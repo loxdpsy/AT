@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.0.1.1
+
+Firefox self-hosting. This version is the first one that can be installed outside addons.mozilla.org and update itself.
+
+**Added**
+
+- Firefox `update_url` pointing to `updates.json` on the latest release. Installed copies check it for newer versions.
+- Each release that is signed for AMO also publishes a signed `atlas-translation-<version>-firefox-signed.xpi` and `updates.json`.
+
+**Changed**
+
+- A listed AMO submission sends a build without `update_url`, because AMO rejects that key on listed add-ons.
+
+**Fixed**
+
+- The toolbar popup's options menu is readable in light and dark mode.
+- The source-language label sits inside the Original button.
+
 ## 0.0.1.0
 
 First release of Atlas Translation. The version numbers start again at 0.0.1.0. The 9.8.x entries below are the TWP fork history.
