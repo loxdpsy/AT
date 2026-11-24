@@ -92,7 +92,7 @@ jobs:
             fi
             SHA="$GITHUB_SHA"
           elif [ "$PUBLISH" = "true" ]; then
-            node scripts/set-version.mjs "$VERSION"
+            node scripts/sync-version.mjs "$VERSION"
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add manifest.json firefox_manifest.json

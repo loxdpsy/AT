@@ -8,11 +8,20 @@
 - An About page with a "More from Etherealmber" section, showing Atlas Commerce, its Android app, and its desktop app.
 - Edge Add-ons automatic submission. The release workflow uploads the Chromium package and submits it when the `EDGE_PRODUCT_ID`, `EDGE_CLIENT_ID`, and `EDGE_API_KEY` secrets are set.
 - A README section on security and privacy: what is sent, what is stored, and why each permission is needed.
+- An About page with the installed version, credits, license, and links. It is reachable from the popup's options menu and from Settings.
+- `npm run version:sync -- <version>` sets the version in every file that states it, and `npm run check` fails when they differ.
 
 **Changed**
 
 - The settings page and the popup use Chrome's settings look (light and dark) in every browser.
 - New icon: the Atlas sunburst with a translation badge (two arrows). It is easier to read at small sizes.
+- The side pages (translate text, change language, improve translation, translate PDF, old popup) use the same Chrome look and theme as the popup.
+- The popup has tighter spacing, hover states on each option, and lighter type.
+
+**Fixed**
+
+- The popup and side pages no longer inject their own hard-coded dark styles, which clashed with the theme.
+- The README version badge and the package version fields are kept in step.
 
 ## 9.8.1.0
 

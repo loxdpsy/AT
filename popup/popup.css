@@ -368,3 +368,71 @@ hr {
   border: 0;
   border-top: 1px solid var(--line);
 }
+
+/* ---- Popup refinement: Chrome-style spacing, hover states and weights ---- */
+body {
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.4;
+  padding: 12px 14px 6px;
+}
+
+.w3-container {
+  font-weight: 500;
+}
+
+[data-popupPanelSection] {
+  border-radius: 8px;
+  padding: 2px 6px;
+  margin: 0 -6px;
+}
+
+[data-popupPanelSection]:hover {
+  background-color: var(--hover);
+}
+
+[data-popupPanelSection] label {
+  padding: 4px 0 4px 6px;
+  display: inline-block;
+}
+
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 6px 0 0 0;
+  vertical-align: top;
+}
+
+hr {
+  margin: 6px 0;
+}
+
+#btnImproveTranslation {
+  height: 32px;
+  font-size: 13px;
+  padding: 0 12px;
+  width: 100%;
+}
+
+#more,
+#less {
+  color: var(--sub);
+  border-radius: 8px;
+}
+
+#more:hover,
+#less:hover {
+  color: var(--text);
+}
+
+#btnOptions {
+  color: var(--text);
+  background-color: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+#divIconTranslate:hover {
+  opacity: 0.85;
+}
+

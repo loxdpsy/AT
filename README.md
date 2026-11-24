@@ -1,5 +1,7 @@
 # Atlas Translation
 
+![Version](https://img.shields.io/badge/version-9.8.1.0-1a73e8) [![Latest release](https://img.shields.io/github/v/release/loxdpsy/AT?label=release)](https://github.com/loxdpsy/AT/releases) [![Issues](https://img.shields.io/github/issues/loxdpsy/AT)](https://github.com/loxdpsy/AT/issues) [![License: MPL-2.0](https://img.shields.io/github/license/loxdpsy/AT)](LICENSE) [![Upstream TWP](https://img.shields.io/github/v/release/FilipePS/Traduzir-paginas-web?label=upstream%20TWP)](https://github.com/FilipePS/Traduzir-paginas-web/releases)
+
 **Translate web pages in real time, in your browser.**
 
 Atlas Translation translates whole pages, selected text, and documents with Google, Bing, Yandex, DeepL, or LibreTranslate.
@@ -37,6 +39,7 @@ Other extensions with a similar name are not Atlas Translation. Store links will
 - **Update check** script that uses the GitHub API and respects the rate limit (see *Checking for updates*).
 - **Per-site and per-language rules**: never translate a site or language, always translate, auto-translate links.
 - **Keyboard shortcuts** for toggling, showing the original, and switching services.
+- **About page** with the installed version, credits, license, and links. Open it from the popup's options menu or from Settings.
 - **Themes**: System, Light, or Dark (*Style → Theme*). The settings page and the popup look the same in Chromium browsers and Firefox. The layout follows Chrome's settings page.
 - **Light on memory**: translations are cached with a bounded in-memory cache, and finished requests are released.
 
@@ -101,6 +104,22 @@ Repository secrets used by the workflows (all optional):
 
 - `CRX_PRIVATE_KEY`: PEM private key for the `.crx` signature. Keep it secret and back it up.
 - `AMO_JWT_ISSUER` and `AMO_JWT_SECRET`: addons.mozilla.org API credentials for signing the XPI.
+
+### Keeping the version in sync
+
+The version lives in five places: `manifest.json`, `firefox_manifest.json`, `package.json`, `package-lock.json`, and the
+version badge at the top of this README. Set all of them at once:
+
+```bash
+npm run version:sync -- 9.8.2.0   # writes every file; warns if CHANGELOG.md has no "## 9.8.2.0" section
+npm run version:check             # prints each version and fails if they differ
+```
+
+`npm run check` runs the same comparison, so CI fails when the versions disagree. The release workflows use
+`scripts/sync-version.mjs` too.
+
+The **Upstream TWP** badge at the top shows the latest release of the original project. This fork's version is separate,
+and it is based on TWP 9.8.1.0. A newer upstream release does not change this fork's version.
 
 ### Release secrets
 

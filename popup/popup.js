@@ -367,6 +367,9 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
         case "translatePDF":
           tabsCreate("https://pdf.translatewebpages.org/");
           break;
+        case "aboutAtlas":
+          tabsCreate(chrome.runtime.getURL("/about/about.html"));
+          break;
         default:
           break;
       }

@@ -1,10 +1,11 @@
 // Validates the extension before it is packed: JSON files, JavaScript syntax,
-// every file referenced by the manifests and importScripts(), and the locales.
+// every file referenced by the manifests and importScripts(), the locales, and that the version matches everywhere.
 // Usage: npm run check
 import { readdir, readFile, stat } from "node:fs/promises";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { versionProblems } from "./sync-version.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 let failures = 0;
@@ -89,6 +90,11 @@ for (const file of localeFiles) {
   }
 }
 ok(`${localeFiles.length} locale files parsed`);
+
+console.log("Versions");
+const versionIssues = await versionProblems();
+if (versionIssues.length) fail("version fields differ: " + versionIssues.join("; "));
+else ok("manifests, package files and README badge agree");
 
 if (failures > 0) {
   console.error(`\n${failures} check(s) failed.`);

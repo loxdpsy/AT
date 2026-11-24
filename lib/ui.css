@@ -1,0 +1,193 @@
+/*
+ * Shared Chrome-style look for the popup and the side pages (translate text, change language,
+ * improve translation, translate PDF, old popup). Loaded last, so it overrides the colours that
+ * each page sets inline. Layout is left to the page. Dark mode is the "dark" class on <html>,
+ * which lib/theme.js sets.
+ */
+:root {
+  --page: #ffffff;
+  --card: #ffffff;
+  --text: #202124;
+  --sub: #5f6368;
+  --line: #e8eaed;
+  --field: #ffffff;
+  --field-border: #dadce0;
+  --hover: #f1f3f4;
+  --accent: #1a73e8;
+  --accent-text: #185abc;
+  --accent-soft: #e8f0fe;
+  --on-accent: #ffffff;
+  --danger: #d93025;
+  --danger-soft: #fce8e6;
+  --shadow: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+  color-scheme: light;
+}
+
+:root.dark {
+  --page: #292a2d;
+  --card: #292a2d;
+  --text: #e8eaed;
+  --sub: #9aa0a6;
+  --line: #3c4043;
+  --field: #35363a;
+  --field-border: #5f6368;
+  --hover: #35363a;
+  --accent: #8ab4f8;
+  --accent-text: #8ab4f8;
+  --accent-soft: #394457;
+  --on-accent: #202124;
+  --danger: #f28b82;
+  --danger-soft: rgba(242, 139, 130, 0.14);
+  --shadow: none;
+  color-scheme: dark;
+}
+
+html,
+body {
+  background-color: var(--page) !important;
+  color: var(--text) !important;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+}
+
+* {
+  scrollbar-color: var(--line) transparent;
+}
+
+a {
+  color: var(--accent-text) !important;
+}
+
+hr {
+  border: 0 !important;
+  border-top: 1px solid var(--line) !important;
+  background: none !important;
+}
+
+/* Form controls */
+select,
+.select {
+  background-color: var(--field) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--field-border) !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+select:hover,
+select:focus,
+.select:hover,
+.select:focus {
+  background-color: var(--hover) !important;
+  border-color: var(--accent) !important;
+  outline: none;
+}
+
+option {
+  background-color: var(--field);
+  color: var(--text);
+}
+
+input[type="text"],
+input:not([type]),
+input[type="search"],
+textarea {
+  background-color: var(--field) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--field-border) !important;
+  border-radius: 4px !important;
+  box-shadow: none !important;
+}
+
+input[type="checkbox"],
+.w3-check {
+  accent-color: var(--accent);
+}
+
+/* Buttons */
+button,
+.w3-btn,
+.w3-button {
+  background-color: var(--field) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--field-border) !important;
+  border-radius: 16px !important;
+  box-shadow: none !important;
+}
+
+button:hover,
+.w3-btn:hover,
+.w3-button:hover {
+  background-color: var(--accent-soft) !important;
+  color: var(--accent-text) !important;
+}
+
+.w3-blue,
+.w3-btn.w3-blue {
+  background-color: var(--accent) !important;
+  border-color: var(--accent) !important;
+  color: var(--on-accent) !important;
+}
+
+.w3-text-blue,
+.w3-text-pale-blue {
+  color: var(--accent-text) !important;
+}
+
+/* Cards and lists used by the side pages */
+.servicebutton,
+.sendbutton {
+  background-color: var(--card) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  color: var(--text) !important;
+  box-shadow: var(--shadow) !important;
+}
+
+.servicebutton:hover,
+.sendbutton:hover {
+  background-color: var(--accent-soft) !important;
+  color: var(--accent-text) !important;
+}
+
+.title {
+  background-color: transparent !important;
+  color: var(--sub) !important;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.alert {
+  background-color: var(--danger-soft) !important;
+  color: var(--danger) !important;
+  border-radius: 8px;
+}
+
+li {
+  background-color: var(--hover);
+  color: var(--text);
+  box-shadow: none !important;
+  border-radius: 16px !important;
+}
+
+li:hover {
+  background-color: var(--accent-soft);
+  color: var(--accent-text);
+}
+
+li.selected,
+.selected {
+  background-color: var(--accent-soft) !important;
+  color: var(--accent-text) !important;
+}
+
+.mdiv,
+.md {
+  background-color: var(--text) !important;
+}
+
+.w3-hover-light-grey:hover,
+.w3-hover-light-gray:hover,
+.w3-hover-light-blue:hover {
+  background-color: var(--hover) !important;
+  color: var(--text) !important;
+}

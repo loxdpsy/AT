@@ -20,53 +20,8 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
   let currentTargetLanguages = twpConfig.get("targetLanguages");
   let currentTargetLanguage = twpConfig.get("targetLanguageTextTranslation");
   let currentTextTranslatorService = twpConfig.get("textTranslatorService");
-  function disableDarkMode() {
-    if (!document.getElementById("lightModeElement")) {
-      const el = document.createElement("style");
-      el.setAttribute("id", "lightModeElement");
-      el.setAttribute("rel", "stylesheet");
-      el.textContent = `
-            body {
-                color: rgb(0, 0, 0) !important;
-                background-color: rgb(215, 215, 215) !important;
-            }
-            .selected {
-                background-color: rgba(0, 0, 0, 0.6) !important;
-            }
-            hr {
-                width: 95%;
-                border: 1px rgba(0, 0, 0, 0.75) solid;
-            }
-            `;
-      document.body.appendChild(el);
-      document.querySelector("#listenTranslated svg").style = "fill: rgb(0, 0, 0)";
-      document.querySelector("#listenOriginal svg").style = "fill: rgb(0, 0, 0)";
-    }
-  }
-  function enableDarkMode() {
-    if (document.getElementById("#lightModeElement")) {
-      document.getElementById("#lightModeElement").remove();
-      document.querySelector("#listenTranslated svg").style = "fill: black";
-      document.querySelector("#listenOriginal svg").style = "fill: black";
-    }
-  }
-  switch (twpConfig.get("darkMode")) {
-    case "auto":
-      if (matchMedia("(prefers-color-scheme: dark)").matches) {
-        enableDarkMode();
-      } else {
-        disableDarkMode();
-      }
-      break;
-    case "yes":
-      enableDarkMode();
-      break;
-    case "no":
-      disableDarkMode();
-      break;
-    default:
-      break;
-  }
+  const darkPref = twpConfig.get("darkMode");
+  twpTheme.set(["auto", "yes", "no"].includes(darkPref) ? darkPref : "auto");
   async function detectTextLanguage(text) {
     if (!chrome.i18n.detectLanguage) return "und";
     return await new Promise(resolve => {

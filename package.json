@@ -10,7 +10,9 @@
     "build": "node scripts/build.mjs all",
     "build:chromium": "node scripts/build.mjs chromium",
     "build:firefox": "node scripts/build.mjs firefox",
-    "update:check": "node scripts/check-update.mjs"
+    "update:check": "node scripts/check-update.mjs",
+    "version:sync": "node scripts/sync-version.mjs",
+    "version:check": "node scripts/sync-version.mjs"
   },
   "devDependencies": {
     "archiver": "^7.0.1",
