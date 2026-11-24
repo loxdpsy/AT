@@ -103,6 +103,13 @@ gh secret set AMO_JWT_ISSUER --body "<issuer value from AMO>"
 gh secret set AMO_JWT_SECRET --body "<secret value from AMO>"
 ```
 
+**Firefox auto-publish, step by step**
+
+1. The first version has to be uploaded by hand, so AMO creates the listing: download the `loxdpsy-firefox` artifact from a *Firefox build* run, then on addons.mozilla.org choose **Submit a New Add-on** and upload `loxdpsy-<version>-firefox.xpi`. Choose **On this site** (listed), then fill in the name, summary, description, category, and license (MPL-2.0).
+2. Add `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` as secrets (below).
+3. From then on, pushing a tag such as `v9.8.2.0` signs the XPI with the `listed` channel and submits it to AMO. AMO's review decides when it becomes public, usually within days. Set the repository variable `AMO_CHANNEL` to `unlisted` if you want self-distribution (signed immediately, not in the store).
+4. Bump the `version` in `manifest.json` (and `firefox_manifest.json`) before each tag. AMO rejects a version number that already exists.
+
 Firefox signing also needs the add-on ID in `firefox_manifest.json` to belong to your AMO account. This fork uses its own ID, so
 the first upload creates the add-on under your account. If you change the ID later, you must sign with the new one too.
 

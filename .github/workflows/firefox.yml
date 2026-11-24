@@ -5,7 +5,10 @@ name: Firefox build (ZIP + XPI)
 # - Tag push (v*): the files are also attached to the GitHub release for that tag.
 #
 # Optional secrets AMO_JWT_ISSUER and AMO_JWT_SECRET (addons.mozilla.org API keys).
-# When both are set, the XPI is signed as an unlisted add-on, so Firefox will install it.
+# When both are set, the add-on is submitted to addons.mozilla.org (AMO).
+#   AMO_CHANNEL (repository variable, optional): "listed" (default, public after Mozilla review)
+#                                               or "unlisted" (self-distribution, signed immediately).
+# Each release needs a new version number in manifest.json; AMO rejects a version that already exists.
 
 on:
   workflow_dispatch:
@@ -46,6 +49,7 @@ jobs:
         env:
           AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
           AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+          AMO_CHANNEL: ${{ vars.AMO_CHANNEL || 'listed' }}
         run: |
           if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ]; then
             echo "AMO keys not set: skipping signing. Unsigned XPI is in build/."
@@ -54,7 +58,7 @@ jobs:
           npx --yes web-ext@8 sign \
             --source-dir build/staging/firefox \
             --artifacts-dir build/signed \
-            --channel unlisted \
+            --channel "${AMO_CHANNEL:-listed}" \
             --api-key "$AMO_JWT_ISSUER" \
             --api-secret "$AMO_JWT_SECRET"
 
