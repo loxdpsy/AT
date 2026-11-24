@@ -1,16 +1,19 @@
-# Publishing loxdpsy in the stores
+# Publishing Atlas Translation in the stores
 
 Each store needs an account, a listing, a privacy disclosure, and a package. The package comes from the release:
 the Chromium **ZIP** is for Chrome and Edge, and the Firefox **ZIP** or **XPI** is for addons.mozilla.org.
 Do not upload the `.crx`: stores only accept ZIP packages, and they sign the extension with their own key.
 
+The four official channels are the Firefox Add-ons site, the Chrome Web Store, Microsoft Edge Add-ons, and Firefox for Android.
+Firefox for Android uses the same Firefox Add-ons listing, so it does not need its own submission.
+
 ## Before you start: things every store asks for
 
-- **Name, summary, and description.** Name: `loxdpsy`. Use the description from `README.md`, and keep the credit to FilipePS.
+- **Name, summary, and description.** Name: `Atlas Translation`. Use the description from `README.md`, and keep the credit to FilipePS.
 - **Icon:** 128 × 128 PNG (`icons/icon-128.png`).
 - **Screenshots:** at least one. Use 1280 × 800 or 640 × 400 PNG or JPEG.
 - **License:** MPL-2.0 (LICENSE file).
-- **Privacy policy URL.** loxdpsy sends the text you translate to the translation provider you chose (Google, Bing, Yandex, DeepL, or LibreTranslate). Say so in the policy and in the store's privacy form. The policy must also say that loxdpsy does not collect or sell data itself.
+- **Privacy policy URL.** Atlas Translation sends the text you translate to the translation provider you chose (Google, Bing, Yandex, DeepL, or LibreTranslate). Say so in the policy and in the store's privacy form. The policy must also say that Atlas Translation does not collect or sell data itself.
 - **Support contact:** a GitHub issues link (`https://github.com/loxdpsy/twp/issues`) is enough.
 
 ## Chrome Web Store
@@ -18,7 +21,7 @@ Do not upload the `.crx`: stores only accept ZIP packages, and they sign the ext
 1. Go to **https://chrome.google.com/webstore/devconsole** and sign in with a Google account.
 2. Turn on **2-Step Verification** for that account. The store requires it.
 3. Pay the one-time **US$5** developer registration fee and accept the developer agreement.
-4. Click **New item**, then upload `loxdpsy-<version>-chromium.zip`.
+4. Click **New item**, then upload `atlas-translation-<version>-chromium.zip`.
 5. Fill in the listing and the **Privacy practices** tab (data use, the privacy policy URL, and the single-purpose statement).
 6. Submit for review. The first review usually takes a few days.
 
@@ -28,7 +31,7 @@ The store gives the extension its own ID. The `CRX_PRIVATE_KEY` is only for self
 
 1. Go to **https://partner.microsoft.com/dashboard/microsoftedge** and sign in with a Microsoft account.
 2. Create a Partner Center developer account. Registration is free. Individual accounts are enough.
-3. Click **Create new extension**, then upload `loxdpsy-<version>-chromium.zip`. Edge accepts the same package as Chrome.
+3. Click **Create new extension**, then upload `atlas-translation-<version>-chromium.zip`. Edge accepts the same package as Chrome.
 4. Fill in the listing, the privacy policy URL, and the data-use answers.
 5. Submit for certification.
 

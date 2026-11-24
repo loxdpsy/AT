@@ -1,6 +1,6 @@
 # Notice and credits
 
-**loxdpsy** is a modified fork of **TWP - Translate Web Pages**.
+**Atlas Translation** is a modified fork of **TWP - Translate Web Pages**.
 
 - Original project: <https://github.com/FilipePS/Traduzir-paginas-web>
 - Original author and maintainer: **FilipePS** (Filipe Pereira Silva). The original code, the translation
@@ -13,7 +13,7 @@
 - Google, Bing, Yandex, DeepL (official API) and LibreTranslate translation services.
 - Manifest V3 for Chromium and Firefox, with a service worker and an offscreen document for audio.
 - Redesigned settings page and popup.
-- Donation and sponsor links removed. Brand renamed to loxdpsy.
+- Donation and sponsor links removed. Brand renamed to Atlas Translation.
 - Build workflows that produce Chromium (.zip and .crx) and Firefox (.zip and .xpi) packages.
 
 Translation services are external. Their APIs and terms belong to their owners (Google, Microsoft,

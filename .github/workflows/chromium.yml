@@ -1,13 +1,28 @@
 name: Chromium build
 
-# Builds loxdpsy for Chromium-based browsers:
+# Builds Atlas Translation for Chromium-based browsers:
 #   - ZIP: upload to the Chrome Web Store and Microsoft Edge Add-ons
 #   - CRX: signed with the CRX_PRIVATE_KEY secret (self-hosting, enterprise policy)
-# Runs by hand (Actions > Chromium build > Run workflow), and from the Release workflow on version tags.
+#
+# Run it by hand: Actions > Chromium build > Run workflow. Leave "version" empty to build the version in manifest.json.
+# The Release workflow also calls this file.
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build, for example 9.8.2.0 (leave empty for the version in manifest.json)"
+        type: string
+        default: ""
   workflow_call:
+    inputs:
+      version:
+        type: string
+        default: ""
+      ref:
+        description: "Commit to build (defaults to the commit that started the run)"
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -19,12 +34,18 @@ jobs:
     steps:
       - name: Check out the code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || github.sha }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+
+      - name: Set the version
+        if: ${{ inputs.version != '' }}
+        run: node scripts/set-version.mjs "${{ inputs.version }}"
 
       - name: Install dependencies
         run: npm ci
@@ -37,7 +58,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: loxdpsy-chromium
+          name: atlas-translation-chromium
           path: |
             build/*.crx
             build/*.zip
@@ -48,9 +69,9 @@ jobs:
         run: |
           VERSION=$(python3 -c "import json; print(json.load(open('manifest.json'))['version'])")
           {
-            echo "## Chromium build: loxdpsy $VERSION"
+            echo "## Chromium build: Atlas Translation $VERSION"
             echo ""
-            echo "- Status: **${{ job.status }}**"
+            echo "- Result: **${{ job.status }}**"
             echo "- Commit: \`${GITHUB_SHA:0:7}\`"
             echo "- Minimum Chrome version: 109"
             echo ""
@@ -60,4 +81,6 @@ jobs:
               [ -f "$f" ] || continue
               echo "| \`$(basename "$f")\` | $(du -h "$f" | cut -f1) | \`$(sha256sum "$f" | cut -c1-16)\` |"
             done
+            echo ""
+            echo "**Next:** install the ZIP unpacked from chrome://extensions to test it, or upload it to the Chrome Web Store and Edge Add-ons."
           } >> "$GITHUB_STEP_SUMMARY"

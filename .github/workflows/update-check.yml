@@ -1,6 +1,6 @@
 name: Update check
 
-# Once a week, and on demand, check GitHub for newer releases of loxdpsy and of the upstream TWP project.
+# Once a week, and on demand, check GitHub for newer releases of Atlas Translation and of the upstream TWP project.
 # The result is written to the run summary (Actions > Update check > run > Summary).
 # The script checks the API rate limit first and skips the lookups when the budget is low.
 

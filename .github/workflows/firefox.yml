@@ -1,20 +1,33 @@
 name: Firefox build
 
-# Builds loxdpsy for Firefox: ZIP and unsigned XPI.
+# Builds Atlas Translation for Firefox and Firefox for Android: a ZIP and an unsigned XPI.
 # With "submit" turned on, the add-on is also submitted to addons.mozilla.org (AMO).
-#   - AMO_JWT_ISSUER and AMO_JWT_SECRET secrets are required for submission.
-#   - AMO_CHANNEL repository variable: "listed" (default, public after Mozilla review) or "unlisted".
-# Runs by hand (Actions > Firefox build > Run workflow), and from the Release workflow on version tags.
+#   - Secrets AMO_JWT_ISSUER and AMO_JWT_SECRET are required for submission.
+#   - Repository variable AMO_CHANNEL: "listed" (default, public after Mozilla review) or "unlisted".
+#   - .github/amo-metadata.json supplies the license, category, and summary AMO requires.
+#
+# Run it by hand: Actions > Firefox build > Run workflow. The Release workflow also calls this file.
 
 on:
   workflow_dispatch:
     inputs:
+      version:
+        description: "Version to build, for example 9.8.2.0 (leave empty for the version in firefox_manifest.json)"
+        type: string
+        default: ""
       submit:
         description: "Submit to addons.mozilla.org (needs the AMO secrets)"
         type: boolean
         default: false
   workflow_call:
     inputs:
+      version:
+        type: string
+        default: ""
+      ref:
+        description: "Commit to build (defaults to the commit that started the run)"
+        type: string
+        default: ""
       submit:
         type: boolean
         default: false
@@ -29,12 +42,18 @@ jobs:
     steps:
       - name: Check out the code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || github.sha }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+
+      - name: Set the version
+        if: ${{ inputs.version != '' }}
+        run: node scripts/set-version.mjs "${{ inputs.version }}"
 
       - name: Install dependencies
         run: npm ci
@@ -48,7 +67,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: loxdpsy-firefox
+          name: atlas-translation-firefox
           path: |
             build/*.zip
             build/*.xpi
@@ -78,10 +97,11 @@ jobs:
         run: |
           VERSION=$(python3 -c "import json; print(json.load(open('firefox_manifest.json'))['version'])")
           {
-            echo "## Firefox build: loxdpsy $VERSION"
+            echo "## Firefox build: Atlas Translation $VERSION"
             echo ""
-            echo "- Build status: **${{ job.status }}**"
-            echo "- Submitted to AMO: **${{ inputs.submit }}**"
+            echo "- Build result: **${{ job.status }}**"
+            echo "- Submitted to addons.mozilla.org: **${{ inputs.submit }}**"
+            echo "- Channel: \`${{ vars.AMO_CHANNEL || 'listed' }}\`"
             echo "- Commit: \`${GITHUB_SHA:0:7}\`"
             echo ""
             echo "| File | Size | SHA-256 (first 16) |"
@@ -97,7 +117,7 @@ jobs:
             echo '```'
             if [ -f build/amo-submit.log ]; then
               echo ""
-              echo "### AMO submission (last 40 lines)"
+              echo "### addons.mozilla.org submission (last 40 lines)"
               echo '```'
               tail -n 40 build/amo-submit.log
               echo '```'

@@ -1,94 +1,216 @@
 name: Release
 
-# Pushing a version tag (for example v9.8.1.0) builds both packages and publishes one GitHub release with:
-#   loxdpsy-<version>-chromium.zip  (Chrome Web Store, Edge Add-ons)
-#   loxdpsy-<version>-chromium.crx  (signed with CRX_PRIVATE_KEY)
-#   loxdpsy-<version>-firefox.zip   (source for Firefox store uploads)
-#   loxdpsy-<version>-firefox.xpi   (unsigned; the store signs listed versions)
+# Build, test, or publish Atlas Translation.
+#
+# Run by hand (Actions > Release > Run workflow):
+#   - version:  the version to build, for example 9.8.2.0 (no "v")
+#   - action:   "build-and-test"    builds both packages and shows checksums in the summary. Nothing is published.
+#               "build-and-release" also commits the version bump, creates the tag v<version>, and publishes a GitHub release.
+#   - submit_amo: also submit the Firefox add-on to addons.mozilla.org (only with build-and-release)
+#
+# Pushing a tag such as v9.8.2.0 (with manifest.json already at that version) publishes it, the same as build-and-release.
 # The release notes come from the matching "## <version>" section in CHANGELOG.md.
-# The Firefox submission to addons.mozilla.org runs on tags too. It does not block the release.
-# Manual runs (workflow_dispatch) only build; they never submit or publish.
 
 on:
   push:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version, for example 9.8.2.0 (no v)"
+        type: string
+        required: true
+      action:
+        description: "What to do"
+        type: choice
+        options:
+          - build-and-test
+          - build-and-release
+        default: build-and-test
+      submit_amo:
+        description: "Submit the Firefox add-on to addons.mozilla.org (build-and-release only)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ github.ref }}-${{ github.event.inputs.version || github.ref_name }}
   cancel-in-progress: false
 
 jobs:
+  prepare:
+    name: Prepare the version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.plan.outputs.version }}
+      sha: ${{ steps.plan.outputs.sha }}
+      publish: ${{ steps.plan.outputs.publish }}
+      submit: ${{ steps.plan.outputs.submit }}
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Work out what to do
+        id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          INPUT_VERSION: ${{ github.event.inputs.version }}
+          INPUT_ACTION: ${{ github.event.inputs.action }}
+          INPUT_SUBMIT: ${{ github.event.inputs.submit_amo }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT" = "push" ]; then
+            VERSION="${REF_NAME#v}"
+            PUBLISH=true
+            SUBMIT=true
+          else
+            VERSION="$(echo "$INPUT_VERSION" | tr -d '[:space:]' | sed 's/^v//')"
+            PUBLISH=$([ "$INPUT_ACTION" = "build-and-release" ] && echo true || echo false)
+            SUBMIT=$([ "$PUBLISH" = "true" ] && [ "$INPUT_SUBMIT" = "true" ] && echo true || echo false)
+          fi
+          if ! echo "$VERSION" | grep -Eq '^[0-9]+(\.[0-9]+){0,3}$'; then
+            echo "::error::Version '$VERSION' is not valid. Use 1 to 4 numbers separated by dots, for example 9.8.2.0."
+            exit 1
+          fi
+          if [ "$PUBLISH" = "true" ] && git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
+            echo "::error::The tag v$VERSION already exists. Choose a new version."
+            exit 1
+          fi
+
+          if [ "$EVENT" = "push" ]; then
+            # The tag must match the manifest that is already in the repository.
+            CURRENT=$(python3 -c "import json; print(json.load(open('manifest.json'))['version'])")
+            if [ "$CURRENT" != "$VERSION" ]; then
+              echo "::error::Tag v$VERSION does not match manifest.json ($CURRENT)."
+              exit 1
+            fi
+            SHA="$GITHUB_SHA"
+          elif [ "$PUBLISH" = "true" ]; then
+            node scripts/set-version.mjs "$VERSION"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add manifest.json firefox_manifest.json
+            if git diff --cached --quiet; then
+              echo "manifest.json already has version $VERSION."
+            else
+              git commit -m "Release $VERSION"
+            fi
+            git tag "v$VERSION"
+            git push origin "HEAD:${GITHUB_REF_NAME}"
+            git push origin "v$VERSION"
+            SHA="$(git rev-parse HEAD)"
+          else
+            # Test build: nothing is committed or tagged. The builds stamp the version themselves.
+            SHA="$GITHUB_SHA"
+          fi
+
+          {
+            echo "version=$VERSION"
+            echo "sha=$SHA"
+            echo "publish=$PUBLISH"
+            echo "submit=$SUBMIT"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Write job summary
+        if: always()
+        env:
+          VERSION: ${{ steps.plan.outputs.version }}
+          PUBLISH: ${{ steps.plan.outputs.publish }}
+          SUBMIT: ${{ steps.plan.outputs.submit }}
+        run: |
+          {
+            echo "## Release plan: Atlas Translation ${VERSION:-?}"
+            echo ""
+            echo "- Result: **${{ job.status }}**"
+            echo "- Mode: $([ "$PUBLISH" = "true" ] && echo "**publish** (tag v$VERSION and a GitHub release)" || echo "**build and test only** (nothing published)")"
+            echo "- Submit to addons.mozilla.org: ${SUBMIT:-false}"
+            echo ""
+            echo "The Chromium and Firefox builds below use version $VERSION."
+          } >> "$GITHUB_STEP_SUMMARY"
+
   chromium:
     name: Chromium
+    needs: prepare
     uses: ./.github/workflows/chromium.yml
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      ref: ${{ needs.prepare.outputs.sha }}
     secrets: inherit
 
   firefox:
     name: Firefox
+    needs: prepare
     uses: ./.github/workflows/firefox.yml
     with:
-      submit: ${{ startsWith(github.ref, 'refs/tags/v') }}
+      version: ${{ needs.prepare.outputs.version }}
+      ref: ${{ needs.prepare.outputs.sha }}
+      submit: ${{ needs.prepare.outputs.submit == 'true' }}
     secrets: inherit
 
-  release:
+  publish:
     name: Publish GitHub release
-    needs: [chromium, firefox]
-    if: ${{ always() && startsWith(github.ref, 'refs/tags/v') && needs.chromium.result == 'success' && needs.firefox.result != 'cancelled' }}
+    needs: [prepare, chromium, firefox]
+    if: ${{ always() && needs.prepare.result == 'success' && needs.prepare.outputs.publish == 'true' && needs.chromium.result == 'success' && needs.firefox.result != 'cancelled' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out the code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
 
       - name: Download the Chromium package
         uses: actions/download-artifact@v4
         with:
-          name: loxdpsy-chromium
+          name: atlas-translation-chromium
           path: dist
 
       - name: Download the Firefox package
         uses: actions/download-artifact@v4
         with:
-          name: loxdpsy-firefox
+          name: atlas-translation-firefox
           path: dist
-
-      - name: Check that the tag matches manifest.json
-        env:
-          TAG: ${{ github.ref_name }}
-        run: |
-          VERSION=$(python3 -c "import json; print(json.load(open('manifest.json'))['version'])")
-          if [ "$TAG" != "v$VERSION" ]; then
-            echo "Tag $TAG does not match manifest.json version $VERSION" >&2
-            exit 1
-          fi
 
       - name: Create or update the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+          VERSION: ${{ needs.prepare.outputs.version }}
         run: |
-          VERSION="${TAG#v}"
+          TAG="v$VERSION"
           awk -v v="$VERSION" 'BEGIN { p = 0 } /^## / { if (p) exit; if ($2 == v) p = 1; next } p' CHANGELOG.md > notes.md
           if [ ! -s notes.md ]; then
-            echo "No CHANGELOG.md section for $VERSION. Using a short note." >&2
-            echo "loxdpsy $VERSION" > notes.md
+            echo "No CHANGELOG.md section for $VERSION. Add a '## $VERSION' section and run again to get full notes." >&2
+            echo "Atlas Translation $VERSION" > notes.md
           fi
           {
             echo ""
             echo "## Downloads"
             echo ""
-            echo "- **Chrome Web Store, Edge Add-ons:** \`loxdpsy-$VERSION-chromium.zip\`"
-            echo "- **Chromium, self-hosting:** \`loxdpsy-$VERSION-chromium.crx\` (Chromium 109 or newer)"
-            echo "- **Firefox, Firefox for Android:** install from addons.mozilla.org. \`loxdpsy-$VERSION-firefox.xpi\` is unsigned, so Firefox will not install it normally."
-            echo "- **Firefox store upload:** \`loxdpsy-$VERSION-firefox.zip\`"
+            echo "- **Chrome Web Store and Edge Add-ons:** \`atlas-translation-$VERSION-chromium.zip\`"
+            echo "- **Chromium, self-hosting:** \`atlas-translation-$VERSION-chromium.crx\` (Chromium 109 or newer)"
+            echo "- **Firefox and Firefox for Android:** install from addons.mozilla.org. \`atlas-translation-$VERSION-firefox.xpi\` is unsigned, so Firefox will not install it directly."
+            echo "- **Firefox store upload:** \`atlas-translation-$VERSION-firefox.zip\`"
           } >> notes.md
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" dist/* --clobber
-            gh release edit "$TAG" --notes-file notes.md
+            gh release edit "$TAG" --title "Atlas Translation $VERSION" --notes-file notes.md
           else
-            gh release create "$TAG" dist/* --title "loxdpsy $VERSION" --notes-file notes.md
+            gh release create "$TAG" dist/* --title "Atlas Translation $VERSION" --notes-file notes.md
           fi
+
+      - name: Write job summary
+        if: always()
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          {
+            echo "## Published: Atlas Translation $VERSION"
+            echo ""
+            echo "- Release: https://github.com/${{ github.repository }}/releases/tag/v$VERSION"
+            echo "- Firefox submission to addons.mozilla.org: see the Firefox job summary."
+          } >> "$GITHUB_STEP_SUMMARY"

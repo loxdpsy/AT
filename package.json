@@ -1,7 +1,7 @@
 {
-  "name": "loxdpsy",
+  "name": "atlas-translation",
   "version": "9.8.1.0",
-  "description": "loxdpsy: translate web pages in real time (a fork of TWP - Translate Web Pages by FilipePS).",
+  "description": "Atlas Translation: translate web pages in real time (a fork of TWP - Translate Web Pages by FilipePS).",
   "private": true,
   "license": "MPL-2.0",
   "type": "module",

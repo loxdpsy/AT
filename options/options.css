@@ -1,43 +1,46 @@
-/* loxdpsy settings page */
+/* Atlas Translation settings page */
 :root {
-  --bg: #f3f5f9;
+  /* Atlas Translation: colours from the Atlas Commerce theme (zinc neutrals, near-black accent). */
+  --bg: #f8fafc;
   --surface: #ffffff;
-  --surface-2: #f8fafc;
+  --surface-2: #f1f5f9;
   --text: #0f172a;
-  --muted: #64748b;
+  --muted: #71717a;
   --border: #e2e8f0;
-  --accent: #2563eb;
-  --accent-hover: #1d4ed8;
-  --accent-soft: #eaf1ff;
+  --accent: #0a0a0a;
+  --accent-hover: #2a3040;
+  --accent-soft: rgba(15, 23, 42, 0.08);
+  --on-accent: #ffffff;
   --danger: #dc2626;
   --danger-soft: #fef2f2;
   --ok: #15803d;
   --ok-soft: #dcfce7;
-  --sidebar: #0b1220;
-  --sidebar-text: #94a3b8;
-  --sidebar-active: #1e293b;
-  --radius: 16px;
+  --sidebar: #18181b;
+  --sidebar-text: #a1a1aa;
+  --sidebar-active: #27272a;
+  --radius: 12px;
   --shadow: 0 1px 2px rgba(15, 23, 42, 0.05), 0 4px 16px rgba(15, 23, 42, 0.04);
   color-scheme: light;
 }
 
 :root.dark {
-  --bg: #0b0d12;
-  --surface: #151922;
-  --surface-2: #1b202b;
-  --text: #e5e7eb;
-  --muted: #94a3b8;
-  --border: #272e3b;
-  --accent: #3b82f6;
-  --accent-hover: #2563eb;
-  --accent-soft: rgba(59, 130, 246, 0.16);
+  --bg: #111113;
+  --surface: #1c1c1f;
+  --surface-2: #27272a;
+  --text: #f4f4f5;
+  --muted: #a1a1aa;
+  --border: rgba(255, 255, 255, 0.09);
+  --accent: #e4e4e7;
+  --accent-hover: #fafafa;
+  --accent-soft: rgba(255, 255, 255, 0.08);
+  --on-accent: #0a0a0a;
   --danger: #f87171;
   --danger-soft: rgba(248, 113, 113, 0.12);
-  --ok: #4ade80;
-  --ok-soft: rgba(74, 222, 128, 0.14);
-  --sidebar: #070a10;
-  --sidebar-text: #7c8799;
-  --sidebar-active: #161c28;
+  --ok: #86efac;
+  --ok-soft: rgba(134, 239, 172, 0.14);
+  --sidebar: #09090b;
+  --sidebar-text: #a1a1aa;
+  --sidebar-active: #1c1c1f;
   --shadow: none;
   color-scheme: dark;
 }
@@ -57,7 +60,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 14px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  font: 14px/1.55 "DM Sans", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -94,7 +97,7 @@ body {
   width: 36px;
   height: 36px;
   border-radius: 11px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  background: transparent;
   color: #fff;
   font-weight: 800;
   font-size: 13px;
@@ -872,4 +875,33 @@ kbd {
 }
 .credits a:hover {
   text-decoration: underline;
+}
+
+/* ---- Atlas Translation: bento layout. The cards of a section form a grid; the first card spans both columns. ---- */
+.section {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+.section > .card {
+  margin: 0;
+  min-width: 0;
+}
+.section > h2,
+.section > .section-title {
+  grid-column: 1 / -1;
+}
+.section > .card:first-of-type {
+  grid-column: 1 / -1;
+}
+@media (max-width: 900px) {
+  .section {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Primary buttons: the text colour follows the theme (white on black in light mode, black on white in dark mode). */
+.btn-primary {
+  color: var(--on-accent);
 }

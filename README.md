@@ -1,14 +1,27 @@
-# loxdpsy
+# Atlas Translation
 
 **Translate web pages in real time, in your browser.**
 
-loxdpsy translates whole pages, selected text, and documents with Google, Bing, Yandex, DeepL, or LibreTranslate.
+Atlas Translation translates whole pages, selected text, and documents with Google, Bing, Yandex, DeepL, or LibreTranslate.
 It works on Chromium-based browsers (Chrome 109+, Edge, Brave, Opera, Vivaldi) and on Firefox.
 
-> loxdpsy is a modified fork of **TWP - Translate Web Pages** by **[FilipePS](https://github.com/FilipePS)**.
+> Atlas Translation is a modified fork of **TWP - Translate Web Pages** by **[FilipePS](https://github.com/FilipePS)**.
 > Huge thanks to FilipePS and every contributor of the original project. See [NOTICE.md](NOTICE.md).
 
 ---
+
+## Official listings
+
+Atlas Translation is published in four places. Install it only from these:
+
+| Store | Browser | Where |
+| --- | --- | --- |
+| Firefox Add-ons (addons.mozilla.org) | Firefox on desktop | *Atlas Translation*, once approved by Mozilla |
+| Chrome Web Store | Chrome, Brave, Opera, Vivaldi | *Atlas Translation*, once published |
+| Microsoft Edge Add-ons | Microsoft Edge | *Atlas Translation*, once certified |
+| Firefox for Android | Firefox for Android | Same listing as Firefox Add-ons. Search for *Atlas Translation*. |
+
+Other extensions with a similar name are not Atlas Translation. Store links will be added here once the listings are live.
 
 ## Features
 
@@ -33,7 +46,7 @@ It works on Chromium-based browsers (Chrome 109+, Edge, Brave, Opera, Vivaldi) a
 
 Chromium 109 or newer is required. Text-to-speech uses the offscreen document API, which Chromium added in version 109.
 
-1. Download `loxdpsy-<version>-chromium.zip` from the [Releases](../../releases) page.
+1. Download `atlas-translation-<version>-chromium.zip` from the [Releases](../../releases) page.
 2. Unzip it. Open `chrome://extensions` (or the equivalent page in your browser), turn on **Developer mode**, and click **Load unpacked**. Select the unzipped folder.
 
 The `.crx` file in the release is the signed package for the same version. Chrome and Edge only install `.crx` files
@@ -41,7 +54,7 @@ from the Web Store or through an enterprise policy, so use the ZIP for normal si
 
 ### Firefox
 
-1. Download `loxdpsy-<version>-firefox.xpi` (or the signed `-signed.xpi` when there is one).
+1. Download `atlas-translation-<version>-firefox.xpi` (or the signed `-signed.xpi` when there is one).
 2. Open `about:addons`, click the gear icon, and choose **Install Add-on From File**.
 
 Unsigned builds are accepted only in Firefox Developer Edition, Nightly, or ESR with `xpinstall.signatures.required` set
@@ -103,10 +116,10 @@ The release workflows read these secrets. Add them in **Settings → Secrets and
 Create the Chromium key (one time, on your own computer):
 
 ```bash
-openssl genrsa -out loxdpsy-key.pem 2048
+openssl genrsa -out atlas-translation-key.pem 2048
 # Store it as a secret. The workflow reads the PEM text.
-gh secret set CRX_PRIVATE_KEY < loxdpsy-key.pem
-# Keep loxdpsy-key.pem in a password manager, then delete the local copy.
+gh secret set CRX_PRIVATE_KEY < atlas-translation-key.pem
+# Keep atlas-translation-key.pem in a password manager, then delete the local copy.
 ```
 
 Store the Firefox keys the same way:
@@ -118,7 +131,7 @@ gh secret set AMO_JWT_SECRET --body "<secret value from AMO>"
 
 **Firefox auto-publish, step by step**
 
-1. The first version has to be uploaded by hand, so AMO creates the listing: download the `loxdpsy-firefox` artifact from a *Firefox build* run, then on addons.mozilla.org choose **Submit a New Add-on** and upload `loxdpsy-<version>-firefox.xpi`. Choose **On this site** (listed), then fill in the name, summary, description, category, and license (MPL-2.0).
+1. The first version has to be uploaded by hand, so AMO creates the listing: download the `atlas-translation-firefox` artifact from a *Firefox build* run, then on addons.mozilla.org choose **Submit a New Add-on** and upload `atlas-translation-<version>-firefox.xpi`. Choose **On this site** (listed), then fill in the name, summary, description, category, and license (MPL-2.0).
 2. Add `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` as secrets (below).
 3. From then on, pushing a tag such as `v9.8.2.0` signs the XPI with the `listed` channel and submits it to AMO. AMO's review decides when it becomes public, usually within days. Set the repository variable `AMO_CHANNEL` to `unlisted` if you want self-distribution (signed immediately, not in the store).
 4. Bump the `version` in `manifest.json` (and `firefox_manifest.json`) before each tag. AMO rejects a version number that already exists.
@@ -158,5 +171,5 @@ scripts/                 Build, check, and update-check scripts
 
 ## License
 
-loxdpsy is licensed under the **Mozilla Public License 2.0**. See [LICENSE](LICENSE). The original TWP project is
+Atlas Translation is licensed under the **Mozilla Public License 2.0**. See [LICENSE](LICENSE). The original TWP project is
 also MPL-2.0 and is credited in [NOTICE.md](NOTICE.md).

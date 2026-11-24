@@ -4,7 +4,7 @@
 
 **Important information**
 
-loxdpsy is a fork of **TWP - Translate Web Pages** by FilipePS. It is not the official TWP extension. The original author and
+Atlas Translation is a fork of **TWP - Translate Web Pages** by FilipePS. It is not the official TWP extension. The official Atlas Translation listings are Firefox Add-ons, the Chrome Web Store, Microsoft Edge Add-ons, and Firefox for Android. The original author and
 license are credited in NOTICE.md and LICENSE. The changes below are relative to the TWP 9.8.1.0 base this fork started from.
 
 **Added**
@@ -16,12 +16,13 @@ license are credited in NOTICE.md and LICENSE. The changes below are relative to
 
 **Changed**
 
-- Renamed to loxdpsy. The Firefox add-on ID is new, so this build installs next to the original TWP.
+- Renamed to Atlas Translation (short name ATL), with a new icon built from the Atlas Commerce sunburst and a translation badge. The Firefox add-on ID is new, so this build installs next to the original TWP.
+- Settings page and popup use the Atlas Commerce colour theme (zinc neutrals, near-black accent). The settings cards are arranged in a bento-style grid.
 - Settings page redesigned, with an improved dark mode.
 - Translation and text-to-speech requests send no cookies.
 - Bing and Yandex translation services rewritten.
 - Donation links (Patreon, PayPal, Coinpayments) and their buttons removed.
-- Interface text updated in all 41 languages: donation strings removed and the name changed to loxdpsy.
+- Interface text updated in all 41 languages: donation strings removed and the name changed to Atlas Translation.
 
 **Fixed**
 

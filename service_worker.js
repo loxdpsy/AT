@@ -1,4 +1,4 @@
-// MV3 service worker entry point for loxdpsy (Chromium).
+// MV3 service worker entry point for Atlas Translation (Chromium).
 // lib/mv3-shims.js bridges the MV2-era APIs; the original background files follow.
 
 importScripts("lib/mv3-shims.js");

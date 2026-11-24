@@ -457,7 +457,7 @@
     "placeholders": {
       "EXTENSION_NAME": {
         "content": "#EXTENSION_NAME#",
-        "example": "loxdpsy"
+        "example": "Atlas Translation"
       },
       "EXTENSION_VERSION": {
         "content": "#EXTENSION_VERSION#",

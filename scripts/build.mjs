@@ -1,8 +1,8 @@
-// Packs loxdpsy for Chromium (ZIP + CRX) and Firefox (ZIP + XPI).
+// Packs Atlas Translation for Chromium (ZIP + CRX) and Firefox (ZIP + XPI).
 //
 //   node scripts/build.mjs all          # both targets (default)
-//   node scripts/build.mjs chromium     # build/loxdpsy-<version>-chromium.{zip,crx}
-//   node scripts/build.mjs firefox      # build/loxdpsy-<version>-firefox.{zip,xpi}
+//   node scripts/build.mjs chromium     # build/atlas-translation-<version>-chromium.{zip,crx}
+//   node scripts/build.mjs firefox      # build/atlas-translation-<version>-firefox.{zip,xpi}
 //
 // CRX signing key: set CRX_PRIVATE_KEY to the PEM text of your key (keep it in a secret).
 // The same key keeps the extension ID stable between releases. Without it, a new key is
@@ -42,7 +42,7 @@ const EXCLUDED_NAMES = new Set([".DS_Store", "Thumbs.db"]);
 
 const manifestChromium = JSON.parse(await readFile(path.join(root, "manifest.json"), "utf8"));
 const version = manifestChromium.version;
-const name = "loxdpsy";
+const name = "atlas-translation";
 
 function log(message) {
   console.log(`[build] ${message}`);
