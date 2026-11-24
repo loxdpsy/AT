@@ -55,7 +55,8 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
   let currentPageLanguage = "und";
   let currentPageLanguageState = "original";
   let currentPageTranslatorService = twpConfig.get("pageTranslatorService");
-  const twpButtons = document.querySelectorAll("button");
+  // Only the language buttons in the first two bars. Other buttons (the menu, Improve translation) must not run the translate handler.
+  const twpButtons = document.querySelectorAll(".w3-bar > button");
   twpButtons.forEach(button => {
     button.addEventListener("click", event => {
       twpButtons.forEach(button => {
@@ -137,14 +138,11 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
   });
   function updateInterface() {
     if (currentPageTranslatorService == "yandex") {
-      $("#btnOptions option[value='translateInExternalSite']").textContent = twpI18n.getMessage("msgOpenOnYandexTranslator");
       $("#iconTranslate").setAttribute("src", "/icons/yandex-translate-32.png");
     } else if (currentPageTranslatorService == "bing") {
-      $("#btnOptions option[value='translateInExternalSite']").textContent = twpI18n.getMessage("btnOpenOnGoogleTranslate");
       $("#iconTranslate").setAttribute("src", "/icons/bing-translate-32.png");
     } else {
       // google
-      $("#btnOptions option[value='translateInExternalSite']").textContent = twpI18n.getMessage("btnOpenOnGoogleTranslate");
       $("#iconTranslate").setAttribute("src", "/icons/google-translate-32.png");
     }
     twpButtons.forEach(button => {
@@ -161,19 +159,6 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
       $("#cbShowTranslatedWhenHoveringThisLang").checked = twpConfig.get("langsToTranslateWhenHovering").indexOf(originalTabLanguage) !== -1;
       $("#lblShowTranslatedWhenHoveringThisLang").textContent = translatedWhenHoveringThisLangText;
       $("#cbShowTranslatedWhenHoveringThisLang").removeAttribute("disabled");
-      if (twpConfig.get("langsToTranslateWhenHovering").indexOf(originalTabLanguage) === -1) {
-        $("option[data-i18n=lblShowTranslatedWhenHoveringThisLang]").textContent = translatedWhenHoveringThisLangText;
-      } else {
-        $("option[data-i18n=lblShowTranslatedWhenHoveringThisLang]").textContent = "✔ " + translatedWhenHoveringThisLangText;
-      }
-      $("option[data-i18n=lblShowTranslatedWhenHoveringThisLang]").removeAttribute("hidden");
-      const neverTranslateLangText = twpI18n.getMessage("btnNeverTranslateThisLanguage");
-      if (twpConfig.get("neverTranslateLangs").indexOf(originalTabLanguage) === -1) {
-        $("option[data-i18n=btnNeverTranslateThisLanguage]").textContent = neverTranslateLangText;
-      } else {
-        $("option[data-i18n=btnNeverTranslateThisLanguage]").textContent = "✔ " + neverTranslateLangText;
-      }
-      $("option[data-i18n=btnNeverTranslateThisLanguage]").style.display = "block";
     }
   }
   updateInterface();
@@ -248,150 +233,226 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     const hostname = new URL(tabs[0].url).hostname;
     $("#cbAlwaysTranslateThisSite").checked = twpConfig.get("alwaysTranslateSites").indexOf(hostname) !== -1;
     $("#cbShowTranslatedWhenHoveringThisSite").checked = twpConfig.get("sitesToTranslateWhenHovering").indexOf(hostname) !== -1;
-    {
-      const text = twpI18n.getMessage("lblShowTranslateSelectedButton");
-      if (twpConfig.get("showTranslateSelectedButton") !== "yes") {
-        $("option[data-i18n=lblShowTranslateSelectedButton]").textContent = text;
-      } else {
-        $("option[data-i18n=lblShowTranslateSelectedButton]").textContent = "✔ " + text;
-      }
-    }
-    {
-      const text = twpI18n.getMessage("lblShowOriginalTextWhenHovering");
-      if (twpConfig.get("showOriginalTextWhenHovering") !== "yes") {
-        $("option[data-i18n=lblShowOriginalTextWhenHovering]").textContent = text;
-      } else {
-        $("option[data-i18n=lblShowOriginalTextWhenHovering]").textContent = "✔ " + text;
-      }
-    }
-    {
-      const text = twpI18n.getMessage("lblShowTranslatedWhenHoveringThisSite");
-      if (twpConfig.get("sitesToTranslateWhenHovering").indexOf(hostname) === -1) {
-        $("option[data-i18n=lblShowTranslatedWhenHoveringThisSite]").textContent = text;
-      } else {
-        $("option[data-i18n=lblShowTranslatedWhenHoveringThisSite]").textContent = "✔ " + text;
-      }
-    }
   });
-  $("#btnOptions").addEventListener("change", event => {
-    const btnOptions = event.target;
+  // ---- Options menu ----
+  // A themed list, not a native <select>. The browser draws a <select> list itself, so its colours
+  // did not follow the theme: light text on a light list in dark mode.
+  const menuButton = $("#btnMenu");
+  const menuPanel = $("#menuPanel");
+  const CHECK_ICON = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  function text(key, fallback, substitution) {
+    return twpI18n.getMessage(key, substitution) || fallback;
+  }
+  function hostnameOf(url) {
+    try {
+      return new URL(url).hostname;
+    } catch (e) {
+      return "";
+    }
+  }
+  function menuItem(action, label, checked = null) {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "menuItem";
+    item.dataset.action = action;
+    item.setAttribute("role", checked === null ? "menuitem" : "menuitemcheckbox");
+    if (checked !== null) {
+      item.setAttribute("aria-checked", String(checked));
+    }
+    const mark = document.createElement("span");
+    mark.className = "menuMark";
+    if (checked) {
+      mark.innerHTML = CHECK_ICON;
+    }
+    const labelNode = document.createElement("span");
+    labelNode.className = "menuLabel";
+    labelNode.textContent = label;
+    item.append(mark, labelNode);
+    return item;
+  }
+  function menuSeparator() {
+    const line = document.createElement("div");
+    line.className = "menuSeparator";
+    line.setAttribute("role", "separator");
+    return line;
+  }
+  function isOn(listName, value) {
+    return twpConfig.get(listName).indexOf(value) !== -1;
+  }
+  // The menu is built from the current state, so every check mark matches the settings.
+  function buildMenu(hostname) {
+    const lang = originalTabLanguage;
+    const hasLang = lang !== "und";
+    const langName = hasLang ? twpLang.codeToLanguage(lang) : "";
+    const siteSection = [
+      menuItem("neverTranslateThisSite", text("btnNeverTranslate", "Never translate this site"), isOn("neverTranslateSites", hostname)),
+      menuItem("alwaysTranslateThisSite", text("btnAlwaysTranslate", "Always translate this site"), isOn("alwaysTranslateSites", hostname))
+    ];
+    if (hasLang) {
+      siteSection.push(menuItem("neverTranslateThisLanguage", text("btnNeverTranslateThisLanguage", "Never translate this language"), isOn("neverTranslateLangs", lang)));
+    }
+    const displaySection = [
+      menuItem("showTranslateSelectedButton", text("lblShowTranslateSelectedButton", "Show the button to translate the selected text"), twpConfig.get("showTranslateSelectedButton") === "yes"),
+      menuItem("showOriginalTextWhenHovering", text("lblShowOriginalTextWhenHovering", "Show original text when hovering"), twpConfig.get("showOriginalTextWhenHovering") === "yes"),
+      menuItem("showTranslatedWhenHoveringThisSite", text("lblShowTranslatedWhenHoveringThisSite", "Show translation when hovering over this site"), isOn("sitesToTranslateWhenHovering", hostname))
+    ];
+    if (hasLang) {
+      displaySection.push(menuItem("showTranslatedWhenHoveringThisLang", text("lblShowTranslatedWhenHoveringThisLang", `Show translation when hovering over websites in ${langName}`, langName), isOn("langsToTranslateWhenHovering", lang)));
+    }
+    const externalLabel = currentPageTranslatorService === "yandex" ?
+      text("msgOpenOnYandexTranslator", "Open in Yandex Translate") :
+      text("btnOpenOnGoogleTranslate", "Open in Google Translate");
+    const pageSection = [
+      menuItem("changeLanguage", text("msgChooseAnotherLanguage", "Choose another language")),
+      menuItem("translateInExternalSite", externalLabel),
+      menuItem("translatePDF", text("msgTranslatePDF", "Translate PDF"))
+    ];
+    const appSection = [
+      menuItem("moreOptions", text("btnMoreOptions", "More options")),
+      menuItem("aboutAtlas", `${text("lblAbout", "About")} ${chrome.runtime.getManifest().name}`)
+    ];
+    const nodes = [];
+    [siteSection, displaySection, pageSection, appSection].forEach((items, i) => {
+      if (i > 0) {
+        nodes.push(menuSeparator());
+      }
+      nodes.push(...items);
+    });
+    return nodes;
+  }
+  function setMenuOpen(open) {
+    menuPanel.hidden = !open;
+    menuButton.setAttribute("aria-expanded", String(open));
+  }
+  function showMenu(hostname) {
+    menuPanel.replaceChildren(...buildMenu(hostname));
+    setMenuOpen(true);
+  }
+  function currentHostname(callback) {
     chrome.tabs.query({
       active: true,
       currentWindow: true
     }, tabs => {
-      const hostname = new URL(tabs[0].url).hostname;
-      switch (btnOptions.value) {
+      callback(hostnameOf(tabs[0] && tabs[0].url));
+    });
+  }
+  // Keep the checkboxes in the popup body in step with the menu.
+  function syncPopupState(hostname) {
+    $("#cbAlwaysTranslateThisSite").checked = isOn("alwaysTranslateSites", hostname);
+    $("#cbShowTranslatedWhenHoveringThisSite").checked = isOn("sitesToTranslateWhenHovering", hostname);
+    $("#cbShowTranslateSelectedButton").checked = twpConfig.get("showTranslateSelectedButton") === "yes";
+    $("#cbShowOriginalWhenHovering").checked = twpConfig.get("showOriginalTextWhenHovering") === "yes";
+    if (originalTabLanguage !== "und") {
+      $("#cbAlwaysTranslateThisLang").checked = isOn("alwaysTranslateLangs", originalTabLanguage);
+      $("#cbShowTranslatedWhenHoveringThisLang").checked = isOn("langsToTranslateWhenHovering", originalTabLanguage);
+    }
+  }
+  function closePopupAfter(error) {
+    void chrome.runtime.lastError;
+    window.close();
+  }
+  function toggleIn(listName, value, add, remove) {
+    if (isOn(listName, value)) {
+      remove();
+    } else {
+      add();
+    }
+  }
+
+  menuButton.addEventListener("click", event => {
+    event.stopPropagation();
+    if (!menuPanel.hidden) {
+      setMenuOpen(false);
+      return;
+    }
+    currentHostname(showMenu);
+  });
+  document.addEventListener("click", event => {
+    if (!event.target.closest || !event.target.closest("#btnMenu, #menuPanel")) {
+      setMenuOpen(false);
+    }
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape") {
+      setMenuOpen(false);
+    }
+  });
+  menuPanel.addEventListener("click", event => {
+    // The menu rebuilds itself after a change, so the clicked item can be removed from the page.
+    // Stop here so the outside-click handler below does not close the menu.
+    event.stopPropagation();
+    const item = event.target.closest(".menuItem");
+    if (item) {
+      runMenuAction(item.dataset.action);
+    }
+  });
+
+  function runMenuAction(action) {
+    chrome.tabs.query({
+      active: true,
+      currentWindow: true
+    }, tabs => {
+      const pageUrl = tabs[0] && tabs[0].url;
+      const hostname = hostnameOf(pageUrl);
+      const lang = originalTabLanguage;
+      // Settings that change in place: refresh the menu and the popup checkboxes, and keep the menu open.
+      let changed = true;
+      switch (action) {
+        case "neverTranslateThisSite":
+          toggleIn("neverTranslateSites", hostname, () => twpConfig.addSiteToNeverTranslate(hostname), () => twpConfig.removeSiteFromNeverTranslate(hostname));
+          break;
+        case "alwaysTranslateThisSite":
+          toggleIn("alwaysTranslateSites", hostname, () => twpConfig.addSiteToAlwaysTranslate(hostname), () => twpConfig.removeSiteFromAlwaysTranslate(hostname));
+          break;
+        case "neverTranslateThisLanguage":
+          toggleIn("neverTranslateLangs", lang, () => twpConfig.addLangToNeverTranslate(lang, hostname), () => twpConfig.removeLangFromNeverTranslate(lang));
+          break;
+        case "showTranslateSelectedButton":
+          twpConfig.set("showTranslateSelectedButton", twpConfig.get("showTranslateSelectedButton") === "yes" ? "no" : "yes");
+          break;
+        case "showOriginalTextWhenHovering":
+          twpConfig.set("showOriginalTextWhenHovering", twpConfig.get("showOriginalTextWhenHovering") === "yes" ? "no" : "yes");
+          break;
+        case "showTranslatedWhenHoveringThisSite":
+          toggleIn("sitesToTranslateWhenHovering", hostname, () => twpConfig.addSiteToTranslateWhenHovering(hostname), () => twpConfig.removeSiteFromTranslateWhenHovering(hostname));
+          break;
+        case "showTranslatedWhenHoveringThisLang":
+          toggleIn("langsToTranslateWhenHovering", lang, () => twpConfig.addLangToTranslateWhenHovering(lang), () => twpConfig.removeLangFromTranslateWhenHovering(lang));
+          break;
+        default:
+          changed = false;
+      }
+      if (changed) {
+        syncPopupState(hostname);
+        showMenu(hostname);
+        return;
+      }
+      // Pages that open in a tab: open it, then close the popup.
+      switch (action) {
         case "changeLanguage":
           location = chrome.runtime.getURL("/popup/popup-change-language.html");
           break;
-        case "alwaysTranslateThisSite":
-          if (twpConfig.get("alwaysTranslateSites").indexOf(hostname) === -1) {
-            twpConfig.addSiteToAlwaysTranslate(hostname);
-          } else {
-            twpConfig.removeSiteFromAlwaysTranslate(hostname);
-          }
-          window.close();
+        case "translateInExternalSite": {
+          const target = twpConfig.get("targetLanguage");
+          const url = currentPageTranslatorService === "yandex" ?
+            `https://translate.yandex.com/translate?view=compact&url=${encodeURIComponent(pageUrl)}&lang=${target.split("-")[0]}` :
+            `https://translate.google.com/translate?tl=${target}&u=${encodeURIComponent(pageUrl)}`;
+          tabsCreate(url, closePopupAfter);
           break;
-        case "neverTranslateThisSite":
-          if (twpConfig.get("neverTranslateSites").indexOf(hostname) === -1) {
-            twpConfig.addSiteToNeverTranslate(hostname);
-          } else {
-            twpConfig.removeSiteFromNeverTranslate(hostname);
-          }
-          window.close();
-          break;
-        case "alwaysTranslateThisLanguage":
-          if (twpConfig.get("alwaysTranslateLangs").indexOf(originalTabLanguage) === -1) {
-            twpConfig.addLangToAlwaysTranslate(originalTabLanguage, hostname);
-          } else {
-            twpConfig.removeLangFromAlwaysTranslate(originalTabLanguage);
-          }
-          window.close();
-          break;
-        case "neverTranslateThisLanguage":
-          if (twpConfig.get("neverTranslateLangs").indexOf(originalTabLanguage) === -1) {
-            twpConfig.addLangToNeverTranslate(originalTabLanguage, hostname);
-          } else {
-            twpConfig.removeLangFromNeverTranslate(originalTabLanguage);
-          }
-          window.close();
-          break;
-        case "showTranslateSelectedButton":
-          if (twpConfig.get("showTranslateSelectedButton") === "yes") {
-            twpConfig.set("showTranslateSelectedButton", "no");
-          } else {
-            twpConfig.set("showTranslateSelectedButton", "yes");
-          }
-          window.close();
-          break;
-        case "showOriginalTextWhenHovering":
-          if (twpConfig.get("showOriginalTextWhenHovering") === "yes") {
-            twpConfig.set("showOriginalTextWhenHovering", "no");
-          } else {
-            twpConfig.set("showOriginalTextWhenHovering", "yes");
-          }
-          window.close();
-          break;
-        case "showTranslatedWhenHoveringThisSite":
-          if (twpConfig.get("sitesToTranslateWhenHovering").indexOf(hostname) === -1) {
-            twpConfig.addSiteToTranslateWhenHovering(hostname);
-          } else {
-            twpConfig.removeSiteFromTranslateWhenHovering(hostname);
-          }
-          window.close();
-          break;
-        case "showTranslatedWhenHoveringThisLang":
-          if (twpConfig.get("langsToTranslateWhenHovering").indexOf(originalTabLanguage) === -1) {
-            twpConfig.addLangToTranslateWhenHovering(originalTabLanguage);
-          } else {
-            twpConfig.removeLangFromTranslateWhenHovering(originalTabLanguage);
-          }
-          window.close();
-          break;
-        case "translateInExternalSite":
-          chrome.tabs.query({
-            active: true,
-            currentWindow: true
-          }, tabs => {
-            if (currentPageTranslatorService === "yandex") {
-              tabsCreate(`https://translate.yandex.com/translate?view=compact&url=${encodeURIComponent(tabs[0].url)}&lang=${twpConfig.get("targetLanguage").split("-")[0]}`);
-            } else {
-              // google
-              tabsCreate(`https://translate.google.com/translate?tl=${twpConfig.get("targetLanguage")}&u=${encodeURIComponent(tabs[0].url)}`);
-            }
-          });
+        }
+        case "translatePDF":
+          tabsCreate("https://pdf.translatewebpages.org/", closePopupAfter);
           break;
         case "moreOptions":
-          tabsCreate(chrome.runtime.getURL("/options/options.html"));
-          break;
-        case "translatePDF":
-          tabsCreate("https://pdf.translatewebpages.org/");
+          chrome.tabs.create({ url: chrome.runtime.getURL("/options/options.html") }, closePopupAfter);
           break;
         case "aboutAtlas":
-          tabsCreate(chrome.runtime.getURL("/about/about.html"));
+          chrome.tabs.create({ url: chrome.runtime.getURL("/about/about.html") }, closePopupAfter);
           break;
         default:
           break;
       }
-      btnOptions.value = "options";
     });
-  });
-  chrome.tabs.query({
-    active: true,
-    currentWindow: true
-  }, tabs => {
-    const hostname = new URL(tabs[0].url).hostname;
-    const textNever = twpI18n.getMessage("btnNeverTranslate");
-    if (twpConfig.get("neverTranslateSites").indexOf(hostname) === -1) {
-      $("option[data-i18n=btnNeverTranslate]").textContent = textNever;
-    } else {
-      $("option[data-i18n=btnNeverTranslate]").textContent = "✔ " + textNever;
-    }
-    const textAlways = twpI18n.getMessage("btnAlwaysTranslate");
-    if (twpConfig.get("alwaysTranslateSites").indexOf(hostname) === -1) {
-      $("option[data-i18n=btnAlwaysTranslate]").textContent = textAlways;
-    } else {
-      $("option[data-i18n=btnAlwaysTranslate]").textContent = "✔ " + textAlways;
-    }
-  });
+  }
 });

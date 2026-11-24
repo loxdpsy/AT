@@ -42,27 +42,10 @@ body {
   z-index: 2;
 }
 
-#btnMenu {
-  border-radius: 50%;
-  position: relative;
-  padding: 6px;
-  cursor: pointer;
-}
-
 #btnSwitchInterfaces {
   border-radius: 50%;
   padding: 10px;
   cursor: pointer;
-}
-
-.menuDot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background-image: radial-gradient(black 2px, transparent 2px),
-    radial-gradient(black 2px, transparent 2px),
-    radial-gradient(black 2px, transparent 2px);
-  background-position: center -5px, center center, center 5px;
 }
 
 #iconSwap {
@@ -79,22 +62,6 @@ body {
 
 #divIconTranslate > img {
   padding: 0;
-}
-
-#btnOptions {
-  appearance: none;
-  position: absolute;
-  top: 0;
-  left: 0;
-  opacity: 0;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  cursor: pointer;
-}
-
-#divMenu {
-  border-radius: 50%;
 }
 
 button span {
@@ -345,12 +312,6 @@ a {
   color: var(--accent);
 }
 
-.menuDot {
-  background-image: radial-gradient(var(--text) 2px, transparent 2px),
-    radial-gradient(var(--text) 2px, transparent 2px),
-    radial-gradient(var(--text) 2px, transparent 2px);
-}
-
 .mdiv,
 .md {
   background-color: var(--text);
@@ -436,14 +397,104 @@ hr {
   color: var(--text);
 }
 
-#btnOptions {
-  color: var(--text);
-  background-color: var(--card);
-  border: 1px solid var(--line);
-  border-radius: 6px;
-}
-
 #divIconTranslate:hover {
   opacity: 0.85;
 }
 
+/* ---- Options menu: a themed list (replaces the native select, whose list the browser colours itself) ---- */
+.menuAnchor {
+  position: absolute;
+  top: 10px;
+  right: 40px;
+}
+
+.menuButton {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.menuButton:hover,
+.menuButton[aria-expanded="true"] {
+  background-color: var(--hover);
+}
+
+.menuButton:focus-visible,
+.menuItem:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.menuDot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 -6px 0 currentColor, 0 6px 0 currentColor;
+}
+
+.menuPanel {
+  box-sizing: border-box;
+  width: auto;
+  margin: 2px 44px 10px 0;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+.menuPanel[hidden] {
+  display: none;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 32px;
+  margin: 0;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menuItem:hover {
+  background-color: var(--hover);
+}
+
+.menuMark {
+  display: inline-flex;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  color: var(--accent);
+}
+
+.menuLabel {
+  flex: 1;
+  min-width: 0;
+}
+
+.menuSeparator {
+  height: 1px;
+  margin: 6px 4px;
+  background: var(--line);
+}

@@ -26,6 +26,8 @@
             title="Translate" data-i18n-title="btnTranslate" value="de">German</button>
     </div>
 
+    <div id="menuPanel" class="menuPanel" role="menu" hidden></div>
+
     <div class="w3-container w3-margin-top" style="font-weight: 500">
         <div data-popupPanelSection="0">
             <div style="margin-right: 60px; margin-bottom: 5px;">
@@ -92,39 +94,11 @@
         </div>
     </div>
 
-    <div class="w3-display-topright" style="margin-right: 35px; margin-top: 10px; position: absolute;">
-        <div class="w3-hover-light-gray" style="position: relative;" id="divMenu" title="Options"
-            data-i18n-title="btnOptions">
-            <div class="w3-hover-light-grey" style="border-radius: 50%; padding: 5px;" id="btnMenu"
-                style="position: relative;">
-                <div class="menuDot"></div>
-            </div>
-            <select id="btnOptions" style="font-weight: 500; font-size: small;">
-                <option value="options" selected disabled hidden>Options</option>
-                <option data-i18n="msgChooseAnotherLanguage" value="changeLanguage">Choose another language</option>
-                <option data-i18n="btnNeverTranslateThisLanguage" value="neverTranslateThisLanguage"
-                    style="display: none;">Never translate this language</option>
-                <option data-i18n="btnNeverTranslate" value="neverTranslateThisSite">Never translate this site</option>
-                <option data-i18n="btnAlwaysTranslate" value="alwaysTranslateThisSite" data-popupPanelSection2="1">
-                    Always translate this site</option>
-                <optgroup label="" data-popupPanelSection2="6"></optgroup>
-                <option data-i18n="lblShowTranslateSelectedButton" value="showTranslateSelectedButton"
-                    data-popupPanelSection2="3">Show the button to translate the selected text</option>
-                <option data-i18n="lblShowOriginalTextWhenHovering" value="showOriginalTextWhenHovering"
-                    data-popupPanelSection2="4">Show original text when hovering</option>
-                <option data-i18n="lblShowTranslatedWhenHoveringThisSite" value="showTranslatedWhenHoveringThisSite"
-                    data-popupPanelSection2="5">Show translation when hovering over this site</option>
-                <option data-i18n="lblShowTranslatedWhenHoveringThisLang" data-i18n-ph-value=""
-                    value="showTranslatedWhenHoveringThisLang" data-popupPanelSection2="6" hidden>Show translation when
-                    hovering over websites in</option>
-                <optgroup label="" data-popupPanelSection2="6"></optgroup>
-                <option data-i18n="btnOpenOnGoogleTranslate" value="translateInExternalSite">Open in google translate
-                </option>
-                <option data-i18n="btnMoreOptions" value="moreOptions">More options</option>
-                <option data-i18n="msgTranslatePDF" value="translatePDF">Translate PDF</option>
-                <option value="aboutAtlas">About Atlas Translation</option>
-            </select>
-        </div>
+    <div id="menuAnchor" class="menuAnchor">
+        <button type="button" id="btnMenu" class="menuButton" title="Options" data-i18n-title="btnOptions"
+            aria-label="Options" aria-haspopup="menu" aria-expanded="false" aria-controls="menuPanel">
+            <span class="menuDot" aria-hidden="true"></span>
+        </button>
     </div>
 
     <div class="w3-display-topright" style="margin-right: 15px; margin-top: 45px; position: absolute; cursor: pointer;">
