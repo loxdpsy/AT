@@ -275,8 +275,11 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     shadowRoot = divElement.attachShadow({
       mode: "closed"
     });
-    shadowRoot.innerHTML = `
-        <link rel="stylesheet" href="${chrome.runtime.getURL("/contentScript/css/showTranslated.css")}">
+    // Parse the markup in the context of the host element, as innerHTML does. Only fixed markup, no page data.
+    const markupRange = document.createRange();
+    markupRange.selectNodeContents(divElement);
+    shadowRoot.replaceChildren(markupRange.createContextualFragment(`
+        <link rel="stylesheet" href="">
 
         <div id="eDivResult">
                 <div id="eTextTranslated" dir="auto"></div>
@@ -343,7 +346,8 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
                     </ul>
                 </div>
             </div>
-        `;
+        `));
+    shadowRoot.querySelector("link").href = chrome.runtime.getURL("/contentScript/css/showTranslated.css");
     {
       const style = document.createElement("style");
       style.textContent = styleTextContent;

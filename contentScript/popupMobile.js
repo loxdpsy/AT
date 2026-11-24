@@ -12,41 +12,6 @@ function getTabHostName() {
 Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
   const tabHostName = _[1];
   if (!platformInfo.isMobile.any) return;
-  const htmlMobile = `
-    <link rel="stylesheet" href="${chrome.runtime.getURL("/contentScript/css/popupMobile.css")}">
-    
-    <div id='element'>
-    <div id='main'>
-        <img id="iconTranslate">
-        <button id="btnOriginal" class="item button" data-i18n="btnMobileOriginal">Original</button>
-        <button id="btnTranslate" class="item button" data-i18n="btnMobileTranslated">Translated</button>
-        <button id="spin" class="item button">
-            <div class="loader button"></div>
-        </button>
-        <button id="btnMenu" class="item2">
-            <div class="dropup">
-                <div id="menu" class="dropup-content">
-                    <a id="btnChangeLanguages" style="position: relative;">
-                      <span data-i18n="msgChooseAnotherLanguage">Choose another language</span>
-                      <select id="menuSelectLanguage">
-                        <optgroup name="targets" label="Recents" data-i18n-label="msgRecents"></optgroup>
-                        <optgroup name="all" label="All" data-i18n-label="msgAll"></optgroup>
-                      </select>
-                    </a>
-                    <a id="btnTranslateSelectedText" data-i18n="msgTranslateSelectedText">Translate selected text</a>
-                    <a id="btnNeverTranslate" data-i18n="btnNeverTranslate">Never translate this site</a>
-                    <a id="neverTranslateThisLanguage" data-i18n="btnNeverTranslateThisLanguage" display="none">Never translate this language</a>
-                    <a id="btnMoreOptions" data-i18n="btnMoreOptions">More options</a>
-                </div>
-            </div>
-            <div class="menuDot"></div>
-            <div class="menuDot"></div>
-            <div class="menuDot"></div>
-        </button>
-        <button id="btnClose" class="item">&times;</button>
-    </div>
-    </div>
-    `;
   let originalTabLanguage = "und";
   let currentTargetLanguage = twpConfig.get("targetLanguage");
   let currentPageTranslatorService = twpConfig.get("pageTranslatorService");
@@ -94,7 +59,44 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     const shadowRoot = divElement.attachShadow({
       mode: "closed"
     });
-    shadowRoot.innerHTML = htmlMobile;
+    const markupRange = document.createRange();
+    markupRange.selectNodeContents(divElement);
+    shadowRoot.replaceChildren(markupRange.createContextualFragment(`
+    <link rel="stylesheet" href="">
+    
+    <div id='element'>
+    <div id='main'>
+        <img id="iconTranslate">
+        <button id="btnOriginal" class="item button" data-i18n="btnMobileOriginal">Original</button>
+        <button id="btnTranslate" class="item button" data-i18n="btnMobileTranslated">Translated</button>
+        <button id="spin" class="item button">
+            <div class="loader button"></div>
+        </button>
+        <button id="btnMenu" class="item2">
+            <div class="dropup">
+                <div id="menu" class="dropup-content">
+                    <a id="btnChangeLanguages" style="position: relative;">
+                      <span data-i18n="msgChooseAnotherLanguage">Choose another language</span>
+                      <select id="menuSelectLanguage">
+                        <optgroup name="targets" label="Recents" data-i18n-label="msgRecents"></optgroup>
+                        <optgroup name="all" label="All" data-i18n-label="msgAll"></optgroup>
+                      </select>
+                    </a>
+                    <a id="btnTranslateSelectedText" data-i18n="msgTranslateSelectedText">Translate selected text</a>
+                    <a id="btnNeverTranslate" data-i18n="btnNeverTranslate">Never translate this site</a>
+                    <a id="neverTranslateThisLanguage" data-i18n="btnNeverTranslateThisLanguage" display="none">Never translate this language</a>
+                    <a id="btnMoreOptions" data-i18n="btnMoreOptions">More options</a>
+                </div>
+            </div>
+            <div class="menuDot"></div>
+            <div class="menuDot"></div>
+            <div class="menuDot"></div>
+        </button>
+        <button id="btnClose" class="item">&times;</button>
+    </div>
+    </div>
+    `));
+    shadowRoot.querySelector("link").href = chrome.runtime.getURL("/contentScript/css/popupMobile.css");
     document.body.appendChild(divElement);
     twpI18n.translateDocument(shadowRoot);
     function enableDarkMode() {
