@@ -51,6 +51,7 @@ for (const name of manifests) {
   const refs = [];
   (function collect(value) {
     if (typeof value === "string") {
+      if (/^https?:\/\//.test(value)) return; // URLs (for example update_url) are not files in the package
       if (/\.(js|html|css|png|webp|gif|svg|json)$/.test(value) && !value.includes("*")) refs.push(value.replace(/^\//, ""));
     } else if (Array.isArray(value)) value.forEach(collect);
     else if (value && typeof value === "object") Object.values(value).forEach(collect);

@@ -99,6 +99,14 @@ jobs:
             --api-key "$AMO_JWT_ISSUER" \
             --api-secret "$AMO_JWT_SECRET" 2>&1 | tee build/amo-submit.log
 
+      - name: Upload the signed add-on
+        if: ${{ inputs.submit }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-translation-firefox-signed
+          path: build/signed/*.xpi
+          if-no-files-found: ignore
+
       - name: Write job summary
         if: always()
         run: |
@@ -113,7 +121,7 @@ jobs:
             echo ""
             echo "| File | Size | SHA-256 (first 16) |"
             echo "| --- | --- | --- |"
-            for f in build/*.zip build/*.xpi; do
+            for f in build/*.zip build/*.xpi build/signed/*.xpi; do
               [ -f "$f" ] || continue
               echo "| \`$(basename "$f")\` | $(du -h "$f" | cut -f1) | \`$(sha256sum "$f" | cut -c1-16)\` |"
             done

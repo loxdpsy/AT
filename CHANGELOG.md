@@ -6,6 +6,7 @@ First release of Atlas Translation. The version numbers start again at 0.0.1.0. 
 
 **Added**
 
+- Firefox self-hosting: a signed `-firefox-signed.xpi` on each release, with automatic updates from `updates.json` (see the README).
 - Theme switcher: System, Light, or Dark, in *Style → Theme*. The choice applies to the settings page and the popup.
 - An About page with a "More from Etherealmber" section, showing Atlas Commerce, its Android app, and its desktop app.
 - Edge Add-ons automatic submission. The release workflow uploads the Chromium package and submits it when the `EDGE_PRODUCT_ID`, `EDGE_CLIENT_ID`, and `EDGE_API_KEY` secrets are set.
