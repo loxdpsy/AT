@@ -57,13 +57,13 @@ from the Web Store or through an enterprise policy, so use the ZIP for normal si
 
 ### Firefox
 
-Firefox for desktop can install Atlas Translation from addons.mozilla.org, or from the signed file on the latest GitHub release:
+Firefox for desktop installs Atlas Translation from the signed file on the latest GitHub release:
 
 1. Download `atlas-translation-<version>-firefox-signed.xpi` from the [latest release](https://github.com/loxdpsy/AT/releases/latest).
 2. Open the file in Firefox, or open `about:addons`, click the gear icon, and choose **Install Add-on From File**.
 3. Firefox then checks `updates.json` in the same release for new versions. It uses the `update_url` in `firefox_manifest.json`, which always points to the latest release.
 
-Firefox for Android: installing a file there needs a hidden developer option (open Settings → About Firefox and tap the logo five times). That is not a supported install path, so on Android use the addons.mozilla.org listing.
+Firefox for Android: there is no supported way to install this add-on. Use Firefox on desktop.
 
 Unsigned builds (`-firefox.xpi`) are accepted only in Firefox Developer Edition, Nightly, or ESR with `xpinstall.signatures.required` set to `false`.
 A release has self-hosted updates only when it was built with an AMO submission (submit turned on), because only then is the XPI signed.

@@ -721,3 +721,87 @@ input[type="checkbox"] {
     grid-template-columns: 1fr;
   }
 }
+
+/* ---------- Services page layout ----------
+   The API key cards share one layout: a label above each field, full-width inputs, and the
+   buttons on their own row. */
+
+.service-card {
+  margin: 0 0 12px;
+  padding: 16px 0 8px;
+  border-top: 0;
+}
+
+.service-card .service-head {
+  padding: 0 16px;
+}
+
+.service-card .card-title {
+  padding: 0;
+}
+
+.service-card .card-desc {
+  padding: 4px 0 0;
+}
+
+.service-card .field-label {
+  display: block;
+  padding: 16px 16px 6px;
+}
+
+.service-card > .input {
+  display: block;
+  width: calc(100% - 32px);
+  height: 36px;
+  margin: 0 16px;
+}
+
+.service-card .input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 16px;
+}
+
+.service-card .input-row .input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+}
+
+.service-card .btn-row {
+  padding: 14px 16px 4px;
+}
+
+.service-card .usage {
+  padding: 8px 16px 0;
+}
+
+.service-card .message {
+  padding: 8px 16px 0;
+}
+
+.service-card .message:empty {
+  display: none;
+}
+
+.service-card .status-pill {
+  white-space: nowrap;
+}
+
+/* Service checkboxes sit level with their names. */
+.service {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.service input[type="checkbox"] {
+  margin: 0;
+}
+
+.service .service-note {
+  margin: 0;
+}
