@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="/w3css/4/w3.css" />
   <link rel="stylesheet" href="options.css" />
-  <script src="darkmode.js"></script>
+  <script src="/lib/theme.js"></script>
 </head>
 
 <body>
@@ -26,6 +26,7 @@
         <a href="#hotkeys" class="nav-item desktopOnly" data-i18n="msgHotkeys">Hotkeys</a>
         <a href="#storage" class="nav-item" data-i18n="msgStorage">Storage</a>
         <a href="#others" class="nav-item" data-i18n="lblOthers">Others</a>
+        <a href="#about" class="nav-item" data-i18n="lblAbout">About</a>
       </nav>
     </aside>
 
@@ -378,11 +379,11 @@
         </div>
         <div class="card">
           <div class="row">
-            <div class="row-text"><div class="row-title" data-i18n="lblDarkMode">Dark mode</div></div>
+            <div class="row-text"><div class="row-title" data-i18n="lblTheme">Theme</div></div>
             <div class="row-control"><select id="darkMode" class="select">
-<option value="auto" data-i18n="msgAutomatic">Automatic</option>
-<option value="yes" data-i18n="msgYes">Yes</option>
-<option value="no" data-i18n="msgNo">No</option>
+<option value="auto" data-i18n="lblThemeSystem">System</option>
+<option value="yes" data-i18n="lblThemeDark">Dark</option>
+<option value="no" data-i18n="lblThemeLight">Light</option>
 </select></div>
           </div>
           <div class="row desktopOnly">
@@ -490,13 +491,39 @@
 </select></div>
           </div>
         </div>
-        <div class="card credits">
+      </section>
+
+      <!-- ABOUT -->
+      <section id="about" class="section">
+        <div class="card">
           <h2 class="card-title">About Atlas Translation</h2>
           <p class="card-desc">Atlas Translation is a modified fork of <strong>TWP - Translate Web Pages</strong>, created by
             <a href="https://github.com/FilipePS" target="_blank" rel="noopener noreferrer">FilipePS</a>.
             Thank you for the original work. The code is released under the
             <a href="https://github.com/FilipePS/Traduzir-paginas-web" target="_blank" rel="noopener noreferrer">Mozilla Public License 2.0</a>.
             See NOTICE.md and LICENSE in the source.</p>
+        </div>
+
+        <h2 class="card-title bento-heading" data-i18n="lblMoreFromEtherealmber">More from Etherealmber</h2>
+        <div class="bento">
+          <a class="bento-tile wide" href="https://github.com/Etherealmber/atlas-commerce" target="_blank" rel="noopener noreferrer">
+            <span class="bento-kicker">Web app</span>
+            <span class="bento-title">Atlas Commerce</span>
+            <span class="bento-desc">Point of sale and ERP that runs on Cloudflare Workers. The Atlas logo and colour theme in this extension come from this project.</span>
+            <span class="bento-link">github.com/Etherealmber/atlas-commerce</span>
+          </a>
+          <a class="bento-tile" href="https://github.com/Etherealmber/atlas-commerce-android" target="_blank" rel="noopener noreferrer">
+            <span class="bento-kicker">Android app</span>
+            <span class="bento-title">Atlas Commerce Android</span>
+            <span class="bento-desc">The Atlas Commerce app for Android, built with Kotlin and Jetpack Compose.</span>
+            <span class="bento-link">github.com/Etherealmber/atlas-commerce-android</span>
+          </a>
+          <a class="bento-tile" href="https://github.com/Etherealmber/atlas-commerce-desktop" target="_blank" rel="noopener noreferrer">
+            <span class="bento-kicker">Desktop app</span>
+            <span class="bento-title">Atlas Commerce Desktop</span>
+            <span class="bento-desc">The Atlas Commerce app for desktop, written in Rust with egui. MIT licensed.</span>
+            <span class="bento-link">github.com/Etherealmber/atlas-commerce-desktop</span>
+          </a>
         </div>
       </section>
     </main>

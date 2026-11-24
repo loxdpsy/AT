@@ -37,7 +37,7 @@ Other extensions with a similar name are not Atlas Translation. Store links will
 - **Update check** script that uses the GitHub API and respects the rate limit (see *Checking for updates*).
 - **Per-site and per-language rules**: never translate a site or language, always translate, auto-translate links.
 - **Keyboard shortcuts** for toggling, showing the original, and switching services.
-- **Dark mode**, a redesigned settings page, and a new popup.
+- **Themes**: System, Light, or Dark (*Style → Theme*). The settings page and the popup look the same in Chromium browsers and Firefox. The layout follows Chrome's settings page.
 - **Light on memory**: translations are cached with a bounded in-memory cache, and finished requests are released.
 
 ## Install
@@ -139,6 +139,21 @@ gh secret set AMO_JWT_SECRET --body "<secret value from AMO>"
 Firefox signing also needs the add-on ID in `firefox_manifest.json` to belong to your AMO account. This fork uses its own ID, so
 the first upload creates the add-on under your account. If you change the ID later, you must sign with the new one too.
 
+### Edge Add-ons automatic submission
+
+The release workflow can upload the Chromium package to your existing Edge listing and submit it for certification. It
+runs in `.github/workflows/edge.yml`, after a release is published. Without these secrets the job is skipped.
+
+| Secret | Where the value comes from |
+| --- | --- |
+| `EDGE_PRODUCT_ID` | The product ID (a GUID) on your extension's **Overview** page in Partner Center. It's in the address bar between `microsoftedge/` and `/packages`. |
+| `EDGE_CLIENT_ID` | Partner Center → **Microsoft Edge** → **Publish API** → **Create API credentials**. |
+| `EDGE_API_KEY` | The API key from the same page. It expires, so note the date and create a new one before then. |
+
+Do the **first** submission by hand in Partner Center. The API can only update a listing that already exists. After that,
+each release uploads the new package and submits it. Edge can take up to seven business days to certify an update. Certification
+notes are set in the workflow. Keep the listing text and screenshots in Partner Center.
+
 ### Checking for updates
 
 `npm run update:check` queries the GitHub API for the latest release of `loxdpsy/twp` and compares it with the version in
@@ -162,6 +177,49 @@ _locales/                Interface translations
 scripts/                 Build, check, and update-check scripts
 .github/workflows/       Release builds for Chromium and Firefox, and the weekly update check
 ```
+
+## Security and privacy
+
+**What leaves your browser.** Text is sent to a translation service only when you ask for a translation: a page, a
+selection, or a word. The text goes to the service you chose in *Translations* (Google, Bing, Yandex, DeepL, or your own
+LibreTranslate server). Each service handles the text under its own privacy policy.
+
+- DeepL keys are sent only to `api.deepl.com` or `api-free.deepl.com`.
+- LibreTranslate requests go only to the server address you enter.
+- The extension has no accounts, analytics, or telemetry. Nothing is sent to the project's authors.
+- All code ships inside the package. The extension does not load code from the internet while it runs.
+
+**What is stored.** Settings, your API keys, and the translation cache are kept in the browser's extension storage on
+your computer. Clear the cache in *Storage*. Removing the extension deletes all of it.
+
+**Permissions and why they are needed.**
+
+- `<all_urls>`: to translate any page you open.
+- `activeTab` and `contextMenus`: the toolbar button and the right-click menu.
+- `storage`: settings and the cache.
+- `webRequest`: reads each page's `Content-Type` header so PDFs can be recognised. It does not change or block requests.
+- `offscreen` (Chromium only): plays text-to-speech audio.
+- `webNavigation` (optional): asked for only when you turn on *Automatically translate when clicking a link*.
+
+**Third-party helper sites.** *Translate PDF* opens websites run by others: `pdf.translatewebpages.org`,
+`pdftohtml.translatewebpages.org`, and `onlinedoctranslator.com`. Files you upload there go to those sites, not through
+this extension. Do not upload confidential documents to them.
+
+**Keys.** Anyone who has your DeepL key can use your quota. If a key leaks, revoke it in your DeepL account and create a new
+one.
+
+**Updates.** The update checker (`scripts/check-update.mjs`) and the Update check workflow run on GitHub, not in your
+browser. They call the GitHub API and nothing else.
+
+**Reporting a security problem.** Please do not open a public issue. Use GitHub's private vulnerability reporting
+(**Security** tab → **Report a vulnerability**). If that option is not turned on for the repository yet, ask the maintainer
+for a private way to report it.
+
+## Logo
+
+The icon is the sunburst from the Atlas Commerce brand (Etherealmber/atlas-commerce), on the Atlas black tile. A translation
+badge in the corner (two opposing arrows) marks it as a translation tool. The source assets are in
+`branding/atlas-source/`. The icons are generated by `scripts/make-atlas-translation-icons.py`.
 
 ## Notes and limits
 

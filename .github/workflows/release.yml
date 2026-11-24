@@ -153,6 +153,15 @@ jobs:
       submit: ${{ needs.prepare.outputs.submit == 'true' }}
     secrets: inherit
 
+  edge:
+    name: Edge Add-ons
+    needs: [prepare, chromium]
+    if: ${{ always() && needs.prepare.result == 'success' && needs.prepare.outputs.publish == 'true' && needs.chromium.result == 'success' }}
+    uses: ./.github/workflows/edge.yml
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+    secrets: inherit
+
   publish:
     name: Publish GitHub release
     needs: [prepare, chromium, firefox]

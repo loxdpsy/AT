@@ -1,5 +1,19 @@
 # Changelog
 
+## Unreleased
+
+**Added**
+
+- Theme switcher: System, Light, or Dark, in *Style → Theme*. The choice applies to the settings page and the popup.
+- An About page with a "More from Etherealmber" section, showing Atlas Commerce, its Android app, and its desktop app.
+- Edge Add-ons automatic submission. The release workflow uploads the Chromium package and submits it when the `EDGE_PRODUCT_ID`, `EDGE_CLIENT_ID`, and `EDGE_API_KEY` secrets are set.
+- A README section on security and privacy: what is sent, what is stored, and why each permission is needed.
+
+**Changed**
+
+- The settings page and the popup use Chrome's settings look (light and dark) in every browser.
+- New icon: the Atlas sunburst with a translation badge (two arrows). It is easier to read at small sizes.
+
 ## 9.8.1.0
 
 **Important information**

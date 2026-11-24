@@ -2,6 +2,8 @@
 
 var $ = document.querySelector.bind(document);
 twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
+  const darkPref = twpConfig.get("darkMode");
+  twpTheme.set(["auto", "yes", "no"].includes(darkPref) ? darkPref : "auto");
   twpI18n.translateDocument();
   $("#btnImproveTranslation").onclick = () => {
     window.location = "improve-translation.html";
@@ -175,77 +177,6 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     }
   }
   updateInterface();
-  function enableDarkMode() {
-    if (!$("#darkModeElement")) {
-      const el = document.createElement("style");
-      el.setAttribute("id", "darkModeElement");
-      el.setAttribute("rel", "stylesheet");
-      el.textContent = `
-            body {
-                color: rgb(231, 230, 228) !important;
-                background-color: #181a1b !important;
-            }
-            
-            .mdiv, .md, {
-                background-color: rgb(231, 230, 228);
-            }
-
-            .menuDot {
-                background-image:
-                    radial-gradient(rgb(231, 230, 228) 2px, transparent 2px),
-                    radial-gradient(rgb(231, 230, 228) 2px, transparent 2px),
-                    radial-gradient(rgb(231, 230, 228) 2px, transparent 2px);
-            }
-
-            #btnSwitchInterfaces:hover, #divMenu:hover {
-                background-color: #454a4d !important;
-                color: rgb(231, 230, 228) !important;
-            }
-            
-            select {
-                color: rgb(231, 230, 228) !important;
-                background-color: #181a1b !important;
-            }
-
-            hr {
-                border-color: #666;
-            }
-
-            .arrow {
-                border-color: rgb(231, 230, 228);
-            }
-
-            #btnImproveTranslation {
-              color: rgb(231, 230, 228) !important;
-              background-color: #181a1b !important;
-              border: 1px solid #454a4d !important;
-            }
-            `;
-      document.head.appendChild(el);
-    }
-  }
-  function disableDarkMode() {
-    if ($("#darkModeElement")) {
-      $("#darkModeElement").remove();
-    }
-  }
-  switch (twpConfig.get("darkMode")) {
-    case "auto":
-      if (matchMedia("(prefers-color-scheme: dark)").matches) {
-        enableDarkMode();
-      } else {
-        disableDarkMode();
-      }
-      break;
-    case "yes":
-      enableDarkMode();
-      break;
-    case "no":
-      disableDarkMode();
-      break;
-    default:
-      break;
-  }
   $("#btnSwitchInterfaces").addEventListener("click", () => {
     twpConfig.set("useOldPopup", "yes");
     window.location = "old-popup.html";

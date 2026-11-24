@@ -77,23 +77,8 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
   fillLanguageList($("#addToAlwaysTranslateLangs"));
   fillLanguageList($("#addLangToTranslateWhenHovering"));
   function updateDarkMode() {
-    switch (twpConfig.get("darkMode")) {
-      case "auto":
-        if (matchMedia("(prefers-color-scheme: dark)").matches) {
-          enableDarkMode();
-        } else {
-          disableDarkMode();
-        }
-        break;
-      case "yes":
-        enableDarkMode();
-        break;
-      case "no":
-        disableDarkMode();
-        break;
-      default:
-        break;
-    }
+    const pref = twpConfig.get("darkMode");
+    twpTheme.set(["auto", "yes", "no"].includes(pref) ? pref : "auto");
   }
   updateDarkMode();
 

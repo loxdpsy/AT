@@ -46,10 +46,17 @@ The store gives the extension its own ID. The `CRX_PRIVATE_KEY` is only for self
 
 The automatic submission needs the secrets `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` (see README, *Release secrets*).
 
+## Automatic Edge submission
+
+After the first manual submission, the release workflow can upload each new Chromium package and submit it for you.
+Add three secrets (`EDGE_PRODUCT_ID`, `EDGE_CLIENT_ID`, `EDGE_API_KEY`). The README explains where to find each one.
+The workflow skips this step if a secret is missing. Edge certification still happens in Partner Center, and you
+will get an email when it finishes.
+
 ## Checklist for each release
 
 - [ ] Bump `version` in `manifest.json` and `firefox_manifest.json`, then add a `## <version>` section to `CHANGELOG.md`.
 - [ ] Run `npm run check` and `npm run build`.
 - [ ] Tag the commit (`git tag v<version>` and `git push origin v<version>`).
 - [ ] Check the **Release** run summary and the **Firefox** AMO submission log.
-- [ ] Upload the Chromium ZIP to the Chrome Web Store and Edge Add-ons (these two stores are not automated yet).
+- [ ] Upload the Chromium ZIP to the Chrome Web Store (not automated yet). Edge Add-ons is submitted by the release workflow when the `EDGE_*` secrets are set. Check the Edge job summary.

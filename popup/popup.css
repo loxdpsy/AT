@@ -246,27 +246,29 @@ hr {
 }
 
 /* ---- Atlas Translation visual refresh: colors, type, spacing only. Layout and IDs are unchanged. ---- */
+/* Chrome-style palette. Dark mode is the "dark" class on <html>, set by lib/theme.js. */
 :root {
   --bg: #ffffff;
-  --text: #0f172a;
-  --muted: #71717a;
-  --line: #e2e8f0;
-  --hover: #f1f5f9;
-  --accent: #0a0a0a;
-  --accent-text: #ffffff;
-  color-scheme: light dark;
+  --text: #202124;
+  --muted: #5f6368;
+  --line: #dadce0;
+  --hover: #f1f3f4;
+  --accent: #1a73e8;
+  --accent-text: #185abc;
+  --accent-soft: #e8f0fe;
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1c1c1f;
-    --text: #f4f4f5;
-    --muted: #a1a1aa;
-    --line: #2e2e33;
-    --hover: #27272a;
-    --accent: #e4e4e7;
-    --accent-text: #0a0a0a;
-  }
+:root.dark {
+  --bg: #292a2d;
+  --text: #e8eaed;
+  --muted: #9aa0a6;
+  --line: #5f6368;
+  --hover: #35363a;
+  --accent: #8ab4f8;
+  --accent-text: #d2e3fc;
+  --accent-soft: #394457;
+  color-scheme: dark;
 }
 
 body {
@@ -297,7 +299,7 @@ body {
 
 .w3-bar .w3-buttonSelected,
 .w3-buttonSelected {
-  background-color: var(--accent) !important;
+  background-color: var(--accent-soft) !important;
   color: var(--accent-text) !important;
 }
 
@@ -341,4 +343,28 @@ a {
 .mdiv,
 .md {
   background-color: var(--text);
+}
+
+/* ---- Chrome-style controls ---- */
+.w3-buttonSelected {
+  font-weight: 600;
+}
+
+#btnImproveTranslation {
+  background-color: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  color: var(--accent-text);
+  font-weight: 500;
+}
+
+#btnImproveTranslation:hover {
+  background-color: var(--accent-soft);
+  box-shadow: none;
+  scale: 1.02;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--line);
 }
