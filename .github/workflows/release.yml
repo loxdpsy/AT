@@ -212,6 +212,13 @@ jobs:
           cp "$SIGNED" "dist/atlas-translation-$VERSION-firefox-signed.xpi"
           node scripts/make-updates-json.mjs --version "$VERSION" --xpi "dist/atlas-translation-$VERSION-firefox-signed.xpi" --repo "$REPOSITORY" --out dist/updates.json
 
+      - name: Name the Edge package
+        env:
+          VERSION: ${{ needs.prepare.outputs.version }}
+        run: |
+          # Edge uses the same MV3 package as Chromium. Attach it under its own name too.
+          cp "dist/atlas-translation-$VERSION-chromium.zip" "dist/atlas-translation-$VERSION-edge.zip"
+
       - name: Create or update the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -227,7 +234,8 @@ jobs:
             echo ""
             echo "## Downloads"
             echo ""
-            echo "- **Chrome Web Store and Edge Add-ons:** \`atlas-translation-$VERSION-chromium.zip\`"
+            echo "- **Chrome Web Store:** \`atlas-translation-$VERSION-chromium.zip\`"
+            echo "- **Microsoft Edge Add-ons:** \`atlas-translation-$VERSION-edge.zip\` (same package as Chromium). It is submitted to Edge automatically when the Edge secrets are set."
             echo "- **Chromium, self-hosting:** \`atlas-translation-$VERSION-chromium.crx\` (Chromium 109 or newer)"
             if [ -f "dist/atlas-translation-$VERSION-firefox-signed.xpi" ]; then
               echo "- **Firefox, self-hosted:** \`atlas-translation-$VERSION-firefox-signed.xpi\` is signed. Open it in Firefox to install. Firefox then updates it from \`updates.json\` in this release. Firefox for Android installs from addons.mozilla.org only."

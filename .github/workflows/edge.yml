@@ -60,11 +60,16 @@ jobs:
             exit 1
           fi
 
-          # Turn a Location header (absolute or relative) into a full URL.
+          # Turn a Location header into a full URL. The header can be a full URL, a path starting with /,
+          # a path without the leading /, or only the operation ID. $2 is the operations path to use for an ID.
           resolve() {
-            case "$1" in
-              http*) echo "$1" ;;
-              *) echo "$EDGE_API$1" ;;
+            local loc="$1" ops="$2"
+            loc=$(printf '%s' "$loc" | tr -d '[:space:]')
+            case "$loc" in
+              http*) echo "$loc" ;;
+              /*) echo "$EDGE_API$loc" ;;
+              */*) echo "$EDGE_API/$loc" ;;
+              *) echo "$EDGE_API/v1/products/$EDGE_PRODUCT_ID/$ops/$loc" ;;
             esac
           }
 
@@ -103,7 +108,8 @@ jobs:
           fi
           loc=$(tr -d '\r' < "$headers" | grep -i '^location:' | sed 's/^[Ll]ocation: *//' || true)
           if [ -n "$loc" ]; then
-            wait_for_operation "$(resolve "$loc")" "package upload"
+            echo "Upload operation: $loc"
+            wait_for_operation "$(resolve "$loc" "submissions/draft/package/operations")" "package upload"
           else
             echo "::warning::No Location header returned for the upload. Check the draft in Partner Center."
           fi
@@ -123,7 +129,8 @@ jobs:
           fi
           loc=$(tr -d '\r' < "$headers" | grep -i '^location:' | sed 's/^[Ll]ocation: *//' || true)
           if [ -n "$loc" ]; then
-            wait_for_operation "$(resolve "$loc")" "submission"
+            echo "Submission operation: $loc"
+            wait_for_operation "$(resolve "$loc" "submissions/operations")" "submission"
           fi
           echo "Submitted $VERSION to Edge Add-ons for certification."
 
