@@ -3,7 +3,7 @@
 **Translate web pages in real time, in your browser.**
 
 loxdpsy translates whole pages, selected text, and documents with Google, Bing, Yandex, DeepL, or LibreTranslate.
-It works on Chromium-based browsers (Chrome, Edge, Brave, Opera, Vivaldi) and on Firefox.
+It works on Chromium-based browsers (Chrome 109+, Edge, Brave, Opera, Vivaldi) and on Firefox.
 
 > loxdpsy is a modified fork of **TWP - Translate Web Pages** by **[FilipePS](https://github.com/FilipePS)**.
 > Huge thanks to FilipePS and every contributor of the original project. See [NOTICE.md](NOTICE.md).
@@ -21,6 +21,7 @@ It works on Chromium-based browsers (Chrome, Edge, Brave, Opera, Vivaldi) and on
   - DeepL (official API, your own key)
   - LibreTranslate (your own server and key)
 - **Text-to-speech** for translated text (Chromium 109+ and Firefox).
+- **Update check** script that uses the GitHub API and respects the rate limit (see *Checking for updates*).
 - **Per-site and per-language rules**: never translate a site or language, always translate, auto-translate links.
 - **Keyboard shortcuts** for toggling, showing the original, and switching services.
 - **Dark mode**, a redesigned settings page, and a new popup.
@@ -28,7 +29,9 @@ It works on Chromium-based browsers (Chrome, Edge, Brave, Opera, Vivaldi) and on
 
 ## Install
 
-### Chromium (Chrome, Edge, Brave, Opera, Vivaldi)
+### Chromium (Chrome 109+, Edge, Brave, Opera, Vivaldi)
+
+Chromium 109 or newer is required. Text-to-speech uses the offscreen document API, which Chromium added in version 109.
 
 1. Download `loxdpsy-<version>-chromium.zip` from the [Releases](../../releases) page.
 2. Unzip it. Open `chrome://extensions` (or the equivalent page in your browser), turn on **Developer mode**, and click **Load unpacked**. Select the unzipped folder.
@@ -73,6 +76,43 @@ Repository secrets used by the workflows (all optional):
 - `CRX_PRIVATE_KEY`: PEM private key for the `.crx` signature. Keep it secret and back it up.
 - `AMO_JWT_ISSUER` and `AMO_JWT_SECRET`: addons.mozilla.org API credentials for signing the XPI.
 
+### Release secrets
+
+The release workflows read these secrets. Add them in **Settings → Secrets and variables → Actions → New repository secret**
+(or with the GitHub CLI, shown below). Never commit them, and never paste them into an issue or a chat.
+
+| Secret | Needed for | Where the value comes from |
+| --- | --- | --- |
+| `CRX_PRIVATE_KEY` | Chromium `.crx` signing. **Required**: the Chromium workflow fails without it. | Generate it once (below). Keep a backup copy: losing it changes the extension ID for every user. |
+| `AMO_JWT_ISSUER` | Signing the Firefox `.xpi` | addons.mozilla.org → **Developer Hub** → **Tools** → **Manage API Keys** (you need a Firefox Account). Use the *JWT issuer* value. |
+| `AMO_JWT_SECRET` | Signing the Firefox `.xpi` | Same page: the *JWT secret* is shown once when you generate the key. |
+
+Create the Chromium key (one time, on your own computer):
+
+```bash
+openssl genrsa -out loxdpsy-key.pem 2048
+# Store it as a secret. The workflow reads the PEM text.
+gh secret set CRX_PRIVATE_KEY < loxdpsy-key.pem
+# Keep loxdpsy-key.pem in a password manager, then delete the local copy.
+```
+
+Store the Firefox keys the same way:
+
+```bash
+gh secret set AMO_JWT_ISSUER --body "<issuer value from AMO>"
+gh secret set AMO_JWT_SECRET --body "<secret value from AMO>"
+```
+
+Firefox signing also needs the add-on ID in `firefox_manifest.json` to belong to your AMO account. This fork uses its own ID, so
+the first upload creates the add-on under your account. If you change the ID later, you must sign with the new one too.
+
+### Checking for updates
+
+`npm run update:check` queries the GitHub API for the latest release of `loxdpsy/twp` and compares it with the version in
+`manifest.json`. It checks the API rate limit first (`GET /rate_limit`, which does not use up the quota) and skips the lookups when
+too few requests remain. Add `--upstream` to also check FilipePS's project. Set `GITHUB_TOKEN` to raise the limit from
+60 to 5,000 requests per hour. The **Update check** workflow runs this every Monday and writes the result to the run summary.
+
 ## Project layout
 
 ```
@@ -86,8 +126,8 @@ offscreen/               Offscreen audio player used by Chromium (MV3)
 options/                 Settings page
 popup/                   Toolbar popup
 _locales/                Interface translations
-scripts/                 Build and check scripts
-.github/workflows/       Release builds for Chromium and Firefox
+scripts/                 Build, check, and update-check scripts
+.github/workflows/       Release builds for Chromium and Firefox, and the weekly update check
 ```
 
 ## Notes and limits

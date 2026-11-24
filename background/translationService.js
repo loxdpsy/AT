@@ -157,6 +157,11 @@ const translationService = function () {
     static get translateSid() {
       return YandexHelper.#translateSid;
     }
+    /** Forgets the SID so the next request gets a fresh one (called after a failed request). */
+    static invalidate() {
+      YandexHelper.#translateSid = null;
+      YandexHelper.#lastRequestSidTime = null;
+    }
 
     /** The `srv` parameter depends on the SID length (mobile SIDs are longer). */
     static get param_srv() {
@@ -444,6 +449,8 @@ const translationService = function () {
     async makeRequest(sourceLanguage, targetLanguage, requests) {
       return await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
+        xhr.withCredentials = false;
+        if ("mozAnon" in xhr) xhr.mozAnon = true; // Firefox: never send cookies with translation requests
         xhr.open(this.xhrMethod, this.baseURL + (this.cbGetExtraParameters ? this.cbGetExtraParameters(sourceLanguage, targetLanguage, requests) : ""));
         if (this.cbGetExtraHeaders) {
           const headers = this.cbGetExtraHeaders();
@@ -720,7 +727,12 @@ const translationService = function () {
       if (!YandexHelper.translateSid) throw new Error("Yandex: the translator session id (SID) could not be found");
       sourceLanguage = yandexLanguageMap[sourceLanguage] || sourceLanguage;
       targetLanguage = yandexLanguageMap[targetLanguage] || targetLanguage;
-      return await super.translate(sourceLanguage, targetLanguage, sourceArray2d, dontSaveInPersistentCache, dontSortResults);
+      try {
+        return await super.translate(sourceLanguage, targetLanguage, sourceArray2d, dontSaveInPersistentCache, dontSortResults);
+      } catch (e) {
+        YandexHelper.invalidate();
+        throw e;
+      }
     }
   }();
 

@@ -141,6 +141,8 @@ const textToSpeech = function () {
     async makeRequest(text, targetLanguage) {
       return await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
+        xhr.withCredentials = false;
+        if ("mozAnon" in xhr) xhr.mozAnon = true; // Firefox: never send Google cookies with TTS requests
         xhr.timeout = 20000;
         xhr.responseType = "blob";
         xhr.onload = () => {

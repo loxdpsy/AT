@@ -106,6 +106,9 @@ async function buildChromium() {
   if (process.env.CRX_PRIVATE_KEY) {
     await writeFile(keyPath, process.env.CRX_PRIVATE_KEY.replace(/\\n/g, "\n"), { mode: 0o600 });
     log("Chromium: using CRX_PRIVATE_KEY (stable extension ID)");
+  } else if (process.env.GITHUB_ACTIONS === "true") {
+    // A random key on every CI run would give each release a different extension ID.
+    throw new Error("CRX_PRIVATE_KEY secret is missing. Add it in Settings > Secrets and variables > Actions (see README, 'Release secrets').");
   } else {
     await rm(keyPath, { force: true });
     log("Chromium: CRX_PRIVATE_KEY not set, a new key is generated (the extension ID will change)");

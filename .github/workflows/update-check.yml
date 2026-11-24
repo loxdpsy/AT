@@ -1,0 +1,30 @@
+name: Update check
+
+# Once a week, and on demand, check GitHub for newer releases of loxdpsy and of the upstream TWP project.
+# The result is written to the run summary (Actions > Update check > run > Summary).
+# The script checks the API rate limit first and skips the lookups when the budget is low.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check for newer releases
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/check-update.mjs --upstream --min-remaining 20
