@@ -117,6 +117,9 @@ const translationCache = function () {
   var _queryInDB = /*#__PURE__*/new WeakSet();
   var _addInDb = /*#__PURE__*/new WeakSet();
   class Cache {
+    /** Max entries kept in memory per cache (per service and language pair). */
+    static MAX_MEMORY_ENTRIES = 2000;
+
     /**
      * Base class to create a translation cache for different services.
      * @param {string} translationService
@@ -184,7 +187,11 @@ const translationCache = function () {
       let translation = this.cache.get(hash);
       if (translation) return translation;
       translation = await _classPrivateMethodGet(this, _queryInDB, _queryInDB2).call(this, hash);
-      if (translation) this.cache.set(hash, translation);
+      if (translation) {
+        // bounded in-memory cache (the IndexedDB copy is the source of truth), so RAM stays flat
+        if (this.cache.size >= Cache.MAX_MEMORY_ENTRIES) this.cache.delete(this.cache.keys().next().value);
+        this.cache.set(hash, translation);
+      }
       return translation;
     }
     /**
@@ -617,4 +624,3 @@ const translationCache = function () {
   });
   return translationCache;
 }();
-//# sourceMappingURL=https://raw.githubusercontent.com/FilipePS/TWP---Source-Maps/main/maps/9.8.1.0/translationCache.js.map

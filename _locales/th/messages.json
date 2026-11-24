@@ -50,9 +50,6 @@
   "btnOpenOnGoogleTranslate": {
     "message": "เปิดใน Google นักแปล"
   },
-  "btnDonate": {
-    "message": "บริจาค"
-  },
   "btnNeverTranslate": {
     "message": "ไม่เคยแปลไซต์นี้"
   },
@@ -82,9 +79,6 @@
   },
   "btnMoreOptions": {
     "message": "ตัวเลือกเพิ่มเติม"
-  },
-  "lblPlsDonate": {
-    "message": "ช่วยนักพัฒนาด้วยการบริจาค"
   },
   "msgTranslateFor": {
     "message": "แปลเป็น $LANGUAGE_NAME$",
@@ -152,9 +146,6 @@
   "msgHotkeys": {
     "message": "ปุ่มลัด"
   },
-  "lblMakeDonation": {
-    "message": "บริจาค"
-  },
   "lblReleaseNotes": {
     "message": "บันทึกประจำรุ่น"
   },
@@ -175,9 +166,6 @@
   },
   "msgThanksForUseExtension": {
     "message": "ขอขอบคุณที่ใช้ส่วนขยายนี้"
-  },
-  "msgIWillBeGrateful": {
-    "message": "ฉันจะขอบคุณถ้าคุณสามารถบริจาคได้"
   },
   "lblShowTranslatedHoveringSites": {
     "message": "แสดงข้อความที่แปลแล้วเมื่อวางเมาส์เหนือไซต์เหล่านี้"
@@ -325,9 +313,6 @@
   "calculatestorage": {
     "message": "คำนวณ"
   },
-  "donatewithpaypal": {
-    "message": "บริจาคด้วย PayPal"
-  },
   "lblAutoTranslateWhenClickingALink": {
     "message": "แปลโดยอัตโนมัติเมื่อคลิกลิงก์ที่นำคุณไปยังโดเมนเดียวกันกับไซต์ปัจจุบัน"
   },
@@ -472,16 +457,13 @@
     "placeholders": {
       "EXTENSION_NAME": {
         "content": "#EXTENSION_NAME#",
-        "example": "TWP - Translate Web Pages"
+        "example": "loxdpsy"
       },
       "EXTENSION_VERSION": {
         "content": "#EXTENSION_VERSION#",
         "example": "9.7"
       }
     }
-  },
-  "donationText": {
-    "message": "ฉันพัฒนา อัปเดต และสนับสนุนส่วนขยายนี้มากว่าสามปีแล้ว เป็นเรื่องน่าทึ่งที่เห็นว่าเรามีผู้ใช้มากกว่า 600,000 รายต่อวัน และผู้ใช้เหล่านี้ทั้งหมดสามารถย้ายไปยัง Firefox อย่างถาวรได้\n\nฉันตั้งเป้าที่จะออกเวอร์ชันใหม่ของส่วนขยายนี้ทุกเดือนและปรับปรุงต่อไป\n\nฉันจะขอบคุณมากหากคุณสามารถช่วยฉันทางการเงินด้วยการเป็นสมาชิก Patreon และสนับสนุนฉันในการปรับปรุงส่วนขยายนี้\n\nขอขอบคุณทุกคนที่มีส่วนสนับสนุนโครงการนี้แล้ว"
   },
   "lblEnableDiskCache": {
     "message": "เปิดใช้งานแคชการแปลถาวร (แคชบนดิสก์)"

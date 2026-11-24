@@ -50,9 +50,6 @@
   "btnOpenOnGoogleTranslate": {
     "message": "Apri in Google Traduttore"
   },
-  "btnDonate": {
-    "message": "Donare"
-  },
   "btnNeverTranslate": {
     "message": "Non tradurre mai questo sito"
   },
@@ -82,9 +79,6 @@
   },
   "btnMoreOptions": {
     "message": "Più opzioni"
-  },
-  "lblPlsDonate": {
-    "message": "Aiuta lo sviluppatore con una donazione"
   },
   "msgTranslateFor": {
     "message": "Traduci in $LANGUAGE_NAME$",
@@ -152,9 +146,6 @@
   "msgHotkeys": {
     "message": "Scorciatoie"
   },
-  "lblMakeDonation": {
-    "message": "Fai una donazione"
-  },
   "lblReleaseNotes": {
     "message": "Note di Rilascio"
   },
@@ -175,9 +166,6 @@
   },
   "msgThanksForUseExtension": {
     "message": "Grazie per aver scelto questa estensione."
-  },
-  "msgIWillBeGrateful": {
-    "message": "Ti sarò grato se potrai fare una donazione."
   },
   "lblShowTranslatedHoveringSites": {
     "message": "Mostra il testo tradotto quando passi la freccia su questi siti"
@@ -325,9 +313,6 @@
   "calculatestorage": {
     "message": "Calcola"
   },
-  "donatewithpaypal": {
-    "message": "Dona con PayPal"
-  },
   "lblAutoTranslateWhenClickingALink": {
     "message": "Traduci automaticamente quando fai clic su un link che ti porta allo stesso dominio del sito corrente"
   },
@@ -472,16 +457,13 @@
     "placeholders": {
       "EXTENSION_NAME": {
         "content": "#EXTENSION_NAME#",
-        "example": "TWP - Translate Web Pages"
+        "example": "loxdpsy"
       },
       "EXTENSION_VERSION": {
         "content": "#EXTENSION_VERSION#",
         "example": "9.7"
       }
     }
-  },
-  "donationText": {
-    "message": "Ho creato, aggiornato e mantenuto questa estensione per oltre tre anni. È sorprendente vedere che abbiamo oltre 600.000 utenti giornalieri e che tutte queste persone sono riuscite a migrare a Firefox in modo permanente.\n\nMi propongo di rilasciare una nuova versione di questa estensione ogni mese e di continuare a migliorarla.\n\nSarei grato se tu potessi aiutarmi finanziariamente diventando un membro di Patreon e sostenendomi nell'apportare miglioramenti a questa estensione.\n\nGrazie a tutti coloro che hanno già contribuito a questo progetto."
   },
   "lblEnableDiskCache": {
     "message": "Abilita la cache persistente di traduzione (cache su disco)"

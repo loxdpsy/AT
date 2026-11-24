@@ -37,7 +37,6 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
                     <a id="btnNeverTranslate" data-i18n="btnNeverTranslate">Never translate this site</a>
                     <a id="neverTranslateThisLanguage" data-i18n="btnNeverTranslateThisLanguage" display="none">Never translate this language</a>
                     <a id="btnMoreOptions" data-i18n="btnMoreOptions">More options</a>
-                    <a id="btnDonate" data-i18n="btnDonate" href="https://www.patreon.com/filipeps" target="_blank" rel="noopener noreferrer">Donate</a>
                 </div>
             </div>
             <div class="menuDot"></div>
@@ -268,12 +267,6 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
         action: "openOptionsPage"
       }, checkedLastError);
     };
-    getElemById("btnDonate").onclick = e => {
-      e.preventDefault();
-      chrome.runtime.sendMessage({
-        action: "openDonationPage"
-      }, checkedLastError);
-    };
     document.addEventListener("blur", hideMenu);
     document.addEventListener("click", hideMenu);
     if (twpConfig.get("showTranslateSelectedButton") === "yes") {
@@ -281,7 +274,6 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     } else {
       getElemById("btnTranslateSelectedText").textContent = twpI18n.getMessage("msgTranslateSelectedText");
     }
-    getElemById("btnDonate").innerHTML += " &#10084;";
   };
   popupMobile.hide = function () {
     if (!divElement) return;
@@ -354,4 +346,3 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     requestAnimationFrame(foo)
     //*/
 });
-//# sourceMappingURL=https://raw.githubusercontent.com/FilipePS/TWP---Source-Maps/main/maps/9.8.1.0/popupMobile.js.map

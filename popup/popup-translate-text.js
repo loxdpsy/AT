@@ -377,4 +377,3 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     translateText();
   }
 });
-//# sourceMappingURL=https://raw.githubusercontent.com/FilipePS/TWP---Source-Maps/main/maps/9.8.1.0/popup-translate-text.js.map

@@ -1,0 +1,21 @@
+{
+  "name": "loxdpsy",
+  "version": "9.8.1.0",
+  "description": "loxdpsy: translate web pages in real time (a fork of TWP - Translate Web Pages by FilipePS).",
+  "private": true,
+  "license": "MPL-2.0",
+  "type": "module",
+  "scripts": {
+    "check": "node scripts/check.mjs",
+    "build": "node scripts/build.mjs all",
+    "build:chromium": "node scripts/build.mjs chromium",
+    "build:firefox": "node scripts/build.mjs firefox"
+  },
+  "devDependencies": {
+    "archiver": "^7.0.1",
+    "crx3": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

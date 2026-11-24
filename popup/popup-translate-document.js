@@ -103,8 +103,6 @@ selectService.onclick = async e => {
   } else if (e.target.dataset.name === "google") {
     window.open(`https://translate.google.com/?sl=auto&tl=${twpConfig.get("targetLanguage")}&op=docs`, "_blank");
     window.close();
-  } else if (e.target.dataset.name === "deepl") {
-    window.open("https://www.deepl.com/translator/files", "_blank");
   } else if (e.target.dataset.name === "onlinedoctranslator") {
     window.open("https://www.onlinedoctranslator.com/translationform", "_blank");
   } else if (e.target.dataset.name === "pdftwp") {
@@ -151,4 +149,3 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
       break;
   }
 });
-//# sourceMappingURL=https://raw.githubusercontent.com/FilipePS/TWP---Source-Maps/main/maps/9.8.1.0/popup-translate-document.js.map

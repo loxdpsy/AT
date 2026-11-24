@@ -50,9 +50,6 @@
   "btnOpenOnGoogleTranslate": {
     "message": "Megnyitás a Google Fordítóban"
   },
-  "btnDonate": {
-    "message": "Adományozás"
-  },
   "btnNeverTranslate": {
     "message": "Soha ne fordítsa le ezt az oldalt"
   },
@@ -82,9 +79,6 @@
   },
   "btnMoreOptions": {
     "message": "További beállítások"
-  },
-  "lblPlsDonate": {
-    "message": "Segítse a fejlesztőt egy adománnyal"
   },
   "msgTranslateFor": {
     "message": "Fordítás $LANGUAGE_NAME$ nyelvre",
@@ -152,9 +146,6 @@
   "msgHotkeys": {
     "message": "Gyorsbillentyűk"
   },
-  "lblMakeDonation": {
-    "message": "Adományozás"
-  },
   "lblReleaseNotes": {
     "message": "Kibocsátási megjegyzések"
   },
@@ -175,9 +166,6 @@
   },
   "msgThanksForUseExtension": {
     "message": "Köszönjük, hogy ezt a bővítményt használja."
-  },
-  "msgIWillBeGrateful": {
-    "message": "Örök hálám az adományokért."
   },
   "lblShowTranslatedHoveringSites": {
     "message": "Fordított szöveg mutatása ezeknél az oldalaknál, ha fölötte áll a kurzorral"
@@ -325,9 +313,6 @@
   "calculatestorage": {
     "message": "Kalkulálás"
   },
-  "donatewithpaypal": {
-    "message": "Adományozás PayPal-lal"
-  },
   "lblAutoTranslateWhenClickingALink": {
     "message": "Ha domainen belülre visz a megnyitott link, akkor ugyanúgy fordítsa az oldalt"
   },
@@ -472,16 +457,13 @@
     "placeholders": {
       "EXTENSION_NAME": {
         "content": "#EXTENSION_NAME#",
-        "example": "TWP - Translate Web Pages"
+        "example": "loxdpsy"
       },
       "EXTENSION_VERSION": {
         "content": "#EXTENSION_VERSION#",
         "example": "9.7"
       }
     }
-  },
-  "donationText": {
-    "message": "Több mint három éve fejlesztem, frissítem és támogatom ezt a bővítményt. Lenyűgöző látni, hogy több mint 600 000 napi felhasználónk van, és ezek az emberek véglegesen áttértek a Firefoxra.\n\nCélom, hogy minden hónapban kiadjam ennek a bővítménynek az új verzióját, és folyamatosan fejlesszem.\n\nHálás lennék, ha anyagilag segítene nekem azzal, hogy Patreon taggá válna és támogatna a bővítmény fejlesztésében.\n\nKöszönöm mindenkinek, aki már hozzájárult ehhez a projekthez."
   },
   "lblEnableDiskCache": {
     "message": "Állandó fordítási gyorsítótár engedélyezése (lemezen lévő gyorsítótár)"

@@ -3,12 +3,80 @@
 const textToSpeech = function () {
   const textToSpeech = {};
 
+  /** Max audio clips kept in memory per service. Older clips are dropped and downloaded again if needed. */
+  const MAX_CACHED_CLIPS = 40;
+
   /**
-   * @callback Callback_Speech_cbGetExtraParameters
-   * @param {string} text
-   * @param {string} targetLanguage
-   * @return {string} urlParamsString
+   * Turns a Blob into a data URL without FileReader (not available in service workers).
+   * @param {Blob} blob
+   * @returns {Promise<string>}
    */
+  async function blobToDataURL(blob) {
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    let binary = "";
+    const chunkSize = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+    }
+    return "data:" + (blob.type || "audio/mpeg") + ";base64," + btoa(binary);
+  }
+
+  /** True when this context can play audio itself (Firefox background page). */
+  const canPlayHere = () => typeof Audio === "function";
+
+  /**
+   * Chromium MV3: audio plays in an offscreen document. It is created on demand and reused.
+   * @returns {Promise<void>}
+   */
+  async function ensureOffscreenDocument() {
+    if (!chrome.offscreen) throw new Error("Audio playback is not available in this browser");
+    if (chrome.offscreen.hasDocument && (await chrome.offscreen.hasDocument())) return;
+    try {
+      await chrome.offscreen.createDocument({
+        url: "offscreen/tts.html",
+        reasons: ["AUDIO_PLAYBACK"],
+        justification: "Read translated text aloud"
+      });
+    } catch (e) {
+      // "Only a single offscreen document may be created": another call got there first.
+      if (!String(e && e.message).includes("single offscreen")) throw e;
+    }
+  }
+
+  /**
+   * Plays audio data URLs in order, with the chosen speed.
+   * @param {string[]} urls
+   * @param {number} speed
+   * @returns {Promise<void>}
+   */
+  async function playUrls(urls, speed) {
+    if (canPlayHere()) {
+      return await twpAudioPlayer.play(urls, speed);
+    }
+    await ensureOffscreenDocument();
+    return await new Promise(resolve => {
+      chrome.runtime.sendMessage({ action: "twp-tts-play", urls, rate: speed }, () => {
+        void chrome.runtime.lastError;
+        resolve();
+      });
+    });
+  }
+
+  function stopPlayback() {
+    if (canPlayHere()) {
+      twpAudioPlayer.stop();
+    } else {
+      chrome.runtime.sendMessage({ action: "twp-tts-stop" }, () => void chrome.runtime.lastError);
+    }
+  }
+
+  function setPlaybackRate(speed) {
+    if (canPlayHere()) {
+      twpAudioPlayer.setRate(speed);
+    } else {
+      chrome.runtime.sendMessage({ action: "twp-tts-rate", rate: speed }, () => void chrome.runtime.lastError);
+    }
+  }
 
   class Service {
     /**
@@ -16,38 +84,32 @@ const textToSpeech = function () {
      * @param {string} serviceName
      * @param {string} baseURL
      * @param {"GET" | "POST"} xhrMethod
-     * @param {Callback_Speech_cbGetExtraParameters} cbGetExtraParameters
+     * @param {(text: string, targetLanguage: string) => string} cbGetExtraParameters
      */
     constructor(serviceName, baseURL, xhrMethod, cbGetExtraParameters) {
       this.serviceName = serviceName;
       this.baseURL = baseURL;
       this.xhrMethod = xhrMethod;
       this.cbGetExtraParameters = cbGetExtraParameters;
-      /** @type {Map<string, HTMLAudioElement>} */
-      this.audios = new Map();
+      /** @type {Map<string, string>} audio data URLs, bounded by MAX_CACHED_CLIPS */
+      this.clips = new Map();
       this.audioSpeed = 1.0;
     }
 
     /**
-     * Takes a long text and splits the text into an array of strings. Each string will be less than 170 characters.
-     *
-     * The goal is not to exceed the quota for text-to-speech services.
+     * Splits a long text into pieces of less than 170 characters, so each request stays small.
      * @param {string} fullText
-     * @returns {string[]} requestStrings
+     * @returns {string[]}
      */
     getRequests(fullText) {
       /** @type {string[]} */
       const fullTextSplitted = [];
       fullText.trim().split(" ").forEach(word => {
-        if (word.length > 160) {
-          while (word.length > 160) {
-            fullTextSplitted.push(word.slice(0, 160));
-            word = word.slice(160);
-          }
-          if (word.trim().length > 0) {
-            fullTextSplitted.push(word);
-          }
-        } else if (word.trim().length > 0) {
+        while (word.length > 160) {
+          fullTextSplitted.push(word.slice(0, 160));
+          word = word.slice(160);
+        }
+        if (word.trim().length > 0) {
           fullTextSplitted.push(word);
         }
       });
@@ -66,119 +128,79 @@ const textToSpeech = function () {
       }
       if (requestString.trim().length > 0) {
         requests.push(requestString);
-        requestString = "";
       }
       return requests;
     }
 
     /**
-     * Makes the request to the text-to-speech service and returns a promise that resolves with the result of the request.
-     *
-     * The promise is rejected if there is an error.
+     * Downloads one clip and returns it as an audio data URL.
      * @param {string} text
      * @param {string} targetLanguage
-     * @returns {Promise<any>} Promise\<blob\>
+     * @returns {Promise<string>}
      */
     async makeRequest(text, targetLanguage) {
       return await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.onload = e => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.onerror = () => reject();
-          reader.readAsDataURL(xhr.response);
-        };
-        xhr.onerror = e => {
-          console.error(e);
-          reject();
-        };
-        xhr.open(this.xhrMethod, this.baseURL + this.cbGetExtraParameters(text, targetLanguage));
+        xhr.timeout = 20000;
         xhr.responseType = "blob";
+        xhr.onload = () => {
+          if (!xhr.response) return reject(new Error("empty audio response"));
+          blobToDataURL(xhr.response).then(resolve, reject);
+        };
+        xhr.onerror = xhr.onabort = xhr.ontimeout = () => reject(new Error("text-to-speech request failed"));
+        xhr.open(this.xhrMethod, this.baseURL + this.cbGetExtraParameters(text, targetLanguage));
         xhr.send();
       });
     }
 
     /**
-     * Transform text into audio and play then.
+     * Remembers a clip and keeps the cache bounded.
+     * @param {string} key
+     * @param {string} url
+     */
+    rememberClip(key, url) {
+      if (this.clips.size >= MAX_CACHED_CLIPS) {
+        this.clips.delete(this.clips.keys().next().value);
+      }
+      this.clips.set(key, url);
+    }
+
+    /**
+     * Transforms text into audio and plays it.
      * @param {string} fullText
      * @param {string} targetLanguage
-     * @returns {Promise<void>} Promise\<void\>
+     * @returns {Promise<void>}
      */
     async textToSpeech(fullText, targetLanguage) {
       const requests = this.getRequests(fullText);
-      const promises = [];
-      for (const requestText of requests) {
-        const audioKey = [targetLanguage, requestText].join(", ");
-        if (!this.audios.get(audioKey)) {
-          promises.push(this.makeRequest(requestText, targetLanguage).then( /** @type {string} */response => {
-            this.audios.set(audioKey, new Audio(response));
-            return response;
-          }).catch(e => {
-            console.error(e);
-            return null;
-          }));
-        }
-      }
-      await Promise.all(promises);
-      return await this.play(requests.map(text => this.audios.get([targetLanguage, text].join(", "))));
-    }
-
-    /**
-     * Play the audio or all the audio in the array.
-     * @param {HTMLAudioElement | HTMLAudioElement[]} audios
-     */
-    async play(audios) {
-      this.stopAll();
-      return await new Promise(resolve => {
-        try {
-          if (audios instanceof Array) {
-            const playAll = ( /** @type {number} */currentIndex) => {
-              this.stopAll();
-              const audio = audios[currentIndex];
-              if (audio) {
-                audio.playbackRate = this.audioSpeed;
-                audio.play();
-                audio.onended = () => {
-                  playAll(currentIndex + 1);
-                };
-              } else {
-                resolve();
-              }
-            };
-            playAll(0);
-          } else if (audios instanceof HTMLAudioElement) {
-            audios.playbackRate = this.audioSpeed;
-            audios.play();
-            audios.onended = () => {
-              resolve();
-            };
-          }
-        } catch (e) {
+      const keys = requests.map(text => [targetLanguage, text].join(", "));
+      const missing = requests.filter((text, i) => !this.clips.has(keys[i]));
+      const results = await Promise.all(missing.map(text =>
+        this.makeRequest(text, targetLanguage).then(url => ({ text, url }), e => {
           console.error(e);
-          resolve();
-        }
-      });
+          return null;
+        })
+      ));
+      for (const result of results) {
+        if (result) this.rememberClip([targetLanguage, result.text].join(", "), result.url);
+      }
+      const urls = keys.map(key => this.clips.get(key)).filter(Boolean);
+      if (urls.length === 0) return;
+      await playUrls(urls, this.audioSpeed);
     }
 
     /**
-     * Sets the audio speed
+     * Sets the audio speed and applies it to the clip that is playing.
      * @param {number} speed
      */
     setAudioSpeed(speed) {
-      this.audioSpeed = speed;
-      this.audios.forEach(audio => {
-        audio.playbackRate = this.audioSpeed;
-      });
+      this.audioSpeed = Number(speed) || 1.0;
+      setPlaybackRate(this.audioSpeed);
     }
 
-    /**
-     * Pause all audio and reset audio time to start
-     */
+    /** Stops playback. */
     stopAll() {
-      this.audios.forEach(audio => {
-        audio.pause();
-        audio.currentTime = 0;
-      });
+      stopPlayback();
     }
   }
 
@@ -190,7 +212,7 @@ const textToSpeech = function () {
   // Listen for messages coming from contentScript or other scripts.
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.action === "textToSpeech") {
-      googleService.textToSpeech(request.text, request.targetLanguage).finally(() => {
+      googleService.textToSpeech(request.text, request.targetLanguage).catch(e => console.error(e)).finally(() => {
         sendResponse();
       });
       return true;
@@ -210,4 +232,3 @@ const textToSpeech = function () {
   textToSpeech.google = googleService;
   return textToSpeech;
 }();
-//# sourceMappingURL=https://raw.githubusercontent.com/FilipePS/TWP---Source-Maps/main/maps/9.8.1.0/textToSpeech.js.map

@@ -242,7 +242,7 @@ function getTabHostName() {
 }
 Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
   const tabHostName = _[1];
-  // "sup" não será traduzido https://github.com/FilipePS/Traduzir-paginas-web/issues/647
+  // "sup" não será traduzido
   /* prettier-ignore */
   const htmlTagsInlineText = ["#text", "a", "abbr", "acronym", "b", "bdo", "big", "cite", "dfn", "em", "i", "label", "q", "s", "small", "span", "strong", "sub", /*"sup",*/"u", "tt", "var"];
   /* prettier-ignore */
@@ -256,7 +256,6 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     }
   }
 
-  // https://github.com/FilipePS/Traduzir-paginas-web/issues/609
   if (twpConfig.get("translateTag_pre") !== "yes" && !(document.body.childElementCount === 1 && document.body.firstChild.nodeName.toLocaleLowerCase() === "pre")) {
     htmlTagsInlineIgnore.push("pre");
   }
@@ -408,7 +407,6 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     if (index === -1) {
       return false;
     } else {
-      // https://github.com/FilipePS/Traduzir-paginas-web/issues/654
       if (nodeName === "script" && node.getAttribute("data-spotim-module") === "spotim-launcher" && [...node.childNodes].find(node => node.nodeType === 1)) {
         return false;
       } else {
@@ -436,12 +434,9 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
           const nodeName = node.nodeName.toLowerCase();
           if (nodeName === "select" || nodeName === "datalist") lastSelectOrDataListElement = node;
           if (htmlTagsInlineIgnore.indexOf(nodeName) !== -1 || isNoTranslateNode(node) || node.classList.contains("notranslate") || node.getAttribute("translate") === "no" || node.isContentEditable || node.classList.contains("material-icons") ||
-          // https://github.com/FilipePS/Traduzir-paginas-web/issues/481
           node.classList.contains("material-symbols-outlined") || nodeName.startsWith("br-") ||
-          // https://github.com/FilipePS/Traduzir-paginas-web/issues/627
           node.getAttribute("id") === "branch-select-menu" ||
-          // https://github.com/FilipePS/Traduzir-paginas-web/issues/570
-          location.hostname === "twitter.com" && nodeName === "a" && (node.matches ? node.matches("article a") : true) // https://github.com/FilipePS/Traduzir-paginas-web/issues/449
+          location.hostname === "twitter.com" && nodeName === "a" && (node.matches ? node.matches("article a") : true)
           ) {
             if (piecesToTranslate[index].nodes.length > 0) {
               currentParagraphSize = 0;
@@ -835,7 +830,6 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     }
     customDictionary = sortDictionary(twpConfig.get("customDictionary"));
 
-    // https://github.com/FilipePS/Traduzir-paginas-web/issues/619
     if (location.hostname === "sberbank.com" || location.hostname === "www.sberbank.com") {
       document.body.classList.remove("notranslate");
     }
@@ -991,7 +985,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
           if (location.hostname === "pdftohtml.translatewebpages.org" && location.href.indexOf("?autotranslate") !== -1 && twpConfig.get("neverTranslateSites").indexOf(tabHostName) === -1 || location.hostname === "pdf.translatewebpages.org" && twpConfig.get("neverTranslateSites").indexOf(tabHostName) === -1) {
             pageTranslator.translatePage();
           } else {
-            if (location.hostname !== "translate.googleusercontent.com" && location.hostname !== "translate.google.com" && location.hostname !== "translate.yandex.com" && location.hostname !== "www.deepl.com" && location.hostname !== "translated.turbopages.org" && !location.hostname.endsWith("translate.goog") && location.hostname !== "sberbank.com" && location.hostname !== "www.sberbank.com" // https://github.com/FilipePS/Traduzir-paginas-web/issues/619
+            if (location.hostname !== "translate.googleusercontent.com" && location.hostname !== "translate.google.com" && location.hostname !== "translate.yandex.com" && location.hostname !== "translated.turbopages.org" && !location.hostname.endsWith("translate.goog") && location.hostname !== "sberbank.com" && location.hostname !== "www.sberbank.com"
             ) {
               if (pageLanguageState === "original" && !platformInfo.isMobile.any && !chrome.extension.inIncognitoContext) {
                 if (twpConfig.get("neverTranslateSites").indexOf(tabHostName) === -1) {
@@ -1047,4 +1041,3 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     }
   });
 });
-//# sourceMappingURL=https://raw.githubusercontent.com/FilipePS/TWP---Source-Maps/main/maps/9.8.1.0/pageTranslator.js.map

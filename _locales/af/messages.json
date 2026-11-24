@@ -50,9 +50,6 @@
   "btnOpenOnGoogleTranslate": {
     "message": "Maak oop in Google Translator"
   },
-  "btnDonate": {
-    "message": "skenk"
-  },
   "btnNeverTranslate": {
     "message": "Moet nooit hierdie webwerf vertaal nie"
   },
@@ -82,9 +79,6 @@
   },
   "btnMoreOptions": {
     "message": "Meer opsies"
-  },
-  "lblPlsDonate": {
-    "message": "Help die ontwikkelaar met 'n skenking"
   },
   "msgTranslateFor": {
     "message": "Vertaal na $LANGUAGE_NAME$",
@@ -152,9 +146,6 @@
   "msgHotkeys": {
     "message": "Sneltoetse"
   },
-  "lblMakeDonation": {
-    "message": "Maak 'n skenking"
-  },
   "lblReleaseNotes": {
     "message": "Vrystellings notas"
   },
@@ -175,9 +166,6 @@
   },
   "msgThanksForUseExtension": {
     "message": "Dankie dat jy hierdie uitbreiding gebruik."
-  },
-  "msgIWillBeGrateful": {
-    "message": "Ek sal dankbaar wees as jy 'n skenking kan maak."
   },
   "lblShowTranslatedHoveringSites": {
     "message": "Wys vertaalde teks wanneer jy op hierdie werwe beweeg"
@@ -325,9 +313,6 @@
   "calculatestorage": {
     "message": "Bereken"
   },
-  "donatewithpaypal": {
-    "message": "Skenk met PayPal"
-  },
   "lblAutoTranslateWhenClickingALink": {
     "message": "Vertaal outomaties wanneer u op 'n skakel klik wat u na dieselfde domein as die huidige webwerf neem"
   },
@@ -472,16 +457,13 @@
     "placeholders": {
       "EXTENSION_NAME": {
         "content": "#EXTENSION_NAME#",
-        "example": "TWP - Translate Web Pages"
+        "example": "loxdpsy"
       },
       "EXTENSION_VERSION": {
         "content": "#EXTENSION_VERSION#",
         "example": "9.7"
       }
     }
-  },
-  "donationText": {
-    "message": "Ek het hierdie uitbreiding al meer as drie jaar ontwikkel, bygewerk en ondersteun. Dit is ongelooflik om te sien dat ons meer as 600 000 daaglikse gebruikers het, en al hierdie mense kon permanent na Firefox toe migreer.\n\nEk beoog om elke maand 'n nuwe weergawe van hierdie uitbreiding vry te stel en aan te hou om dit te verbeter.\n\nEk sal dankbaar wees as jy my finansieel kan help deur 'n Patreon-lid te word en my te ondersteun om verbeterings aan hierdie uitbreiding aan te bring.\n\nDankie aan almal wat reeds bygedra het tot hierdie projek."
   },
   "lblEnableDiskCache": {
     "message": "Aktiveer aanhoudende vertaalkas (op-skyfkas)"

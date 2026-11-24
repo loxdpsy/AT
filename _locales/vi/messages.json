@@ -50,9 +50,6 @@
   "btnOpenOnGoogleTranslate": {
     "message": "Mở trong Google Translate"
   },
-  "btnDonate": {
-    "message": "Ủng hộ"
-  },
   "btnNeverTranslate": {
     "message": "Không bao giờ dịch trang này"
   },
@@ -82,9 +79,6 @@
   },
   "btnMoreOptions": {
     "message": "Tùy chọn khác"
-  },
-  "lblPlsDonate": {
-    "message": "Giúp đỡ nhà phát triển bằng cách ủng hộ"
   },
   "msgTranslateFor": {
     "message": "Dịch từ $LANGUAGE_NAME$",
@@ -152,9 +146,6 @@
   "msgHotkeys": {
     "message": "Phím tắt"
   },
-  "lblMakeDonation": {
-    "message": "Ủng hộ"
-  },
   "lblReleaseNotes": {
     "message": "Ghi chú phát hành"
   },
@@ -175,9 +166,6 @@
   },
   "msgThanksForUseExtension": {
     "message": "Cảm ơn bạn đã sử dụng tiện ích này."
-  },
-  "msgIWillBeGrateful": {
-    "message": "Tôi sẽ biết ơn nếu bạn có thể đóng góp."
   },
   "lblShowTranslatedHoveringSites": {
     "message": "Hiển thị văn bản đã dịch khi di chuột qua các trang web này"
@@ -325,9 +313,6 @@
   "calculatestorage": {
     "message": "Tính toán"
   },
-  "donatewithpaypal": {
-    "message": "Ủng hộ qua PayPal"
-  },
   "lblAutoTranslateWhenClickingALink": {
     "message": "Tự động dịch khi nhấp vào liên kết đến cùng một tên miền với trang web hiện tại"
   },
@@ -472,16 +457,13 @@
     "placeholders": {
       "EXTENSION_NAME": {
         "content": "#EXTENSION_NAME#",
-        "example": "TWP - Translate Web Pages"
+        "example": "loxdpsy"
       },
       "EXTENSION_VERSION": {
         "content": "#EXTENSION_VERSION#",
         "example": "9.7"
       }
     }
-  },
-  "donationText": {
-    "message": "Tôi đã phát triển, cập nhật và hỗ trợ tiện ích mở rộng này trong hơn ba năm. Thật ngạc nhiên khi thấy rằng chúng tôi có hơn 600.000 người dùng hàng ngày và tất cả những người này đã có thể chuyển sang Firefox vĩnh viễn.\n\nTôi đặt mục tiêu phát hành phiên bản mới của tiện ích mở rộng này hàng tháng và tiếp tục cải thiện nó.\n\nTôi sẽ rất biết ơn nếu bạn có thể giúp tôi về mặt tài chính bằng cách trở thành thành viên Patreon và hỗ trợ tôi mang lại những cải tiến cho tiện ích mở rộng này.\n\nCảm ơn tất cả những người đã đóng góp cho dự án này."
   },
   "lblEnableDiskCache": {
     "message": "Kích hoạt bộ nhớ đệm dịch lâu dài (bộ nhớ đệm trên ổ cứng)"

@@ -50,9 +50,6 @@
   "btnOpenOnGoogleTranslate": {
     "message": "Отвори у гоогле преводиоцу"
   },
-  "btnDonate": {
-    "message": "Донирајте"
-  },
   "btnNeverTranslate": {
     "message": "Никада не преводи овај сајт"
   },
@@ -82,9 +79,6 @@
   },
   "btnMoreOptions": {
     "message": "Више опција"
-  },
-  "lblPlsDonate": {
-    "message": "Помозите програмеру донацијом"
   },
   "msgTranslateFor": {
     "message": "Преведи на $LANGUAGE_NAME$",
@@ -152,9 +146,6 @@
   "msgHotkeys": {
     "message": "Хоткеис"
   },
-  "lblMakeDonation": {
-    "message": "Донирати"
-  },
   "lblReleaseNotes": {
     "message": "Белешке о издању"
   },
@@ -175,9 +166,6 @@
   },
   "msgThanksForUseExtension": {
     "message": "Хвала вам што користите ово проширење."
-  },
-  "msgIWillBeGrateful": {
-    "message": "Бићу вам захвалан ако можете да дате донацију."
   },
   "lblShowTranslatedHoveringSites": {
     "message": "Прикажи преведени текст када лебдите мишем на овим сајтовима"
@@ -325,9 +313,6 @@
   "calculatestorage": {
     "message": "Израчунај"
   },
-  "donatewithpaypal": {
-    "message": "Донирајте помоћу ПаиПал-а"
-  },
   "lblAutoTranslateWhenClickingALink": {
     "message": "Аутоматски преводи када кликнете на везу која вас води на исти домен као тренутни сајт"
   },
@@ -472,16 +457,13 @@
     "placeholders": {
       "EXTENSION_NAME": {
         "content": "#EXTENSION_NAME#",
-        "example": "TWP - Translate Web Pages"
+        "example": "loxdpsy"
       },
       "EXTENSION_VERSION": {
         "content": "#EXTENSION_VERSION#",
         "example": "9.7"
       }
     }
-  },
-  "donationText": {
-    "message": "Развијам, ажурирам и подржавам ово проширење више од три године. Невероватно је видети да имамо преко 600.000 корисника дневно, и да су сви ови људи могли да мигрирају на Фирефок трајно.\n\nЦиљ ми је да објавим нову верзију овог проширења сваког месеца и наставим да је побољшавам.\n\nБио бих вам захвалан ако бисте ми могли финансијски помоћи тако што ћете постати члан Патреона и подржати ме у побољшању овог проширења.\n\nХвала свима који су већ допринели овом пројекту."
   },
   "lblEnableDiskCache": {
     "message": "Омогући трајни кеш за превод (кеш меморија на диску)"

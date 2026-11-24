@@ -50,9 +50,6 @@
   "btnOpenOnGoogleTranslate": {
     "message": "Google تەرجىمانىدا ئېچىڭ"
   },
-  "btnDonate": {
-    "message": "ئىئانە قىلىڭ"
-  },
   "btnNeverTranslate": {
     "message": "بۇ تور بەتنى ھەرگىز تەرجىمە قىلماڭ"
   },
@@ -82,9 +79,6 @@
   },
   "btnMoreOptions": {
     "message": "تېخىمۇ كۆپ تاللاشلار"
-  },
-  "lblPlsDonate": {
-    "message": "ئىئانە قىلغۇچىغا ئىئانە بىلەن ياردەم قىلىڭ"
   },
   "msgTranslateFor": {
     "message": "$LANGUAGE_NAME$تەرجىمە قىلىڭ",
@@ -152,9 +146,6 @@
   "msgHotkeys": {
     "message": "Hotkeys"
   },
-  "lblMakeDonation": {
-    "message": "ئىئانە قىلىڭ"
-  },
   "lblReleaseNotes": {
     "message": "ئىزاھات"
   },
@@ -175,9 +166,6 @@
   },
   "msgThanksForUseExtension": {
     "message": "بۇ كېڭەيتىلمىنى ئىشلەتكەنلىكىڭىزگە رەھمەت."
-  },
-  "msgIWillBeGrateful": {
-    "message": "ئىئانە قىلسىڭىز مەن مىننەتدار بولىمەن."
   },
   "lblShowTranslatedHoveringSites": {
     "message": "بۇ تور بەتلەردە يۈرگەندە تەرجىمە قىلىنغان تېكىستنى كۆرسەت"
@@ -325,9 +313,6 @@
   "calculatestorage": {
     "message": "ھېسابلاپ بېقىڭ"
   },
-  "donatewithpaypal": {
-    "message": "PayPal بىلەن ئىئانە قىلىڭ"
-  },
   "lblAutoTranslateWhenClickingALink": {
     "message": "سىزنى نۆۋەتتىكى تور بېكەت بىلەن ئوخشاش تورغا ئېلىپ بارىدىغان ئۇلانمىنى چەككەندە ئاپتوماتىك تەرجىمە قىلىڭ"
   },
@@ -472,16 +457,13 @@
     "placeholders": {
       "EXTENSION_NAME": {
         "content": "#EXTENSION_NAME#",
-        "example": "TWP - Translate Web Pages"
+        "example": "loxdpsy"
       },
       "EXTENSION_VERSION": {
         "content": "#EXTENSION_VERSION#",
         "example": "9.7"
       }
     }
-  },
-  "donationText": {
-    "message": "مەن بۇ كېڭەيتىشنى ئۈچ يىلدىن كۆپرەك ۋاقىتتىن بۇيان تەتقىق قىلىۋاتىمەن ، يېڭىلاۋاتىمەن ۋە قوللاۋاتىمەن. بىزنىڭ كۈندىلىك ئىشلەتكۈچىلىرىمىزنىڭ 600،000 دىن ئاشىدىغانلىقى ئادەمنى ھەيران قالدۇرىدۇ ، بۇ كىشىلەرنىڭ ھەممىسى Firefox غا مەڭگۈلۈك كۆچۈپ كېتەلەيدۇ.\n\nمەن ھەر ئايدا بۇ كېڭەيتىلمىنىڭ يېڭى نەشرىنى ئېلان قىلىپ ، ئۇنى داۋاملىق ياخشىلاشنى مەقسەت قىلىمەن.\n\nئەگەر سىز پاترون ئەزاسى بولۇپ ، بۇ كېڭەيتىشكە ياخشىلىنىشلارنى ئېلىپ مېنى قوللاپ ئىقتىسادىي جەھەتتىن ياردەم قىلغان بولسىڭىز ، مەن مىننەتدار.\n\nبۇ تۈرگە تۆھپە قوشقان بارلىق كىشىلەرگە رەھمەت."
   },
   "lblEnableDiskCache": {
     "message": "ئىزچىل تەرجىمە ساقلىغۇچنى قوزغىتىڭ (دىسكىدىكى غەملەك)"

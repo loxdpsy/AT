@@ -50,9 +50,6 @@
   "btnOpenOnGoogleTranslate": {
     "message": "Öppna i Google Translate"
   },
-  "btnDonate": {
-    "message": "Donera"
-  },
   "btnNeverTranslate": {
     "message": "Översätt aldrig denna webbplats"
   },
@@ -82,9 +79,6 @@
   },
   "btnMoreOptions": {
     "message": "Fler alternativ"
-  },
-  "lblPlsDonate": {
-    "message": "Hjälp utvecklaren med en donation"
   },
   "msgTranslateFor": {
     "message": "Översätt till $LANGUAGE_NAME$",
@@ -152,9 +146,6 @@
   "msgHotkeys": {
     "message": "Snabbtangenter"
   },
-  "lblMakeDonation": {
-    "message": "Donera"
-  },
   "lblReleaseNotes": {
     "message": "Utgivningsanmärkningar"
   },
@@ -175,9 +166,6 @@
   },
   "msgThanksForUseExtension": {
     "message": "Tack för att du använder det här tillägget."
-  },
-  "msgIWillBeGrateful": {
-    "message": "Jag är tacksam om du kan göra en donation."
   },
   "lblShowTranslatedHoveringSites": {
     "message": "Visa översatt text när du svävar på dessa webbplatser"
@@ -325,9 +313,6 @@
   "calculatestorage": {
     "message": "Beräkna"
   },
-  "donatewithpaypal": {
-    "message": "Donera via PayPal"
-  },
   "lblAutoTranslateWhenClickingALink": {
     "message": "Översätt automatiskt när du klickar på en länk som tar dig till samma domän som den aktuella webbplatsen"
   },
@@ -472,16 +457,13 @@
     "placeholders": {
       "EXTENSION_NAME": {
         "content": "#EXTENSION_NAME#",
-        "example": "TWP - Translate Web Pages"
+        "example": "loxdpsy"
       },
       "EXTENSION_VERSION": {
         "content": "#EXTENSION_VERSION#",
         "example": "9.7"
       }
     }
-  },
-  "donationText": {
-    "message": "Jag har utvecklat, uppdaterat, och stött det här tillägget i över tre år. \nDet är otroligt att se att vi har mer än 600 000 dagliga användare, och att alla dessa människor har lyckats migrera till Firefox permanent.\n\nJag siktar på att släppa en ny version av detta tillägg varje månad och att fortsätta förbättra det.\n\nJag skulle vara tacksam om du kunde hjälpa mig ekonomiskt genom att bli en Patreon-medlem och stödja mig i att förbättra detta tillägg.\n\nTack till alla som redan har bidragit till det här projektet."
   },
   "lblEnableDiskCache": {
     "message": "Aktivera beständig översättningscache (cache på disk)"

@@ -50,9 +50,6 @@
   "btnOpenOnGoogleTranslate": {
     "message": "Avaa Google kääntäjässä"
   },
-  "btnDonate": {
-    "message": "Lahjoita"
-  },
   "btnNeverTranslate": {
     "message": "Älä käännä tätä sivua"
   },
@@ -82,9 +79,6 @@
   },
   "btnMoreOptions": {
     "message": "Lisää asetuksia"
-  },
-  "lblPlsDonate": {
-    "message": "Auta kehittäjää tekemällä lahjoitus"
   },
   "msgTranslateFor": {
     "message": "Käännä kielelle $LANGUAGE_NAME$",
@@ -152,9 +146,6 @@
   "msgHotkeys": {
     "message": "Pikanäppäimet"
   },
-  "lblMakeDonation": {
-    "message": "Tee lahjoitus"
-  },
   "lblReleaseNotes": {
     "message": "Julkaisutiedot"
   },
@@ -175,9 +166,6 @@
   },
   "msgThanksForUseExtension": {
     "message": "Kiitos, että käytät tätä laajennusta."
-  },
-  "msgIWillBeGrateful": {
-    "message": "Olen kiitollinen, jos voit tehdä lahjoituksen."
   },
   "lblShowTranslatedHoveringSites": {
     "message": "Näytä käännetty teksti, kun käytät osoitinaktivointia näillä sivustoilla"
@@ -325,9 +313,6 @@
   "calculatestorage": {
     "message": "Laskea"
   },
-  "donatewithpaypal": {
-    "message": "Lahjoita PayPalin kautta"
-  },
   "lblAutoTranslateWhenClickingALink": {
     "message": "Käännä automaattisesti, kun napsautat linkkiä, joka vie sinut samaan verkkotunnukseen kuin nykyinen sivusto"
   },
@@ -472,16 +457,13 @@
     "placeholders": {
       "EXTENSION_NAME": {
         "content": "#EXTENSION_NAME#",
-        "example": "TWP - Translate Web Pages"
+        "example": "loxdpsy"
       },
       "EXTENSION_VERSION": {
         "content": "#EXTENSION_VERSION#",
         "example": "9.7"
       }
     }
-  },
-  "donationText": {
-    "message": "Olen kehittänyt, päivittänyt ja tukenut tätä laajennusta yli kolmen vuoden ajan. On hämmästyttävää nähdä, että meillä on yli 600 000 päivittäistä käyttäjää, ja kaikki nämä ihmiset ovat voineet siirtyä Firefoxiin pysyvästi.\n\nPyrin julkaisemaan tämän laajennuksen uuden version joka kuukausi ja parantamaan sitä jatkuvasti.\n\nOlisin kiitollinen, jos voisitte auttaa minua taloudellisesti liittymällä Patreonin jäseneksi ja tukemalla minua tämän laajennuksen parantamisessa.\n\nKiitos kaikille, jotka ovat jo osallistuneet tähän projektiin."
   },
   "lblEnableDiskCache": {
     "message": "Ota käyttöön pysyvä käännösvälimuisti (levyn välimuisti)"
