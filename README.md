@@ -1,5 +1,7 @@
 # Atlas Translation
 
+![Version](https://img.shields.io/badge/version-0.0.1.0-1a73e8) ![Release date](https://img.shields.io/github/release-date/loxdpsy/AT?label=release%20date) [![Issues](https://img.shields.io/github/issues/loxdpsy/AT)](https://github.com/loxdpsy/AT/issues) [![Pull requests](https://img.shields.io/github/issues-pr/loxdpsy/AT)](https://github.com/loxdpsy/AT/pulls) [![License: MPL-2.0](https://img.shields.io/github/license/loxdpsy/AT)](LICENSE)
+
 **Translate web pages in real time, in your browser.**
 
 Atlas Translation translates whole pages, selected text, and documents with Google, Bing, Yandex, DeepL, or LibreTranslate.
@@ -37,7 +39,8 @@ Other extensions with a similar name are not Atlas Translation. Store links will
 - **Update check** script that uses the GitHub API and respects the rate limit (see *Checking for updates*).
 - **Per-site and per-language rules**: never translate a site or language, always translate, auto-translate links.
 - **Keyboard shortcuts** for toggling, showing the original, and switching services.
-- **Dark mode**, a redesigned settings page, and a new popup.
+- **About page** with the installed version, credits, license, and links. Open it from the popup's options menu or from Settings.
+- **Themes**: System, Light, or Dark (*Style → Theme*). The settings page and the popup look the same in Chromium browsers and Firefox. The layout follows Chrome's settings page.
 - **Light on memory**: translations are cached with a bounded in-memory cache, and finished requests are released.
 
 ## Install
@@ -102,6 +105,21 @@ Repository secrets used by the workflows (all optional):
 - `CRX_PRIVATE_KEY`: PEM private key for the `.crx` signature. Keep it secret and back it up.
 - `AMO_JWT_ISSUER` and `AMO_JWT_SECRET`: addons.mozilla.org API credentials for signing the XPI.
 
+### Keeping the version in sync
+
+The version lives in five places: `manifest.json`, `firefox_manifest.json`, `package.json`, `package-lock.json`, and the
+version badge at the top of this README. Set all of them at once:
+
+```bash
+npm run version:sync -- 9.8.2.0   # writes every file; warns if CHANGELOG.md has no "## 9.8.2.0" section
+npm run version:check             # prints each version and fails if they differ
+```
+
+`npm run check` runs the same comparison, so CI fails when the versions disagree. The release workflows use
+`scripts/sync-version.mjs` too.
+
+This fork has its own version numbers, starting at 0.0.1.0. The upstream project's releases do not change this version.
+
 ### Release secrets
 
 The release workflows read these secrets. Add them in **Settings → Secrets and variables → Actions → New repository secret**
@@ -133,15 +151,30 @@ gh secret set AMO_JWT_SECRET --body "<secret value from AMO>"
 
 1. The first version has to be uploaded by hand, so AMO creates the listing: download the `atlas-translation-firefox` artifact from a *Firefox build* run, then on addons.mozilla.org choose **Submit a New Add-on** and upload `atlas-translation-<version>-firefox.xpi`. Choose **On this site** (listed), then fill in the name, summary, description, category, and license (MPL-2.0).
 2. Add `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` as secrets (below).
-3. From then on, pushing a tag such as `v9.8.2.0` signs the XPI with the `listed` channel and submits it to AMO. AMO's review decides when it becomes public, usually within days. Set the repository variable `AMO_CHANNEL` to `unlisted` if you want self-distribution (signed immediately, not in the store).
+3. By default, a tag or a *Firefox build* run with submit turned on signs the XPI for the `unlisted` channel. That is signed for self-distribution and is not put in the store. The workflow will not send a `listed` version unless you set the repository variable `AMO_CHANNEL` to `listed` **and** `AMO_LISTING_READY` to `true`. Set `AMO_LISTING_READY` only after the listing has its icon, screenshots, description, and license. Mozilla reviews listed versions before they go public.
 4. Bump the `version` in `manifest.json` (and `firefox_manifest.json`) before each tag. AMO rejects a version number that already exists.
 
 Firefox signing also needs the add-on ID in `firefox_manifest.json` to belong to your AMO account. This fork uses its own ID, so
 the first upload creates the add-on under your account. If you change the ID later, you must sign with the new one too.
 
+### Edge Add-ons automatic submission
+
+The release workflow can upload the Chromium package to your existing Edge listing and submit it for certification. It
+runs in `.github/workflows/edge.yml`, after a release is published. Without these secrets the job is skipped.
+
+| Secret | Where the value comes from |
+| --- | --- |
+| `EDGE_PRODUCT_ID` | The product ID (a GUID) on your extension's **Overview** page in Partner Center. It's in the address bar between `microsoftedge/` and `/packages`. |
+| `EDGE_CLIENT_ID` | Partner Center → **Microsoft Edge** → **Publish API** → **Create API credentials**. |
+| `EDGE_API_KEY` | The API key from the same page. It expires, so note the date and create a new one before then. |
+
+Do the **first** submission by hand in Partner Center. The API can only update a listing that already exists. After that,
+each release uploads the new package and submits it. Edge can take up to seven business days to certify an update. Certification
+notes are set in the workflow. Keep the listing text and screenshots in Partner Center.
+
 ### Checking for updates
 
-`npm run update:check` queries the GitHub API for the latest release of `loxdpsy/twp` and compares it with the version in
+`npm run update:check` queries the GitHub API for the latest release of `loxdpsy/AT` and compares it with the version in
 `manifest.json`. It checks the API rate limit first (`GET /rate_limit`, which does not use up the quota) and skips the lookups when
 too few requests remain. Add `--upstream` to also check FilipePS's project. Set `GITHUB_TOKEN` to raise the limit from
 60 to 5,000 requests per hour. The **Update check** workflow runs this every Monday and writes the result to the run summary.
@@ -162,6 +195,51 @@ _locales/                Interface translations
 scripts/                 Build, check, and update-check scripts
 .github/workflows/       Release builds for Chromium and Firefox, and the weekly update check
 ```
+
+## Security and privacy
+
+The full privacy policy, written for store listings, is in [docs/privacy-policy.md](docs/privacy-policy.md).
+
+**What leaves your browser.** Text is sent to a translation service only when you ask for a translation: a page, a
+selection, or a word. The text goes to the service you chose in *Translations* (Google, Bing, Yandex, DeepL, or your own
+LibreTranslate server). Each service handles the text under its own privacy policy.
+
+- DeepL keys are sent only to `api.deepl.com` or `api-free.deepl.com`.
+- LibreTranslate requests go only to the server address you enter.
+- The extension has no accounts, analytics, or telemetry. Nothing is sent to the project's authors.
+- All code ships inside the package. The extension does not load code from the internet while it runs.
+
+**What is stored.** Settings, your API keys, and the translation cache are kept in the browser's extension storage on
+your computer. Clear the cache in *Storage*. Removing the extension deletes all of it.
+
+**Permissions and why they are needed.**
+
+- `<all_urls>`: to translate any page you open.
+- `activeTab` and `contextMenus`: the toolbar button and the right-click menu.
+- `storage`: settings and the cache.
+- `webRequest`: reads each page's `Content-Type` header so PDFs can be recognised. It does not change or block requests.
+- `offscreen` (Chromium only): plays text-to-speech audio.
+- `webNavigation` (optional): asked for only when you turn on *Automatically translate when clicking a link*.
+
+**Third-party helper sites.** *Translate PDF* opens websites run by others: `pdf.translatewebpages.org`,
+`pdftohtml.translatewebpages.org`, and `onlinedoctranslator.com`. Files you upload there go to those sites, not through
+this extension. Do not upload confidential documents to them.
+
+**Keys.** Anyone who has your DeepL key can use your quota. If a key leaks, revoke it in your DeepL account and create a new
+one.
+
+**Updates.** The update checker (`scripts/check-update.mjs`) and the Update check workflow run on GitHub, not in your
+browser. They call the GitHub API and nothing else.
+
+**Reporting a security problem.** Please do not open a public issue. Use GitHub's private vulnerability reporting
+(**Security** tab → **Report a vulnerability**). If that option is not turned on for the repository yet, ask the maintainer
+for a private way to report it.
+
+## Logo
+
+The icon is the sunburst from the Atlas Commerce brand (Etherealmber/atlas-commerce), on the Atlas black tile. A translation
+badge in the corner (two opposing arrows) marks it as a translation tool. The source assets are in
+`branding/atlas-source/`. The icons are generated by `scripts/make-atlas-translation-icons.py`.
 
 ## Notes and limits
 

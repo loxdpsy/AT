@@ -1,0 +1,143 @@
+name: Edge Add-ons
+
+# Uploads the Chromium package to an existing Microsoft Edge Add-ons listing and submits it for certification.
+# Called by release.yml after the Chromium build. You can also set the secrets and run a release to test it.
+#
+# Secrets (Settings > Secrets and variables > Actions):
+#   EDGE_PRODUCT_ID  the product GUID from the Edge extension overview page
+#   EDGE_CLIENT_ID   from Partner Center > Publish API > Create API credentials
+#   EDGE_API_KEY     the API key from the same page. It expires, so note the date.
+#
+# If any secret is missing, the job is skipped and the summary says so.
+# The first submission must be done by hand in Partner Center. The API can only update an existing product.
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Version that was built, for example 9.8.2.0"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  submit:
+    name: Submit to Edge Add-ons
+    runs-on: ubuntu-latest
+    env:
+      EDGE_API: https://api.addons.microsoftedge.microsoft.com
+      EDGE_PRODUCT_ID: ${{ secrets.EDGE_PRODUCT_ID }}
+      EDGE_CLIENT_ID: ${{ secrets.EDGE_CLIENT_ID }}
+      EDGE_API_KEY: ${{ secrets.EDGE_API_KEY }}
+      VERSION: ${{ inputs.version }}
+    steps:
+      - name: Check the Edge secrets
+        id: check
+        run: |
+          if [ -z "$EDGE_PRODUCT_ID" ] || [ -z "$EDGE_CLIENT_ID" ] || [ -z "$EDGE_API_KEY" ]; then
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Edge secrets are not set. Skipping the Edge submission."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download the Chromium package
+        if: steps.check.outputs.ready == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: atlas-translation-chromium
+          path: dist
+
+      - name: Upload the package and submit it
+        if: steps.check.outputs.ready == 'true'
+        run: |
+          set -euo pipefail
+          ZIP="dist/atlas-translation-${VERSION}-chromium.zip"
+          if [ ! -f "$ZIP" ]; then
+            echo "::error::$ZIP not found in the Chromium artifact"
+            exit 1
+          fi
+
+          # Turn a Location header (absolute or relative) into a full URL.
+          resolve() {
+            case "$1" in
+              http*) echo "$1" ;;
+              *) echo "$EDGE_API$1" ;;
+            esac
+          }
+
+          # Poll an operation until it succeeds, fails, or times out (about 10 minutes).
+          wait_for_operation() {
+            local url="$1" label="$2" body status
+            for i in $(seq 1 60); do
+              body=$(curl -sS -H "Authorization: ApiKey $EDGE_API_KEY" -H "X-ClientID: $EDGE_CLIENT_ID" "$url")
+              status=$(printf '%s' "$body" | jq -r '.status // empty' 2>/dev/null || true)
+              echo "$label: ${status:-unknown} (check $i)"
+              case "$status" in
+                Succeeded) return 0 ;;
+                Failed)
+                  echo "$body"
+                  echo "::error::Edge $label failed. See the response above."
+                  return 1 ;;
+              esac
+              sleep 10
+            done
+            echo "::error::Edge $label did not finish in time"
+            return 1
+          }
+
+          # 1. Upload the package to the draft submission.
+          headers=$(mktemp)
+          code=$(curl -sS -o /dev/null -D "$headers" -w "%{http_code}" -X POST \
+            -H "Authorization: ApiKey $EDGE_API_KEY" \
+            -H "X-ClientID: $EDGE_CLIENT_ID" \
+            -H "Content-Type: application/zip" \
+            --data-binary "@$ZIP" \
+            "$EDGE_API/v1/products/$EDGE_PRODUCT_ID/submissions/draft/package")
+          if [ "$code" != "202" ]; then
+            echo "::error::Package upload returned HTTP $code"
+            cat "$headers"
+            exit 1
+          fi
+          loc=$(tr -d '\r' < "$headers" | grep -i '^location:' | sed 's/^[Ll]ocation: *//' || true)
+          if [ -n "$loc" ]; then
+            wait_for_operation "$(resolve "$loc")" "package upload"
+          else
+            echo "::warning::No Location header returned for the upload. Check the draft in Partner Center."
+          fi
+
+          # 2. Submit the draft for certification.
+          headers=$(mktemp)
+          code=$(curl -sS -o /dev/null -D "$headers" -w "%{http_code}" -X POST \
+            -H "Authorization: ApiKey $EDGE_API_KEY" \
+            -H "X-ClientID: $EDGE_CLIENT_ID" \
+            -H "Content-Type: application/json" \
+            -d "{\"notes\": \"Atlas Translation $VERSION. Release notes are on the GitHub release.\"}" \
+            "$EDGE_API/v1/products/$EDGE_PRODUCT_ID/submissions")
+          if [ "$code" != "202" ]; then
+            echo "::error::Submission returned HTTP $code"
+            cat "$headers"
+            exit 1
+          fi
+          loc=$(tr -d '\r' < "$headers" | grep -i '^location:' | sed 's/^[Ll]ocation: *//' || true)
+          if [ -n "$loc" ]; then
+            wait_for_operation "$(resolve "$loc")" "submission"
+          fi
+          echo "Submitted $VERSION to Edge Add-ons for certification."
+
+      - name: Write job summary
+        if: always()
+        run: |
+          {
+            echo "## Edge Add-ons: ${VERSION}"
+            echo
+            if [ "${{ steps.check.outputs.ready }}" != "true" ]; then
+              echo "Skipped. Set the EDGE_PRODUCT_ID, EDGE_CLIENT_ID and EDGE_API_KEY secrets to submit automatically."
+            elif [ "${{ job.status }}" = "success" ]; then
+              echo "The package was uploaded and submitted for certification. Edge usually certifies within a few business days."
+            else
+              echo "The Edge submission failed. Open the job log for the error, then submit by hand in Partner Center if needed."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

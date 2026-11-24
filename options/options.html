@@ -7,7 +7,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="/w3css/4/w3.css" />
   <link rel="stylesheet" href="options.css" />
-  <script src="darkmode.js"></script>
+  <script src="/lib/theme.js"></script>
 </head>
 
 <body>
@@ -26,6 +26,7 @@
         <a href="#hotkeys" class="nav-item desktopOnly" data-i18n="msgHotkeys">Hotkeys</a>
         <a href="#storage" class="nav-item" data-i18n="msgStorage">Storage</a>
         <a href="#others" class="nav-item" data-i18n="lblOthers">Others</a>
+        <a href="/about/about.html" target="_blank" rel="noopener noreferrer" class="nav-item" data-i18n="lblAbout">About</a>
       </nav>
     </aside>
 
@@ -378,11 +379,11 @@
         </div>
         <div class="card">
           <div class="row">
-            <div class="row-text"><div class="row-title" data-i18n="lblDarkMode">Dark mode</div></div>
+            <div class="row-text"><div class="row-title" data-i18n="lblTheme">Theme</div></div>
             <div class="row-control"><select id="darkMode" class="select">
-<option value="auto" data-i18n="msgAutomatic">Automatic</option>
-<option value="yes" data-i18n="msgYes">Yes</option>
-<option value="no" data-i18n="msgNo">No</option>
+<option value="auto" data-i18n="lblThemeSystem">System</option>
+<option value="yes" data-i18n="lblThemeDark">Dark</option>
+<option value="no" data-i18n="lblThemeLight">Light</option>
 </select></div>
           </div>
           <div class="row desktopOnly">
@@ -490,15 +491,8 @@
 </select></div>
           </div>
         </div>
-        <div class="card credits">
-          <h2 class="card-title">About Atlas Translation</h2>
-          <p class="card-desc">Atlas Translation is a modified fork of <strong>TWP - Translate Web Pages</strong>, created by
-            <a href="https://github.com/FilipePS" target="_blank" rel="noopener noreferrer">FilipePS</a>.
-            Thank you for the original work. The code is released under the
-            <a href="https://github.com/FilipePS/Traduzir-paginas-web" target="_blank" rel="noopener noreferrer">Mozilla Public License 2.0</a>.
-            See NOTICE.md and LICENSE in the source.</p>
-        </div>
       </section>
+
     </main>
   </div>
 

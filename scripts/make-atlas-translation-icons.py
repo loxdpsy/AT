@@ -1,64 +1,61 @@
 #!/usr/bin/env python3
 """Builds the Atlas Translation extension icons from the Atlas Commerce sunburst.
 
-The sunburst is taken from the Atlas Commerce brand (public/atlas-icon-dark.png). A translation badge
-(a paper-coloured disc with "A" and a two-way arrow) is added at the bottom right, so the icon reads as
-a translation tool while keeping the Atlas look.
+Design: an Atlas black tile with the paper-coloured sunburst from Atlas Commerce (public/atlas-icon-dark.png),
+and a translation marker in the bottom-right corner: a paper disc with a black ring and two opposite arrows
+(the universal "translate" sign). Shapes are drawn at 4x and downscaled, so the edges stay clean at 16 px.
 
 Usage: python3 scripts/make-atlas-translation-icons.py <source-dir> <output-dir>
   source-dir: folder that contains atlas-icon-dark.png (from Etherealmber/atlas-commerce public/)
-Requires Pillow (pip install pillow) and DejaVu Sans Bold (Linux) or any Bold sans font.
+Requires Pillow (pip install pillow).
 """
 import os
 import sys
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
-INK = (10, 10, 10, 255)          # Atlas accent #0a0a0a
-PAPER = (255, 253, 249, 255)     # Atlas paper #fffdf9
-FONT_CANDIDATES = [
-    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
-    "/Library/Fonts/Arial Bold.ttf",
-    "C:/Windows/Fonts/arialbd.ttf",
-]
+INK = (10, 10, 10, 255)        # Atlas accent #0a0a0a
+PAPER = (255, 253, 249, 255)   # Atlas paper #fffdf9
+SS = 4                         # supersampling factor
 
 
-def load_font(size):
-    for path in FONT_CANDIDATES:
-        if os.path.exists(path):
-            return ImageFont.truetype(path, size)
-    return ImageFont.load_default()
+def arrow(draw, x0, x1, y, head, width, color):
+    """Horizontal arrow from x0 to x1 at height y. head > 0 points right, head < 0 points left."""
+    draw.line([(x0, y), (x1, y)], fill=color, width=width)
+    tip = x1
+    base = x1 - head * 0.9
+    h = width * 1.6
+    width = round(width)
+    draw.polygon([(tip, y), (base, y - h), (base, y + h)], fill=color)
 
 
 def build(source_dir, size):
+    big = size * SS
     sun = Image.open(os.path.join(source_dir, "atlas-icon-dark.png")).convert("RGBA")
-    # Tile: rounded black square, like the Atlas app icon.
-    canvas = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    canvas = Image.new("RGBA", (big, big), (0, 0, 0, 0))
     draw = ImageDraw.Draw(canvas)
-    draw.rounded_rectangle([0, 0, size - 1, size - 1], radius=round(size * 0.22), fill=INK)
 
-    # Sunburst in paper colour, upper left.
-    sun_size = round(size * 0.66)
-    sun_resized = sun.resize((sun_size, sun_size), Image.LANCZOS)
-    sun_tinted = Image.new("RGBA", sun_resized.size, PAPER)
-    sun_tinted.putalpha(sun_resized.getchannel("A"))
-    offset = round(size * 0.12)
-    canvas.alpha_composite(sun_tinted, (offset, offset))
+    # 1. Tile: rounded black square.
+    draw.rounded_rectangle([0, 0, big - 1, big - 1], radius=round(big * 0.22), fill=INK)
 
-    # Translation badge: paper disc with a black ring, bottom right.
-    radius = round(size * 0.22)
-    cx, cy = size - radius - round(size * 0.04), size - radius - round(size * 0.04)
-    draw.ellipse([cx - radius - round(size * 0.02), cy - radius - round(size * 0.02),
-                  cx + radius + round(size * 0.02), cy + radius + round(size * 0.02)], fill=INK)
-    draw.ellipse([cx - radius, cy - radius, cx + radius, cy + radius], fill=PAPER)
-    if size >= 32:
-        font = load_font(max(8, round(size * 0.24)))
-        draw.text((cx, cy), "A\u21c4", font=font, fill=INK, anchor="mm")
-    else:
-        # Too small for text at 16 px: draw two short arrows instead.
-        w = max(1, round(size * 0.02))
-        draw.line([cx - radius * 0.6, cy - radius * 0.2, cx + radius * 0.6, cy - radius * 0.2], fill=INK, width=w)
-        draw.line([cx - radius * 0.6, cy + radius * 0.2, cx + radius * 0.6, cy + radius * 0.2], fill=INK, width=w)
-    return canvas
+    # 2. Sunburst in paper colour, centred in the upper part of the tile.
+    sun_px = round(big * 0.56)
+    s = sun.resize((sun_px, sun_px), Image.LANCZOS)
+    tinted = Image.new("RGBA", (sun_px, sun_px), PAPER)
+    tinted.putalpha(s.getchannel("A"))
+    canvas.alpha_composite(tinted, (round(big * 0.12), round(big * 0.08)))
+
+    # 3. Translation marker: paper disc with black ring, bottom right.
+    r = big * 0.21
+    cx = cy = big * 0.745
+    ring = big * 0.035
+    draw.ellipse([cx - r - ring, cy - r - ring, cx + r + ring, cy + r + ring], fill=INK)
+    draw.ellipse([cx - r, cy - r, cx + r, cy + r], fill=PAPER)
+    # Two opposite arrows inside the disc: right arrow on top, left arrow below.
+    w = max(1, round(big * 0.038))
+    arrow(draw, cx - r * 0.62, cx + r * 0.52, cy - r * 0.28, head=r * 0.5, width=w, color=INK)
+    arrow(draw, cx + r * 0.62, cx - r * 0.52, cy + r * 0.28, head=-r * 0.5, width=w, color=INK)
+
+    return canvas.resize((size, size), Image.LANCZOS)
 
 
 def main():
@@ -68,8 +65,9 @@ def main():
     source_dir, out_dir = sys.argv[1], sys.argv[2]
     os.makedirs(out_dir, exist_ok=True)
     for size in (16, 32, 48, 64, 128):
-        build(source_dir, size).save(os.path.join(out_dir, f"icon-{size}.png"), optimize=True)
-        print("wrote", os.path.join(out_dir, f"icon-{size}.png"))
+        path = os.path.join(out_dir, f"icon-{size}.png")
+        build(source_dir, size).save(path, optimize=True)
+        print("wrote", path)
 
 
 if __name__ == "__main__":

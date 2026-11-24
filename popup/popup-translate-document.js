@@ -111,41 +111,8 @@ selectService.onclick = async e => {
   }
 };
 $ = document.querySelector.bind(document);
-function disableDarkMode() {
-  if (!$("#lightModeElement")) {
-    const el = document.createElement("style");
-    el.setAttribute("id", "lightModeElement");
-    el.setAttribute("rel", "stylesheet");
-    el.textContent = `
-        body {
-            color: rgb(0, 0, 0);
-            background-color: rgb(224, 224, 224);
-        }
-        .servicebutton, .sendbutton, .title {
-            background-color: rgba(0, 0, 0, 0.2);
-        }
-        
-        .servicebutton:hover, .sendbutton:hover {
-            background-color: rgba(0, 0, 0, 0.4);
-        }
-        `;
-    document.head.appendChild(el);
-  }
-}
-function enableDarkMode() {
-  if ($("#lightModeElement")) $("#lightModeElement").remove();
-}
 twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
   twpI18n.translateDocument();
-  switch (twpConfig.get("darkMode")) {
-    case "auto":
-      if (matchMedia("(prefers-color-scheme: dark)").matches) enableDarkMode();else disableDarkMode();
-      break;
-    case "yes":
-      enableDarkMode();
-      break;
-    case "no":
-      disableDarkMode();
-      break;
-  }
+  const darkPref = twpConfig.get("darkMode");
+  twpTheme.set(["auto", "yes", "no"].includes(darkPref) ? darkPref : "auto");
 });

@@ -1,6 +1,6 @@
 {
   "name": "atlas-translation",
-  "version": "9.8.1.0",
+  "version": "0.0.1.0",
   "description": "Atlas Translation: translate web pages in real time (a fork of TWP - Translate Web Pages by FilipePS).",
   "private": true,
   "license": "MPL-2.0",
@@ -10,7 +10,9 @@
     "build": "node scripts/build.mjs all",
     "build:chromium": "node scripts/build.mjs chromium",
     "build:firefox": "node scripts/build.mjs firefox",
-    "update:check": "node scripts/check-update.mjs"
+    "update:check": "node scripts/check-update.mjs",
+    "version:sync": "node scripts/sync-version.mjs",
+    "version:check": "node scripts/sync-version.mjs"
   },
   "devDependencies": {
     "archiver": "^7.0.1",
@@ -21,6 +23,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/loxdpsy/twp.git"
+    "url": "https://github.com/loxdpsy/AT.git"
   }
 }

@@ -3,7 +3,9 @@ name: Firefox build
 # Builds Atlas Translation for Firefox and Firefox for Android: a ZIP and an unsigned XPI.
 # With "submit" turned on, the add-on is also submitted to addons.mozilla.org (AMO).
 #   - Secrets AMO_JWT_ISSUER and AMO_JWT_SECRET are required for submission.
-#   - Repository variable AMO_CHANNEL: "listed" (default, public after Mozilla review) or "unlisted".
+#   - Repository variable AMO_CHANNEL: "unlisted" (default: signed for self-distribution, no public listing) or "listed".
+#   - "listed" is skipped unless the repository variable AMO_LISTING_READY is "true". Set it only after the listing has its
+#     icon, screenshots, description, and license, so Mozilla never reviews an empty listing.
 #   - .github/amo-metadata.json supplies the license, category, and summary AMO requires.
 #
 # Run it by hand: Actions > Firefox build > Run workflow. The Release workflow also calls this file.
@@ -53,7 +55,7 @@ jobs:
 
       - name: Set the version
         if: ${{ inputs.version != '' }}
-        run: node scripts/set-version.mjs "${{ inputs.version }}"
+        run: node scripts/sync-version.mjs "${{ inputs.version }}"
 
       - name: Install dependencies
         run: npm ci
@@ -78,10 +80,15 @@ jobs:
         env:
           AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
           AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
-          AMO_CHANNEL: ${{ vars.AMO_CHANNEL || 'listed' }}
+          AMO_CHANNEL: ${{ vars.AMO_CHANNEL || 'unlisted' }}
+          AMO_LISTING_READY: ${{ vars.AMO_LISTING_READY }}
         run: |
           if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ]; then
             echo "AMO keys are not set. Skipping the submission." | tee build/amo-submit.log
+            exit 0
+          fi
+          if [ "$AMO_CHANNEL" = "listed" ] && [ "$AMO_LISTING_READY" != "true" ]; then
+            echo "Skipping the listed submission. Set the repository variable AMO_LISTING_READY to true once the AMO listing has its icon, screenshots, description, and license." | tee build/amo-submit.log
             exit 0
           fi
           npx --yes web-ext@8 sign \
@@ -101,7 +108,7 @@ jobs:
             echo ""
             echo "- Build result: **${{ job.status }}**"
             echo "- Submitted to addons.mozilla.org: **${{ inputs.submit }}**"
-            echo "- Channel: \`${{ vars.AMO_CHANNEL || 'listed' }}\`"
+            echo "- Channel: \`${{ vars.AMO_CHANNEL || 'unlisted' }}\`"
             echo "- Commit: \`${GITHUB_SHA:0:7}\`"
             echo ""
             echo "| File | Size | SHA-256 (first 16) |"

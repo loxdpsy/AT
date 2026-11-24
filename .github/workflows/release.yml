@@ -92,7 +92,7 @@ jobs:
             fi
             SHA="$GITHUB_SHA"
           elif [ "$PUBLISH" = "true" ]; then
-            node scripts/set-version.mjs "$VERSION"
+            node scripts/sync-version.mjs "$VERSION"
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add manifest.json firefox_manifest.json
@@ -151,6 +151,15 @@ jobs:
       version: ${{ needs.prepare.outputs.version }}
       ref: ${{ needs.prepare.outputs.sha }}
       submit: ${{ needs.prepare.outputs.submit == 'true' }}
+    secrets: inherit
+
+  edge:
+    name: Edge Add-ons
+    needs: [prepare, chromium]
+    if: ${{ always() && needs.prepare.result == 'success' && needs.prepare.outputs.publish == 'true' && needs.chromium.result == 'success' }}
+    uses: ./.github/workflows/edge.yml
+    with:
+      version: ${{ needs.prepare.outputs.version }}
     secrets: inherit
 
   publish:

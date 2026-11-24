@@ -70,61 +70,8 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     });
   }
   selectTargetLanguage.value = twpConfig.get("targetLanguage");
-  function enableDarkMode() {
-    if (!document.getElementById("darkModeElement")) {
-      const el = document.createElement("style");
-      el.setAttribute("id", "darkModeElement");
-      el.setAttribute("rel", "stylesheet");
-      el.textContent = `
-            * {
-                scrollbar-color: #202324 #454a4d;
-            }
-            
-            body {
-                color: #e8e6e3 !important;
-                background-color: #181a1b !important;
-                border: 1px solid #454a4d;
-            }
-            
-            #btnSwitchInterfaces:hover {
-                background-color: #454a4d !important;
-                color: rgb(231, 230, 228) !important;
-            }
-            
-            #selectTargetLanguage, #btnReset, #btnRestore, #btnTryAgain, #btnOptionB, #btnImproveTranslation {
-                color: #55a9ed !important;
-                background-color: #181a1b !important;
-                border: 1px solid #454a4d !important;
-            }
-
-            #btnImproveTranslation {
-              color: rgb(231, 230, 228) !important;
-            }
-
-            select, option {
-              color: GhostWhite !important;
-              background-color: #181a1b !important;
-            }
-            `;
-      document.head.appendChild(el);
-    }
-  }
-  function disableDarkMode() {
-    if (document.getElementById("darkModeElement")) {
-      document.getElementById("darkModeElement").remove();
-    }
-  }
-  if (twpConfig.get("darkMode") == "auto") {
-    if (matchMedia("(prefers-color-scheme: dark)").matches) {
-      enableDarkMode();
-    } else {
-      disableDarkMode();
-    }
-  } else if (twpConfig.get("darkMode") == "yes") {
-    enableDarkMode();
-  } else {
-    disableDarkMode();
-  }
+  const darkPref = twpConfig.get("darkMode");
+  twpTheme.set(["auto", "yes", "no"].includes(darkPref) ? darkPref : "auto");
   let originalTabLanguage = "und";
   let currentPageLanguage = "und";
   let currentPageLanguageState = "original";

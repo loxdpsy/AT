@@ -83,53 +83,6 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     eRecentsLangs.appendChild(option);
   }
   selectTargetLanguage.value = twpConfig.get("targetLanguages")[0];
-  function disableDarkMode() {
-    if (!$("#lightModeElement")) {
-      const el = document.createElement("style");
-      el.setAttribute("id", "lightModeElement");
-      el.setAttribute("rel", "stylesheet");
-      el.textContent = `
-            body {
-                color: rgb(0, 0, 0);
-                background-color: rgb(224, 224, 224);
-            }
-  
-            .select, #btnApply {
-                color: black;
-                background-color: rgba(0, 0, 0, 0.2);
-            }
-            
-            .select:hover, .select:focus, #btnApply:hover {
-                background-color: rgba(0, 0, 0, 0.4);
-            }
-  
-            .mdiv, .md {
-                background-color: rgb(0, 0, 0);
-            }
-            `;
-      document.head.appendChild(el);
-    }
-  }
-  function enableDarkMode() {
-    if ($("#lightModeElement")) {
-      $("#lightModeElement").remove();
-    }
-  }
-  switch (twpConfig.get("darkMode")) {
-    case "auto":
-      if (matchMedia("(prefers-color-scheme: dark)").matches) {
-        enableDarkMode();
-      } else {
-        disableDarkMode();
-      }
-      break;
-    case "yes":
-      enableDarkMode();
-      break;
-    case "no":
-      disableDarkMode();
-      break;
-    default:
-      break;
-  }
+  const darkPref = twpConfig.get("darkMode");
+  twpTheme.set(["auto", "yes", "no"].includes(darkPref) ? darkPref : "auto");
 });

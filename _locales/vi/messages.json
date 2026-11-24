@@ -494,5 +494,23 @@
   },
   "msgExtUILanguage": {
     "message": "Ngôn ngữ giao diện người dùng của tiện ích"
+  },
+  "lblTheme": {
+    "message": "Theme"
+  },
+  "lblThemeSystem": {
+    "message": "System"
+  },
+  "lblThemeLight": {
+    "message": "Light"
+  },
+  "lblThemeDark": {
+    "message": "Dark"
+  },
+  "lblAbout": {
+    "message": "About"
+  },
+  "lblMoreFromEtherealmber": {
+    "message": "More from Etherealmber"
   }
 }

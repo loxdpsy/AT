@@ -2,7 +2,7 @@
 // Checks GitHub for a newer release of Atlas Translation (and optionally the upstream TWP project).
 //
 // Usage:
-//   node scripts/check-update.mjs                    # loxdpsy/twp
+//   node scripts/check-update.mjs                    # loxdpsy/AT
 //   node scripts/check-update.mjs --upstream         # also FilipePS/Traduzir-paginas-web
 //   node scripts/check-update.mjs --min-remaining 20 # stop early when the API budget is low
 //   node scripts/check-update.mjs --fail-if-newer    # exit 1 when a newer release exists
@@ -14,7 +14,7 @@
 import { readFile, appendFile } from "node:fs/promises";
 
 const API = "https://api.github.com";
-const LOCAL_REPO = "loxdpsy/twp";
+const LOCAL_REPO = "loxdpsy/AT";
 const UPSTREAM_REPO = "FilipePS/Traduzir-paginas-web";
 const TIMEOUT_MS = 15000;
 
