@@ -1,15 +1,31 @@
 "use strict";
 
+// When the extension is updated or reloaded, a page keeps its old copy of this script. From then on
+// chrome.runtime throws "Extension context invalidated". Such a copy is stale: stop quietly instead.
+// Returns false when the message was not sent.
+function sendToExtension(message, callback) {
+  try {
+    if (!chrome.runtime || !chrome.runtime.id) return false;
+    chrome.runtime.sendMessage(message, callback);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
 // TODO especificar o parametro HL para aprimorar a detecção de idioma
 //TODO desativar o botão caso a pagina esteja traduzida
 var translateSelected = {};
 function getTabHostName() {
-  return new Promise(resolve => chrome.runtime.sendMessage({
-    action: "getTabHostName"
-  }, result => {
-    checkedLastError();
-    resolve(result);
-  }));
+  return new Promise(resolve => {
+    const sent = sendToExtension({
+      action: "getTabHostName"
+    }, result => {
+      checkedLastError();
+      resolve(result);
+    });
+    if (!sent) resolve(undefined);
+  });
 }
 Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
   const tabHostName = _[1];
@@ -66,7 +82,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
   let isPlayingAudio = false;
   function playAudio(text, targetLanguage, cbOnEnded = () => {}) {
     isPlayingAudio = true;
-    chrome.runtime.sendMessage({
+    const sent = sendToExtension({
       action: "textToSpeech",
       text,
       targetLanguage
@@ -75,11 +91,15 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
       isPlayingAudio = false;
       cbOnEnded();
     });
+    if (!sent) {
+      isPlayingAudio = false;
+      cbOnEnded();
+    }
   }
   function stopAudio() {
     if (!isPlayingAudio) return;
     isPlayingAudio = false;
-    chrome.runtime.sendMessage({
+    sendToExtension({
       action: "stopAudio"
     }, checkedLastError);
   }
@@ -922,7 +942,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
   let windowIsInFocus = true;
   window.addEventListener("focus", function (e) {
     windowIsInFocus = true;
-    chrome.runtime.sendMessage({
+    sendToExtension({
       action: "thisFrameIsInFocus"
     }, checkedLastError);
   });
