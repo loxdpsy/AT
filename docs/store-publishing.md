@@ -42,7 +42,8 @@ The store gives the extension its own ID. The `CRX_PRIVATE_KEY` is only for self
 3. Upload the first version by hand, or let the workflow do it. Choose **On this site** (listed). Firefox for Android installs
    listed add-ons from the same listing, so there is no separate Android submission.
 4. Fill in the listing: name, summary, description, category (*Language support*), license (MPL-2.0), and the privacy policy.
-5. After that, pushing a tag submits each new version automatically. Mozilla reviews every version before it goes public.
+5. Do not submit a listed version until the listing is complete: icon, at least one screenshot, the description, and the privacy policy URL. A review of an empty listing is rejected or wasted time.
+6. When it is ready, set the repository variables `AMO_CHANNEL` to `listed` and `AMO_LISTING_READY` to `true` (**Settings → Secrets and variables → Actions → Variables**). From then on, tags submit listed versions automatically, and Mozilla reviews each one before it goes public.
 
 The automatic submission needs the secrets `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` (see README, *Release secrets*).
 

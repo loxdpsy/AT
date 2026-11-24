@@ -151,7 +151,7 @@ gh secret set AMO_JWT_SECRET --body "<secret value from AMO>"
 
 1. The first version has to be uploaded by hand, so AMO creates the listing: download the `atlas-translation-firefox` artifact from a *Firefox build* run, then on addons.mozilla.org choose **Submit a New Add-on** and upload `atlas-translation-<version>-firefox.xpi`. Choose **On this site** (listed), then fill in the name, summary, description, category, and license (MPL-2.0).
 2. Add `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` as secrets (below).
-3. From then on, pushing a tag such as `v9.8.2.0` signs the XPI with the `listed` channel and submits it to AMO. AMO's review decides when it becomes public, usually within days. Set the repository variable `AMO_CHANNEL` to `unlisted` if you want self-distribution (signed immediately, not in the store).
+3. By default, a tag or a *Firefox build* run with submit turned on signs the XPI for the `unlisted` channel. That is signed for self-distribution and is not put in the store. The workflow will not send a `listed` version unless you set the repository variable `AMO_CHANNEL` to `listed` **and** `AMO_LISTING_READY` to `true`. Set `AMO_LISTING_READY` only after the listing has its icon, screenshots, description, and license. Mozilla reviews listed versions before they go public.
 4. Bump the `version` in `manifest.json` (and `firefox_manifest.json`) before each tag. AMO rejects a version number that already exists.
 
 Firefox signing also needs the add-on ID in `firefox_manifest.json` to belong to your AMO account. This fork uses its own ID, so
