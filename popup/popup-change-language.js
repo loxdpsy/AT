@@ -84,4 +84,3 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
       break;
   }
 });
-//# sourceMappingURL=https://raw.githubusercontent.com/FilipePS/TWP---Source-Maps/main/maps/9.8.1.0/popup-change-language.js.map

@@ -50,9 +50,6 @@
   "btnOpenOnGoogleTranslate": {
     "message": "Άνοιγμα μεταφραστή Google"
   },
-  "btnDonate": {
-    "message": "Δωρεά"
-  },
   "btnNeverTranslate": {
     "message": "Ποτέ μετάφραση αυτή την ιστοσελίδα"
   },
@@ -82,9 +79,6 @@
   },
   "btnMoreOptions": {
     "message": "Περισσότερες επιλογές"
-  },
-  "lblPlsDonate": {
-    "message": "Βοηθήστε τον προγραμματιστή με μια δωρεά"
   },
   "msgTranslateFor": {
     "message": "Μετάφραση σε $LANGUAGE_NAME$",
@@ -152,9 +146,6 @@
   "msgHotkeys": {
     "message": "Πλήκτρα συντόμευσης"
   },
-  "lblMakeDonation": {
-    "message": "Κάντε μια δωρεά"
-  },
   "lblReleaseNotes": {
     "message": "Σημειώσεις έκδοσης"
   },
@@ -175,9 +166,6 @@
   },
   "msgThanksForUseExtension": {
     "message": "Σας ευχαριστούμε για τη χρήση αυτής της επέκτασης."
-  },
-  "msgIWillBeGrateful": {
-    "message": "Θα είμαι ευγνώμων αν μπορείτε να κάνετε μια δωρεά."
   },
   "lblShowTranslatedHoveringSites": {
     "message": "Εμφάνιση μεταφρασμένου κειμένου όταν αιωρείται σε αυτούς τους ιστότοπους"
@@ -325,9 +313,6 @@
   "calculatestorage": {
     "message": "Υπολογισμός"
   },
-  "donatewithpaypal": {
-    "message": "Δωρεά μέσω PayPal"
-  },
   "lblAutoTranslateWhenClickingALink": {
     "message": "Αυτόματη μετάφραση όταν κάνετε κλικ σε έναν σύνδεσμο που σας μεταφέρει στον ίδιο τομέα με τον τρέχοντα ιστότοπο"
   },
@@ -472,16 +457,13 @@
     "placeholders": {
       "EXTENSION_NAME": {
         "content": "#EXTENSION_NAME#",
-        "example": "TWP - Translate Web Pages"
+        "example": "loxdpsy"
       },
       "EXTENSION_VERSION": {
         "content": "#EXTENSION_VERSION#",
         "example": "9.7"
       }
     }
-  },
-  "donationText": {
-    "message": "Αναπτύσσω, ενημερώνω και υποστηρίζω αυτήν την επέκταση για περισσότερα από τρία χρόνια. Είναι εκπληκτικό να βλέπουμε ότι έχουμε πάνω από 600.000 καθημερινούς χρήστες και όλοι αυτοί οι άνθρωποι μπόρεσαν να μετεγκατασταθούν μόνιμα στον Firefox.\n\nΣτόχος μου είναι να κυκλοφορώ μια νέα έκδοση αυτής της επέκτασης κάθε μήνα και να συνεχίσω να τη βελτιώνω.\n\nΘα σας ήμουν ευγνώμων εάν μπορούσατε να με βοηθήσετε οικονομικά, γίνοντας μέλος του Patreon και υποστηρίζοντάς με να βελτιώσω αυτήν την επέκταση.\n\nΕυχαριστούμε όλους όσους έχουν ήδη συνεισφέρει σε αυτό το έργο."
   },
   "lblEnableDiskCache": {
     "message": "Ενεργοποίηση μόνιμης προσωρινής μνήμης μετάφρασης (κρυφή μνήμη στο δίσκο)"

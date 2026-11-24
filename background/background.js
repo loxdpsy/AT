@@ -2,6 +2,10 @@
 
 // get mimetype
 var tabToMimeType = {};
+// forget the MIME type of closed tabs so the map does not grow forever
+chrome.tabs.onRemoved.addListener(tabId => {
+  delete tabToMimeType[tabId];
+});
 chrome.webRequest.onHeadersReceived.addListener(function (details) {
   if (details.tabId !== -1) {
     let contentTypeHeader = null;
@@ -42,11 +46,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     updateContextMenu(request.pageLanguageState);
   } else if (request.action === "openOptionsPage") {
     tabsCreate(chrome.runtime.getURL("/options/options.html"));
-  } else if (request.action === "openDonationPage") {
-    tabsCreate(chrome.runtime.getURL("/options/options.html#donation"));
   } else if (request.action === "detectTabLanguage") {
     if (!sender.tab) {
-      // https://github.com/FilipePS/Traduzir-paginas-web/issues/478
       sendResponse("und");
       return;
     }
@@ -157,16 +158,6 @@ chrome.runtime.onInstalled.addListener(details => {
       translationCache.deleteTranslationCache();
     });
   }
-  twpConfig.onReady(async () => {
-    if (platformInfo.isMobile.any) {
-      const enabledServices = twpConfig.get("enabledServices");
-      const index = enabledServices.indexOf("deepl");
-      if (index !== -1) {
-        enabledServices.splice(index, 1);
-        twpConfig.set("enabledServices", enabledServices);
-      }
-    }
-  });
 });
 function resetPageAction(tabId, forceShow = false) {
   if (twpConfig.get("translateClickingOnce") === "yes" && !forceShow) {
@@ -205,92 +196,98 @@ function resetBrowserAction(forceShow = false) {
     }
   }
 }
+// MV3: there is a single toolbar action, so every menu item uses the "action" context.
+// The service worker can be restarted at any time, so the static items are rebuilt from
+// scratch with removeAll() on each start; dynamic items are refreshed by updateContextMenu().
 if (typeof chrome.contextMenus !== "undefined") {
-  chrome.contextMenus.create({
-    id: "browserAction-showPopup",
-    title: twpI18n.getMessage("btnShowPopup"),
-    contexts: ["browser_action"]
-  });
-  chrome.contextMenus.create({
-    id: "pageAction-showPopup",
-    title: twpI18n.getMessage("btnShowPopup"),
-    contexts: ["page_action"]
-  });
-  chrome.contextMenus.create({
-    id: "never-translate",
-    title: twpI18n.getMessage("btnNeverTranslate"),
-    contexts: ["browser_action", "page_action"]
-  });
-  chrome.contextMenus.create({
-    id: "more-options",
-    title: twpI18n.getMessage("btnMoreOptions"),
-    contexts: ["browser_action", "page_action"]
-  });
-  chrome.contextMenus.create({
-    id: "browserAction-translate-pdf",
-    title: twpI18n.getMessage("msgTranslatePDF"),
-    contexts: ["browser_action"]
-  });
-  chrome.contextMenus.create({
-    id: "pageAction-translate-pdf",
-    title: twpI18n.getMessage("msgTranslatePDF"),
-    contexts: ["page_action"]
-  });
   const tabHasContentScript = {};
   let currentTabId = null;
+
+  function createContextMenuItem(props) {
+    chrome.contextMenus.create(props, checkedLastError);
+  }
+  function openActionPopup() {
+    if (chrome.action && typeof chrome.action.openPopup === "function") {
+      const result = chrome.action.openPopup();
+      if (result && typeof result.catch === "function") result.catch(() => {});
+      return true;
+    }
+    return false;
+  }
+
+  chrome.contextMenus.removeAll(() => {
+    checkedLastError();
+    createContextMenuItem({
+      id: "action-showPopup",
+      title: twpI18n.getMessage("btnShowPopup"),
+      contexts: ["action"]
+    });
+    createContextMenuItem({
+      id: "never-translate",
+      title: twpI18n.getMessage("btnNeverTranslate"),
+      contexts: ["action"]
+    });
+    createContextMenuItem({
+      id: "more-options",
+      title: twpI18n.getMessage("btnMoreOptions"),
+      contexts: ["action"]
+    });
+    createContextMenuItem({
+      id: "action-translate-pdf",
+      title: twpI18n.getMessage("msgTranslatePDF"),
+      contexts: ["action"]
+    });
+  });
+
   chrome.tabs.onActivated.addListener(activeInfo => currentTabId = activeInfo.tabId);
   chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId == "translate-web-page") {
       const mimeType = tabToMimeType[tab.id];
-      if (mimeType && mimeType.toLowerCase() === "application/pdf" && chrome.pageAction && chrome.pageAction.openPopup) {
-        chrome.pageAction.openPopup();
-      } else {
-        chrome.tabs.sendMessage(tab.id, {
-          action: "toggle-translation"
-        }, checkedLastError);
+      if (mimeType && mimeType.toLowerCase() === "application/pdf" && openActionPopup()) {
+        return;
       }
+      chrome.tabs.sendMessage(tab.id, {
+        action: "toggle-translation"
+      }, checkedLastError);
     } else if (info.menuItemId == "translate-selected-text") {
-      if (chrome.pageAction && chrome.pageAction.openPopup && (!tab || !tabHasContentScript[tab.id] || tab.isInReaderMode)) {
-        chrome.pageAction.setPopup({
+      if (!tab || !tabHasContentScript[tab.id] || tab.isInReaderMode) {
+        const tabId = (tab && tab.id) || currentTabId;
+        chrome.action.setPopup({
           popup: "popup/popup-translate-text.html#text=" + encodeURIComponent(info.selectionText),
-          tabId: (tab === null || tab === void 0 ? void 0 : tab.id) || currentTabId
+          tabId
         });
-        chrome.pageAction.openPopup();
-        resetPageAction((tab === null || tab === void 0 ? void 0 : tab.id) || currentTabId);
+        if (openActionPopup()) {
+          resetPageAction(tabId);
+        } else {
+          chrome.tabs.sendMessage(tabId, {
+            action: "TranslateSelectedText",
+            selectionText: info.selectionText
+          }, checkedLastError);
+        }
       } else {
-        // a merda do chrome não suporte openPopup
         chrome.tabs.sendMessage(tab.id, {
           action: "TranslateSelectedText",
           selectionText: info.selectionText
         }, checkedLastError);
       }
-    } else if (info.menuItemId == "browserAction-showPopup") {
+    } else if (info.menuItemId == "action-showPopup") {
+      const tabId = tab && tab.id;
       resetBrowserAction(true);
-      chrome.browserAction.openPopup();
+      if (tabId !== undefined) resetPageAction(tabId, true);
+      openActionPopup();
       resetBrowserAction();
-    } else if (info.menuItemId == "pageAction-showPopup") {
-      resetPageAction(tab.id, true);
-      chrome.pageAction.openPopup();
-      resetPageAction(tab.id);
+      if (tabId !== undefined) resetPageAction(tabId);
     } else if (info.menuItemId == "never-translate") {
       const hostname = new URL(tab.url).hostname;
       twpConfig.addSiteToNeverTranslate(hostname);
     } else if (info.menuItemId == "more-options") {
       tabsCreate(chrome.runtime.getURL("/options/options.html"));
-    } else if (info.menuItemId == "browserAction-translate-pdf") {
+    } else if (info.menuItemId == "action-translate-pdf") {
       const mimeType = tabToMimeType[tab.id];
-      if (mimeType && mimeType.toLowerCase() === "application/pdf" && typeof chrome.browserAction.openPopup !== "undefined") {
-        chrome.browserAction.openPopup();
-      } else {
-        tabsCreate("https://pdf.translatewebpages.org/");
+      if (mimeType && mimeType.toLowerCase() === "application/pdf" && openActionPopup()) {
+        return;
       }
-    } else if (info.menuItemId == "pageAction-translate-pdf") {
-      const mimeType = tabToMimeType[tab.id];
-      if (mimeType && mimeType.toLowerCase() === "application/pdf" && typeof chrome.pageAction.openPopup !== "undefined") {
-        chrome.pageAction.openPopup();
-      } else {
-        tabsCreate("https://pdf.translatewebpages.org/");
-      }
+      tabsCreate("https://pdf.translatewebpages.org/");
     }
   });
   chrome.tabs.onActivated.addListener(activeInfo => {
@@ -350,15 +347,7 @@ twpConfig.onReady(() => {
       }, checkedLastError);
     });
   } else {
-    if (chrome.pageAction) {
-      chrome.pageAction.onClicked.addListener(tab => {
-        if (twpConfig.get("translateClickingOnce") === "yes") {
-          chrome.tabs.sendMessage(tab.id, {
-            action: "toggle-translation"
-          }, checkedLastError);
-        }
-      });
-    }
+    // chrome.action (MV3) is shared by browserAction and pageAction; one listener is enough.
     chrome.browserAction.onClicked.addListener(tab => {
       if (twpConfig.get("translateClickingOnce") === "yes") {
         chrome.tabs.sendMessage(tab.id, {
@@ -769,28 +758,4 @@ chrome.runtime.onUpdateAvailable.addListener(details => {
     });
   });
 
-  // chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-  //   const url = new URL(tabs[0].url);
-  //   if (
-  //     (url.hostname === "github.com" &&
-  //       url.pathname.includes("FilipePS/Traduzir-paginas-web/releases")) ||
-  //     (url.hostname === "addons.mozilla.org" &&
-  //       url.pathname.includes("addon/traduzir-paginas-web/versions"))
-  //   ) {
-  //     chrome.tabs.query({}, (tabs) => {
-  //       const cleanUpsPromises = [];
-  //       tabs.forEach((tab) => {
-  //         cleanUpsPromises.push(
-  //           new Promise((resolve) => {
-  //             chrome.tabs.sendMessage(tab.id, { action: "cleanUp" }, resolve);
-  //           })
-  //         );
-  //       });
-  //       Promise.all(cleanUpsPromises).finally(() => {
-  //         chrome.runtime.reload();
-  //       });
-  //     });
-  //   }
-  // });
 });
-//# sourceMappingURL=https://raw.githubusercontent.com/FilipePS/TWP---Source-Maps/main/maps/9.8.1.0/background.js.map

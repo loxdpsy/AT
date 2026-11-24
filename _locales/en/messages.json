@@ -1,6 +1,6 @@
 {
   "extensionDescription": {
-    "message": "Translate your page in real time using Google or Yandex."
+    "message": "Translate web pages in real time with Google, Bing, Yandex, DeepL or LibreTranslate."
   },
   "pageActionTitle": {
     "message": "Translate this page"
@@ -50,9 +50,6 @@
   "btnOpenOnGoogleTranslate": {
     "message": "Open in google translator"
   },
-  "btnDonate": {
-    "message": "Donate"
-  },
   "btnNeverTranslate": {
     "message": "Never translate this site"
   },
@@ -82,9 +79,6 @@
   },
   "btnMoreOptions": {
     "message": "More options"
-  },
-  "lblPlsDonate": {
-    "message": "Help the developer with a donation"
   },
   "msgTranslateFor": {
     "message": "Translate to $LANGUAGE_NAME$",
@@ -152,9 +146,6 @@
   "msgHotkeys": {
     "message": "Hotkeys"
   },
-  "lblMakeDonation": {
-    "message": "Make a donation"
-  },
   "lblReleaseNotes": {
     "message": "Release Notes"
   },
@@ -175,9 +166,6 @@
   },
   "msgThanksForUseExtension": {
     "message": "Thank you for using this extension."
-  },
-  "msgIWillBeGrateful": {
-    "message": "I will be grateful if you can make a donation."
   },
   "lblShowTranslatedHoveringSites": {
     "message": "Show translated text when hovering on these sites"
@@ -325,9 +313,6 @@
   "calculatestorage": {
     "message": "Calculate"
   },
-  "donatewithpaypal": {
-    "message": "Donate With PayPal"
-  },
   "lblAutoTranslateWhenClickingALink": {
     "message": "Automatically translate when clicking on a link that takes you to the same domain as the current site"
   },
@@ -472,16 +457,13 @@
     "placeholders": {
       "EXTENSION_NAME": {
         "content": "#EXTENSION_NAME#",
-        "example": "TWP - Translate Web Pages"
+        "example": "loxdpsy"
       },
       "EXTENSION_VERSION": {
         "content": "#EXTENSION_VERSION#",
         "example": "9.7"
       }
     }
-  },
-  "donationText": {
-    "message": "I have been developing, updating, and supporting this extension for over three years. It's amazing to see that we have over 600,000 daily users, and all of these people have been able to migrate to Firefox permanently.\n\nI aim to release a new version of this extension every month and keep improving it.\n\nI would be grateful if you could help me financially by becoming a Patreon member and supporting me in bringing improvements to this extension.\n\nThank you to everyone who has already contributed to this project."
   },
   "lblEnableDiskCache": {
     "message": "Enable persistent translation cache (on-disk cache)"

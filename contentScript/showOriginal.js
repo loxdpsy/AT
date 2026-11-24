@@ -191,4 +191,3 @@ twpConfig.onReady(function () {
     document.removeEventListener("visibilitychange", hideOriginalText);
   };
 });
-//# sourceMappingURL=https://raw.githubusercontent.com/FilipePS/TWP---Source-Maps/main/maps/9.8.1.0/showOriginal.js.map

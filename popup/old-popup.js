@@ -38,11 +38,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     twpConfig.set("showTranslateSelectedButton", e.target.checked ? "yes" : "no");
   };
   cbShowTranslateSelectedButton.checked = twpConfig.get("showTranslateSelectedButton") == "yes" ? true : false;
-  $("#btnPatreon").onclick = e => {
-    window.open("https://www.patreon.com/filipeps", "_blank");
-  };
   $("#btnOptionB").innerHTML += ' <i class="arrow down"></i>';
-  $("#btnOptions option[value='donate']").innerHTML += " &#10084;";
   var cStyle = getComputedStyle(document.querySelector("#btnOptionB"));
   btnOptions.style.width = parseInt(cStyle.width) + 0 + "px";
 
@@ -445,9 +441,6 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
         case "moreOptions":
           tabsCreate(chrome.runtime.getURL("/options/options.html"));
           break;
-        case "donate":
-          tabsCreate(chrome.runtime.getURL("/options/options.html#donation"));
-          break;
         case "translatePDF":
           tabsCreate("https://pdf.translatewebpages.org/");
           break;
@@ -500,4 +493,3 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     }
   });
 });
-//# sourceMappingURL=https://raw.githubusercontent.com/FilipePS/TWP---Source-Maps/main/maps/9.8.1.0/old-popup.js.map

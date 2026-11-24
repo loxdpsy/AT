@@ -50,9 +50,6 @@
   "btnOpenOnGoogleTranslate": {
     "message": "Открыть в Google Переводчике"
   },
-  "btnDonate": {
-    "message": "Пожертвовать"
-  },
   "btnNeverTranslate": {
     "message": "Никогда не переводить этот сайт"
   },
@@ -82,9 +79,6 @@
   },
   "btnMoreOptions": {
     "message": "Дополнительные настройки"
-  },
-  "lblPlsDonate": {
-    "message": "Пожертвовать разработчику"
   },
   "msgTranslateFor": {
     "message": "Перевести на $LANGUAGE_NAME$",
@@ -152,9 +146,6 @@
   "msgHotkeys": {
     "message": "Горячие клавиши"
   },
-  "lblMakeDonation": {
-    "message": "Пожертвовать"
-  },
   "lblReleaseNotes": {
     "message": "Примечания к выпуску"
   },
@@ -175,9 +166,6 @@
   },
   "msgThanksForUseExtension": {
     "message": "Спасибо, что используете это расширение."
-  },
-  "msgIWillBeGrateful": {
-    "message": "Буду признателен, если сделаете пожертвование."
   },
   "lblShowTranslatedHoveringSites": {
     "message": "Показывать переведённый текст при наведении курсора на этих сайтах"
@@ -325,9 +313,6 @@
   "calculatestorage": {
     "message": "Вычислить"
   },
-  "donatewithpaypal": {
-    "message": "Пожертвовать через PayPal"
-  },
   "lblAutoTranslateWhenClickingALink": {
     "message": "Автоматически переводить при нажатии на ссылку, которая ведет на тот же домен, что и текущий сайт"
   },
@@ -472,16 +457,13 @@
     "placeholders": {
       "EXTENSION_NAME": {
         "content": "#EXTENSION_NAME#",
-        "example": "TWP - Translate Web Pages"
+        "example": "loxdpsy"
       },
       "EXTENSION_VERSION": {
         "content": "#EXTENSION_VERSION#",
         "example": "9.7"
       }
     }
-  },
-  "donationText": {
-    "message": "Я разрабатываю, обновляю и поддерживаю это расширение более трёх лет. Удивительно видеть, что у нас более 600 000 ежедневных пользователей, и все они смогли навсегда перейти на Firefox.\n\nЯ планирую выпускать новую версию этого расширения каждый месяц и постоянно улучшать её.\n\nЯ был бы признателен, если бы вы могли помочь мне финансово, став участником Patreon и поддержав меня в улучшении этого расширения.\n\nСпасибо всем, кто уже внёс свой вклад в этот проект."
   },
   "lblEnableDiskCache": {
     "message": "Включить постоянный кэш переводов (кэш на диске)"

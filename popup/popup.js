@@ -246,9 +246,6 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     default:
       break;
   }
-  $("#btnPatreon").onclick = e => {
-    window.open("https://www.patreon.com/filipeps", "_blank");
-  };
   $("#btnSwitchInterfaces").addEventListener("click", () => {
     twpConfig.set("useOldPopup", "yes");
     window.location = "old-popup.html";
@@ -436,9 +433,6 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
         case "moreOptions":
           tabsCreate(chrome.runtime.getURL("/options/options.html"));
           break;
-        case "donate":
-          tabsCreate(chrome.runtime.getURL("/options/options.html#donation"));
-          break;
         case "translatePDF":
           tabsCreate("https://pdf.translatewebpages.org/");
           break;
@@ -465,7 +459,5 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     } else {
       $("option[data-i18n=btnAlwaysTranslate]").textContent = "✔ " + textAlways;
     }
-    $("option[data-i18n=btnDonate]").innerHTML += " &#10084;";
   });
 });
-//# sourceMappingURL=https://raw.githubusercontent.com/FilipePS/TWP---Source-Maps/main/maps/9.8.1.0/popup.js.map

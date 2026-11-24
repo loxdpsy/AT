@@ -18,7 +18,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
   let originalTabLanguage = "und";
   let currentTargetLanguages = twpConfig.get("targetLanguages");
   let currentTargetLanguage = twpConfig.get("targetLanguageTextTranslation");
-  let currentTextTranslatorService = twpConfig.get("textTranslatorService") === "deepl" ? "google" : twpConfig.get("textTranslatorService");
+  let currentTextTranslatorService = twpConfig.get("textTranslatorService");
   let showTranslatedTextWhenHoveringThisSite = twpConfig.get("sitesToTranslateWhenHovering").indexOf(tabHostName) !== -1;
   let showTranslatedTextWhenHoveringThisLang = false;
   let translateTextOverMouseWhenPressTwice = twpConfig.get("translateTextOverMouseWhenPressTwice") === "yes";
@@ -26,7 +26,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
   twpConfig.onChanged(function (name, newValue) {
     switch (name) {
       case "textTranslatorService":
-        currentTextTranslatorService = newValue === "deepl" ? "google" : newValue;
+        currentTextTranslatorService = newValue;
         break;
       case "targetLanguages":
         currentTargetLanguages = newValue;
@@ -133,7 +133,6 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     if (index === -1) {
       return false;
     } else {
-      // https://github.com/FilipePS/Traduzir-paginas-web/issues/654
       if (nodeName === "script" && node.getAttribute("data-spotim-module") === "spotim-launcher" && [...node.childNodes].find(node => node.nodeType === 1)) {
         return false;
       } else {
@@ -568,4 +567,3 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     updateEventListener();
   });
 });
-//# sourceMappingURL=https://raw.githubusercontent.com/FilipePS/TWP---Source-Maps/main/maps/9.8.1.0/showTranslated.js.map

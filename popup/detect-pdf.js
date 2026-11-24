@@ -17,4 +17,3 @@ chrome.runtime.sendMessage({
     window.location = "popup-translate-document.html";
   }
 });
-//# sourceMappingURL=https://raw.githubusercontent.com/FilipePS/TWP---Source-Maps/main/maps/9.8.1.0/detect-pdf.js.map

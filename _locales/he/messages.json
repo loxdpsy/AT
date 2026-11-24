@@ -50,9 +50,6 @@
   "btnOpenOnGoogleTranslate": {
     "message": "פתח בגוגל תרגום"
   },
-  "btnDonate": {
-    "message": "תרומה"
-  },
   "btnNeverTranslate": {
     "message": "לעולם אל תתרגם דף זה"
   },
@@ -82,9 +79,6 @@
   },
   "btnMoreOptions": {
     "message": "אפשרויות נוספות"
-  },
-  "lblPlsDonate": {
-    "message": "תרמו ועזרו למפתח"
   },
   "msgTranslateFor": {
     "message": "תרגם ל: $LANGUAGE_NAME$",
@@ -152,9 +146,6 @@
   "msgHotkeys": {
     "message": "מקשי קיצור"
   },
-  "lblMakeDonation": {
-    "message": "לתרום"
-  },
   "lblReleaseNotes": {
     "message": "מכתבי שחרור"
   },
@@ -175,9 +166,6 @@
   },
   "msgThanksForUseExtension": {
     "message": "תודה על השימוש בתוסף זה."
-  },
-  "msgIWillBeGrateful": {
-    "message": "אני אהיה אסיר תודה אם תוכל להתרום."
   },
   "lblShowTranslatedHoveringSites": {
     "message": "הראה טקסט מתורגם בעת ריחוף באתרים אלה"
@@ -325,9 +313,6 @@
   "calculatestorage": {
     "message": "חשב"
   },
-  "donatewithpaypal": {
-    "message": "תרומה דרך PayPal"
-  },
   "lblAutoTranslateWhenClickingALink": {
     "message": "תרגם באופן אוטומטי ברגע שאתה לוחץ על קישור ונפתח לך דף זהה"
   },
@@ -472,16 +457,13 @@
     "placeholders": {
       "EXTENSION_NAME": {
         "content": "#EXTENSION_NAME#",
-        "example": "TWP - Translate Web Pages"
+        "example": "loxdpsy"
       },
       "EXTENSION_VERSION": {
         "content": "#EXTENSION_VERSION#",
         "example": "9.7"
       }
     }
-  },
-  "donationText": {
-    "message": "אני מפתח, מעדכן ותומך בהרחבה זו במשך יותר משלוש שנים. מדהים לראות שיש לנו יותר מ-600,000 משתמשים יומיים, וכל האנשים האלה הצליחו לעבור ל-Firefox לצמיתות.\n\nאני שואף לשחרר גרסה חדשה של הרחבה זו מדי חודש ולהמשיך לשפר אותה.\n\nאודה לך אם תוכל לעזור לי כלכלית על ידי הפיכתך לחבר בפטראון ותתמוך בי בהבאת שיפורים להרחבה זו.\n\nתודה לכל מי שכבר תרם לפרויקט זה."
   },
   "lblEnableDiskCache": {
     "message": "אפשר מטמון תרגום מתמיד (מטמון בדיסק)"

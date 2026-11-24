@@ -50,9 +50,6 @@
   "btnOpenOnGoogleTranslate": {
     "message": "Odpri v Google prevajalniku"
   },
-  "btnDonate": {
-    "message": "Doniraj"
-  },
   "btnNeverTranslate": {
     "message": "Nikoli ne prevedi te strani"
   },
@@ -82,9 +79,6 @@
   },
   "btnMoreOptions": {
     "message": "Več možnosti"
-  },
-  "lblPlsDonate": {
-    "message": "Pomagaj razvijalcu z donacijo"
   },
   "msgTranslateFor": {
     "message": "Prevedi v $LANGUAGE_NAME$",
@@ -152,9 +146,6 @@
   "msgHotkeys": {
     "message": "Bližnjice"
   },
-  "lblMakeDonation": {
-    "message": "Naredite donacijo"
-  },
   "lblReleaseNotes": {
     "message": "Opombe ob izdaji"
   },
@@ -175,9 +166,6 @@
   },
   "msgThanksForUseExtension": {
     "message": "Zahvaljujemo se vam za uporabo te razširitve."
-  },
-  "msgIWillBeGrateful": {
-    "message": "Hvaležen vam bom, če lahko prispevate."
   },
   "lblShowTranslatedHoveringSites": {
     "message": "Pokažite prevedeno besedilo, ko lebdite na teh straneh"
@@ -325,9 +313,6 @@
   "calculatestorage": {
     "message": "Izračunaj"
   },
-  "donatewithpaypal": {
-    "message": "Donirajte s PayPalom"
-  },
   "lblAutoTranslateWhenClickingALink": {
     "message": "Samodejno prevedi, ko klikneš povezavo, ki te popelje na isto domeno kot trenutno spletno mesto"
   },
@@ -472,16 +457,13 @@
     "placeholders": {
       "EXTENSION_NAME": {
         "content": "#EXTENSION_NAME#",
-        "example": "TWP - Translate Web Pages"
+        "example": "loxdpsy"
       },
       "EXTENSION_VERSION": {
         "content": "#EXTENSION_VERSION#",
         "example": "9.7"
       }
     }
-  },
-  "donationText": {
-    "message": "To razširitev razvijam, posodabljam in podpiram več kot tri leta. Neverjetno je videti, da imamo več kot 600.000 dnevnih uporabnikov in da so vsi ti ljudje lahko trajno prešli na Firefox.\n\nVsak mesec nameravam izdati novo različico te razširitve in jo še naprej izboljševati.\n\nHvaležen bi bil, če bi mi lahko finančno pomagali tako, da bi postal član Patreona in me podprli pri uvajanju izboljšav v to razširitev.\n\nHvala vsem, ki ste že prispevali k temu projektu."
   },
   "lblEnableDiskCache": {
     "message": "Omogoči trajni predpomnilnik prevodov (predpomnilnik na disku)"

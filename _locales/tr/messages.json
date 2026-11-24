@@ -50,9 +50,6 @@
   "btnOpenOnGoogleTranslate": {
     "message": "Google Çeviri'de aç"
   },
-  "btnDonate": {
-    "message": "Bağış yap"
-  },
   "btnNeverTranslate": {
     "message": "Bu siteyi hiçbir zaman çevirme"
   },
@@ -82,9 +79,6 @@
   },
   "btnMoreOptions": {
     "message": "Daha fazla seçenek"
-  },
-  "lblPlsDonate": {
-    "message": "Geliştiriciye bağış yaparak yardımcı ol"
   },
   "msgTranslateFor": {
     "message": "$LANGUAGE_NAME$ diline çevir",
@@ -152,9 +146,6 @@
   "msgHotkeys": {
     "message": "Kısayol Tuşları"
   },
-  "lblMakeDonation": {
-    "message": "Bağış yap"
-  },
   "lblReleaseNotes": {
     "message": "Sürüm Notları"
   },
@@ -175,9 +166,6 @@
   },
   "msgThanksForUseExtension": {
     "message": "Bu uzantıyı kullandığınız için teşekkür ederiz."
-  },
-  "msgIWillBeGrateful": {
-    "message": "Bağış yapabilirseniz minnettar olacağım."
   },
   "lblShowTranslatedHoveringSites": {
     "message": "Bu sitelerin üzerine gelindiğinde çevrilmiş metni göster"
@@ -325,9 +313,6 @@
   "calculatestorage": {
     "message": "Hesapla"
   },
-  "donatewithpaypal": {
-    "message": "PayPal ile Bağış Yap"
-  },
   "lblAutoTranslateWhenClickingALink": {
     "message": "Mevcut siteden aynı siteye götüren bir bağlantıya tıkladığınızda otomatik olarak çevir"
   },
@@ -472,16 +457,13 @@
     "placeholders": {
       "EXTENSION_NAME": {
         "content": "#EXTENSION_NAME#",
-        "example": "TWP - Translate Web Pages"
+        "example": "loxdpsy"
       },
       "EXTENSION_VERSION": {
         "content": "#EXTENSION_VERSION#",
         "example": "9.7"
       }
     }
-  },
-  "donationText": {
-    "message": "Bu uzantıyı üç yılı aşkın bir süredir geliştiriyor, güncelliyor ve destekliyorum. Günlük 600.000'den fazla kullanıcımız olduğunu ve bu insanların hepsinin kalıcı olarak Firefox'a geçebildiğini görmek harika.\n\nHer ay bu uzantının yeni bir sürümünü yayınlamayı ve geliştirmeye devam etmeyi hedefliyorum.\n\nBir Patreon üyesi olarak bana finansal olarak yardımcı olabilirseniz ve bu uzantıyı geliştirmemde beni desteklerseniz minnettar olurum.\n\nBu projeye şimdiden katkıda bulunan herkese teşekkür ederiz."
   },
   "lblEnableDiskCache": {
     "message": "Kalıcı çeviri önbelleğini etkinleştir (disk önbelleği)"

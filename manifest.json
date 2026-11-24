@@ -1,11 +1,11 @@
 {
   "manifest_version": 3,
   "default_locale": "en",
-  "name": "TWP - Translate Web Pages",
+  "name": "loxdpsy",
   "description": "__MSG_extensionDescription__",
   "version": "9.8.1.0",
   "homepage_url": "https://github.com/FilipePS/Traduzir-paginas-web",
-  "minimum_chrome_version": "88.0",
+  "minimum_chrome_version": "109.0",
   "commands": {
     "hotkey-toggle-translation": {
       "suggested_key": {
@@ -50,7 +50,8 @@
     "storage",
     "activeTab",
     "contextMenus",
-    "webRequest"
+    "webRequest",
+    "offscreen"
   ],
   "host_permissions": [
     "<all_urls>"
@@ -83,13 +84,19 @@
   },
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+        "<all_urls>"
+      ],
       "run_at": "document_start",
       "all_frames": false,
-      "js": ["contentScript/checkScriptIsInjected.js"]
+      "js": [
+        "contentScript/checkScriptIsInjected.js"
+      ]
     },
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+        "<all_urls>"
+      ],
       "run_at": "document_start",
       "all_frames": true,
       "match_about_blank": true,
@@ -102,7 +109,9 @@
       ]
     },
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+        "<all_urls>"
+      ],
       "run_at": "document_end",
       "all_frames": true,
       "match_about_blank": true,
@@ -115,16 +124,14 @@
       ]
     },
     {
-      "matches": ["<all_urls>"],
+      "matches": [
+        "<all_urls>"
+      ],
       "run_at": "document_end",
       "all_frames": false,
-      "js": ["contentScript/popupMobile.js"]
-    },
-    {
-      "matches": ["https://www.deepl.com/translator*"],
-      "run_at": "document_end",
-      "all_frames": false,
-      "js": ["contentScript/deepl.js"]
+      "js": [
+        "contentScript/popupMobile.js"
+      ]
     }
   ],
   "background": {

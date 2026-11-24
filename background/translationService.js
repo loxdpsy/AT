@@ -128,139 +128,116 @@ const translationService = function () {
       return normalizedResult.toString() + "." + (normalizedResult ^ tkkIndex);
     }
   }
+  /**
+   * fetch() with a timeout. Service workers have no XMLHttpRequest timeout helpers, so use AbortController.
+   * @param {string} url
+   * @param {RequestInit} init
+   * @param {number} ms
+   * @returns {Promise<Response>}
+   */
+  function fetchWithTimeout(url, init = {}, ms = 15000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ms);
+    return fetch(url, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer));
+  }
+
+  /**
+   * Yandex keeps a short-lived session id (SID) that is found on a public page.
+   */
   class YandexHelper {
+    /** @type {number | null} */
+    static #lastRequestSidTime = null;
+    /** @type {string | null} */
+    static #translateSid = null;
+    /** @type {boolean} */
+    static #SIDNotFound = false;
+    /** @type {Promise<void> | null} */
+    static #findPromise = null;
+
     static get translateSid() {
-      return _classStaticPrivateFieldSpecGet(YandexHelper, YandexHelper, _translateSid);
+      return YandexHelper.#translateSid;
+    }
+    /** Forgets the SID so the next request gets a fresh one (called after a failed request). */
+    static invalidate() {
+      YandexHelper.#translateSid = null;
+      YandexHelper.#lastRequestSidTime = null;
+    }
+
+    /** The `srv` parameter depends on the SID length (mobile SIDs are longer). */
+    static get param_srv() {
+      return YandexHelper.#translateSid && YandexHelper.#translateSid.length > 40 ? "tr-touch-url" : "tr-url-widget";
     }
 
     /**
-     * Find the SID of Yandex Translator. The SID value is used in translation requests.
+     * Finds the SID. The result is cached: 20 min when found, 10 min when not found, 5 min otherwise.
      * @returns {Promise<void>}
      */
     static async findSID() {
-      if (_classStaticPrivateFieldSpecGet(YandexHelper, YandexHelper, _findPromise)) return await _classStaticPrivateFieldSpecGet(YandexHelper, YandexHelper, _findPromise);
-      _classStaticPrivateFieldSpecSet(YandexHelper, YandexHelper, _findPromise, new Promise(resolve => {
-        let updateYandexSid = false;
-        if (_classStaticPrivateFieldSpecGet(YandexHelper, YandexHelper, _lastRequestSidTime)) {
-          const date = new Date();
-          if (_classStaticPrivateFieldSpecGet(YandexHelper, YandexHelper, _translateSid)) {
-            date.setMinutes(date.getMinutes() - 30);
-          } else if (_classStaticPrivateFieldSpecGet(YandexHelper, YandexHelper, _SIDNotFound)) {
-            date.setMinutes(date.getMinutes() - 5);
-          } else {
-            date.setMinutes(date.getMinutes() - 1);
-          }
-          if (date.getTime() > _classStaticPrivateFieldSpecGet(YandexHelper, YandexHelper, _lastRequestSidTime)) {
-            updateYandexSid = true;
-          }
-        } else {
-          updateYandexSid = true;
-        }
-        if (updateYandexSid) {
-          _classStaticPrivateFieldSpecSet(YandexHelper, YandexHelper, _lastRequestSidTime, Date.now());
-          const http = new XMLHttpRequest();
-          http.open("GET", "https://translate.yandex.net/website-widget/v1/widget.js?widgetId=ytWidget&pageLang=es&widgetTheme=light&autoMode=false");
-          http.send();
-          http.onload = e => {
-            const result = http.responseText.match(/sid\:\s\'[0-9a-f\.]+/);
-            if (result && result[0] && result[0].length > 7) {
-              _classStaticPrivateFieldSpecSet(YandexHelper, YandexHelper, _translateSid, result[0].substring(6));
-              _classStaticPrivateFieldSpecSet(YandexHelper, YandexHelper, _SIDNotFound, false);
-            } else {
-              _classStaticPrivateFieldSpecSet(YandexHelper, YandexHelper, _SIDNotFound, true);
-            }
-            resolve();
-          };
-          http.onerror = http.onabort = http.ontimeout = e => {
-            console.error(e);
-            resolve();
-          };
-        } else {
-          resolve();
-        }
-      }));
-      _classStaticPrivateFieldSpecGet(YandexHelper, YandexHelper, _findPromise).finally(() => {
-        _classStaticPrivateFieldSpecSet(YandexHelper, YandexHelper, _findPromise, null);
+      if (YandexHelper.#findPromise) return await YandexHelper.#findPromise;
+      const minutes = YandexHelper.#translateSid ? 20 : YandexHelper.#SIDNotFound ? 10 : 5;
+      const expired = !YandexHelper.#lastRequestSidTime || Date.now() - YandexHelper.#lastRequestSidTime > minutes * 60000;
+      if (!expired) return;
+      YandexHelper.#lastRequestSidTime = Date.now();
+      YandexHelper.#findPromise = YandexHelper.#fetchSID().finally(() => {
+        YandexHelper.#findPromise = null;
       });
-      return await _classStaticPrivateFieldSpecGet(YandexHelper, YandexHelper, _findPromise);
-    }
-  }
-  /** @type {number} */
-  var _lastRequestSidTime = {
-    writable: true,
-    value: null
-  };
-  /** @type {string} */
-  var _translateSid = {
-    writable: true,
-    value: null
-  };
-  /** @type {boolean} */
-  var _SIDNotFound = {
-    writable: true,
-    value: false
-  };
-  /** @type {Promise<void>} */
-  var _findPromise = {
-    writable: true,
-    value: null
-  };
-  class BingHelper {
-    static get translateAuth() {
-      return _classStaticPrivateFieldSpecGet(BingHelper, BingHelper, _translateAuth);
+      return await YandexHelper.#findPromise;
     }
 
-    /**
-     * Find the SID (IID and IG) of Bing Translator. The SID value is used in translation requests.
-     * @returns {Promise<void>}
-     */
-    static async findAuth() {
-      if (_classStaticPrivateFieldSpecGet(BingHelper, BingHelper, _authPromise)) return await _classStaticPrivateFieldSpecGet(BingHelper, BingHelper, _authPromise);
-      _classStaticPrivateFieldSpecSet(BingHelper, BingHelper, _authPromise, new Promise(resolve => {
-        let updateBingAuth = false;
-        if (_classStaticPrivateFieldSpecGet(BingHelper, BingHelper, _lastRequestAuthTime)) {
-          const date = new Date();
-          if (_classStaticPrivateFieldSpecGet(BingHelper, BingHelper, _translateAuth)) {
-            date.setMinutes(date.getMinutes() - 30);
-          } else if (_classStaticPrivateFieldSpecGet(BingHelper, BingHelper, _AuthNotFound)) {
-            date.setMinutes(date.getMinutes() - 5);
-          } else {
-            date.setMinutes(date.getMinutes() - 2);
-          }
-          if (date.getTime() > _classStaticPrivateFieldSpecGet(BingHelper, BingHelper, _lastRequestAuthTime)) {
-            updateBingAuth = true;
-          }
+    static async #fetchSID() {
+      try {
+        const response = await fetchWithTimeout("https://translated.turbopages.org/proxy_u/en-es.en/https/example.com/");
+        const text = await response.text();
+        const result = text.match(/sid\:\s\'[0-9a-f\.]+/);
+        if (result && result[0] && result[0].length > 7) {
+          YandexHelper.#translateSid = result[0].substring(6);
+          YandexHelper.#SIDNotFound = false;
         } else {
-          updateBingAuth = true;
+          YandexHelper.#SIDNotFound = true;
         }
-        if (updateBingAuth) {
-          _classStaticPrivateFieldSpecSet(BingHelper, BingHelper, _lastRequestAuthTime, Date.now());
-          const http = new XMLHttpRequest();
-          http.open("GET", "https://edge.microsoft.com/translate/auth");
-          http.send();
-          http.onload = e => {
-            if (http.responseText && http.responseText.length > 1) {
-              _classStaticPrivateFieldSpecSet(BingHelper, BingHelper, _translateAuth, http.responseText);
-              _classStaticPrivateFieldSpecSet(BingHelper, BingHelper, _AuthNotFound, false);
-            } else {
-              _classStaticPrivateFieldSpecSet(BingHelper, BingHelper, _AuthNotFound, true);
-            }
-            resolve();
-          };
-          http.onerror = http.onabort = http.ontimeout = e => {
-            console.error(e);
-            resolve();
-          };
-        } else {
-          resolve();
-        }
-      }));
-      _classStaticPrivateFieldSpecGet(BingHelper, BingHelper, _authPromise).finally(() => {
-        _classStaticPrivateFieldSpecSet(BingHelper, BingHelper, _authPromise, null);
-      });
-      return await _classStaticPrivateFieldSpecGet(BingHelper, BingHelper, _authPromise);
+      } catch (e) {
+        console.error(e);
+      }
     }
   }
+
+  /**
+   * Bing response: each request is `<b10>text</b10><b11>text</b11>...`. Plain text between the
+   * tags is added to the next translated block. Entities are decoded without DOMParser,
+   * because DOMParser does not exist in service workers.
+   * @param {string} html
+   * @param {boolean} dontSortResults
+   * @returns {string[]}
+   */
+  function parseBingResult(html, dontSortResults) {
+    const named = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'", nbsp: "\u00a0" };
+    const decode = text => text.replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (match, entity) => {
+      if (entity[0] === "#") {
+        const cp = entity[1] === "x" || entity[1] === "X" ? parseInt(entity.slice(2), 16) : parseInt(entity.slice(1), 10);
+        return cp > 0 && cp <= 0x10ffff ? String.fromCodePoint(cp) : match;
+      }
+      const value = named[entity.toLowerCase()];
+      return value !== undefined ? value : match;
+    });
+    const resultArray = [];
+    const tagRegex = /<b(\d+)>([\s\S]*?)<\/b\1>/gi;
+    let currText = "";
+    let last = 0;
+    let match;
+    while ((match = tagRegex.exec(html)) !== null) {
+      currText += decode(html.slice(last, match.index));
+      const text = currText + decode(match[2]);
+      if (dontSortResults) {
+        resultArray.push(text);
+      } else {
+        resultArray[parseInt(match[1], 10) - 10] = text;
+      }
+      currText = "";
+      last = tagRegex.lastIndex;
+    }
+    return resultArray;
+  }
+
 
   /**
    * Returns a string with additional parameters to be concatenated to the request URL.
@@ -421,6 +398,7 @@ const translationService = function () {
           /** @type {TranslationInfo} */
           const progressInfo = {
             originalText: requestString,
+            requestHash,
             translatedText: null,
             detectedLanguage: null,
             get status() {
@@ -471,6 +449,8 @@ const translationService = function () {
     async makeRequest(sourceLanguage, targetLanguage, requests) {
       return await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
+        xhr.withCredentials = false;
+        if ("mozAnon" in xhr) xhr.mozAnon = true; // Firefox: never send cookies with translation requests
         xhr.open(this.xhrMethod, this.baseURL + (this.cbGetExtraParameters ? this.cbGetExtraParameters(sourceLanguage, targetLanguage, requests) : ""));
         if (this.cbGetExtraHeaders) {
           const headers = this.cbGetExtraHeaders();
@@ -479,6 +459,7 @@ const translationService = function () {
           });
         }
         xhr.responseType = "json";
+        xhr.timeout = 30000; // a hung request must not block the translation queue forever
         xhr.onload = event => {
           resolve(xhr.response);
         };
@@ -531,11 +512,16 @@ const translationService = function () {
       }
 
       await Promise.all(currentTranslationsInProgress.map(transInfo => transInfo.waitTranlate));
+      // Finished entries are released so the map does not keep every translated text in memory.
+      for (const transInfo of currentTranslationsInProgress) {
+        if (this.translationsInProgress.get(transInfo.requestHash) === transInfo) {
+          this.translationsInProgress.delete(transInfo.requestHash);
+        }
+      }
       return currentTranslationsInProgress.map(transInfo => this.cbTransformResponse(transInfo.translatedText, dontSortResults));
     }
 
     /**
-     * https://github.com/FilipePS/Traduzir-paginas-web/issues/484
      * @param {string} str
      * @returns {string} fixedStr
      */
@@ -610,7 +596,6 @@ const translationService = function () {
         // maybe the same index appears several times
         // maybe some text will be outside of <a i={number}> (Usually text before the first <a> tag, and some whitespace between the <a> tags),
         // in this case, The outside text will be placed inside the <a i={number}> closer
-        // https://github.com/FilipePS/Traduzir-paginas-web/issues/449
         // TODO lidar com tags dentro de tags e tags vazias
         // https://de.wikipedia.org/wiki/Wikipedia:Hauptseite
         // "{\"originalText\":\"<pre><a i=0>\\nFür den </a><a i=1>37. Schreib­wettbewerb</a><a i=2> und den </a><a i=3>18. Miniaturwettbewerb</a><a i=4> können ab sofort Artikel nominiert werden.</a></pre>\",\"translatedText\":\"<pre><a i=0>\\n</a>Artigos já podem ser indicados <a i=0>para o</a> <a i=1>37º Concurso de Redação <a i=2>e</a></a> <a i=3><a i=4>18º</a> Concurso de Miniaturas</a> .</pre>\",\"detectedLanguage\":\"de\",\"status\":\"complete\",\"waitTranlate\":{}}"
@@ -665,7 +650,6 @@ const translationService = function () {
         if (dontSortResults) {
           // Should not sort the <a i={number}> of Google Translate result
           // Instead of it, join the texts without sorting
-          // https://github.com/FilipePS/Traduzir-paginas-web/issues/163
 
           // /** @type {string[]} */
           // const finalResulArray = [];
@@ -709,28 +693,29 @@ const translationService = function () {
       });
     }
   }();
+  /** Language codes that differ between TWP and the Yandex API. */
+  const yandexLanguageMap = { "zh-CN": "zh", "zh-TW": "zh", "es-MX": "es", "fr-CA": "fr", pt: "pt-BR", "pt-PT": "pt" };
+  /** Language codes that differ between TWP and the Bing API. */
+  const bingLanguageMap = {
+    auto: "auto-detect", "zh-CN": "zh-Hans", "zh-TW": "zh-Hant", tl: "fil", hmn: "mww", ku: "kmr",
+    ckb: "ku", mn: "mn-Cyrl", no: "nb", lg: "lug", sr: "sr-Cyrl", "mni-Mtei": "mni"
+  };
+
   const yandexService = new class extends Service {
     constructor() {
-      super("yandex", "https://translate.yandex.net/api/v1/tr.json/translate?srv=tr-url-widget", "GET", function cbTransformRequest(sourceArray) {
+      super("yandex", "https://translate.yandex.net/api/v1/tr.json/translate?", "GET", function cbTransformRequest(sourceArray) {
         return sourceArray.map(value => Utils.escapeHTML(value)).join("<wbr>");
       }, function cbParseResponse(response) {
         const lang = response.lang;
         const detectedLanguage = lang ? lang.split("-")[0] : null;
-        return response.text.map( /** @return {Service_Single_Result_Response} */( /** @type {string} */text) => ({
-          text,
-          detectedLanguage
-        }));
+        return response.text.map(text => ({ text, detectedLanguage }));
       }, function cbTransformResponse(result, dontSortResults) {
         return result.split("<wbr>").map(value => Utils.unescapeHTML(value));
       }, function cbGetExtraParameters(sourceLanguage, targetLanguage, requests) {
-        return `&id=${YandexHelper.translateSid}-0-0&format=html&lang=${sourceLanguage === "auto" ? "" : sourceLanguage + "-"}${targetLanguage}${requests.map(info => `&text=${encodeURIComponent(info.originalText)}`).join("")}`;
-      }, function cbGetRequestBody(sourceLanguage, targetLanguage, requests) {
-        return undefined;
-      }, function cbGetExtraHeaders() {
-        return [{
-          name: "Content-Type",
-          value: "application/x-www-form-urlencoded"
-        }];
+        const from = sourceLanguage === "auto" ? "" : sourceLanguage + "-";
+        return `srv=${YandexHelper.param_srv}&id=${YandexHelper.translateSid}-0-0&format=html&lang=${from}${targetLanguage}` + requests.map(info => `&text=${encodeURIComponent(info.originalText)}`).join("");
+      }, null, function cbGetExtraHeaders() {
+        return [{ name: "Content-Type", value: "application/x-www-form-urlencoded" }];
       });
     }
 
@@ -739,15 +724,21 @@ const translationService = function () {
      */
     async translate(sourceLanguage, targetLanguage, sourceArray2d, dontSaveInPersistentCache, dontSortResults = false) {
       await YandexHelper.findSID();
-      if (!YandexHelper.translateSid) return;
-      sourceLanguage = sourceLanguage.split("-")[0];
-      targetLanguage = targetLanguage.split("-")[0];
-      return await super.translate(sourceLanguage, targetLanguage, sourceArray2d, dontSaveInPersistentCache, dontSortResults);
+      if (!YandexHelper.translateSid) throw new Error("Yandex: the translator session id (SID) could not be found");
+      sourceLanguage = yandexLanguageMap[sourceLanguage] || sourceLanguage;
+      targetLanguage = yandexLanguageMap[targetLanguage] || targetLanguage;
+      try {
+        return await super.translate(sourceLanguage, targetLanguage, sourceArray2d, dontSaveInPersistentCache, dontSortResults);
+      } catch (e) {
+        YandexHelper.invalidate();
+        throw e;
+      }
     }
   }();
+
   const bingService = new class extends Service {
     constructor() {
-      super("bing", "https://api-edge.cognitive.microsofttranslator.com/translate?api-version=3.0&includeSentenceLength=true", "POST", function cbTransformRequest(sourceArray) {
+      super("bing", "https://edge.microsoft.com/translate/translatetext?isEnterpriseClient=false", "POST", function cbTransformRequest(sourceArray) {
         let id = 10;
         return sourceArray.map(value => {
           const r = `<b${id}>${Utils.escapeHTML(value)}</b${id}>`;
@@ -755,178 +746,170 @@ const translationService = function () {
           return r;
         }).join("");
       }, function cbParseResponse(response) {
-        return response.map( /** @return {Service_Single_Result_Response} */
-        ( /** @type {object} */r) => {
-          var _r$detectedLanguage;
-          return {
-            text: r.translations[0].text,
-            detectedLanguage: (_r$detectedLanguage = r.detectedLanguage) === null || _r$detectedLanguage === void 0 ? void 0 : _r$detectedLanguage.language
-          };
-        });
+        return response.map(r => ({
+          text: r.translations[0].text,
+          detectedLanguage: r.detectedLanguage?.language
+        }));
       }, function cbTransformResponse(result, dontSortResults) {
-        const resultArray = [];
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(result, "text/html");
-        let currText = "";
-        doc.body.childNodes.forEach(node => {
-          if (dontSortResults) {
-            if (node.nodeName == "#text") {
-              currText += node.textContent;
-            } else {
-              resultArray.push(currText + node.textContent);
-              currText = "";
-            }
-          } else {
-            if (node.nodeName == "#text") {
-              currText += node.textContent;
-            } else {
-              const id = parseInt(node.nodeName.slice(1)) - 10;
-              resultArray[id] = currText + node.textContent;
-              currText = "";
-            }
-          }
-        });
-        return resultArray;
-      }, function cbGetExtraParameters(sourceLanguage, targetLanguage, requests) {
+        return parseBingResult(result, dontSortResults);
+      }, function cbGetExtraParameters(sourceLanguage, targetLanguage) {
         return `${sourceLanguage !== "auto-detect" ? "&from=" + sourceLanguage : ""}&to=${targetLanguage}`;
       }, function cbGetRequestBody(sourceLanguage, targetLanguage, requests) {
-        return JSON.stringify(requests.map(info => ({
-          text: info.originalText
-        })));
+        return JSON.stringify(requests.map(info => info.originalText));
       }, function cbGetExtraHeaders() {
-        return [{
-          name: "Content-Type",
-          value: "application/json"
-        }, {
-          name: "authorization",
-          value: "Bearer " + BingHelper.translateAuth
-        }];
+        return [{ name: "Content-Type", value: "application/json" }];
       });
     }
 
     /**
-     * @param {string[][]} sourceArray2d - Only the string `sourceArray2d[0][0]` will be translated.
-     * @param {boolean} dontSortResults - This parameter is not needed in this translation service
+     * @param {boolean} dontSortResults This parameter is not needed in this translation service
      */
     async translate(sourceLanguage, targetLanguage, sourceArray2d, dontSaveInPersistentCache, dontSortResults = false) {
-      /** @type {{search: string, replace: string}[]} */
-      const replacements = [{
-        search: "auto",
-        replace: "auto-detect"
-      }, {
-        search: "zh-CN",
-        replace: "zh-Hans"
-      }, {
-        search: "zh-TW",
-        replace: "zh-Hant"
-      }, {
-        search: "tl",
-        replace: "fil"
-      }, {
-        search: "hmn",
-        replace: "mww"
-      }, {
-        search: "ku",
-        replace: "kmr"
-      }, {
-        search: "ckb",
-        replace: "ku"
-      }, {
-        search: "mn",
-        replace: "mn-Cyrl"
-      }, {
-        search: "no",
-        replace: "nb"
-      }, {
-        search: "lg",
-        replace: "lug"
-      }, {
-        search: "sr",
-        replace: "sr-Cyrl"
-      }];
-      replacements.forEach(r => {
-        if (targetLanguage === r.search) {
-          targetLanguage = r.replace;
-        }
-        if (sourceLanguage === r.search) {
-          sourceLanguage = r.replace;
-        }
-      });
-      await BingHelper.findAuth();
-      if (!BingHelper.translateAuth) return;
+      sourceLanguage = bingLanguageMap[sourceLanguage] || sourceLanguage;
+      targetLanguage = bingLanguageMap[targetLanguage] || targetLanguage;
       return await super.translate(sourceLanguage, targetLanguage, sourceArray2d, dontSaveInPersistentCache, dontSortResults);
     }
   }();
-  const deeplService = new class {
-    constructor() {
-      this.DeepLTab = null;
-    }
-    /**
-     *
-     * @param {string} sourceLanguage - This parameter is not used
-     * @param {*} targetLanguage
-     * @param {*} sourceArray2d - Only the string `sourceArray2d[0][0]` will be translated.
-     * @param {*} dontSaveInPersistentCache - This parameter is not used
-     * @param {*} dontSortResults - This parameter is not used
-     * @returns
-     */
-    async translate(sourceLanguage, targetLanguage, sourceArray2d, dontSaveInPersistentCache, dontSortResults = false) {
-      if (targetLanguage === "pt") {
-        targetLanguage = "pt-BR";
-      } else if (targetLanguage === "no") {
-        targetLanguage = "nb";
-      } else if (targetLanguage.startsWith("zh-")) {
-        targetLanguage = "zh";
-      } else if (targetLanguage.startsWith("fr-")) {
-        targetLanguage = "fr";
-      }
-      return await new Promise(resolve => {
-        const waitFirstTranslationResult = () => {
-          const listener = (request, sender, sendResponse) => {
-            if (request.action === "DeepL_firstTranslationResult") {
-              resolve([[request.result]]);
-              chrome.runtime.onMessage.removeListener(listener);
-            }
+  /**
+   * DeepL API (v2). Keys ending with ":fx" belong to the Free plan and must
+   * use api-free.deepl.com; every other key uses api.deepl.com.
+   * Auth: "Authorization: DeepL-Auth-Key <key>".
+   */
+  const deeplTargetLanguageMap = {
+    en: "EN-US",
+    "en-US": "EN-US",
+    "en-GB": "EN-GB",
+    pt: "PT-BR",
+    "pt-BR": "PT-BR",
+    "pt-PT": "PT-PT",
+    "zh-CN": "ZH-HANS",
+    zh: "ZH-HANS",
+    "zh-TW": "ZH-HANT",
+    no: "NB"
+  };
+  const deeplSourceLanguages = ["AR", "BG", "CS", "DA", "DE", "EL", "EN", "ES", "ET", "FI", "FR", "HU", "ID", "IT", "JA", "KO", "LT", "LV", "NB", "NL", "PL", "PT", "RO", "RU", "SK", "SL", "SV", "TR", "UK", "ZH"];
+
+  /**
+   * @param {string} apiKey
+   * @returns {string} base URL of the DeepL API that matches the key
+   */
+  function getDeeplBaseURL(apiKey) {
+    return apiKey.trim().endsWith(":fx") ? "https://api-free.deepl.com" : "https://api.deepl.com";
+  }
+
+  /**
+   * @param {string} lang TWP language code
+   * @returns {string} DeepL target_lang code
+   */
+  function toDeeplTargetLanguage(lang) {
+    return deeplTargetLanguageMap[lang] || lang.toUpperCase();
+  }
+
+  /**
+   * @param {string} lang TWP language code
+   * @returns {string|null} DeepL source_lang code, or null to let DeepL detect the language
+   */
+  function toDeeplSourceLanguage(lang) {
+    if (!lang || lang === "auto" || lang === "auto-detect" || lang === "und") return null;
+    let code;
+    if (lang === "no") code = "NB";else if (lang.startsWith("zh")) code = "ZH";else if (lang.startsWith("pt")) code = "PT";else code = lang.split("-")[0].toUpperCase();
+    return deeplSourceLanguages.includes(code) ? code : null;
+  }
+
+  /** XML escape used with `tag_handling: "xml"` so that every text segment keeps its own id. */
+  function escapeXml(text) {
+    return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  function unescapeXml(text) {
+    return text.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+  }
+
+  /**
+   * Creates a DeepL service bound to one API key.
+   * @param {string} apiKey
+   * @returns {Service}
+   */
+  const createDeeplService = apiKey => {
+    const DEEPL_MAX_TEXTS_PER_REQUEST = 50;
+    return new class extends Service {
+      constructor() {
+        super("deepl", getDeeplBaseURL(apiKey) + "/v2/translate", "POST", function cbTransformRequest(sourceArray) {
+          // every piece is wrapped in <x id="n"> so the result can be split back into pieces
+          if (sourceArray.length === 1) return `<x id="0">${escapeXml(sourceArray[0])}</x>`;
+          return sourceArray.map((text, index) => `<x id="${index}">${escapeXml(text)}</x>`).join("");
+        }, function cbParseResponse(response) {
+          return response.translations.map( /** @return {Service_Single_Result_Response} */value => ({
+            text: value.text,
+            detectedLanguage: value.detected_source_language ? value.detected_source_language.toLowerCase() : "und"
+          }));
+        }, function cbTransformResponse(result, dontSortResults) {
+          const pieces = [];
+          for (const match of result.matchAll(/<x id="(\d+)">([\s\S]*?)<\/x>/g)) {
+            pieces[parseInt(match[1], 10)] = unescapeXml(match[2]);
+          }
+          if (pieces.length === 0) return [unescapeXml(result)];
+          return Array.from(pieces, piece => piece ?? "");
+        }, null, function cbGetRequestBody(sourceLanguage, targetLanguage, requests) {
+          const body = {
+            text: requests.map(info => info.originalText),
+            target_lang: toDeeplTargetLanguage(targetLanguage),
+            tag_handling: "xml",
+            outline_detection: false
           };
-          chrome.runtime.onMessage.addListener(listener);
-          setTimeout(() => {
-            chrome.runtime.onMessage.removeListener(listener);
-            resolve([[""]]);
-          }, 8000);
-        };
-        if (this.DeepLTab) {
-          chrome.tabs.get(this.DeepLTab.id, tab => {
-            checkedLastError();
-            if (tab) {
-              //chrome.tabs.update(tab.id, {active: true})
-              chrome.tabs.sendMessage(tab.id, {
-                action: "translateTextWithDeepL",
-                text: sourceArray2d[0][0],
-                targetLanguage
-              }, {
-                frameId: 0
-              }, response => {
-                checkedLastError();
-                resolve([[response]]);
-              });
-            } else {
-              tabsCreate(`https://www.deepl.com/#!${targetLanguage}!#${encodeURIComponent(sourceArray2d[0][0])}`, tab => {
-                this.DeepLTab = tab;
-                waitFirstTranslationResult();
-              });
-              // resolve([[""]])
-            }
-          });
-        } else {
-          tabsCreate(`https://www.deepl.com/#!${targetLanguage}!#${encodeURIComponent(sourceArray2d[0][0])}`, tab => {
-            this.DeepLTab = tab;
-            waitFirstTranslationResult();
-          });
-          // resolve([[""]])
+          const source = toDeeplSourceLanguage(sourceLanguage);
+          if (source) body.source_lang = source;
+          return JSON.stringify(body);
+        }, function cbGetExtraHeaders() {
+          return [{
+            name: "Content-Type",
+            value: "application/json"
+          }, {
+            name: "Authorization",
+            value: "DeepL-Auth-Key " + apiKey.trim()
+          }];
+        });
+      }
+
+      /**
+       * DeepL accepts at most 50 texts per request, so long batches are split.
+       * @param {string} sourceLanguage
+       * @param {string} targetLanguage
+       * @param {Array<TranslationInfo>} requests
+       */
+      async makeRequest(sourceLanguage, targetLanguage, requests) {
+        const translations = [];
+        for (let i = 0; i < requests.length; i += DEEPL_MAX_TEXTS_PER_REQUEST) {
+          const response = await super.makeRequest(sourceLanguage, targetLanguage, requests.slice(i, i + DEEPL_MAX_TEXTS_PER_REQUEST));
+          if (!response || !Array.isArray(response.translations)) {
+            throw new Error("DeepL error: " + (response && (response.message || response.detail) || "unexpected response"));
+          }
+          translations.push(...response.translations);
         }
-      });
+        return {
+          translations
+        };
+      }
+    }();
+  };
+
+  /** @type {Service|null} */
+  let deeplService = null;
+  /** @type {string} */
+  let deeplServiceKey = "";
+  /**
+   * Returns the DeepL service for the API key saved in the settings.
+   * A new service is created whenever the key changes.
+   * @returns {Service|null}
+   */
+  const getDeeplService = () => {
+    const apiKey = (twpConfig.get("deeplApiKey") || "").trim();
+    if (!apiKey) return null;
+    if (!deeplService || deeplServiceKey !== apiKey) {
+      deeplService = createDeeplService(apiKey);
+      deeplServiceKey = apiKey;
     }
-  }();
+    return deeplService;
+  };
 
   /**
    * Creates the libreTranslate translation service from URL and apiKey
@@ -984,79 +967,11 @@ const translationService = function () {
     }();
   };
 
-  /**
-   * Creates the DeepLFreeApi translation service
-   * @param {string} apiKey
-   * @returns {Service} libreService
-   */
-  const createDeeplFreeApiService = apiKey => {
-    return new class extends Service {
-      constructor() {
-        super("deepl", "https://api-free.deepl.com/v2/translate", "POST", function cbTransformRequest(sourceArray) {
-          return sourceArray[0];
-        }, function cbParseResponse(response) {
-          return [{
-            text: response.translations[0].text,
-            detectedLanguage: response.translations[0].detected_source_language
-          }];
-        }, function cbTransformResponse(result, dontSortResults) {
-          return [result];
-        }, null, function cbGetRequestBody(sourceLanguage, targetLanguage, requests) {
-          const params = new URLSearchParams();
-          params.append("text", requests[0].originalText);
-          if (sourceLanguage !== "auto") {
-            // params.append("source_lang", sourceLanguage);
-          }
-          if (targetLanguage === "pt") {
-            targetLanguage = "pt-BR";
-          } else if (targetLanguage === "no") {
-            targetLanguage = "nb";
-          } else if (targetLanguage.startsWith("zh-")) {
-            targetLanguage = "zh";
-          } else if (targetLanguage.startsWith("fr-")) {
-            targetLanguage = "fr";
-          }
-          params.append("target_lang", targetLanguage);
-          return params.toString();
-        }, function cbGetExtraHeaders() {
-          return [{
-            name: "Content-Type",
-            value: "application/x-www-form-urlencoded"
-          }, {
-            name: "Authorization",
-            value: "DeepL-Auth-Key " + apiKey
-          }];
-        });
-      }
-
-      /**
-       *
-       * @param {string} sourceLanguage - This parameter is not used
-       * @param {*} targetLanguage
-       * @param {*} sourceArray2d - Only the string `sourceArray2d[0][0]` will be translated.
-       * @param {*} dontSaveInPersistentCache - This parameter is not used
-       * @param {*} dontSortResults - This parameter is not used
-       * @returns
-       */
-      /*
-      async translate(
-        sourceLanguage,
-        targetLanguage,
-        sourceArray2d,
-        dontSaveInPersistentCache,
-        dontSortResults = false
-      ) {
-      }
-      //*/
-    }();
-  };
-
   /** @type {Map<string, Service>} */
   const serviceList = new Map();
   serviceList.set("google", googleService);
   serviceList.set("yandex", yandexService);
   serviceList.set("bing", bingService);
-  serviceList.set("deepl", /** @type {Service} */ /** @type {?} */deeplService);
 
   /**
    * Get translation service from your name
@@ -1066,6 +981,7 @@ const translationService = function () {
    */
   const getSafeServiceByName = serviceName => {
     if (twpConfig.get("enabledServices").includes(serviceName) || twpConfig.get("customServices").find(cs => cs.name === serviceName)) {
+      if (serviceName === "deepl") return getDeeplService();
       return serviceList.get(serviceName);
     } else {
       return null;
@@ -1118,14 +1034,11 @@ const translationService = function () {
           service.removeTranslationsWithError();
         }
       });
+      if (deeplService) deeplService.removeTranslationsWithError();
     } else if (request.action === "createLibreService") {
       serviceList.set("libre", createLibreService(request.libre.url, request.libre.apiKey));
     } else if (request.action === "removeLibreService") {
       serviceList.delete("libre");
-    } else if (request.action === "createDeeplFreeApiService") {
-      serviceList.set("deepl", createDeeplFreeApiService(request.deepl_freeapi.apiKey));
-    } else if (request.action === "removeDeeplFreeApiService") {
-      serviceList.set("deepl", /** @type {Service} */ /** @type {?} */deeplService);
     }
   });
   twpConfig.onReady(function () {
@@ -1133,11 +1046,6 @@ const translationService = function () {
       const libre = twpConfig.get("customServices").find(cs => cs.name === "libre");
       serviceList.set("libre", createLibreService(libre.url, libre.apiKey));
     }
-    if (twpConfig.get("customServices").find(cs => cs.name === "deepl_freeapi")) {
-      const deepl_freeapi = twpConfig.get("customServices").find(cs => cs.name === "deepl_freeapi");
-      serviceList.set("deepl", createDeeplFreeApiService(deepl_freeapi.apiKey));
-    }
   });
   return translationService;
 }();
-//# sourceMappingURL=https://raw.githubusercontent.com/FilipePS/TWP---Source-Maps/main/maps/9.8.1.0/translationService.js.map

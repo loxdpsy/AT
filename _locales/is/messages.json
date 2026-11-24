@@ -50,9 +50,6 @@
   "btnOpenOnGoogleTranslate": {
     "message": "Opna í Google Þýðingum"
   },
-  "btnDonate": {
-    "message": "Styrkja"
-  },
   "btnNeverTranslate": {
     "message": "Aldrei þýða þessa síðu"
   },
@@ -82,9 +79,6 @@
   },
   "btnMoreOptions": {
     "message": "Fleiri valkostir"
-  },
-  "lblPlsDonate": {
-    "message": "Hjálpa hönnuðinum með því að styrkja"
   },
   "msgTranslateFor": {
     "message": "Þýða yfir á $LANGUAGE_NAME$",
@@ -152,9 +146,6 @@
   "msgHotkeys": {
     "message": "Flýtilyklar"
   },
-  "lblMakeDonation": {
-    "message": "Styrkja verkefnið"
-  },
   "lblReleaseNotes": {
     "message": "Útgáfuupplýsingar"
   },
@@ -175,9 +166,6 @@
   },
   "msgThanksForUseExtension": {
     "message": "Þakka þér fyrir að nota þessa viðbót."
-  },
-  "msgIWillBeGrateful": {
-    "message": "Ég mun vera þakklátur ef þú getur styrkt mig."
   },
   "lblShowTranslatedHoveringSites": {
     "message": "Sýna þýddan texta þegar sveimað er yfir á þessum síðum"
@@ -325,9 +313,6 @@
   "calculatestorage": {
     "message": "Reikna"
   },
-  "donatewithpaypal": {
-    "message": "Styrkja með PayPal"
-  },
   "lblAutoTranslateWhenClickingALink": {
     "message": "Þýða sjálfkrafa þegar smellt er á tengil sem færir þig á sama lén og núverandi síða"
   },
@@ -472,16 +457,13 @@
     "placeholders": {
       "EXTENSION_NAME": {
         "content": "#EXTENSION_NAME#",
-        "example": "TWP - Translate Web Pages"
+        "example": "loxdpsy"
       },
       "EXTENSION_VERSION": {
         "content": "#EXTENSION_VERSION#",
         "example": "9.7"
       }
     }
-  },
-  "donationText": {
-    "message": "Ég hef verið að þróa, uppfæra og styðja þessa viðbót í meira en þrjú ár. Það er ótrúlegt að sjá að við erum með yfir 600.000 notendur daglega og að allt þetta fólk hefur getað skipt yfir í Firefox endanlega.\n\nÉg stefni á að gefa út nýja útgáfu af þessari viðbót í hverjum mánuði og halda áfram að bæta hana.\n\nÉg væri þakklátur ef þú gætir hjálpað mér fjárhagslega með því að gerast meðlimur á Patreon og styðja mig við að bæta úr þessari viðbót.\n\nÉg þakka öllum sem hafa nú þegar lagt þessu verkefni lið."
   },
   "lblEnableDiskCache": {
     "message": "Virkja varanlegt þýðingarskyndiminni (skyndiminni á diski)"

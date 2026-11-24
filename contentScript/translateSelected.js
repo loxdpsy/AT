@@ -391,7 +391,6 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     eOrigText.onkeyup = e => {
       e.stopPropagation();
       if (twpConfig.get("translateSelectedWhenPressTwice") !== "yes") return;
-      // https://github.com/FilipePS/Traduzir-paginas-web/issues/577
       if (isSelectingText()) {
         return onKeyUp(e);
       } else {
@@ -997,4 +996,3 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     }
   });
 });
-//# sourceMappingURL=https://raw.githubusercontent.com/FilipePS/TWP---Source-Maps/main/maps/9.8.1.0/translateSelected.js.map
