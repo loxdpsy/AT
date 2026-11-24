@@ -156,7 +156,7 @@ notes are set in the workflow. Keep the listing text and screenshots in Partner 
 
 ### Checking for updates
 
-`npm run update:check` queries the GitHub API for the latest release of `loxdpsy/twp` and compares it with the version in
+`npm run update:check` queries the GitHub API for the latest release of `loxdpsy/AT` and compares it with the version in
 `manifest.json`. It checks the API rate limit first (`GET /rate_limit`, which does not use up the quota) and skips the lookups when
 too few requests remain. Add `--upstream` to also check FilipePS's project. Set `GITHUB_TOKEN` to raise the limit from
 60 to 5,000 requests per hour. The **Update check** workflow runs this every Monday and writes the result to the run summary.
