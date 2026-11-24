@@ -185,6 +185,33 @@ jobs:
           name: atlas-translation-firefox
           path: dist
 
+      - name: Download the signed Firefox add-on (only after an AMO submission)
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: atlas-translation-firefox-signed
+          path: signed
+
+      - name: Write the Firefox update manifest
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.prepare.outputs.version }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          SIGNED=$(ls signed/*.xpi 2>/dev/null | head -n 1 || true)
+          if [ -z "$SIGNED" ]; then
+            # The update URL always points at the latest release, so keep a valid updates.json there.
+            # Copy the previous release's file. It still describes the last signed version, so nothing new is offered.
+            if gh release download --repo "$REPOSITORY" --pattern updates.json --dir dist --clobber 2>/dev/null; then
+              echo "No signed Firefox add-on in this release. Kept the updates.json of the previous release, so self-hosted installs see no new version." | tee -a "$GITHUB_STEP_SUMMARY"
+            else
+              echo "No signed Firefox add-on and no previous updates.json. Self-hosted Firefox updates have no manifest until a signed release. Run the release with submit_amo on." | tee -a "$GITHUB_STEP_SUMMARY"
+            fi
+            exit 0
+          fi
+          cp "$SIGNED" "dist/atlas-translation-$VERSION-firefox-signed.xpi"
+          node scripts/make-updates-json.mjs --version "$VERSION" --xpi "dist/atlas-translation-$VERSION-firefox-signed.xpi" --repo "$REPOSITORY" --out dist/updates.json
+
       - name: Create or update the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -202,7 +229,11 @@ jobs:
             echo ""
             echo "- **Chrome Web Store and Edge Add-ons:** \`atlas-translation-$VERSION-chromium.zip\`"
             echo "- **Chromium, self-hosting:** \`atlas-translation-$VERSION-chromium.crx\` (Chromium 109 or newer)"
-            echo "- **Firefox and Firefox for Android:** install from addons.mozilla.org. \`atlas-translation-$VERSION-firefox.xpi\` is unsigned, so Firefox will not install it directly."
+            if [ -f "dist/atlas-translation-$VERSION-firefox-signed.xpi" ]; then
+              echo "- **Firefox, self-hosted:** \`atlas-translation-$VERSION-firefox-signed.xpi\` is signed. Open it in Firefox to install. Firefox then updates it from \`updates.json\` in this release. Firefox for Android installs from addons.mozilla.org only."
+            else
+              echo "- **Firefox:** install from addons.mozilla.org. This release has no signed \`.xpi\`, so self-hosted installs and updates are not available for it."
+            fi
             echo "- **Firefox store upload:** \`atlas-translation-$VERSION-firefox.zip\`"
           } >> notes.md
           if gh release view "$TAG" >/dev/null 2>&1; then

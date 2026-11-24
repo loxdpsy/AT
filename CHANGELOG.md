@@ -1,11 +1,30 @@
 # Changelog
 
+## 0.0.1.1
+
+Firefox self-hosting. This version is the first one that can be installed outside addons.mozilla.org and update itself.
+
+**Added**
+
+- Firefox `update_url` pointing to `updates.json` on the latest release. Installed copies check it for newer versions.
+- Each release that is signed for AMO also publishes a signed `atlas-translation-<version>-firefox-signed.xpi` and `updates.json`.
+
+**Changed**
+
+- A listed AMO submission sends a build without `update_url`, because AMO rejects that key on listed add-ons.
+
+**Fixed**
+
+- The toolbar popup's options menu is readable in light and dark mode.
+- The source-language label sits inside the Original button.
+
 ## 0.0.1.0
 
 First release of Atlas Translation. The version numbers start again at 0.0.1.0. The 9.8.x entries below are the TWP fork history.
 
 **Added**
 
+- Firefox self-hosting: a signed `-firefox-signed.xpi` on each release, with automatic updates from `updates.json` (see the README).
 - Theme switcher: System, Light, or Dark, in *Style → Theme*. The choice applies to the settings page and the popup.
 - An About page with a "More from Etherealmber" section, showing Atlas Commerce, its Android app, and its desktop app.
 - Edge Add-ons automatic submission. The release workflow uploads the Chromium package and submits it when the `EDGE_PRODUCT_ID`, `EDGE_CLIENT_ID`, and `EDGE_API_KEY` secrets are set.

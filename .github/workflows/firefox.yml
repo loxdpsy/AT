@@ -91,6 +91,16 @@ jobs:
             echo "Skipping the listed submission. Set the repository variable AMO_LISTING_READY to true once the AMO listing has its icon, screenshots, description, and license." | tee build/amo-submit.log
             exit 0
           fi
+          if [ "$AMO_CHANNEL" = "listed" ]; then
+            # AMO refuses update_url on a listed add-on (MANIFEST_UPDATE_URL). AMO updates listed add-ons itself.
+            python3 - <<'PY'
+          import json, pathlib
+          p = pathlib.Path("build/staging/firefox/manifest.json")
+          m = json.loads(p.read_text(encoding="utf-8"))
+          m["browser_specific_settings"]["gecko"].pop("update_url", None)
+          p.write_text(json.dumps(m, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+          fi
           npx --yes web-ext@8 sign \
             --source-dir build/staging/firefox \
             --artifacts-dir build/signed \
@@ -98,6 +108,14 @@ jobs:
             --amo-metadata .github/amo-metadata.json \
             --api-key "$AMO_JWT_ISSUER" \
             --api-secret "$AMO_JWT_SECRET" 2>&1 | tee build/amo-submit.log
+
+      - name: Upload the signed add-on
+        if: ${{ inputs.submit }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-translation-firefox-signed
+          path: build/signed/*.xpi
+          if-no-files-found: ignore
 
       - name: Write job summary
         if: always()
@@ -113,7 +131,7 @@ jobs:
             echo ""
             echo "| File | Size | SHA-256 (first 16) |"
             echo "| --- | --- | --- |"
-            for f in build/*.zip build/*.xpi; do
+            for f in build/*.zip build/*.xpi build/signed/*.xpi; do
               [ -f "$f" ] || continue
               echo "| \`$(basename "$f")\` | $(du -h "$f" | cut -f1) | \`$(sha256sum "$f" | cut -c1-16)\` |"
             done

@@ -3,14 +3,18 @@
   "default_locale": "en",
   "name": "Atlas Translation",
   "description": "__MSG_extensionDescription__",
-  "version": "0.0.1.0",
-  "homepage_url": "https://github.com/FilipePS/Traduzir-paginas-web",
+  "version": "0.0.1.1",
+  "homepage_url": "https://github.com/loxdpsy/AT",
   "browser_specific_settings": {
     "gecko": {
       "id": "{1bc5e819-aec9-4d8b-8348-0b2c9ae516f5}",
+      "update_url": "https://github.com/loxdpsy/AT/releases/latest/download/updates.json",
       "strict_min_version": "140.0",
       "data_collection_permissions": {
-        "required": ["websiteContent", "authenticationInfo"]
+        "required": [
+          "websiteContent",
+          "authenticationInfo"
+        ]
       }
     },
     "gecko_android": {

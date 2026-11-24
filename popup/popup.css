@@ -330,6 +330,17 @@ select {
   padding: 4px 8px;
 }
 
+/* The native dropdown list is drawn by the OS. Give every option its own colours so text is never light-on-white. */
+select option,
+select optgroup {
+  color: var(--text);
+  background-color: var(--bg);
+}
+
+select option:disabled {
+  color: var(--muted);
+}
+
 a {
   color: var(--accent);
 }
