@@ -483,11 +483,17 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
   $("#popupBlueWhenSiteIsTranslated").value = twpConfig.get("popupBlueWhenSiteIsTranslated");
 
   // hotkeys options
-  function escapeHtml(unsafe) {
-    return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  // Replace the "[Ctrl]" placeholder with a <kbd> element. The strings are plain text, so DOM nodes are safe.
+  function highlightCtrlKey(el) {
+    const text = el.textContent;
+    const at = text.indexOf("[Ctrl]");
+    if (at === -1) return;
+    const kbd = document.createElement("kbd");
+    kbd.textContent = "Ctrl";
+    el.replaceChildren(document.createTextNode(text.slice(0, at)), kbd, document.createTextNode(text.slice(at + "[Ctrl]".length)));
   }
-  $('[data-i18n="lblTranslateSelectedWhenPressTwice"]').innerHTML = $('[data-i18n="lblTranslateSelectedWhenPressTwice"]').innerHTML.replace("[Ctrl]", "<kbd>Ctrl</kbd>");
-  $('[data-i18n="lblTranslateTextOverMouseWhenPressTwice"]').innerHTML = $('[data-i18n="lblTranslateTextOverMouseWhenPressTwice"]').innerHTML.replace("[Ctrl]", "<kbd>Ctrl</kbd>");
+  highlightCtrlKey($('[data-i18n="lblTranslateSelectedWhenPressTwice"]'));
+  highlightCtrlKey($('[data-i18n="lblTranslateTextOverMouseWhenPressTwice"]'));
   $("#openNativeShortcutManager").onclick = e => {
     tabsCreate("chrome://extensions/shortcuts");
   };
@@ -512,15 +518,11 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     if (hotkeyname === "_execute_browser_action" && !description) {
       description = "Enable the extension";
     }
-    function escapeHtml(unsafe) {
-      return unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-    }
-    description = escapeHtml(description);
     const li = document.createElement("li");
     li.classList.add("shortcut-row");
     li.setAttribute("id", hotkeyname);
     li.innerHTML = `
-        <div>${description}</div>
+        <div></div>
         <div class="shortcut-input-options">
             <div style="position: relative;">
                 <input name="input" class="w3-input w3-border shortcut-input" type="text" readonly placeholder="Enter a shortcut" data-i18n-placeholder="enterShortcut">
@@ -530,6 +532,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
             <div class="w3-hover-light-grey shortcut-button" name="resetKey"><i class="gg-sync"></i></div>
         </div>  
         `;
+    li.querySelector("div").textContent = description;
     $("#KeyboardShortcuts").appendChild(li);
     const input = li.querySelector(`[name="input"]`);
     const error = li.querySelector(`[name="error"]`);
