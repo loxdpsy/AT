@@ -59,6 +59,7 @@ jobs:
             --source-dir build/staging/firefox \
             --artifacts-dir build/signed \
             --channel "${AMO_CHANNEL:-listed}" \
+            --amo-metadata .github/amo-metadata.json \
             --api-key "$AMO_JWT_ISSUER" \
             --api-secret "$AMO_JWT_SECRET"
 
