@@ -64,6 +64,13 @@ jobs:
             build/*.zip
           if-no-files-found: error
 
+      - name: Upload the Edge package (zip only)
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-translation-edge
+          path: build/*.zip
+          if-no-files-found: error
+
       - name: Write job summary
         if: always()
         run: |

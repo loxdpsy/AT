@@ -181,16 +181,16 @@ function resetPageAction(tabId, forceShow = false) {
 }
 function resetBrowserAction(forceShow = false) {
   if (twpConfig.get("translateClickingOnce") === "yes" && !forceShow) {
-    chrome.browserAction.setPopup({
+    chrome.action.setPopup({
       popup: null
     });
   } else {
     if (twpConfig.get("useOldPopup") === "yes") {
-      chrome.browserAction.setPopup({
+      chrome.action.setPopup({
         popup: "popup/old-popup.html"
       });
     } else {
-      chrome.browserAction.setPopup({
+      chrome.action.setPopup({
         popup: "popup/popup.html"
       });
     }
@@ -339,7 +339,7 @@ twpConfig.onReady(() => {
         chrome.pageAction.hide(tabId);
       }
     });
-    chrome.browserAction.onClicked.addListener(tab => {
+    chrome.action.onClicked.addListener(tab => {
       chrome.tabs.sendMessage(tab.id, {
         action: "showPopupMobile"
       }, {
@@ -348,7 +348,7 @@ twpConfig.onReady(() => {
     });
   } else {
     // chrome.action (MV3) is shared by browserAction and pageAction; one listener is enough.
-    chrome.browserAction.onClicked.addListener(tab => {
+    chrome.action.onClicked.addListener(tab => {
       if (twpConfig.get("translateClickingOnce") === "yes") {
         chrome.tabs.sendMessage(tab.id, {
           action: "toggle-translation"
@@ -455,14 +455,14 @@ twpConfig.onReady(() => {
               chrome.pageAction.show(tabId);
             }
           }
-          if (chrome.browserAction) {
+          if (chrome.action) {
             if (pageLanguageState === "translated" && twpConfig.get("popupBlueWhenSiteIsTranslated") === "yes") {
-              chrome.browserAction.setIcon({
+              chrome.action.setIcon({
                 tabId: tabId,
                 path: "/icons/icon-32-translated.png"
               });
             } else {
-              chrome.browserAction.setIcon({
+              chrome.action.setIcon({
                 tabId: tabId,
                 path: "/icons/icon-32.png"
               });
