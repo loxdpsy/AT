@@ -1,6 +1,6 @@
 # Atlas Translation
 
-![Version](https://img.shields.io/badge/version-9.8.1.0-1a73e8) [![Latest release](https://img.shields.io/github/v/release/loxdpsy/AT?label=release)](https://github.com/loxdpsy/AT/releases) [![Issues](https://img.shields.io/github/issues/loxdpsy/AT)](https://github.com/loxdpsy/AT/issues) [![License: MPL-2.0](https://img.shields.io/github/license/loxdpsy/AT)](LICENSE) [![Upstream TWP](https://img.shields.io/github/v/release/FilipePS/Traduzir-paginas-web?label=upstream%20TWP)](https://github.com/FilipePS/Traduzir-paginas-web/releases)
+![Version](https://img.shields.io/badge/version-0.0.1.0-1a73e8) ![Release date](https://img.shields.io/github/release-date/loxdpsy/AT?label=release%20date) [![Issues](https://img.shields.io/github/issues/loxdpsy/AT)](https://github.com/loxdpsy/AT/issues) [![Pull requests](https://img.shields.io/github/issues-pr/loxdpsy/AT)](https://github.com/loxdpsy/AT/pulls) [![License: MPL-2.0](https://img.shields.io/github/license/loxdpsy/AT)](LICENSE)
 
 **Translate web pages in real time, in your browser.**
 
@@ -118,8 +118,7 @@ npm run version:check             # prints each version and fails if they differ
 `npm run check` runs the same comparison, so CI fails when the versions disagree. The release workflows use
 `scripts/sync-version.mjs` too.
 
-The **Upstream TWP** badge at the top shows the latest release of the original project. This fork's version is separate,
-and it is based on TWP 9.8.1.0. A newer upstream release does not change this fork's version.
+This fork has its own version numbers, starting at 0.0.1.0. The upstream project's releases do not change this version.
 
 ### Release secrets
 
@@ -198,6 +197,8 @@ scripts/                 Build, check, and update-check scripts
 ```
 
 ## Security and privacy
+
+The full privacy policy, written for store listings, is in [docs/privacy-policy.md](docs/privacy-policy.md).
 
 **What leaves your browser.** Text is sent to a translation service only when you ask for a translation: a page, a
 selection, or a word. The text goes to the service you chose in *Translations* (Google, Bing, Yandex, DeepL, or your own

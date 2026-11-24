@@ -13,7 +13,7 @@ Firefox for Android uses the same Firefox Add-ons listing, so it does not need i
 - **Icon:** 128 × 128 PNG (`icons/icon-128.png`).
 - **Screenshots:** at least one. Use 1280 × 800 or 640 × 400 PNG or JPEG.
 - **License:** MPL-2.0 (LICENSE file).
-- **Privacy policy URL.** Atlas Translation sends the text you translate to the translation provider you chose (Google, Bing, Yandex, DeepL, or LibreTranslate). Say so in the policy and in the store's privacy form. The policy must also say that Atlas Translation does not collect or sell data itself.
+- **Privacy policy URL.** Atlas Translation sends the text you translate to the translation provider you chose (Google, Bing, Yandex, DeepL, or LibreTranslate). Say so in the policy and in the store's privacy form. The policy must also say that Atlas Translation does not collect or sell data itself. The draft is in `docs/privacy-policy.md`. Use this URL in both stores: `https://github.com/loxdpsy/AT/blob/main/docs/privacy-policy.md`.
 - **Support contact:** a GitHub issues link (`https://github.com/loxdpsy/AT/issues`) is enough.
 
 ## Chrome Web Store

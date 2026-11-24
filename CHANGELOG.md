@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## 0.0.1.0
+
+First release of Atlas Translation. The version numbers start again at 0.0.1.0. The 9.8.x entries below are the TWP fork history.
 
 **Added**
 
