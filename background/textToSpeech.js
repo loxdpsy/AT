@@ -29,10 +29,11 @@ const textToSpeech = function () {
    * @returns {Promise<void>}
    */
   async function ensureOffscreenDocument() {
-    if (!chrome.offscreen) throw new Error("Audio playback is not available in this browser");
-    if (chrome.offscreen.hasDocument && (await chrome.offscreen.hasDocument())) return;
+    const offscreenApi = chrome.offscreen;
+    if (!offscreenApi) throw new Error("Audio playback is not available in this browser");
+    if (offscreenApi.hasDocument && (await offscreenApi.hasDocument())) return;
     try {
-      await chrome.offscreen.createDocument({
+      await offscreenApi.createDocument({
         url: "offscreen/tts.html",
         reasons: ["AUDIO_PLAYBACK"],
         justification: "Read translated text aloud"

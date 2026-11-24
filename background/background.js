@@ -446,7 +446,7 @@ twpConfig.onReady(() => {
           if (chrome.pageAction) {
             resetPageAction(tabId);
             // On MV3 pageAction is an alias of action. Chromium cannot decode SVG icons, so the action branch below sets the PNG.
-            if (!chrome.pageAction.isAlias) {
+            if (!self.twpPageActionIsAlias) {
               chrome.pageAction.setIcon({
                 tabId: tabId,
                 path: getSVGIcon(incognito)

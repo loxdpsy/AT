@@ -121,10 +121,14 @@ twpConfig.onReady(function () {
     shadowRoot = divElement.attachShadow({
       mode: "closed"
     });
-    shadowRoot.innerHTML = `
-            <link rel="stylesheet" href="${chrome.runtime.getURL("/contentScript/css/showOriginal.css")}">
+    // Parse the markup in the context of the host element, as innerHTML does. Only fixed markup, no page data.
+    const markupRange = document.createRange();
+    markupRange.selectNodeContents(divElement);
+    shadowRoot.replaceChildren(markupRange.createContextualFragment(`
+            <link rel="stylesheet" href="">
             <div id="originalText" dir="auto"></div>
-        `;
+        `));
+    shadowRoot.querySelector("link").href = chrome.runtime.getURL("/contentScript/css/showOriginal.css");
     {
       const style = document.createElement("style");
       style.textContent = styleTextContent;
