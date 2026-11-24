@@ -239,7 +239,24 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
   // did not follow the theme: light text on a light list in dark mode.
   const menuButton = $("#btnMenu");
   const menuPanel = $("#menuPanel");
-  const CHECK_ICON = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3.5 8.5l3 3 6-6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  // The check mark is built with DOM calls, not innerHTML (AMO's validator flags innerHTML).
+  function checkIcon() {
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 16 16");
+    svg.setAttribute("width", "16");
+    svg.setAttribute("height", "16");
+    svg.setAttribute("aria-hidden", "true");
+    const path = document.createElementNS(ns, "path");
+    path.setAttribute("d", "M3.5 8.5l3 3 6-6.5");
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", "currentColor");
+    path.setAttribute("stroke-width", "2");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+    svg.append(path);
+    return svg;
+  }
 
   function text(key, fallback, substitution) {
     return twpI18n.getMessage(key, substitution) || fallback;
@@ -263,7 +280,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     const mark = document.createElement("span");
     mark.className = "menuMark";
     if (checked) {
-      mark.innerHTML = CHECK_ICON;
+      mark.append(checkIcon());
     }
     const labelNode = document.createElement("span");
     labelNode.className = "menuLabel";
