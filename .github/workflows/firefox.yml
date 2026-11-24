@@ -3,7 +3,10 @@ name: Firefox build
 # Builds Atlas Translation for Firefox and Firefox for Android: a ZIP and an unsigned XPI.
 # With "submit" turned on, the add-on is also submitted to addons.mozilla.org (AMO).
 #   - Secrets AMO_JWT_ISSUER and AMO_JWT_SECRET are required for submission.
-#   - Repository variable AMO_CHANNEL: "unlisted" (default: signed for self-distribution, no public listing) or "listed".
+#   - Input "channel":
+#       "unlisted" (default): signed for GitHub distribution. Uses the add-on ID in firefox_manifest.json and keeps update_url.
+#       "listed": the Firefox store (addons.mozilla.org). Uses the store ID in FIREFOX_STORE_ID below, which is a separate
+#         add-on, and drops update_url (AMO refuses it on listed add-ons).
 #   - "listed" is skipped unless the repository variable AMO_LISTING_READY is "true". Set it only after the listing has its
 #     icon, screenshots, description, and license, so Mozilla never reviews an empty listing.
 #   - .github/amo-metadata.json supplies the license, category, and summary AMO requires.
@@ -17,6 +20,13 @@ on:
         description: "Version to build, for example 9.8.2.0 (leave empty for the version in firefox_manifest.json)"
         type: string
         default: ""
+      channel:
+        description: "unlisted = GitHub distribution (signed). listed = Firefox store (public after review)."
+        type: choice
+        options:
+          - unlisted
+          - listed
+        default: unlisted
       submit:
         description: "Submit to addons.mozilla.org (needs the AMO secrets)"
         type: boolean
@@ -30,12 +40,20 @@ on:
         description: "Commit to build (defaults to the commit that started the run)"
         type: string
         default: ""
+      channel:
+        type: string
+        default: unlisted
       submit:
         type: boolean
         default: false
 
 permissions:
   contents: read
+
+env:
+  # Firefox store add-on ID. It differs from the GitHub add-on ID in firefox_manifest.json, so the store and GitHub
+  # installs are separate add-ons. Changing it creates a new add-on on addons.mozilla.org.
+  FIREFOX_STORE_ID: "{863f4958-b7f6-48c2-b9c9-33dddf81366c}"
 
 jobs:
   build:
@@ -63,8 +81,39 @@ jobs:
       - name: Check and build the Firefox package
         run: npm run build:firefox
 
+      - name: Prepare the store build (listed only)
+        if: ${{ inputs.channel == 'listed' }}
+        env:
+          STORE_ID: ${{ env.FIREFOX_STORE_ID }}
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib
+          p = pathlib.Path("build/staging/firefox/manifest.json")
+          m = json.loads(p.read_text(encoding="utf-8"))
+          gecko = m["browser_specific_settings"]["gecko"]
+          gecko["id"] = os.environ["STORE_ID"]
+          # AMO refuses update_url on a listed add-on (MANIFEST_UPDATE_URL). AMO updates listed add-ons itself.
+          gecko.pop("update_url", None)
+          p.write_text(json.dumps(m, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          print("Store build ID:", gecko["id"], "| update_url removed")
+          # The ZIP for uploading the store listing by hand. It has the store ID, so it is a different file from the GitHub ZIP.
+          import zipfile
+          version = m["version"]
+          out = pathlib.Path(f"build/atlas-translation-{version}-firefox-store.zip")
+          with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+              for f in sorted(pathlib.Path("build/staging/firefox").rglob("*")):
+                  if f.is_file():
+                      z.write(f, f.relative_to("build/staging/firefox").as_posix())
+          print("Wrote", out)
+          PY
+
       - name: Lint the extension with web-ext
-        run: npx --yes web-ext@8 lint --source-dir build/staging/firefox --self-hosted --output text > build/web-ext-lint.txt 2>&1 || true
+        env:
+          CHANNEL: ${{ inputs.channel }}
+        run: |
+          # The GitHub build keeps update_url, so it is linted in self-hosted mode. The store build is linted as listed.
+          if [ "$CHANNEL" = "listed" ]; then FLAG=""; else FLAG="--self-hosted"; fi
+          npx --yes web-ext@8 lint --source-dir build/staging/firefox $FLAG --output text > build/web-ext-lint.txt 2>&1 || true
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -80,31 +129,21 @@ jobs:
         env:
           AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
           AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
-          AMO_CHANNEL: ${{ vars.AMO_CHANNEL || 'unlisted' }}
+          CHANNEL: ${{ inputs.channel }}
           AMO_LISTING_READY: ${{ vars.AMO_LISTING_READY }}
         run: |
           if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ]; then
             echo "AMO keys are not set. Skipping the submission." | tee build/amo-submit.log
             exit 0
           fi
-          if [ "$AMO_CHANNEL" = "listed" ] && [ "$AMO_LISTING_READY" != "true" ]; then
+          if [ "$CHANNEL" = "listed" ] && [ "$AMO_LISTING_READY" != "true" ]; then
             echo "Skipping the listed submission. Set the repository variable AMO_LISTING_READY to true once the AMO listing has its icon, screenshots, description, and license." | tee build/amo-submit.log
             exit 0
-          fi
-          if [ "$AMO_CHANNEL" = "listed" ]; then
-            # AMO refuses update_url on a listed add-on (MANIFEST_UPDATE_URL). AMO updates listed add-ons itself.
-            python3 - <<'PY'
-          import json, pathlib
-          p = pathlib.Path("build/staging/firefox/manifest.json")
-          m = json.loads(p.read_text(encoding="utf-8"))
-          m["browser_specific_settings"]["gecko"].pop("update_url", None)
-          p.write_text(json.dumps(m, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-          PY
           fi
           npx --yes web-ext@8 sign \
             --source-dir build/staging/firefox \
             --artifacts-dir build/signed \
-            --channel "$AMO_CHANNEL" \
+            --channel "$CHANNEL" \
             --amo-metadata .github/amo-metadata.json \
             --api-key "$AMO_JWT_ISSUER" \
             --api-secret "$AMO_JWT_SECRET" 2>&1 | tee build/amo-submit.log
@@ -126,7 +165,7 @@ jobs:
             echo ""
             echo "- Build result: **${{ job.status }}**"
             echo "- Submitted to addons.mozilla.org: **${{ inputs.submit }}**"
-            echo "- Channel: \`${{ vars.AMO_CHANNEL || 'unlisted' }}\`"
+            echo "- Channel: \`${{ inputs.channel }}\`"
             echo "- Commit: \`${GITHUB_SHA:0:7}\`"
             echo ""
             echo "| File | Size | SHA-256 (first 16) |"

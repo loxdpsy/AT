@@ -56,15 +56,23 @@ After that, each release run uploads the Chromium package and submits it to Edge
 
 ## Firefox (addons.mozilla.org) and Firefox for Android
 
+Firefox has two separate listings, with two add-on IDs:
+
+- **GitHub** is the main distribution. Its ID does not change. The GitHub release carries the signed `.xpi` and `updates.json`.
+- **Firefox store** is the public listing on addons.mozilla.org. It uses `FIREFOX_STORE_ID`, which is set in `.github/workflows/firefox.yml`. It is a different add-on from the GitHub one, so both can exist at the same time.
+
+Steps:
+
 1. Go to **https://addons.mozilla.org/developers/** and sign in with a Firefox Account.
 2. Accept the developer agreement.
-3. Upload the first version by hand, or let the workflow do it. Choose **On this site** (listed). Firefox for Android installs
-   listed add-ons from the same listing, so there is no separate Android submission.
-4. Fill in the listing: name, summary, description, category (*Language support*), license (MPL-2.0), and the privacy policy.
+3. Run the *Firefox build* workflow with `channel: listed` and `submit` off. Download the `atlas-translation-<version>-firefox-store.zip` file from the artifacts.
+4. On addons.mozilla.org choose **Submit a New Add-on**, upload that zip, and choose **On this site** (listed). Fill in the listing from `.github/amo-metadata.json`: name, summary, description, category (*Productivity*), license (MPL-2.0), and the privacy policy.
 5. Do not submit a listed version until the listing is complete: icon, at least one screenshot, the description, and the privacy policy URL. A review of an empty listing is rejected or wasted time.
-6. When it is ready, set the repository variables `AMO_CHANNEL` to `listed` and `AMO_LISTING_READY` to `true` (**Settings → Secrets and variables → Actions → Variables**). From then on, tags submit listed versions automatically, and Mozilla reviews each one before it goes public.
+6. When it is ready, set the repository variable `AMO_LISTING_READY` to `true` (**Settings → Secrets and variables → Actions → Variables**). From then on, a *Firefox build* run with `channel: listed` and `submit` on sends each store version for review, and Mozilla reviews it before it goes public.
 
-The automatic submission needs the secrets `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` (see README, *Release secrets*).
+Firefox for Android installs listed add-ons from the same store listing, so there is no separate Android submission.
+
+The automatic submission needs the secrets `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` (see README, *Release secrets*). The release workflow always builds the GitHub channel, so a release never sends a version to the store.
 
 ## Checklist for each release
 

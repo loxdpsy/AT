@@ -150,6 +150,7 @@ jobs:
     with:
       version: ${{ needs.prepare.outputs.version }}
       ref: ${{ needs.prepare.outputs.sha }}
+      channel: unlisted
       submit: ${{ needs.prepare.outputs.submit == 'true' }}
     secrets: inherit
 

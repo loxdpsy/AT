@@ -154,12 +154,18 @@ gh secret set AMO_JWT_ISSUER --body "<issuer value from AMO>"
 gh secret set AMO_JWT_SECRET --body "<secret value from AMO>"
 ```
 
-**Firefox auto-publish, step by step**
+**Firefox has two listings, and each one has its own add-on ID.**
 
-1. The first version has to be uploaded by hand, so AMO creates the listing: download the `atlas-translation-firefox` artifact from a *Firefox build* run, then on addons.mozilla.org choose **Submit a New Add-on** and upload `atlas-translation-<version>-firefox.xpi`. Choose **On this site** (listed), then fill in the name, summary, description, category, and license (MPL-2.0).
+- **GitHub** (`unlisted`, the default): the ID in `firefox_manifest.json` stays, and `update_url` points at `updates.json` on the latest release. Every tag and every *Release* run publishes this build to the GitHub release. Mozilla signs it for self-distribution only. It is not shown in the store.
+- **Firefox store** (`listed`): the ID is `FIREFOX_STORE_ID` in `.github/workflows/firefox.yml`. The build removes `update_url`, because AMO refuses it on listed add-ons. Mozilla reviews each listed version before it goes public. The store build is a separate add-on, so the GitHub users and the store users never mix.
+
+Steps for the store listing:
+
+1. The first store version has to be uploaded by hand, so AMO creates the listing. Run the *Firefox build* workflow with `channel: listed` and `submit` off, then download the `atlas-translation-<version>-firefox-store.zip` file from the artifacts. On addons.mozilla.org choose **Submit a New Add-on** and upload that zip. Choose **On this site** (listed), then fill in the listing from `.github/amo-metadata.json`.
 2. Add `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` as secrets (below).
-3. By default, a tag or a *Firefox build* run with submit turned on signs the XPI for the `unlisted` channel. That is signed for self-distribution and is not put in the store. The workflow will not send a `listed` version unless you set the repository variable `AMO_CHANNEL` to `listed` **and** `AMO_LISTING_READY` to `true`. Set `AMO_LISTING_READY` only after the listing has its icon, screenshots, description, and license. Mozilla reviews listed versions before they go public.
-4. Bump the `version` in `manifest.json` (and `firefox_manifest.json`) before each tag. AMO rejects a version number that already exists.
+3. Set the repository variable `AMO_LISTING_READY` to `true` only after the listing has its icon, screenshots, description, and license. Until then the `listed` run skips the submission, so Mozilla never reviews an empty listing.
+4. Later store versions: run *Firefox build* with `channel: listed` and `submit` on, or let a release do it. The workflow reads the store ID and removes `update_url` automatically.
+5. Bump the `version` in `manifest.json` and `firefox_manifest.json` before each tag. AMO rejects a version number that already exists.
 
 Firefox signing also needs the add-on ID in `firefox_manifest.json` to belong to your AMO account. This fork uses its own ID, so
 the first upload creates the add-on under your account. If you change the ID later, you must sign with the new one too.
