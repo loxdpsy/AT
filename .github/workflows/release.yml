@@ -194,12 +194,19 @@ jobs:
 
       - name: Write the Firefox update manifest
         env:
+          GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.prepare.outputs.version }}
           REPOSITORY: ${{ github.repository }}
         run: |
           SIGNED=$(ls signed/*.xpi 2>/dev/null | head -n 1 || true)
           if [ -z "$SIGNED" ]; then
-            echo "No signed Firefox add-on. updates.json is not written, so self-hosted Firefox updates will not reach this release. Run the release with submit_amo on to sign it." | tee -a "$GITHUB_STEP_SUMMARY"
+            # The update URL always points at the latest release, so keep a valid updates.json there.
+            # Copy the previous release's file. It still describes the last signed version, so nothing new is offered.
+            if gh release download --repo "$REPOSITORY" --pattern updates.json --dir dist --clobber 2>/dev/null; then
+              echo "No signed Firefox add-on in this release. Kept the updates.json of the previous release, so self-hosted installs see no new version." | tee -a "$GITHUB_STEP_SUMMARY"
+            else
+              echo "No signed Firefox add-on and no previous updates.json. Self-hosted Firefox updates have no manifest until a signed release. Run the release with submit_amo on." | tee -a "$GITHUB_STEP_SUMMARY"
+            fi
             exit 0
           fi
           cp "$SIGNED" "dist/atlas-translation-$VERSION-firefox-signed.xpi"

@@ -63,10 +63,12 @@ Firefox for desktop can install Atlas Translation from addons.mozilla.org, or fr
 2. Open the file in Firefox, or open `about:addons`, click the gear icon, and choose **Install Add-on From File**.
 3. Firefox then checks `updates.json` in the same release for new versions. It uses the `update_url` in `firefox_manifest.json`, which always points to the latest release.
 
-Firefox for Android installs only from addons.mozilla.org. Use the listing there.
+Firefox for Android: installing a file there needs a hidden developer option (open Settings → About Firefox and tap the logo five times). That is not a supported install path, so on Android use the addons.mozilla.org listing.
 
 Unsigned builds (`-firefox.xpi`) are accepted only in Firefox Developer Edition, Nightly, or ESR with `xpinstall.signatures.required` set to `false`.
 A release has self-hosted updates only when it was built with an AMO submission (submit turned on), because only then is the XPI signed.
+
+When the add-on is listed on addons.mozilla.org, the workflow sends a build without `update_url`, because AMO refuses that key on listed add-ons. Listed updates come from AMO.
 
 ## Build from source
 
