@@ -27,7 +27,6 @@ if (!["all", "chromium", "firefox"].includes(target)) {
 // the original build helpers) stays out of the package.
 const SHIPPED = [
   "_locales",
-  "about",
   "background",
   "contentScript",
   "icons",

@@ -3,6 +3,10 @@
 var $ = document.querySelector.bind(document);
 twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("temporaryUiLanguage"))).then(() => {
   twpI18n.translateDocument();
+  // About section: name and version come from the installed manifest, so they match the build.
+  const manifest = chrome.runtime.getManifest();
+  $("#appName").textContent = manifest.name;
+  $("#appVersion").textContent = manifest.version;
   document.querySelector("[data-i18n='msgDefaultLanguage']").textContent = twpI18n.getMessage("msgDefaultLanguage") + " - Default language";
   const temporaryUiLanguage = sessionStorage.getItem("temporaryUiLanguage");
   sessionStorage.removeItem("temporaryUiLanguage");

@@ -448,7 +448,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
           chrome.tabs.create({ url: chrome.runtime.getURL("/options/options.html") }, closePopupAfter);
           break;
         case "aboutAtlas":
-          chrome.tabs.create({ url: chrome.runtime.getURL("/about/about.html") }, closePopupAfter);
+          chrome.tabs.create({ url: chrome.runtime.getURL("/options/options.html#about") }, closePopupAfter);
           break;
         default:
           break;
