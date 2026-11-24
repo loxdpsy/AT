@@ -445,10 +445,13 @@ twpConfig.onReady(() => {
           const incognito = tabInfo ? tabInfo.incognito : false;
           if (chrome.pageAction) {
             resetPageAction(tabId);
-            chrome.pageAction.setIcon({
-              tabId: tabId,
-              path: getSVGIcon(incognito)
-            });
+            // On MV3 pageAction is an alias of action. Chromium cannot decode SVG icons, so the action branch below sets the PNG.
+            if (!chrome.pageAction.isAlias) {
+              chrome.pageAction.setIcon({
+                tabId: tabId,
+                path: getSVGIcon(incognito)
+              });
+            }
             if (twpConfig.get("showButtonInTheAddressBar") == "no") {
               chrome.pageAction.hide(tabId);
             } else {
