@@ -1,40 +1,59 @@
-name: Firefox build (ZIP + XPI)
+name: Firefox build
 
-# Builds loxdpsy for Firefox (Manifest V3, Firefox 115 or newer).
-# - Manual run: Actions > Firefox build > Run workflow. Files are kept as workflow artifacts.
-# - Tag push (v*): the files are also attached to the GitHub release for that tag.
+# Builds Atlas Translation for Firefox and Firefox for Android: a ZIP and an unsigned XPI.
+# With "submit" turned on, the add-on is also submitted to addons.mozilla.org (AMO).
+#   - Secrets AMO_JWT_ISSUER and AMO_JWT_SECRET are required for submission.
+#   - Repository variable AMO_CHANNEL: "listed" (default, public after Mozilla review) or "unlisted".
+#   - .github/amo-metadata.json supplies the license, category, and summary AMO requires.
 #
-# Optional secrets AMO_JWT_ISSUER and AMO_JWT_SECRET (addons.mozilla.org API keys).
-# When both are set, the add-on is submitted to addons.mozilla.org (AMO).
-#   AMO_CHANNEL (repository variable, optional): "listed" (default, public after Mozilla review)
-#                                               or "unlisted" (self-distribution, signed immediately).
-# Each release needs a new version number in manifest.json; AMO rejects a version that already exists.
+# Run it by hand: Actions > Firefox build > Run workflow. The Release workflow also calls this file.
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - "v*"
+    inputs:
+      version:
+        description: "Version to build, for example 9.8.2.0 (leave empty for the version in firefox_manifest.json)"
+        type: string
+        default: ""
+      submit:
+        description: "Submit to addons.mozilla.org (needs the AMO secrets)"
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        default: ""
+      ref:
+        description: "Commit to build (defaults to the commit that started the run)"
+        type: string
+        default: ""
+      submit:
+        type: boolean
+        default: false
 
 permissions:
-  contents: write
-
-concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: false
+  contents: read
 
 jobs:
   build:
+    name: Build Firefox package
     runs-on: ubuntu-latest
     steps:
       - name: Check out the code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || github.sha }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+
+      - name: Set the version
+        if: ${{ inputs.version != '' }}
+        run: node scripts/set-version.mjs "${{ inputs.version }}"
 
       - name: Install dependencies
         run: npm ci
@@ -43,43 +62,64 @@ jobs:
         run: npm run build:firefox
 
       - name: Lint the extension with web-ext
-        run: npx --yes web-ext@8 lint --source-dir build/staging/firefox --self-hosted || true
+        run: npx --yes web-ext@8 lint --source-dir build/staging/firefox --self-hosted --output text > build/web-ext-lint.txt 2>&1 || true
 
-      - name: Sign the XPI (only when AMO keys are configured)
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-translation-firefox
+          path: |
+            build/*.zip
+            build/*.xpi
+          if-no-files-found: error
+
+      - name: Submit to addons.mozilla.org
+        if: ${{ inputs.submit }}
         env:
           AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
           AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
           AMO_CHANNEL: ${{ vars.AMO_CHANNEL || 'listed' }}
         run: |
           if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ]; then
-            echo "AMO keys not set: skipping signing. Unsigned XPI is in build/."
+            echo "AMO keys are not set. Skipping the submission." | tee build/amo-submit.log
             exit 0
           fi
           npx --yes web-ext@8 sign \
             --source-dir build/staging/firefox \
             --artifacts-dir build/signed \
-            --channel "${AMO_CHANNEL:-listed}" \
+            --channel "$AMO_CHANNEL" \
+            --amo-metadata .github/amo-metadata.json \
             --api-key "$AMO_JWT_ISSUER" \
-            --api-secret "$AMO_JWT_SECRET"
+            --api-secret "$AMO_JWT_SECRET" 2>&1 | tee build/amo-submit.log
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: loxdpsy-firefox
-          path: |
-            build/*.xpi
-            build/*.zip
-            build/signed/*.xpi
-          if-no-files-found: error
-
-      - name: Attach to the GitHub release
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+      - name: Write job summary
+        if: always()
         run: |
-          if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" --title "loxdpsy $TAG" --generate-notes
-          fi
-          gh release upload "$TAG" build/*.xpi build/*.zip --clobber
-          if ls build/signed/*.xpi >/dev/null 2>&1; then gh release upload "$TAG" build/signed/*.xpi --clobber; fi
+          VERSION=$(python3 -c "import json; print(json.load(open('firefox_manifest.json'))['version'])")
+          {
+            echo "## Firefox build: Atlas Translation $VERSION"
+            echo ""
+            echo "- Build result: **${{ job.status }}**"
+            echo "- Submitted to addons.mozilla.org: **${{ inputs.submit }}**"
+            echo "- Channel: \`${{ vars.AMO_CHANNEL || 'listed' }}\`"
+            echo "- Commit: \`${GITHUB_SHA:0:7}\`"
+            echo ""
+            echo "| File | Size | SHA-256 (first 16) |"
+            echo "| --- | --- | --- |"
+            for f in build/*.zip build/*.xpi; do
+              [ -f "$f" ] || continue
+              echo "| \`$(basename "$f")\` | $(du -h "$f" | cut -f1) | \`$(sha256sum "$f" | cut -c1-16)\` |"
+            done
+            echo ""
+            echo "### web-ext lint (last 15 lines)"
+            echo '```'
+            tail -n 15 build/web-ext-lint.txt 2>/dev/null || echo "no lint output"
+            echo '```'
+            if [ -f build/amo-submit.log ]; then
+              echo ""
+              echo "### addons.mozilla.org submission (last 40 lines)"
+              echo '```'
+              tail -n 40 build/amo-submit.log
+              echo '```'
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"

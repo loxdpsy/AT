@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Checks GitHub for a newer release of loxdpsy (and optionally the upstream TWP project).
+// Checks GitHub for a newer release of Atlas Translation (and optionally the upstream TWP project).
 //
 // Usage:
 //   node scripts/check-update.mjs                    # loxdpsy/twp
@@ -44,7 +44,7 @@ function compareVersions(a, b) {
 }
 
 async function github(pathname) {
-  const headers = { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "loxdpsy-update-check" };
+  const headers = { Accept: "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28", "User-Agent": "atlas-translation-update-check" };
   if (token) headers.Authorization = `Bearer ${token}`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);

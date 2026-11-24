@@ -245,26 +245,27 @@ hr {
   box-shadow: 0 0 3px -2px black;
 }
 
-/* ---- loxdpsy visual refresh: colors, type, spacing only. Layout and IDs are unchanged. ---- */
+/* ---- Atlas Translation visual refresh: colors, type, spacing only. Layout and IDs are unchanged. ---- */
 :root {
   --bg: #ffffff;
   --text: #0f172a;
-  --muted: #64748b;
+  --muted: #71717a;
   --line: #e2e8f0;
   --hover: #f1f5f9;
-  --accent: #2563eb;
+  --accent: #0a0a0a;
   --accent-text: #ffffff;
   color-scheme: light dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #151922;
-    --text: #e5e7eb;
-    --muted: #94a3b8;
-    --line: #2a3140;
-    --hover: #1f2635;
-    --accent: #3b82f6;
+    --bg: #1c1c1f;
+    --text: #f4f4f5;
+    --muted: #a1a1aa;
+    --line: #2e2e33;
+    --hover: #27272a;
+    --accent: #e4e4e7;
+    --accent-text: #0a0a0a;
   }
 }
 

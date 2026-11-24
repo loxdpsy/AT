@@ -1,0 +1,11 @@
+{
+  "version": {
+    "license": "MPL-2.0"
+  },
+  "categories": {
+    "firefox": ["language-support"]
+  },
+  "summary": {
+    "en-US": "Translate web pages and selected text with Google, Bing, Yandex, DeepL, or LibreTranslate."
+  }
+}
