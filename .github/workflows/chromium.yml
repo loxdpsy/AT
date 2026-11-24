@@ -1,27 +1,20 @@
-name: Chromium build (ZIP + CRX)
+name: Chromium build
 
-# Builds loxdpsy for Chromium-based browsers (Chrome, Edge, Brave, Opera, Vivaldi, ...).
-# - Manual run: Actions > Chromium build > Run workflow. Files are kept as workflow artifacts.
-# - Tag push (v*): the files are also attached to the GitHub release for that tag.
-#
-# Optional secret CRX_PRIVATE_KEY: the PEM private key used to sign the .crx.
-# Keep the same key for every release so the extension ID stays the same.
+# Builds loxdpsy for Chromium-based browsers:
+#   - ZIP: upload to the Chrome Web Store and Microsoft Edge Add-ons
+#   - CRX: signed with the CRX_PRIVATE_KEY secret (self-hosting, enterprise policy)
+# Runs by hand (Actions > Chromium build > Run workflow), and from the Release workflow on version tags.
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - "v*"
+  workflow_call:
 
 permissions:
-  contents: write
-
-concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: false
+  contents: read
 
 jobs:
   build:
+    name: Build Chromium package
     runs-on: ubuntu-latest
     steps:
       - name: Check out the code
@@ -50,13 +43,21 @@ jobs:
             build/*.zip
           if-no-files-found: error
 
-      - name: Attach to the GitHub release
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.ref_name }}
+      - name: Write job summary
+        if: always()
         run: |
-          if ! gh release view "$TAG" >/dev/null 2>&1; then
-            gh release create "$TAG" --title "loxdpsy $TAG" --generate-notes
-          fi
-          gh release upload "$TAG" build/*.crx build/*.zip --clobber
+          VERSION=$(python3 -c "import json; print(json.load(open('manifest.json'))['version'])")
+          {
+            echo "## Chromium build: loxdpsy $VERSION"
+            echo ""
+            echo "- Status: **${{ job.status }}**"
+            echo "- Commit: \`${GITHUB_SHA:0:7}\`"
+            echo "- Minimum Chrome version: 109"
+            echo ""
+            echo "| File | Size | SHA-256 (first 16) |"
+            echo "| --- | --- | --- |"
+            for f in build/*.crx build/*.zip; do
+              [ -f "$f" ] || continue
+              echo "| \`$(basename "$f")\` | $(du -h "$f" | cut -f1) | \`$(sha256sum "$f" | cut -c1-16)\` |"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"

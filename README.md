@@ -64,12 +64,25 @@ the extension ID does not change. Without it, a new key is generated for each bu
 
 ## Release workflows
 
-| Workflow | What it builds | Where it goes |
-| --- | --- | --- |
-| `.github/workflows/chromium.yml` | `loxdpsy-<version>-chromium.zip` and `.crx` | Workflow artifact, plus the tag's release |
-| `.github/workflows/firefox.yml` | `loxdpsy-<version>-firefox.zip` and `.xpi`, and a signed XPI when AMO keys are set | Workflow artifact, plus the tag's release |
+Pushing a version tag builds both packages and publishes one GitHub release. The tag must match the version in `manifest.json`
+(for example `v9.8.1.0`). The release notes come from the matching section in `CHANGELOG.md`.
 
-Both run on **Run workflow** (manual) and on any tag that starts with `v` (for example `v9.8.2.0`).
+```bash
+git tag v9.8.1.0
+git push origin v9.8.1.0
+```
+
+| Workflow | What it does |
+| --- | --- |
+| `release.yml` | Runs on a `v*` tag. Builds both packages, submits Firefox to AMO, and publishes the GitHub release with all files. |
+| `chromium.yml` | Builds the Chromium ZIP and CRX. Also runs by hand from the Actions tab. |
+| `firefox.yml` | Builds the Firefox ZIP and XPI. Turn on **submit** when you run it by hand to submit to AMO. |
+| `update-check.yml` | Runs weekly and writes the update check to the run summary. |
+
+Every build writes a summary to its run page (**Actions → run → Summary**): versions, file sizes, SHA-256 checksums,
+lint output, and the AMO submission log. A failed AMO submission does not stop the GitHub release.
+
+Store uploads (Chrome Web Store, Edge Add-ons, addons.mozilla.org) are described in `docs/store-publishing.md`.
 
 Repository secrets used by the workflows (all optional):
 

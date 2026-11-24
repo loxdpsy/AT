@@ -1,0 +1,94 @@
+name: Release
+
+# Pushing a version tag (for example v9.8.1.0) builds both packages and publishes one GitHub release with:
+#   loxdpsy-<version>-chromium.zip  (Chrome Web Store, Edge Add-ons)
+#   loxdpsy-<version>-chromium.crx  (signed with CRX_PRIVATE_KEY)
+#   loxdpsy-<version>-firefox.zip   (source for Firefox store uploads)
+#   loxdpsy-<version>-firefox.xpi   (unsigned; the store signs listed versions)
+# The release notes come from the matching "## <version>" section in CHANGELOG.md.
+# The Firefox submission to addons.mozilla.org runs on tags too. It does not block the release.
+# Manual runs (workflow_dispatch) only build; they never submit or publish.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  chromium:
+    name: Chromium
+    uses: ./.github/workflows/chromium.yml
+    secrets: inherit
+
+  firefox:
+    name: Firefox
+    uses: ./.github/workflows/firefox.yml
+    with:
+      submit: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    secrets: inherit
+
+  release:
+    name: Publish GitHub release
+    needs: [chromium, firefox]
+    if: ${{ always() && startsWith(github.ref, 'refs/tags/v') && needs.chromium.result == 'success' && needs.firefox.result != 'cancelled' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Download the Chromium package
+        uses: actions/download-artifact@v4
+        with:
+          name: loxdpsy-chromium
+          path: dist
+
+      - name: Download the Firefox package
+        uses: actions/download-artifact@v4
+        with:
+          name: loxdpsy-firefox
+          path: dist
+
+      - name: Check that the tag matches manifest.json
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          VERSION=$(python3 -c "import json; print(json.load(open('manifest.json'))['version'])")
+          if [ "$TAG" != "v$VERSION" ]; then
+            echo "Tag $TAG does not match manifest.json version $VERSION" >&2
+            exit 1
+          fi
+
+      - name: Create or update the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          VERSION="${TAG#v}"
+          awk -v v="$VERSION" 'BEGIN { p = 0 } /^## / { if (p) exit; if ($2 == v) p = 1; next } p' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then
+            echo "No CHANGELOG.md section for $VERSION. Using a short note." >&2
+            echo "loxdpsy $VERSION" > notes.md
+          fi
+          {
+            echo ""
+            echo "## Downloads"
+            echo ""
+            echo "- **Chrome Web Store, Edge Add-ons:** \`loxdpsy-$VERSION-chromium.zip\`"
+            echo "- **Chromium, self-hosting:** \`loxdpsy-$VERSION-chromium.crx\` (Chromium 109 or newer)"
+            echo "- **Firefox, Firefox for Android:** install from addons.mozilla.org. \`loxdpsy-$VERSION-firefox.xpi\` is unsigned, so Firefox will not install it normally."
+            echo "- **Firefox store upload:** \`loxdpsy-$VERSION-firefox.zip\`"
+          } >> notes.md
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+            gh release edit "$TAG" --notes-file notes.md
+          else
+            gh release create "$TAG" dist/* --title "loxdpsy $VERSION" --notes-file notes.md
+          fi
