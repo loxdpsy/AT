@@ -10,12 +10,36 @@ Not released yet. Changes after 0.0.2.0 will be listed here.
 
 - Atlas Translation is a fork of TWP - Translate Web Pages by FilipePS. It is not the official TWP extension.
 - Groq and DeepL: the popup shows a notice while the page text is sent to that service.
-- Firefox GitHub build: it has a new add-on ID. Installs of the old GitHub build do not receive updates from this release. Install the new `.xpi` once.
+
+### Differences compared to version 0.0.1.9
+
+- Added: DeepL quota and Groq usage in the popup, and the official Atlas logo, which turns blue while a page is translated.
+- Changed: one popup with the options list always shown. The simple interface is removed.
+
+### Full Release Notes
+
+* **Added:**
+  * The popup header shows the official Atlas logo, and a badge with the logo of the service that translates the page: Google, Yandex, Bing, DeepL or Groq. The logo turns blue while the page is translated, the same as the toolbar icon.
+  * **DeepL:** the popup shows the characters used and your plan's limit.
+  * **Groq:** the popup shows the approximate tokens used, counted from the answers Groq returns while the extension runs.
+* **Changes:**
+  * The site and language rules, the page actions, More options and About are always shown in the popup. The gear is at the top right and at the bottom right of the list. The simple interface and its *Select popup interface style* setting are removed.
+  * The service badge is a label, not a switch. Choose the service in *Settings → Services*.
+
+**Full comparison:** [v0.0.1.9...v0.0.2.0](https://github.com/loxdpsy/AT/compare/v0.0.1.9...v0.0.2.0)
+
+**Thanks** to @loxdpsy (maintainer) and arena-agent (AI coding agent, co-author on this work).
+
+## 0.0.1.9
+
+**Important information**
+
+- Atlas Translation is a fork of TWP - Translate Web Pages by FilipePS. It is not the official TWP extension.
+- Groq and DeepL: the popup shows a notice while the page text is sent to that service.
 
 ### Differences compared to version 0.0.1.4
 
-- Added: a Groq (AI) translator with your own API key, DeepL and Groq usage in the popup, a Firefox toolbar icon colour setting, and the Atlas logo, which turns blue while a page is translated.
-- Changed: one popup. The simple interface is removed, and the options list is always shown.
+- Added: a Groq (AI) translator with your own API key, and a Firefox toolbar icon colour setting.
 - Fixed: Chinese pages with large blocks (#922), and auto-translate after a site or page language change (#934).
 
 ### Full Release Notes
@@ -25,15 +49,10 @@ Not released yet. Changes after 0.0.2.0 will be listed here.
   * Firefox toolbar icon colour in *Settings → Style*: follow the theme, black, white, or blue. Firefox only.
   * The GitHub Firefox build is signed by addons.mozilla.org as an **unlisted** add-on when a release runs with *submit_amo* on. It is never listed publicly.
   * The popup shows a notice while the page service is **Groq** or **DeepL**, because the page text is sent to that service.
-  * The popup header shows the official Atlas logo, and a badge with the logo of the service that translates the page: Google, Yandex, Bing, DeepL or Groq. The logo turns blue while the page is translated, the same as the toolbar icon.
-  * **DeepL:** the popup shows the characters used and your plan's limit.
-  * **Groq:** the popup shows the approximate tokens used, counted from the answers Groq returns while the extension runs.
 * **Changes:**
   * The toolbar popup shows every option on one page. The More and Less paging is removed. The gear icon opens Settings.
-  * The site and language rules, the page actions, More options and About are always shown in the popup. The gear is at the top right and at the bottom right of the list. The simple interface and its *Select popup interface style* setting are removed.
-  * The service badge is a label, not a switch. Choose the service in *Settings → Services*.
-  * The Firefox GitHub build has a new add-on ID. Installs of the old GitHub build do not receive updates from this release. Install the new `.xpi` once.
   * Builds and releases run the unit tests (`npm test`) first. Edge is submitted only after the checks pass. A release stops before its version commit and tag when CHANGELOG.md has no section for that version.
+  * The ⋮ options menu has an icon for each row. It holds the site and language rules, the page actions, More options, and About. Display options stay in Settings.
 * **Fixed:**
   * Chinese pages: large blocks that cover the screen are translated (issue #922).
   * Auto-translate runs again after a site or page language change (issue #934).
@@ -41,7 +60,7 @@ Not released yet. Changes after 0.0.2.0 will be listed here.
   * Page translation starts faster: cache reads run together instead of one by one.
   * Right-to-left pages also flip for Dari (prs) and Sindhi (sd).
 
-**Full comparison:** [v0.0.1.4...v0.0.2.0](https://github.com/loxdpsy/AT/compare/v0.0.1.4...v0.0.2.0)
+**Full comparison:** [v0.0.1.4...v0.0.1.9](https://github.com/loxdpsy/AT/compare/v0.0.1.4...v0.0.1.9)
 
 **Thanks** to @loxdpsy (maintainer) and arena-agent (AI coding agent, co-author on this work).
 
