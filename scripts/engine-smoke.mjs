@@ -44,12 +44,6 @@ const child = spawn(engine, [dir], { stdio: ["pipe", "pipe", "inherit"] });
 const lines = readline.createInterface({ input: child.stdout })[Symbol.asyncIterator]();
 const withTimeout = (promise, what) =>
   Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error(`timed out: ${what}`)), 240000))]);
-const ready = await withTimeout(lines.next(), "waiting for the engine to load the model");
-if (ready.value !== "ready") throw new Error(`engine did not say ready: ${ready.value}`);
-console.log("  ok    engine loaded the English to French model");
-
-const sentences = ["Hello, how are you today?", "The weather is very nice in the park."];
-const translations = [];
 // The engine's exit code and signal, so a crash shows in the log (a crash prints nothing of its own).
 async function exitStatus() {
   if (child.exitCode !== null || child.signalCode !== null) return `code ${child.exitCode}, signal ${child.signalCode}`;
@@ -57,6 +51,15 @@ async function exitStatus() {
   if (exited) return `code ${exited[0]}, signal ${exited[1]}`;
   return `still running (code ${child.exitCode}, signal ${child.signalCode})`;
 }
+const ready = await withTimeout(lines.next(), "waiting for the engine to load the model");
+if (ready.value !== "ready") {
+  const status = await exitStatus();
+  throw new Error(`engine did not say ready (${status}): ${ready.value ?? "no reply"}`);
+}
+console.log("  ok    engine loaded the English to French model");
+
+const sentences = ["Hello, how are you today?", "The weather is very nice in the park."];
+const translations = [];
 for (const sentence of sentences) {
   child.stdin.write(Buffer.from(sentence, "utf8").toString("base64") + "\n");
   const reply = await withTimeout(lines.next(), "waiting for a translation");

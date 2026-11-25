@@ -138,7 +138,8 @@ static std::string modelConfig(const fs::path &dir) {
   // std::stoi, so it must be a number, not "false".
   yaml += "shortlist:\n  - " + yamlQuote(lex) + "\n  - 0\n";
   yaml += "beam-size: 1\nnormalize: 1.0\nword-penalty: 0\nmax-length-break: 128\nmax-length-factor: 2.0\n";
-  yaml += "mini-batch-words: 1024\nworkspace: 128\ncpu-threads: 0\nskip-cost: true\nquiet: true\n";
+  // quiet is off: with it on, Marian's error messages are not printed, and a failed check only shows as an abort.
+  yaml += "mini-batch-words: 1024\nworkspace: 128\ncpu-threads: 0\nskip-cost: true\nquiet: false\n";
   yaml += "quiet-translation: true\nalignment: soft\ngemm-precision: int8shiftAlphaAll\n";
   return yaml;
 }
@@ -168,7 +169,9 @@ int main(int argc, char **argv) {
     serviceConfig.numWorkers = 1;
     serviceConfig.cacheSize = 0;
     AsyncService service(serviceConfig);
-    auto options = parseOptionsFromString(modelConfig(fs::path(argv[1])));
+    // Not validated, as Firefox's TranslationModel constructor does it. The validator aborts on configs that Firefox
+    // accepts, and an abort prints nothing when quiet is on.
+    auto options = parseOptionsFromString(modelConfig(fs::path(argv[1])), /*validate=*/false);
     std::shared_ptr<TranslationModel> model = service.createCompatibleModel(options);
 
     std::fprintf(protocol, "ready\n");
