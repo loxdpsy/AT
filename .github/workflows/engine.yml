@@ -70,6 +70,10 @@ jobs:
           node-version: 22
 
       - name: Configure
+        # The environment variable reaches the PCRE2 build that SentencePiece downloads. A variable set inside
+        # CMakeLists.txt does not, and that build declares an old CMake minimum too.
+        env:
+          CMAKE_POLICY_VERSION_MINIMUM: "3.5"
         run: cmake -S tools/atlas-engine -B build/engine -DCMAKE_BUILD_TYPE=Release
 
       - name: Build

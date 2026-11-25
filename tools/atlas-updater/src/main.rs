@@ -13,9 +13,13 @@
 //
 // It stores nothing and sends nothing except the request to api.github.com and the zip download from github.com.
 
+mod api;
 mod browsers;
+mod engine;
 mod json;
+mod packs;
 mod sha256;
+mod store;
 mod web;
 
 use std::fs;

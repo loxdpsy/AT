@@ -33,6 +33,13 @@ set(COMPILE_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(COMPILE_SERVER OFF CACHE BOOL "" FORCE)
 set(COMPILE_WASM OFF CACHE BOOL "" FORCE)
 set(COMPILE_PYTHON OFF CACHE BOOL "" FORCE)
+# SentencePiece (through ssplit) needs PCRE2. Let the build download and compile it, so every runner gets the same copy.
+set(SSPLIT_USE_INTERNAL_PCRE2 ON CACHE BOOL "" FORCE)
+
+# CMake 4 no longer accepts "cmake_minimum_required" below 3.5, and SentencePiece (inside marian-dev) declares an older
+# minimum. This lets the vendored code configure with CMake 3.5 rules. CI also sets CMAKE_POLICY_VERSION_MINIMUM=3.5 in
+# the environment, which the PCRE2 sub-build needs (see engine.yml).
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
 add_subdirectory(bergamot)
 
