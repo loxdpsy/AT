@@ -59,6 +59,23 @@ jobs:
           test "$code" -eq 1
           echo "$output" | grep -q "is not the Atlas Translation folder"
 
+      - name: Installs the latest release into a test folder (uses GitHub, checksum and unzip)
+        run: |
+          folder="$RUNNER_TEMP/atlas-install-test"
+          rm -rf "$folder"
+          mkdir -p "$folder"
+          echo '{"name": "Atlas Translation", "version": "0.0.1.0"}' > "$folder/manifest.json"
+          "./target/release/${{ matrix.binary }}" "$folder"
+          grep -q '"name": "Atlas Translation"' "$folder/manifest.json"
+          if grep -q '"version": "0.0.1.0"' "$folder/manifest.json"; then
+            echo "manifest.json was not replaced"
+            exit 1
+          fi
+          test -f "$folder/service_worker.js"
+          second=$("./target/release/${{ matrix.binary }}" "$folder")
+          echo "$second"
+          echo "$second" | grep -q "You have the latest version"
+
       - name: Upload the build
         uses: actions/upload-artifact@v4
         with:
