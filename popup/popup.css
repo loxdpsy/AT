@@ -584,12 +584,18 @@ hr {
   align-items: center;
   gap: 8px;
 }
+/* The official Atlas logo, used as a mask so its colour follows the theme (dark or light) and turns blue while the page is translated. */
 .popupLogo {
   display: block;
-  width: 24px;
-  height: 24px;
+  width: 70px;
+  height: 23px;
   flex: none;
-  border-radius: 6px;
+  background-color: var(--text);
+  -webkit-mask: url("/icons/atlas-logo.png") left center / contain no-repeat;
+  mask: url("/icons/atlas-logo.png") left center / contain no-repeat;
+}
+.popupLogo.translated {
+  background-color: var(--accent);
 }
 .popupActions {
   gap: 6px;
