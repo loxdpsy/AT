@@ -12,7 +12,8 @@
 #   mv /tmp/translations-eea6e5a80aa4ddd86d9cc35ce9a65b79aa3ab96d/inference tools/atlas-engine/translations-source/
 #   git init -q tools/atlas-engine/translations-source && git -C tools/atlas-engine/translations-source \
 #     -c user.name=ci -c user.email=ci@localhost commit -q --allow-empty -m "mozilla/translations eea6e5a8"
-#   (then fetch ssplit-cpp, sentencepiece and intgemm at the commits in engine.yml into the paths it lists)
+#   (then fetch the submodules at the commits in engine.yml into the paths it lists: ssplit-cpp, sentencepiece, intgemm,
+#   onnxjs and its eigen)
 #   cmake -S tools/atlas-engine -B build/engine && cmake --build build/engine --config Release
 cmake_minimum_required(VERSION 3.16)
 project(atlas-engine LANGUAGES C CXX)
@@ -46,6 +47,11 @@ set(COMPILE_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(COMPILE_SERVER OFF CACHE BOOL "" FORCE)
 set(COMPILE_WASM OFF CACHE BOOL "" FORCE)
 set(COMPILE_PYTHON OFF CACHE BOOL "" FORCE)
+# Use the WASM-compatible marian sources, as Mozilla's WASM build does (Bergamot's docs require this for changes to
+# bergamot-translator). Float products then use ONNX sgemm, which needs no BLAS or LAPACK. A native build without this
+# setting aborts on its first translation: "Marian must be compiled with a BLAS library" (marian has a BLAS only on
+# macOS, through Accelerate). With these sources the faiss path that needs LAPACK is not compiled.
+set(USE_WASM_COMPATIBLE_SOURCE ON CACHE BOOL "" FORCE)
 # SentencePiece (through ssplit) needs PCRE2. On Linux and macOS, let the build download and compile it, so every runner
 # gets the same copy. On Windows the internal build leaves the static library as pcre2-8-static.lib, which the link does
 # not find (ssplit expects pcre2-8.lib). There, PCRE2 comes from vcpkg instead: engine.yml installs it and sets

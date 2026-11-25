@@ -63,8 +63,8 @@ jobs:
       # Bergamot is the inference/ folder of mozilla/translations, at the commit Firefox builds from (see
       # tools/atlas-engine/CMakeLists.txt). It comes from the commit's source tarball. Marian reads a .git next to the
       # folder for its version header, so the folder gets a git repository with one empty commit. That repository has no
-      # submodule entries, so CMake's own submodule updates do nothing. The three submodules that the native build needs
-      # are fetched as tarballs at their pinned commits. The other submodules are for WASM, CUDA, or the ARM build.
+      # submodule entries, so CMake's own submodule updates do nothing. The five submodules that the build needs
+      # are fetched as tarballs at their pinned commits. The other submodules are for CUDA, FBGEMM, or the ARM build.
       - name: Fetch Bergamot (inference/ of mozilla/translations at eea6e5a8)
         run: |
           set -euo pipefail
@@ -88,6 +88,9 @@ jobs:
           fetch browsermt/sentencepiece ae41b7740d7006596bb9257e83340b2620db9d00 "$src/inference/marian-fork/src/3rd_party/sentencepiece" \
             --exclude='*/python/test/botchan.txt'
           fetch kpu/intgemm f7401513da71758dacce52fed1c7855549abee59 "$src/inference/marian-fork/src/3rd_party/intgemm"
+          # onnxjs supplies the float GEMM of the WASM-compatible sources (USE_WASM_COMPATIBLE_SOURCE, see the engine CMakeLists).
+          fetch browsermt/onnxjs 924924b08e9596b41aeebada4a172f026be95f5a "$src/inference/marian-fork/src/3rd_party/onnxjs"
+          fetch abhi-agg/eigen-git-mirror fff37f4ca0397af9ed7e04f3bd6b893a1ea2b08e "$src/inference/marian-fork/src/3rd_party/onnxjs/deps/eigen"
 
       - name: Set up Node
         uses: actions/setup-node@v4
