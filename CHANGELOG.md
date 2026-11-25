@@ -13,6 +13,7 @@ Not released yet. These changes are in the branch and will appear in the next ve
   * The popup shows a notice while the page service is **Groq** or **DeepL**, because the page text is sent to that service.
 * **Changes:**
   * The toolbar popup shows every option on one page. The More and Less paging is removed. The gear icon opens Settings.
+  * Builds and releases run the unit tests (`npm test`) first. Edge is submitted only after the checks pass. A release stops before its version commit and tag when CHANGELOG.md has no section for that version.
   * The ⋮ options menu has an icon for each row. It holds the site and language rules, the page actions, More options, and About. Display options stay in Settings.
 * **Fixed:**
   * Chinese pages: large blocks that cover the screen are translated (issue #922).

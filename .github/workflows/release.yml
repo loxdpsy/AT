@@ -94,6 +94,9 @@ jobs:
             SHA="$GITHUB_SHA"
           elif [ "$PUBLISH" = "true" ]; then
             node scripts/sync-version.mjs "$VERSION"
+            # Stop before anything is committed, tagged, or pushed. A missing CHANGELOG.md section, or a failing check or unit test, must not leave a version commit and tag on main.
+            node scripts/check.mjs
+            node tests/run.mjs
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             # Every file that sync-version.mjs changes. Staging only the manifests left package.json and the README badge behind.
@@ -176,6 +179,7 @@ jobs:
     uses: ./.github/workflows/edge.yml
     with:
       version: ${{ needs.prepare.outputs.version }}
+      ref: ${{ needs.prepare.outputs.sha }}
     secrets: inherit
 
   publish:

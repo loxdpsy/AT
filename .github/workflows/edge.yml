@@ -18,13 +18,43 @@ on:
         description: "Version that was built, for example 9.8.2.0"
         type: string
         required: true
+      ref:
+        description: "Commit to test and submit (defaults to the commit that started the run)"
+        type: string
+        default: ""
 
 permissions:
   contents: read
 
 jobs:
+  # The Edge package is the Chromium build, so the same checks must pass before anything is sent to Microsoft.
+  test:
+    name: Test before the Edge submission
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref != '' && inputs.ref || github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check the repository
+        run: npm run check
+
+      - name: Run the unit tests
+        run: npm test
+
   submit:
     name: Submit to Edge Add-ons
+    needs: test
     runs-on: ubuntu-latest
     env:
       EDGE_API: https://api.addons.microsoftedge.microsoft.com
