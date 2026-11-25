@@ -51,19 +51,19 @@ endif()
 
 # faiss (inside marian-dev) uses uint8_t without including <cstdint>. Newer GCC (Ubuntu 24.04) does not include it
 # indirectly any more, so every C++ file gets it.
-add_compile_options($<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-include;cstdint>)
+add_compile_options("$<$<COMPILE_LANG_AND_ID:CXX,GNU,Clang,AppleClang>:-include;cstdint>")
 
 if(APPLE)
   # zlib (inside marian-dev) defines fdopen as a macro. The current macOS SDK declares fdopen in stdio.h, and the
   # macro breaks that declaration. Including stdio.h first, before zlib's macro, avoids it.
-  add_compile_options($<$<COMPILE_LANGUAGE:C>:-include;stdio.h>)
+  add_compile_options("$<$<COMPILE_LANGUAGE:C>:-include;stdio.h>")
   # sentencepiece (inside marian-dev) converts -1 to an enum. Apple clang in Xcode 16.4 treats that as an error.
-  add_compile_options($<$<COMPILE_LANG_AND_ID:CXX,AppleClang,Clang>:-Wno-enum-constexpr-conversion>)
+  add_compile_options("$<$<COMPILE_LANG_AND_ID:CXX,AppleClang,Clang>:-Wno-enum-constexpr-conversion>")
 endif()
 
 if(MSVC)
   # protobuf-lite (inside sentencepiece) needs std::hash_compare, which current MSVC does not have. See the header.
-  add_compile_options($<$<COMPILE_LANGUAGE:CXX>:/FI${CMAKE_CURRENT_SOURCE_DIR}/compat/msvc_hash_compare.h>)
+  add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/FI${CMAKE_CURRENT_SOURCE_DIR}/compat/msvc_hash_compare.h>")
 endif()
 
 add_subdirectory(bergamot)
