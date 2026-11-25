@@ -46,9 +46,9 @@ Not released yet. These changes are in the branch and will appear in the next ve
   * *Always translate this site* in the mobile menu.
   * Right-to-left pages: when the translation is in a right-to-left language (ar, he, fa, ur, ps, sd, ug, yi, dv, ckb), the page is flipped to right-to-left. The page returns to its original direction when translation is turned off.
   * Yandex captcha dialog: the captcha is shown on the page. *Open in a small window* and *Translate again* are the fallbacks.
-* **Changed:**
+* **Changes:**
   * The options menu is a panel above the page content, not an overlay. It closes on Escape, an outside click, or the button. Display options (selected-text button and hover translation) stay in Settings.
-  * The GitHub Firefox build is unsigned and is never sent to addons.mozilla.org.
+  * The GitHub Firefox build in this release is unsigned. From the next release on, it is signed by addons.mozilla.org as an unlisted add-on and is never listed publicly.
   * When no extension theme colour applies, the Firefox toolbar icon gets an outline in the opposite colour, so it stays visible on light and dark toolbars.
   * Firefox store submission reads `AMO_LISTING_READY` from a repository variable or a secret.
 * **Fixed:**
