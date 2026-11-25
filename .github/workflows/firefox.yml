@@ -7,7 +7,8 @@ name: Firefox build
 #     on listed add-ons). Its ZIP is uploaded as atlas-translation-firefox-store. With "submit" on, the version is sent to
 #     Mozilla for review through the API. Mozilla publishes it after approval.
 #   - "submit" needs the secrets AMO_JWT_ISSUER and AMO_JWT_SECRET.
-#   - The listed submission is skipped until the repository variable AMO_LISTING_READY is "true". Set it once the listing
+#   - The listed submission is skipped until AMO_LISTING_READY is "true". It is read from the repository variable or the
+#     secret of that name (either works). Set it once the listing
 #     text, icon, and privacy policy are in place. Screenshots are added once in the Developer Hub. The API cannot upload them.
 #   - The listed submission does not wait for approval (--approval-timeout 0). Review takes days, so the job ends after
 #     Mozilla has the version.
@@ -141,7 +142,7 @@ jobs:
           AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
           AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
           CHANNEL: ${{ inputs.channel }}
-          AMO_LISTING_READY: ${{ vars.AMO_LISTING_READY }}
+          AMO_LISTING_READY: ${{ vars.AMO_LISTING_READY || secrets.AMO_LISTING_READY }}
         run: |
           mkdir -p build
           if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ]; then
@@ -150,7 +151,7 @@ jobs:
             exit 0
           fi
           if [ "$CHANNEL" = "listed" ] && [ "$AMO_LISTING_READY" != "true" ]; then
-            echo "Skipping the store submission. Set the repository variable AMO_LISTING_READY to true once the listing text, icon, and privacy policy are in place." | tee build/amo-submit.log
+            echo "::warning::Skipping the store submission. Set AMO_LISTING_READY to true (repository variable or secret) once the listing text, icon, and privacy policy are in place." | tee build/amo-submit.log
             echo "skipped: AMO_LISTING_READY is not true" > build/amo-status.txt
             exit 0
           fi

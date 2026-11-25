@@ -401,14 +401,12 @@ hr {
   opacity: 0.85;
 }
 
-/* ---- Options menu: a themed list (replaces the native select, whose list the browser colours itself) ---- */
-.menuAnchor {
+/* ---- Options menu ---- */
+/* The list opens under the ⋮ button, right-aligned inside the popup. The layer covers the popup, so a click outside closes it. */
+.menuButton {
   position: absolute;
   top: 10px;
   right: 40px;
-}
-
-.menuButton {
   display: grid;
   place-items: center;
   width: 32px;
@@ -440,20 +438,36 @@ hr {
   box-shadow: 0 -6px 0 currentColor, 0 6px 0 currentColor;
 }
 
+.menuLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+}
+
+.menuLayer[hidden] {
+  display: none;
+}
+
 .menuPanel {
+  position: absolute;
+  top: 46px;
+  right: 10px;
   box-sizing: border-box;
-  width: auto;
-  margin: 2px 44px 10px 0;
+  width: 252px;
+  max-height: calc(100% - 56px);
+  overflow-y: auto;
   padding: 6px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--bg);
   color: var(--text);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
 }
 
-.menuPanel[hidden] {
-  display: none;
+.menuGroup + .menuGroup {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--line);
 }
 
 .menuItem {
@@ -462,6 +476,7 @@ hr {
   gap: 8px;
   width: 100%;
   min-height: 32px;
+  box-sizing: border-box;
   margin: 0;
   padding: 6px 8px;
   border: 0;
@@ -476,8 +491,13 @@ hr {
   cursor: pointer;
 }
 
-.menuItem:hover {
+.menuItem:hover:not(:disabled) {
   background-color: var(--hover);
+}
+
+.menuItem:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .menuMark {
@@ -491,10 +511,44 @@ hr {
 .menuLabel {
   flex: 1;
   min-width: 0;
+  overflow-wrap: anywhere;
 }
 
-.menuSeparator {
-  height: 1px;
-  margin: 6px 4px;
-  background: var(--line);
+/* ---- Update notice (background/updateCheck.js) ---- */
+.updateBanner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--hover);
+  color: var(--text);
+  font-size: 12px;
+}
+
+.updateBanner[hidden] {
+  display: none;
+}
+
+.updateBannerText {
+  flex: 1;
+  min-width: 0;
+}
+
+.updateHelp {
+  opacity: 0.8;
+  font-weight: 400;
+}
+
+#btnUpdateDownload {
+  flex: 0 0 auto;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
 }

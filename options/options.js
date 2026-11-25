@@ -1017,3 +1017,56 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
 window.scrollTo({
   top: 0
 });
+
+// ---- Update notice (background/updateCheck.js). Not shown on Firefox, which updates itself. ----
+function renderUpdateStatus() {
+  chrome.storage.local.get("updateCheck", result => {
+    const state = (result && result.updateCheck) || {};
+    const status = $("#updateStatus");
+    const msg = (key, fallback, substitution) => twpI18n.getMessage(key, substitution) || fallback;
+    $("#cbUpdateCheck").checked = state.enabled !== false;
+    status.replaceChildren();
+    if (state.enabled === false) {
+      status.textContent = msg("updateStatusOff", "Checks are turned off.");
+    } else if (!state.checkedAt) {
+      status.textContent = msg("updateStatusNever", "Not checked yet.");
+    } else if (state.latest) {
+      status.append(msg("updateStatusNewer", `Version ${state.latest.version} is available.`, state.latest.version) + " ");
+      const link = document.createElement("a");
+      link.className = "btn btn-primary";
+      link.href = state.latest.zipUrl;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = msg("updateBannerDownload", "Download");
+      status.append(link);
+    } else if (state.error === "rate-limited") {
+      status.textContent = msg("updateStatusRateLimited", "GitHub is limiting requests. Atlas Translation will try again later.");
+    } else if (state.error === "offline") {
+      status.textContent = msg("updateStatusOffline", "Could not reach GitHub. Atlas Translation will try again later.");
+    } else {
+      status.textContent = msg("updateStatusCurrent", "You have the latest version.");
+    }
+  });
+}
+function setupUpdates() {
+  if (/Firefox\//.test(navigator.userAgent)) {
+    $("#updatesCard").hidden = true;
+    return;
+  }
+  renderUpdateStatus();
+  $("#cbUpdateCheck").addEventListener("change", event => {
+    const enabled = event.target.checked;
+    chrome.storage.local.get("updateCheck", result => {
+      const updateCheck = (result && result.updateCheck) || {};
+      chrome.storage.local.set({ updateCheck: { ...updateCheck, enabled } }, () => renderUpdateStatus());
+    });
+  });
+  $("#btnUpdateNow").addEventListener("click", () => {
+    $("#updateStatus").textContent = "...";
+    chrome.runtime.sendMessage({ action: "checkForUpdates" }, () => {
+      void chrome.runtime.lastError;
+      renderUpdateStatus();
+    });
+  });
+}
+setupUpdates();

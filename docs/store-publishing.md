@@ -66,7 +66,7 @@ Steps:
 1. Go to **https://addons.mozilla.org/developers/** and sign in with a Firefox Account. Accept the developer agreement.
 2. Create the API keys (Developer Hub → **Manage API Keys**) and add them as `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` (see README, *Release secrets*).
 3. Check the listing text in `.github/amo-metadata.json`: name, summary, description, category (*Productivity*), license (MPL-2.0), tags, and privacy policy.
-4. Set the repository variable `AMO_LISTING_READY` to `true`. Until then the store step is skipped, so Mozilla never reviews an empty listing.
+4. Set the repository variable (or a secret) `AMO_LISTING_READY` to `true`. Until then the store step is skipped, so Mozilla never reviews an empty listing.
 5. Run **Release** with `submit_amo` on, or push a tag. The store version is sent for review. The first version creates the store add-on.
 6. Upload the screenshots from `store/screenshots/` once in the Developer Hub (**Manage listing → Screenshots**). The API cannot upload them. Later versions keep them.
 

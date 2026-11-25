@@ -504,6 +504,16 @@
             <p class="about-tagline" data-i18n="aboutTagline">Translate web pages and selected text in place, with the translation service you choose.</p>
           </div>
         </header>
+
+        <section class="card" id="updatesCard">
+          <h2 class="card-title" data-i18n="updateCheckTitle">Updates</h2>
+          <p class="card-desc" data-i18n="updateCheckDesc">Chrome and Edge update only the copies they got from a store. For a copy installed from the GitHub zip, Atlas Translation checks GitHub once a day and tells you when a newer version is out.</p>
+          <label class="check"><input type="checkbox" id="cbUpdateCheck" /><span data-i18n="updateCheckToggle">Check GitHub once a day</span></label>
+          <p class="card-desc" id="updateStatus"></p>
+          <div class="btn-row">
+            <button type="button" class="btn btn-ghost" id="btnUpdateNow" data-i18n="updateCheckNow">Check now</button>
+          </div>
+        </section>
   
         <section class="card">
           <h2 class="card-title" data-i18n="aboutCreditsTitle">Credits and license</h2>

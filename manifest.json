@@ -48,6 +48,7 @@
   },
   "permissions": [
     "storage",
+    "alarms",
     "activeTab",
     "contextMenus",
     "webRequest",
