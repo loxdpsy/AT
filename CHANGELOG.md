@@ -234,7 +234,7 @@ First release of Atlas Translation. The version numbers start again at 0.0.1.0. 
 - The popup and side pages no longer inject their own hard-coded dark styles, which clashed with the theme.
 - The README version badge and the package version fields are kept in step.
 
-## 9.8.1.0
+## 0.0.0.1
 
 **Important information**
 
