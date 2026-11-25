@@ -4,6 +4,14 @@
 
 Not released yet. Changes after 0.0.2.1 will be listed here.
 
+## 0.0.2.2
+
+Not released yet. This version is in progress; the list grows until it is released.
+
+- Desktop helper: its version is the extension's version (0.0.2.2 for this version), and a README section describes it.
+- Planned: a faster offline translation (long texts are split into parts and translated in parallel), a tray icon with
+  the helper's own settings window (no browser, no terminal), and right-to-left layout in the helper.
+
 ## 0.0.2.1
 
 - Offline translation (desktop helper): a new service, "Offline (desktop helper)", translates on this computer with no text sent to a web service. The Atlas helper (atlas-updater) runs an offline engine built from Mozilla's Bergamot (the engine Firefox uses) and serves it to the extension on 127.0.0.1. Set it up in Options, under Translation services: open the helper, install a language pack in its window, then paste the pairing code from the helper window and choose Save and test.
