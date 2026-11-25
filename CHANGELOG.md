@@ -10,6 +10,7 @@ Not released yet. Changes after 0.0.2.1 will be listed here.
 - Chromium and Edge: the signed build carries its public key in the manifest, so the unpacked zip has the same extension ID as the CRX. Settings are stored per extension ID, so a copy loaded from the 0.0.2.0 zip keeps its own settings. Use Restore from file to move them.
 - Restore from file: a blank Groq or DeepL key in a backup keeps the key saved on this device.
 - Restore from file: Groq or DeepL is turned off when no key is saved, and the translators move to Google. A backup from 0.0.1.9 restores as it is, without its key.
+- Helper window: starting atlas-updater with no arguments opens a page in your browser. It checks for a new version when it opens, installs it in one click, and shows the steps for Chrome, Edge, Brave, Opera, Vivaldi, Comet, Iopera and Firefox. Firefox links to the Firefox Add-ons page. Chromium browsers load the extension from its folder (Load unpacked), because they do not allow the helper to add it.
 - Updates: a helper program, atlas-updater (tools/atlas-updater), installs the newest release into an unpacked copy of the extension. It is written in Rust and runs on Windows, macOS and Linux. Every release attaches the three programs.
 - Restore from file no longer fails on Chromium when the browser has no shortcut update call. The shortcut keys are set in chrome://extensions/shortcuts there.
 - Reset to defaults has the same fix.
