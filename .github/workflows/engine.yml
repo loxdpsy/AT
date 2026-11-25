@@ -1,4 +1,4 @@
-# Builds the offline translation engine (tools/atlas-engine, built from bergamot-translator) for Windows, macOS and
+# Builds the offline translation engine (tools/atlas-engine, built from Bergamot v0.6.0) for Windows, macOS and
 # Linux. Each build is checked with a real language pack: scripts/engine-smoke.mjs downloads the English to French pack
 # from the catalogue, checks it, and translates. Each program is kept as an artifact for the release.
 #
@@ -60,13 +60,32 @@ jobs:
         with:
           ref: ${{ inputs.ref }}
 
-      - name: Check out bergamot-translator (with its submodules)
+      # Bergamot is the inference/ folder of mozilla/translations, at the commit Firefox builds from (see
+      # tools/atlas-engine/CMakeLists.txt). Only that folder is checked out. Its submodules are not checked out by
+      # actions/checkout, because CMake would then try to clone all of them. The three that the native build needs are
+      # fetched below as tarballs at their pinned commits. The other submodules are for WASM, CUDA, or the ARM build.
+      - name: Check out Bergamot (inference/ of mozilla/translations)
         uses: actions/checkout@v4
         with:
-          repository: browsermt/bergamot-translator
-          ref: v0.4.5
-          submodules: recursive
-          path: tools/atlas-engine/bergamot
+          repository: mozilla/translations
+          ref: eea6e5a80aa4ddd86d9cc35ce9a65b79aa3ab96d
+          sparse-checkout: inference
+          path: translations-source
+          submodules: false
+
+      - name: Move Bergamot into place and fetch its pinned submodules
+        run: |
+          set -euo pipefail
+          mv translations-source/inference tools/atlas-engine/bergamot
+          rm -rf translations-source
+          fetch() { # <owner/repo> <commit> <destination>
+            mkdir -p "$3"
+            curl -fsSL "https://codeload.github.com/$1/tar.gz/$2" | tar xz --strip-components=1 -C "$3"
+          }
+          # Commits are the gitlinks of eea6e5a8 (inference/3rd_party/ssplit-cpp, marian-fork/src/3rd_party/...).
+          fetch browsermt/ssplit-cpp a311f9865ade34db1e8e080e6cc146f55dafb067 tools/atlas-engine/bergamot/3rd_party/ssplit-cpp
+          fetch browsermt/sentencepiece ae41b7740d7006596bb9257e83340b2620db9d00 tools/atlas-engine/bergamot/marian-fork/src/3rd_party/sentencepiece
+          fetch kpu/intgemm f7401513da71758dacce52fed1c7855549abee59 tools/atlas-engine/bergamot/marian-fork/src/3rd_party/intgemm
 
       - name: Set up Node
         uses: actions/setup-node@v4
@@ -74,7 +93,7 @@ jobs:
           node-version: 22
 
       # Windows only: PCRE2 for ssplit comes from vcpkg, built as a static library with the static C runtime (/MT), the
-      # same runtime marian-dev and bergamot use. CMAKE_PREFIX_PATH points CMake at it. See tools/atlas-engine/CMakeLists.txt.
+      # same runtime marian and bergamot use. CMAKE_PREFIX_PATH points CMake at it. See tools/atlas-engine/CMakeLists.txt.
       - name: Install PCRE2 (Windows)
         if: runner.os == 'Windows'
         run: |
