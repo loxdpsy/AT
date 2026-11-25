@@ -74,10 +74,16 @@ jobs:
           node-version: 22
 
       - name: Configure
+        id: configure
         run: cmake -S tools/atlas-engine -B build/engine -DCMAKE_BUILD_TYPE=Release
 
+      # The log is kept for the job summary. On Linux and macOS, -k keeps going after an error, so one run lists every
+      # failing file instead of only the first one. Windows (MSBuild) stops at the failed project.
       - name: Build
-        run: cmake --build build/engine --config Release --parallel 4
+        id: build
+        run: |
+          set -o pipefail
+          cmake --build build/engine --config Release --parallel 4 ${{ runner.os != 'Windows' && '-- -k' || '' }} 2>&1 | tee "$RUNNER_TEMP/engine-build.log"
 
       - name: Find the program
         id: find
@@ -90,9 +96,11 @@ jobs:
           echo "path=$found" >> "$GITHUB_OUTPUT"
 
       - name: Translate English to French with the real language pack
+        id: smoke
         run: node scripts/engine-smoke.mjs "${{ steps.find.outputs.path }}"
 
       - name: Name the program for the release
+        id: name
         run: cp "${{ steps.find.outputs.path }}" "$RUNNER_TEMP/${{ matrix.asset }}"
 
       - name: Keep the program for the release
@@ -101,3 +109,54 @@ jobs:
           name: ${{ matrix.asset }}
           path: ${{ runner.temp }}/${{ matrix.asset }}
           if-no-files-found: error
+
+      # Runs even when a step failed. Shows each step's result, the compiler and linker errors when the build failed,
+      # and the size and SHA-256 of the program when it was built. A summary problem never fails the job.
+      - name: Job summary
+        if: always()
+        continue-on-error: true
+        env:
+          ASSET: ${{ matrix.asset }}
+        run: |
+          summary="$GITHUB_STEP_SUMMARY"
+          {
+            echo "## Offline engine: ${{ matrix.os }}"
+            echo ""
+            echo "| Step | Result |"
+            echo "| --- | --- |"
+            echo "| Configure | ${{ steps.configure.outcome }} |"
+            echo "| Build | ${{ steps.build.outcome }} |"
+            echo "| Find the program | ${{ steps.find.outcome }} |"
+            echo "| Translate with the real language pack | ${{ steps.smoke.outcome }} |"
+            echo "| Name for the release | ${{ steps.name.outcome }} |"
+            echo ""
+          } >> "$summary"
+
+          log="$RUNNER_TEMP/engine-build.log"
+          if [ "${{ steps.build.outcome }}" != "success" ]; then
+            {
+              echo "### Build errors"
+              echo ""
+              echo "Compiler, linker and make lines (the first 80). The full log is in the Build step."
+              echo ""
+              echo '```'
+              if [ -f "$log" ]; then
+                grep -E ': error|error [A-Z]+[0-9]+|LNK[0-9]+|\*\*\* |failed' "$log" | head -n 80 || true
+              fi
+              echo '```'
+              echo ""
+            } >> "$summary"
+          fi
+
+          if [ "${{ steps.name.outcome }}" = "success" ]; then
+            file="$RUNNER_TEMP/$ASSET"
+            size=$(wc -c < "$file")
+            digest=$(node -e "const c=require('crypto'),f=require('fs');process.stdout.write(c.createHash('sha256').update(f.readFileSync(process.argv[1])).digest('hex'))" "$file")
+            {
+              echo "### Program: $ASSET"
+              echo ""
+              echo "- Size: $size bytes"
+              echo "- SHA-256: \`$digest\`"
+              echo ""
+            } >> "$summary"
+          fi
