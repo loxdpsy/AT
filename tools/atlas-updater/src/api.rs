@@ -26,6 +26,8 @@ pub const PORT: u16 = 47632;
 const MAX_BODY: usize = 4 * 1024 * 1024;
 /// The most texts in one request.
 const MAX_TEXTS: usize = 500;
+/// How long the window has to answer a bind request before the extension gets a timeout.
+const BIND_WAIT: Duration = Duration::from_secs(120);
 
 struct Request {
     method: String,
