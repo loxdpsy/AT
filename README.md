@@ -59,7 +59,7 @@ from the Web Store or through an enterprise policy, so use the ZIP for normal si
 
 Install Atlas Translation from **addons.mozilla.org** (the store listing). That is the only Firefox build Mozilla signs.
 
-The GitHub release also has `atlas-translation-<version>-firefox.xpi`. It is **not signed** and is not sent to Mozilla. Firefox refuses unsigned add-ons, so use it only in Firefox Developer Edition, Nightly, or ESR with `xpinstall.signatures.required` set to `false`. It has no self-hosted updates.
+The GitHub release also has `atlas-translation-<version>-firefox.xpi`. When the release runs with `submit_amo` on, Mozilla signs it as an **unlisted** add-on: it is never listed or published. Its add-on ID is in `firefox_manifest.json`. If the file is unsigned, Firefox refuses it, so use it only in Firefox Developer Edition, Nightly, or ESR with `xpinstall.signatures.required` set to `false`. It has no self-hosted updates.
 
 Firefox for Android: install from addons.mozilla.org once the store listing is published. There is no install path for the GitHub build.
 
@@ -151,14 +151,14 @@ gh secret set AMO_JWT_SECRET --body "<secret value from AMO>"
 
 **Firefox has two listings, and each one has its own add-on ID. Both are published from the Release workflow.**
 
-- **GitHub** (`unlisted`): the ID in `firefox_manifest.json` stays. The unsigned `.xpi` is attached to the GitHub release. It is never sent to Mozilla.
+- **GitHub** (`unlisted`): the ID is `browser_specific_settings.gecko.id` in `firefox_manifest.json`. With `submit_amo` on, the `.xpi` is signed by Mozilla as an unlisted add-on, never listed, and the signed file is attached to the GitHub release.
 - **Firefox store** (`listed`): the ID is `FIREFOX_STORE_ID` in `.github/workflows/firefox.yml`. The workflow removes `update_url` and sends the version to addons.mozilla.org through the API, using the `AMO_JWT_*` secrets. Mozilla reviews every version before it is public. The store add-on is separate, so GitHub users and store users never mix.
 
 Steps:
 
 1. Add `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` as secrets (see *Release secrets* above).
 2. Check the store listing text in `.github/amo-metadata.json`, then set the repository variable (or a secret) `AMO_LISTING_READY` to `true` (**Settings → Secrets and variables → Actions → Variables**). Until it is `true`, the store step is skipped, so no empty listing is sent.
-3. Run **Release** with `action: build-and-release` and `submit_amo` on. The GitHub build is attached unsigned. Only the store version is sent for review. The first store submission creates the add-on under the store ID.
+3. Run **Release** with `action: build-and-release` and `submit_amo` on. The GitHub build is signed as an unlisted add-on. The store version is sent for review. The first store submission creates the add-on under the store ID.
 4. Screenshots are the one step the API cannot do. Upload `store/screenshots/` once in the Developer Hub (**Manage listing → Screenshots**). Later versions keep them.
 5. Bump the `version` in `manifest.json` and `firefox_manifest.json` before each tag. AMO rejects a version number that already exists.
 

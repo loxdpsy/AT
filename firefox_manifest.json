@@ -7,7 +7,7 @@
   "homepage_url": "https://github.com/loxdpsy/AT",
   "browser_specific_settings": {
     "gecko": {
-      "id": "{1bc5e819-aec9-4d8b-8348-0b2c9ae516f5}",
+      "id": "{fed15b8b-37be-49a7-97d7-e062452c568a}",
       "update_url": "https://github.com/loxdpsy/AT/releases/latest/download/updates.json",
       "strict_min_version": "140.0",
       "data_collection_permissions": {

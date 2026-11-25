@@ -21,9 +21,9 @@ Not released yet. Changes after 0.0.1.9 will be listed here.
 * **Added:**
   * **Groq (AI)** translator. Add your own Groq API key in *Settings → Services*, then choose Groq for pages or selected text. The key is stored in the extension and is sent only to Groq.
   * Firefox toolbar icon colour in *Settings → Style*: follow the theme, black, white, or blue. Firefox only.
+  * The GitHub Firefox build is signed by addons.mozilla.org as an **unlisted** add-on when a release runs with *submit_amo* on. It is never listed publicly.
   * The popup shows a notice while the page service is **Groq** or **DeepL**, because the page text is sent to that service.
 * **Changes:**
-  * The GitHub Firefox build is not signed in this release. Mozilla rejected the GitHub add-on ID as a duplicate, so the unlisted signing step was removed until that is fixed.
   * The toolbar popup shows every option on one page. The More and Less paging is removed. The gear icon opens Settings.
   * Builds and releases run the unit tests (`npm test`) first. Edge is submitted only after the checks pass. A release stops before its version commit and tag when CHANGELOG.md has no section for that version.
   * The ⋮ options menu has an icon for each row. It holds the site and language rules, the page actions, More options, and About. Display options stay in Settings.
@@ -63,7 +63,7 @@ Not released yet. Changes after 0.0.1.9 will be listed here.
   * Yandex captcha dialog: the captcha is shown on the page. *Open in a small window* and *Translate again* are the fallbacks.
 * **Changes:**
   * The options menu is a panel above the page content, not an overlay. It closes on Escape, an outside click, or the button. Display options (selected-text button and hover translation) stay in Settings.
-  * The GitHub Firefox build is unsigned. Signing it as an unlisted add-on is not in place yet.
+  * The GitHub Firefox build in this release is unsigned. From the next release on, it is signed by addons.mozilla.org as an unlisted add-on and is never listed publicly.
   * When no extension theme colour applies, the Firefox toolbar icon gets an outline in the opposite colour, so it stays visible on light and dark toolbars.
   * Firefox store submission reads `AMO_LISTING_READY` from a repository variable or a secret.
 * **Fixed:**
