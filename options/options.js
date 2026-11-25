@@ -699,7 +699,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     twpConfig.set("useAlternativeService", e.target.value);
   };
   $("#useAlternativeService").value = twpConfig.get("useAlternativeService");
-  const pageTranslationServices = ["google", "bing", "yandex", "deepl", "groq", "offline", "libre"];
+  const pageTranslationServices = ["google", "bing", "yandex", "deepl", "groq", "openrouter", "offline", "libre"];
   const updateServiceSelector = enabledServices => {
     document.querySelectorAll("#pageTranslatorService option").forEach(option => option.setAttribute("hidden", ""));
     document.querySelectorAll("#textTranslatorService option").forEach(option => option.setAttribute("hidden", ""));
@@ -734,6 +734,9 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
   }, {
     selector: "#btnEnableGroq",
     svName: "groq"
+  }, {
+    selector: "#btnEnableOpenRouter",
+    svName: "openrouter"
   }, {
     selector: "#btnEnableOffline",
     svName: "offline"
@@ -1011,6 +1014,97 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
   groqKeyInput.value = storedGroqKey;
   groqCheckbox.disabled = !storedGroqKey;
   groqCheckbox.checked = storedGroqKey !== "" && twpConfig.get("enabledServices").includes("groq");
+
+  // OpenRouter (AI). Each user adds their own key. The key is checked with GET /key, which uses no tokens. The model list
+  // is public and is used only to warn about a model name that is not on it.
+  const openRouterKeyInput = $("#openRouterKEY");
+  const openRouterMessage = $("#openRouterApiResponse");
+  const openRouterCheckbox = $("#btnEnableOpenRouter");
+  const openRouterModelInput = $("#openRouterModel");
+  const defaultOpenRouterModel = "openai/gpt-4o-mini";
+  function setOpenRouterMessage(text, kind = "") {
+    openRouterMessage.textContent = text;
+    openRouterMessage.className = "message" + (kind ? " " + kind : "");
+  }
+  async function checkOpenRouterKey(apiKey) {
+    const response = await fetch("https://openrouter.ai/api/v1/key", { headers: { Authorization: "Bearer " + apiKey } });
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      if (response.status === 401 || response.status === 403) {
+        throw new Error(`OpenRouter rejected this key (${response.status}). Check that it is copied correctly.`);
+      }
+      if (response.status === 429) {
+        throw new Error("Too many requests to OpenRouter. Try again in a moment.");
+      }
+      throw new Error("OpenRouter error: " + (body && body.error && body.error.message || "HTTP " + response.status));
+    }
+  }
+  async function requestOpenRouterModelIds() {
+    const response = await fetch("https://openrouter.ai/api/v1/models");
+    if (!response.ok) return null;
+    const body = await response.json();
+    return body && Array.isArray(body.data) ? body.data.map(model => model.id) : null;
+  }
+  $("#toggleOpenRouterKey").onclick = () => {
+    const showing = openRouterKeyInput.type === "text";
+    openRouterKeyInput.type = showing ? "password" : "text";
+    $("#toggleOpenRouterKey").textContent = showing ? "Show" : "Hide";
+  };
+  $("#addOpenRouter").onclick = async () => {
+    const apiKey = openRouterKeyInput.value.trim();
+    const model = openRouterModelInput.value.trim() || defaultOpenRouterModel;
+    if (!apiKey) {
+      setOpenRouterMessage("Paste your OpenRouter API key first.", "error");
+      return;
+    }
+    setOpenRouterMessage("Checking the key…");
+    try {
+      await checkOpenRouterKey(apiKey);
+      const modelIds = await requestOpenRouterModelIds().catch(() => null);
+      twpConfig.set("openRouterApiKey", apiKey);
+      twpConfig.set("openRouterModel", model);
+      const enabledServices = twpConfig.get("enabledServices");
+      if (!enabledServices.includes("openrouter")) {
+        twpConfig.set("enabledServices", [...enabledServices, "openrouter"]);
+      }
+      openRouterCheckbox.disabled = false;
+      openRouterCheckbox.checked = true;
+      updateServiceSelector(twpConfig.get("enabledServices"));
+      if (!modelIds || modelIds.includes(model)) {
+        setOpenRouterMessage("Key saved. OpenRouter is ready to use.", "ok");
+      } else {
+        setOpenRouterMessage(`Key saved. The model "${model}" is not in OpenRouter's list, so translation may fail. Choose another model name.`, "error");
+      }
+    } catch (e) {
+      setOpenRouterMessage(e.message || String(e), "error");
+    }
+  };
+  $("#removeOpenRouter").onclick = () => {
+    twpConfig.set("openRouterApiKey", "");
+    openRouterKeyInput.value = "";
+    setOpenRouterMessage("Key removed. OpenRouter is disabled.");
+    openRouterCheckbox.checked = false;
+    openRouterCheckbox.disabled = true;
+    let enabledServices = twpConfig.get("enabledServices").filter(sv => sv !== "openrouter");
+    if (enabledServices.length === 0) {
+      enabledServices = ["google"];
+    }
+    twpConfig.set("enabledServices", enabledServices);
+    if (twpConfig.get("textTranslatorService") === "openrouter") {
+      twpConfig.set("textTranslatorService", enabledServices[0]);
+    }
+    if (twpConfig.get("pageTranslatorService") === "openrouter") {
+      twpConfig.set("pageTranslatorService", enabledServices[0]);
+    }
+    updateServiceSelector(enabledServices);
+    $("#pageTranslatorService").value = twpConfig.get("pageTranslatorService");
+    $("#textTranslatorService").value = twpConfig.get("textTranslatorService");
+  };
+  const storedOpenRouterKey = twpConfig.get("openRouterApiKey") || "";
+  openRouterModelInput.value = twpConfig.get("openRouterModel") || defaultOpenRouterModel;
+  openRouterKeyInput.value = storedOpenRouterKey;
+  openRouterCheckbox.disabled = !storedOpenRouterKey;
+  openRouterCheckbox.checked = storedOpenRouterKey !== "" && twpConfig.get("enabledServices").includes("openrouter");
 
   // Offline (desktop helper). The Atlas helper runs on this computer at 127.0.0.1:47632 (tools/atlas-updater/src/api.rs).
   // The pairing code is shown in the helper window. The helper's status does not need it; a test translation does.

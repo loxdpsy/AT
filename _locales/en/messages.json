@@ -669,6 +669,24 @@
   "msgIconBlue": {
     "message": "Blue"
   },
+  "msgOpenRouterNeedsKey": {
+    "message": "Needs an API key"
+  },
+  "msgOpenRouterDescription": {
+    "message": "One key for many AI models, and you choose the model. Add your own key from openrouter.ai. The text you translate is sent to OpenRouter with that key, and from there to the model you choose."
+  },
+  "msgOpenRouterKeyLabel": {
+    "message": "OpenRouter API key"
+  },
+  "msgOpenRouterModelLabel": {
+    "message": "Model"
+  },
+  "msgOpenRouterSave": {
+    "message": "Save and test"
+  },
+  "msgOpenRouterRemove": {
+    "message": "Remove key"
+  },
   "msgGroqNeedsKey": {
     "message": "Needs an API key"
   },

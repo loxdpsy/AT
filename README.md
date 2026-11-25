@@ -31,11 +31,13 @@ Other extensions with a similar name are not Atlas Translation. Store links will
 
 - **Page translation** in place, with the original text shown on hover (optional).
 - **Selected text** translation from the right-click menu, the popup, or a hotkey.
-- **Five translation services**
+- **Translation services**
   - Google Translate (default)
   - Bing Translator
   - Yandex Translate
   - DeepL (official API, your own key)
+  - Groq (AI, your own key)
+  - OpenRouter (AI, your own key; you choose the model)
   - LibreTranslate (your own server and key)
   - When a service fails, the next enabled service that supports the language translates the text. A service that fails three times in a row is skipped for five minutes (see *Notes and limits*).
 - **Text-to-speech** for translated text (Chromium 109+ and Firefox).
@@ -250,10 +252,11 @@ scripts/                 Build, check, and update-check scripts
 The full privacy policy, written for store listings, is in [docs/privacy-policy.md](docs/privacy-policy.md).
 
 **What leaves your browser.** Text is sent to a translation service only when you ask for a translation: a page, a
-selection, or a word. The text goes to the service you chose in *Translations* (Google, Bing, Yandex, DeepL, or your own
-LibreTranslate server). Each service handles the text under its own privacy policy.
+selection, or a word. The text goes to the service you chose in *Translations* (Google, Bing, Yandex, DeepL, Groq,
+OpenRouter, or your own LibreTranslate server). Each service handles the text under its own privacy policy.
 
 - DeepL keys are sent only to `api.deepl.com` or `api-free.deepl.com`.
+- Groq keys are sent only to `api.groq.com`, and OpenRouter keys only to `openrouter.ai`.
 - LibreTranslate requests go only to the server address you enter.
 - The extension has no accounts, analytics, or telemetry. Nothing is sent to the project's authors.
 - All code ships inside the package. The extension does not load code from the internet while it runs.

@@ -22,6 +22,8 @@ Not released yet. This version is in progress; the list grows until it is releas
 - Paragraphs (#727), optional: Options, "Translate each paragraph as one text" (off by default). A sentence split by inline tags (links, bold, spans) is then sent and translated as one text, instead of in fragments.
 - Desktop helper: its settings open in the helper's own window, not a browser tab, with a tray icon (Windows, macOS, Linux). Closing the window keeps the helper in the tray; Quit in the tray menu stops it.
 - Desktop helper: the window lays out right to left when the system language is Arabic, Hebrew, Persian, Urdu or another right-to-left language.
+- OpenRouter (AI): a new translator with your own OpenRouter key (Settings → Services). Choose any model OpenRouter offers; the default is openai/gpt-4o-mini. Like Groq, the text goes only to OpenRouter with that key, and the answer must match the request, so a broken answer is not shown as a translation (#1029).
+- Translation failures: OpenRouter is included in the retry-with-the-next-service rule and in the removal of failed translations.
 
 ## 0.0.2.1
 

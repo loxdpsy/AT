@@ -1079,6 +1079,116 @@ const translationService = function () {
   };
 
   /**
+   * OpenRouter (AI): one API for many models, with an OpenAI-compatible chat API. Each user adds their own key, so the
+   * text goes to OpenRouter with that key, and from there to the model the user chose. Like Groq, one batch of texts is
+   * one request, and the answer must have the same shape as the request (see makeRequest). The request asks for a JSON
+   * schema (structured output). provider.require_parameters sends it only to a provider that supports that.
+   * Groq's language names and instruction are used, so both services translate the same way.
+   */
+  const openRouterSchema = {
+    type: "object",
+    properties: {
+      translations: { type: "array", items: { type: "array", items: { type: "string" } } }
+    },
+    required: ["translations"],
+    additionalProperties: false
+  };
+  /**
+   * @param {string} apiKey
+   * @param {string} model
+   * @returns {Service}
+   */
+  const createOpenRouterService = (apiKey, model) => {
+    return new class extends Service {
+      constructor() {
+        super("openrouter", "https://openrouter.ai/api/v1/chat/completions", "POST", function cbTransformRequest(sourceArray) {
+          return JSON.stringify(sourceArray);
+        }, function cbParseResponse(response) {
+          return response.translations.map( /** @return {Service_Single_Result_Response} */pieces => ({
+            text: JSON.stringify(pieces),
+            detectedLanguage: "und"
+          }));
+        }, function cbTransformResponse(result, dontSortResults) {
+          if (typeof result !== "string") throw new Error("OpenRouter: no translation for this text");
+          return JSON.parse(result);
+        }, null, function cbGetRequestBody(sourceLanguage, targetLanguage, requests) {
+          const source = sourceLanguage && sourceLanguage !== "auto" && sourceLanguage !== "und" ? ` The source language is ${groqLanguageName(sourceLanguage)}.` : "";
+          const instruction = `You translate website text into ${groqLanguageName(targetLanguage)}.${source} ` +
+            "The user message is a JSON array. Each item is an array of text strings taken from one part of a web page. " +
+            "Translate every string. Keep HTML-like tags, numbers, URLs and line breaks as they are, and do not add notes. " +
+            "Reply with a JSON object {\"translations\": [...]}. It must have one item per input item, in the same order, " +
+            "and each item must be an array of translated strings with the same length and order as its input array.";
+          return JSON.stringify({
+            model,
+            temperature: 0,
+            provider: { require_parameters: true },
+            response_format: { type: "json_schema", json_schema: { name: "translations", strict: true, schema: openRouterSchema } },
+            messages: [{ role: "system", content: instruction }, { role: "user", content: JSON.stringify(requests.map(info => JSON.parse(info.originalText))) }]
+          });
+        }, function cbGetExtraHeaders() {
+          return [{
+            name: "Content-Type",
+            value: "application/json"
+          }, {
+            name: "Authorization",
+            value: "Bearer " + apiKey.trim()
+          }, {
+            // Names the app on OpenRouter's usage pages. It is not a secret.
+            name: "X-Title",
+            value: "Atlas Translation"
+          }];
+        });
+      }
+
+      /**
+       * Sends one batch. The answer must have one array per request, with the same number of pieces as its input.
+       * @param {string} sourceLanguage
+       * @param {string} targetLanguage
+       * @param {Array<TranslationInfo>} requests
+       */
+      async makeRequest(sourceLanguage, targetLanguage, requests) {
+        const response = await super.makeRequest(sourceLanguage, targetLanguage, requests);
+        const content = response && response.choices && response.choices[0] && response.choices[0].message && response.choices[0].message.content;
+        let parsed = null;
+        try {
+          parsed = JSON.parse(content);
+        } catch (e) {
+          parsed = null;
+        }
+        const inputs = requests.map(info => JSON.parse(info.originalText));
+        const valid = parsed && Array.isArray(parsed.translations) && parsed.translations.length === inputs.length && parsed.translations.every((pieces, i) => Array.isArray(pieces) && pieces.length === inputs[i].length);
+        if (!valid) {
+          const message = response && response.error && response.error.message;
+          throw new Error("OpenRouter error: " + (message || "the answer did not match the request"));
+        }
+        return {
+          translations: parsed.translations.map(pieces => pieces.map(text => String(text)))
+        };
+      }
+    }();
+  };
+
+  /** @type {Service|null} */
+  let openRouterService = null;
+  /** @type {string} */
+  let openRouterServiceKey = "";
+  /**
+   * Returns the OpenRouter service for the key and model saved in the settings. A new service is made when either changes.
+   * @returns {Service|null}
+   */
+  const getOpenRouterService = () => {
+    const apiKey = (twpConfig.get("openRouterApiKey") || "").trim();
+    if (!apiKey) return null;
+    const model = (twpConfig.get("openRouterModel") || "openai/gpt-4o-mini").trim();
+    const key = apiKey + "\n" + model;
+    if (!openRouterService || openRouterServiceKey !== key) {
+      openRouterService = createOpenRouterService(apiKey, model);
+      openRouterServiceKey = key;
+    }
+    return openRouterService;
+  };
+
+  /**
    * Creates the libreTranslate translation service from URL and apiKey
    * @param {string} url
    * @param {string} apiKey
@@ -1286,6 +1396,7 @@ const translationService = function () {
     if (twpConfig.get("enabledServices").includes(serviceName) || twpConfig.get("customServices").find(cs => cs.name === serviceName)) {
       if (serviceName === "deepl") return getDeeplService();
       if (serviceName === "groq") return getGroqService();
+      if (serviceName === "openrouter") return getOpenRouterService();
       return serviceList.get(serviceName);
     } else {
       return null;
@@ -1434,6 +1545,7 @@ const translationService = function () {
       });
       if (deeplService) deeplService.removeTranslationsWithError();
       if (groqService) groqService.removeTranslationsWithError();
+      if (openRouterService) openRouterService.removeTranslationsWithError();
     } else if (request.action === "createLibreService") {
       serviceList.set("libre", createLibreService(request.libre.url, request.libre.apiKey));
     } else if (request.action === "removeLibreService") {

@@ -202,7 +202,7 @@
 <option value="google">Google</option>
 <option value="bing">Bing</option>
 <option value="yandex">Yandex</option>
-<option value="deepl">DeepL</option><option value="groq">Groq (AI)</option><option value="offline">Offline (desktop helper)</option><option value="libre" hidden>LibreTranslate</option>
+<option value="deepl">DeepL</option><option value="groq">Groq (AI)</option><option value="openrouter">OpenRouter (AI)</option><option value="offline">Offline (desktop helper)</option><option value="libre" hidden>LibreTranslate</option>
 </select></div>
           </div>
           <div class="row">
@@ -213,7 +213,7 @@
 <option value="google">Google</option>
 <option value="bing">Bing</option>
 <option value="yandex">Yandex</option>
-<option value="deepl">DeepL</option><option value="groq">Groq (AI)</option><option value="offline">Offline (desktop helper)</option>
+<option value="deepl">DeepL</option><option value="groq">Groq (AI)</option><option value="openrouter">OpenRouter (AI)</option><option value="offline">Offline (desktop helper)</option>
 </select></div>
           </div>
         </div>
@@ -332,6 +332,11 @@
               <span class="service-name">Groq (AI)</span>
               <span class="service-note" data-i18n="msgGroqNeedsKey">Needs an API key</span>
             </label>
+            <label class="service" for="btnEnableOpenRouter">
+              <input type="checkbox" id="btnEnableOpenRouter" />
+              <span class="service-name">OpenRouter (AI)</span>
+              <span class="service-note" data-i18n="msgOpenRouterNeedsKey">Needs an API key</span>
+            </label>
             <label class="service" for="btnEnableOffline">
               <input type="checkbox" id="btnEnableOffline" />
               <span class="service-name">Offline (desktop helper)</span>
@@ -394,6 +399,29 @@
             <button id="removeGroq" class="btn btn-danger" data-i18n="msgGroqRemove">Remove key</button>
           </div>
           <p class="message" id="groqApiResponse" role="status"></p>
+        </div>
+
+        <div class="card service-card" id="openRouterCard">
+          <div class="service-head">
+            <div>
+              <h2 class="card-title">OpenRouter (AI)</h2>
+              <p class="card-desc" data-i18n="msgOpenRouterDescription">One key for many AI models, and you choose the model. Add your own key from openrouter.ai. The text you translate is sent to OpenRouter with that key, and from there to the model you choose.</p>
+            </div>
+          </div>
+          <label class="field-label" for="openRouterKEY" data-i18n="msgOpenRouterKeyLabel">OpenRouter API key</label>
+          <div class="input-row">
+            <input type="password" id="openRouterKEY" class="input" placeholder="sk-or-..." autocomplete="off" spellcheck="false" />
+            <button class="btn btn-ghost" id="toggleOpenRouterKey" type="button">Show</button>
+          </div>
+          <label class="field-label" for="openRouterModel" data-i18n="msgOpenRouterModelLabel">Model</label>
+          <div class="input-row">
+            <input type="text" id="openRouterModel" class="input" placeholder="openai/gpt-4o-mini" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="btn-row">
+            <button id="addOpenRouter" class="btn btn-primary" data-i18n="msgOpenRouterSave">Save and test</button>
+            <button id="removeOpenRouter" class="btn btn-danger" data-i18n="msgOpenRouterRemove">Remove key</button>
+          </div>
+          <p class="message" id="openRouterApiResponse" role="status"></p>
         </div>
 
         <div class="card service-card" id="offlineCard">

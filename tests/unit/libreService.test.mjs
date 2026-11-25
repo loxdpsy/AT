@@ -7,7 +7,7 @@ const ROOT = new URL("../../", import.meta.url).pathname;
 const read = p => fs.readFileSync(ROOT + p, "utf8");
 
 // Page translation: the page service list in languages.js includes libre.
-assert.match(read("lib/languages.js"), /const pageTranslationServices = \["google", "bing", "yandex", "deepl", "groq", "offline", "libre"\];/, "libre is a page service");
+assert.match(read("lib/languages.js"), /const pageTranslationServices = \["google", "bing", "yandex", "deepl", "groq", "openrouter", "offline", "libre"\];/, "libre is a page service");
 // The popup has a logo for it, so it does not fall back to the Google logo.
 assert.match(read("popup/popup.js"), /libre: \["\/icons\/icon-32\.png", "LibreTranslate", false\]/, "popup logo for libre");
 
