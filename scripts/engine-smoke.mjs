@@ -3,6 +3,7 @@
 // sentences. Fails when the download is wrong or the reply does not look like French.
 // Usage: node scripts/engine-smoke.mjs <path to atlas-engine>
 import { spawn } from "node:child_process";
+import { once } from "node:events";
 import { createHash } from "node:crypto";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
@@ -49,9 +50,19 @@ console.log("  ok    engine loaded the English to French model");
 
 const sentences = ["Hello, how are you today?", "The weather is very nice in the park."];
 const translations = [];
+// The engine's exit code and signal, so a crash shows in the log (a crash prints nothing of its own).
+async function exitStatus() {
+  if (child.exitCode !== null || child.signalCode !== null) return `code ${child.exitCode}, signal ${child.signalCode}`;
+  const exited = await Promise.race([once(child, "exit"), new Promise(resolve => setTimeout(resolve, 5000, null))]);
+  if (exited) return `code ${exited[0]}, signal ${exited[1]}`;
+  return `still running (code ${child.exitCode}, signal ${child.signalCode})`;
+}
 for (const sentence of sentences) {
   child.stdin.write(Buffer.from(sentence, "utf8").toString("base64") + "\n");
   const reply = await withTimeout(lines.next(), "waiting for a translation");
+  if (reply.done) {
+    throw new Error(`the engine stopped before it translated "${sentence}" (${await exitStatus()})`);
+  }
   const text = Buffer.from(reply.value, "base64").toString("utf8");
   translations.push(text);
   console.log(`  ok    "${sentence}" -> "${text}"`);
