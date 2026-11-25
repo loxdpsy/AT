@@ -4,6 +4,11 @@
 
 Not released yet. Changes after 0.0.2.1 will be listed here.
 
+- Restore from file no longer fails on Chromium when the browser has no shortcut update call. The shortcut keys are set in chrome://extensions/shortcuts there.
+- Reset to defaults has the same fix.
+- Updates: the Reload extension button reloads Atlas Translation from its folder after the new zip is extracted over it. Chromium cannot install a newer unpacked copy by itself.
+- Options: an open settings page says once that it must be refreshed after the extension is reloaded, instead of showing many errors.
+
 ## 0.0.2.1
 
 - Popup: the translate icon is the brand in the header. The Atlas wordmark and the duplicate icon are removed.

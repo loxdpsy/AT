@@ -612,10 +612,8 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
       const hotkeys = twpConfig.get("hotkeys");
       hotkeys[hotkeyname] = keystring;
       twpConfig.set("hotkeys", hotkeys);
-      browser.commands.update({
-        name: name,
-        shortcut: keystring
-      });
+      // Firefox sets the shortcut here. Chromium cannot, so there the shortcut is set in chrome://extensions/shortcuts.
+      twpConfig.setBrowserShortcut(name, keystring);
     }
     function onkeychange(e) {
       input.value = getKeyString(e);
@@ -1166,6 +1164,21 @@ function setupUpdates() {
   });
 }
 setupUpdates();
+
+// Chromium cannot install a newer unpacked copy by itself. After the new zip is extracted over the same folder,
+// this reloads the extension from that folder, which is the update.
+$("#btnReloadExtension").addEventListener("click", () => chrome.runtime.reload());
+
+// After the extension is reloaded, this open page can no longer reach it. Say so once, instead of many errors.
+let twpReloadNoticeShown = false;
+function twpNoticeIfReloaded(error) {
+  const text = String(error && (error.message || error) || "");
+  if (!/Extension context invalidated/.test(text) || twpReloadNoticeShown) return;
+  twpReloadNoticeShown = true;
+  alert(twpI18n.getMessage("updateReloaded") || "Atlas Translation was reloaded while this page was open. Refresh this page to continue.");
+}
+window.addEventListener("error", event => twpNoticeIfReloaded(event.error || event.message));
+window.addEventListener("unhandledrejection", event => twpNoticeIfReloaded(event.reason));
 
 // True when version a is newer than b (numeric parts, like "0.0.1.10").
 function twpVersionIsNewer(a, b) {
