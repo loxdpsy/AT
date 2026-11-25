@@ -438,6 +438,10 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     twpConfig.set("dontSortResults", e.target.value);
   };
   $("#dontSortResults").value = twpConfig.get("dontSortResults");
+  $("#translateWholeParagraphs").onchange = e => {
+    twpConfig.set("translateWholeParagraphs", e.target.value);
+  };
+  $("#translateWholeParagraphs").value = twpConfig.get("translateWholeParagraphs");
   $("#translateAllLanguages").onchange = e => {
     twpConfig.set("translateAllLanguages", e.target.value);
   };

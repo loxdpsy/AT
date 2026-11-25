@@ -718,6 +718,31 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     }
     mutationObserver.takeRecords();
   }
+  // Paragraph mode: results[i] is the translation of the whole piece i. The first text node takes it, through
+  // translateResults. The other text nodes of the piece are cleared, so the paragraph is not shown twice. They are
+  // recorded in nodesToRestore with an empty translation, so restorePage puts their original text back.
+  function translateParagraphResults(piecesNow, results) {
+    // A piece without a translation keeps its original text, so only pieces with a result are written.
+    const done = piecesNow.map((ptt, i) => ({ ptt, text: results[i] && results[i][0] })).filter(item => typeof item.text === "string");
+    if (done.length === 0) return;
+    translateResults(done.map(item => ({ nodes: item.ptt.nodes.slice(0, 1) })), done.map(item => [item.text]));
+    done.forEach(({ ptt }) => {
+      for (let j = 1; j < ptt.nodes.length; j++) {
+        const node = ptt.nodes[j];
+        if (!node || !node.parentNode || node.textContent === "") continue;
+        nodesToRestore.push({
+          node,
+          original: node,
+          originalText: node.textContent,
+          translatedText: "",
+          originalScale: null,
+          parentNode: node.parentNode
+        });
+        node.textContent = "";
+      }
+    });
+    mutationObserver.takeRecords();
+  }
   function translateAttributes(attributesToTranslateNow, results) {
     for (const i in attributesToTranslateNow) {
       const ati = attributesToTranslateNow[i];
@@ -786,9 +811,18 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
             }
           });
           if (piecesToTranslateNow.length > 0) {
-            backgroundTranslateHTML(currentPageTranslatorService, currentSourceLanguage, currentTargetLanguage, piecesToTranslateNow.map(ptt => ptt.nodes.map(node => filterKeywordsInText(node.textContent, customDictionary, currentPageTranslatorService))), dontSortResults).then(results => {
+            // Paragraph mode (#727): the text of a whole block is sent as one string, so the service translates the
+            // sentence as a unit. Off by default: each text node is then translated on its own, as before.
+            const paragraphMode = twpConfig.get("translateWholeParagraphs") === "yes";
+            const keywordFilter = node => filterKeywordsInText(node.textContent, customDictionary, currentPageTranslatorService);
+            const sourceArray2d = paragraphMode ? piecesToTranslateNow.map(ptt => [ptt.nodes.map(keywordFilter).join("")]) : piecesToTranslateNow.map(ptt => ptt.nodes.map(keywordFilter));
+            backgroundTranslateHTML(currentPageTranslatorService, currentSourceLanguage, currentTargetLanguage, sourceArray2d, dontSortResults).then(results => {
               if (pageLanguageState === "translated" && currentFooCount === fooCount) {
-                translateResults(piecesToTranslateNow, results);
+                if (paragraphMode) {
+                  translateParagraphResults(piecesToTranslateNow, results);
+                } else {
+                  translateResults(piecesToTranslateNow, results);
+                }
               }
             });
           }

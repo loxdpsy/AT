@@ -293,6 +293,9 @@
   "lblToggleHoverTranslationForTab": {
     "message": "Toggle hover translation for this tab"
   },
+  "lblTranslateWholeParagraphs": {
+    "message": "Translate each paragraph as one text"
+  },
   "lblRestorePageToOriginal": {
     "message": "Restore page to original"
   },

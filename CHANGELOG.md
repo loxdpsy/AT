@@ -19,6 +19,7 @@ Not released yet. This version is in progress; the list grows until it is releas
   two engine processes per language pair.
 - The helper tries a download again when the network cuts it short.
 - The helper can start when you log in, in the background (Settings: "Start at login"). Windows, macOS and Linux.
+- Paragraphs (#727), optional: Options, "Translate each paragraph as one text" (off by default). A sentence split by inline tags (links, bold, spans) is then sent and translated as one text, instead of in fragments.
 - Planned: a tray icon with the helper's own settings window (no browser, no terminal), and right-to-left layout in the helper.
 
 ## 0.0.2.1
