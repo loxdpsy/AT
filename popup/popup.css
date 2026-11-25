@@ -42,28 +42,6 @@ body {
   z-index: 2;
 }
 
-#btnSwitchInterfaces {
-  border-radius: 50%;
-  padding: 10px;
-  cursor: pointer;
-}
-
-#iconSwap {
-  display: none;
-}
-
-#divIconTranslate:hover #iconSwap {
-  display: block;
-}
-
-#divIconTranslate:hover #iconTranslate {
-  opacity: 0.6;
-}
-
-#divIconTranslate > img {
-  padding: 0;
-}
-
 button span {
   pointer-events: none;
 }
@@ -366,9 +344,6 @@ hr {
   width: 100%;
 }
 
-#divIconTranslate:hover {
-  opacity: 0.85;
-}
 
 /* ---- Options menu ---- */
 /* The list opens under the ⋮ button, right-aligned inside the popup. The layer covers the popup, so a click outside closes it. */
@@ -452,24 +427,6 @@ hr {
 .iconButton:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: -2px;
-}
-#divIconTranslate {
-  position: relative;
-  width: 32px;
-  height: 32px;
-}
-#divIconTranslate img {
-  display: block;
-  width: 22px;
-  height: 22px;
-  padding: 0;
-  margin: 5px;
-}
-#divIconTranslate #iconSwap {
-  display: none;
-  position: absolute;
-  top: 5px;
-  left: 5px;
 }
 #btnSettings {
   color: var(--muted);
@@ -619,4 +576,62 @@ hr {
 }
 .serviceNotice[hidden] {
   display: none;
+}
+
+/* ---- Header and service display: Atlas logo, a service badge (no switch buttons), and the usage line. ---- */
+.popupBrand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.popupLogo {
+  display: block;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  border-radius: 6px;
+}
+.popupActions {
+  gap: 6px;
+}
+/* A white tile, so the DeepL mark, the Groq wordmark and the Google, Yandex and Bing icons read well in dark mode too. */
+.serviceBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 26px;
+  min-width: 34px;
+  padding: 0 7px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  overflow: hidden;
+  cursor: default;
+}
+.serviceBadge img {
+  display: block;
+  width: auto;
+  height: 16px;
+  padding: 0;
+  margin: 0;
+}
+.serviceBadge img.wordmark {
+  height: 11px;
+}
+/* Shown while DeepL or Groq translates the page: the quota (DeepL) or the approximate tokens used (Groq). */
+.serviceUsage {
+  margin: 4px 16px 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.serviceUsage[hidden] {
+  display: none;
+}
+.menuFooterButton {
+  color: var(--muted);
+}
+.menuFooterButton:hover {
+  color: var(--text);
 }

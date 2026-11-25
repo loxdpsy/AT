@@ -501,11 +501,6 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
   $("#dontShowIfSelectedTextIsUnknown").checked = twpConfig.get("dontShowIfSelectedTextIsUnknown") === "yes" ? true : false;
 
   // style options
-  $("#useOldPopup").onchange = e => {
-    twpConfig.set("useOldPopup", e.target.value);
-    updateDarkMode();
-  };
-  $("#useOldPopup").value = twpConfig.get("useOldPopup");
   $("#darkMode").onchange = e => {
     twpConfig.set("darkMode", e.target.value);
     updateDarkMode();

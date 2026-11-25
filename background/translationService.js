@@ -1031,6 +1031,7 @@ const translationService = function () {
        */
       async makeRequest(sourceLanguage, targetLanguage, requests) {
         const response = await super.makeRequest(sourceLanguage, targetLanguage, requests);
+        recordGroqUsage(response && response.usage);
         const content = response && response.choices && response.choices[0] && response.choices[0].message && response.choices[0].message.content;
         let parsed = null;
         try {
@@ -1163,6 +1164,44 @@ const translationService = function () {
     const service = getSafeServiceByName(serviceName);
     return (await service.translate(sourceLanguage, targetLanguage, [[originalText]], dontSaveInPersistentCache))[0][0];
   };
+  /**
+   * Adds the tokens of one Groq answer to the running total the popup shows. The total is approximate:
+   * it only counts answers that came back while this extension was running, and two answers at the same moment can add up slightly wrong.
+   * @param {{total_tokens?: number}|undefined} usage the "usage" block of a Groq chat answer
+   */
+  function recordGroqUsage(usage) {
+    const tokens = usage ? Number(usage.total_tokens) : 0;
+    if (!Number.isFinite(tokens) || tokens <= 0) return;
+    chrome.storage.local.get("groqUsage", result => {
+      const current = (result && result.groqUsage) || { tokens: 0, requests: 0, since: Date.now() };
+      chrome.storage.local.set({ groqUsage: { tokens: current.tokens + tokens, requests: current.requests + 1, since: current.since } });
+    });
+  }
+  /**
+   * DeepL quota for the saved key: characters used and the plan limit (GET /v2/usage).
+   * @returns {Promise<{used?: number, limit?: number, error?: string}>}
+   */
+  async function getDeeplUsage() {
+    const apiKey = (twpConfig.get("deeplApiKey") || "").trim();
+    if (!apiKey) return { error: "no-key" };
+    const response = await fetchWithTimeout(getDeeplBaseURL(apiKey) + "/v2/usage", { headers: { Authorization: "DeepL-Auth-Key " + apiKey } });
+    if (!response.ok) return { error: "http-" + response.status };
+    const data = await response.json();
+    return { used: data.character_count, limit: data.character_limit };
+  }
+  /**
+   * Approximate Groq token total counted from the answers (see recordGroqUsage).
+   * @returns {Promise<{tokens: number, requests: number, since: number|null}>}
+   */
+  function getGroqUsage() {
+    return new Promise(resolve => {
+      chrome.storage.local.get("groqUsage", result => {
+        const current = (result && result.groqUsage) || { tokens: 0, requests: 0, since: null };
+        resolve({ tokens: current.tokens, requests: current.requests, since: current.since });
+      });
+    });
+  }
+
   // A Yandex captcha is shown on the page that asked for the translation, so the user can solve it there.
   function notifyCaptchaRequired(e, sender) {
     if (!(e instanceof ServiceCaptchaError) || !sender || !sender.tab) return;
@@ -1195,6 +1234,10 @@ const translationService = function () {
         sendResponse();
         console.error(e);
       });
+      return true;
+    } else if (request.action === "getServiceUsage") {
+      const usage = request.service === "deepl" ? getDeeplUsage() : request.service === "groq" ? getGroqUsage() : Promise.resolve({ error: "not-supported" });
+      usage.then(result => sendResponse(result)).catch(e => sendResponse({ error: String((e && e.message) || e) }));
       return true;
     } else if (request.action === "removeTranslationsWithError") {
       serviceList.forEach(service => {
