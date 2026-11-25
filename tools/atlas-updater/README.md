@@ -33,8 +33,8 @@ browser:
   Firefox Add-ons page. The Chromium browsers get the steps to load the folder with *Load unpacked*.
 
 - **Offline translation:** shows the pairing code for the extension, installs the offline engine, and installs or
-  removes language packs. A pack is one language pair, such as English to French, from Mozilla's tiny translation
-  models. The engine is Mozilla's Bergamot engine, built by the Engine workflow and attached to each release as
+  removes language packs. A pack is one language pair, such as English to French, from Mozilla's translation models
+  (the base models where Mozilla has them, otherwise the tiny ones). The files come from Firefox's Remote Settings. The engine is Mozilla's Bergamot engine, built by the Engine workflow and attached to each release as
   `atlas-engine-windows.exe`, `atlas-engine-macos` or `atlas-engine-linux`. See "Offline translation" below.
 
 The page only talks to the helper on this computer, and every action needs the token in the address the helper
@@ -60,7 +60,7 @@ The helper can translate text on this computer, so the extension does not send i
 uses it as the service named **Offline (desktop helper)**.
 
 1. Open the helper window and install the offline engine (**Install the offline engine**).
-2. Install one or more language packs. Each pack is 11 to 18 MB. A pack is downloaded from the catalogue in the
+2. Install one or more language packs. Each pack is 21 to 55 MB (most are 35 to 38 MB). A pack is downloaded from the catalogue in the
    program, checked against its SHA-256, and only then kept. A file that fails the check is removed, and nothing is
    left behind.
 3. In the extension's options, under Translation services, turn on Offline (desktop helper), paste the pairing code

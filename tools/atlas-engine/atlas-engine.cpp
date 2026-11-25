@@ -5,8 +5,8 @@
 //
 //   atlas-engine <pair folder>
 //
-// The engine unpacks the .gz model files into <pair folder>/unpacked/ the first time, loads the model, and prints the
-// line "ready". After that it reads one line per text and writes one line back. Each line is the text in base64, so a
+// The engine loads the model files of the folder as they are (the files are not compressed), then prints the line
+// "ready". After that it reads one line per text and writes one line back. Each line is the text in base64, so a
 // text can hold any character, including new lines. The reply to an empty line is an empty line.
 //
 // The protocol has its own file handle. Anything the libraries print to stdout goes to stderr, so it cannot corrupt
@@ -115,24 +115,6 @@ static std::string findModelFile(const fs::path &dir, const std::string &prefix,
   return matches.front();
 }
 
-// Writes the plain (not gzipped) copy of a .gz pack file into <dir>/unpacked/ and returns its path. Marian's stream
-// reads the .gz file directly, so no compression library is needed here.
-static std::string unpack(const std::string &gzPath, const fs::path &dir) {
-  const fs::path plain = dir / "unpacked" / fs::path(gzPath).stem();
-  if (fs::exists(plain) && fs::file_size(plain) > 0) return plain.string();
-  fs::create_directories(plain.parent_path());
-  fs::path partial = plain;
-  partial += ".part";
-  {
-    marian::io::InputFileStream in(gzPath);
-    std::ofstream out(partial, std::ios::binary);
-    out << in.rdbuf();
-    if (!out) throw std::runtime_error("cannot write " + partial.string());
-  }
-  fs::rename(partial, plain);
-  return plain.string();
-}
-
 static std::string yamlQuote(const std::string &s) {
   std::string out = "\"";
   for (char c : s) {
@@ -144,9 +126,9 @@ static std::string yamlQuote(const std::string &s) {
 
 // Marian's configuration for the pack (the settings Firefox uses for these models).
 static std::string modelConfig(const fs::path &dir) {
-  const std::string model = unpack(findModelFile(dir, "model.", ".intgemm.alphas.bin.gz"), dir);
-  const std::string vocab = unpack(findModelFile(dir, "vocab.", ".spm.gz"), dir);
-  const std::string lex = unpack(findModelFile(dir, "lex.50.50.", ".s2t.bin.gz"), dir);
+  const std::string model = findModelFile(dir, "model.", ".intgemm.alphas.bin");
+  const std::string vocab = findModelFile(dir, "vocab.", ".spm");
+  const std::string lex = findModelFile(dir, "lex.50.50.", ".s2t.bin");
   std::string yaml;
   yaml += "models:\n  - " + yamlQuote(model) + "\n";
   yaml += "vocabs:\n  - " + yamlQuote(vocab) + "\n  - " + yamlQuote(vocab) + "\n";

@@ -2,7 +2,7 @@
 //
 // The catalogue (packs.json, written by scripts/make-pack-catalogue.mjs) lists each pack's files with their SHA-256 and
 // size. A pack is a folder under store::packs_dir(), named after its pair (for example "enfr"). It holds the three model
-// files exactly as the catalogue lists them (still gzipped, the engine unpacks them).
+// files exactly as the catalogue lists them. The engine loads them as they are.
 //
 // Installing downloads each file to a ".part" file first. A file is moved into place only when its size and SHA-256
 // match the catalogue. The marker file "installed.json" is written last. A half-finished download never counts as
@@ -60,9 +60,13 @@ fn valid_pair(pair: &str) -> bool {
     pair.len() == 4 && pair.chars().all(|c| c.is_ascii_lowercase())
 }
 
-/// A file name in a pack: a gzipped file with no folder parts.
+/// A file name in a pack: a model file (.bin) or a vocabulary (.spm), with no folder parts.
 fn valid_file_name(name: &str) -> bool {
-    !name.is_empty() && name.ends_with(".gz") && !name.contains('/') && !name.contains('\\') && !name.starts_with('.')
+    (name.ends_with(".bin") || name.ends_with(".spm"))
+        && !name.is_empty()
+        && !name.contains('/')
+        && !name.contains('\\')
+        && !name.starts_with('.')
 }
 
 /// Reads a catalogue. The downloads must be https, so a catalogue cannot point the helper at another kind of address.
@@ -196,7 +200,7 @@ mod tests {
     fn the_built_in_catalogue_has_the_expected_packs() {
         let cat = catalogue().expect("packs.json must parse");
         assert_eq!(cat.commit.len(), 40);
-        assert!(cat.packs.len() >= 80);
+        assert!(cat.packs.len() >= 100);
         let enfr = find(&cat, "enfr").expect("English to French is in the catalogue");
         assert_eq!((enfr.from.as_str(), enfr.to.as_str()), ("en", "fr"));
         assert_eq!(enfr.files.len(), 3);
@@ -212,9 +216,9 @@ mod tests {
     fn a_bad_catalogue_is_refused() {
         let bad_pair = r#"{"commit":"x","packs":[{"pair":"../x","from":"a","to":"b","bytes":0,"files":[]}]}"#;
         assert!(parse_catalogue(bad_pair).unwrap_err().contains("bad pair"));
-        let http = r#"{"commit":"x","packs":[{"pair":"enfr","from":"en","to":"fr","bytes":1,"files":[{"name":"a.gz","sha256":"0000000000000000000000000000000000000000000000000000000000000000","size":1,"url":"http://example.com/a.gz"}]}]}"#;
+        let http = r#"{"commit":"x","packs":[{"pair":"enfr","from":"en","to":"fr","bytes":1,"files":[{"name":"a.bin","sha256":"0000000000000000000000000000000000000000000000000000000000000000","size":1,"url":"http://example.com/a.bin"}]}]}"#;
         assert!(parse_catalogue(http).unwrap_err().contains("https"));
-        let folder = r#"{"commit":"x","packs":[{"pair":"enfr","from":"en","to":"fr","bytes":1,"files":[{"name":"../a.gz","sha256":"0000000000000000000000000000000000000000000000000000000000000000","size":1,"url":"https://example.com/a.gz"}]}]}"#;
+        let folder = r#"{"commit":"x","packs":[{"pair":"enfr","from":"en","to":"fr","bytes":1,"files":[{"name":"../a.bin","sha256":"0000000000000000000000000000000000000000000000000000000000000000","size":1,"url":"https://example.com/a.bin"}]}]}"#;
         assert!(parse_catalogue(folder).unwrap_err().contains("bad file name"));
     }
 
@@ -224,21 +228,21 @@ mod tests {
         let source = temp("source");
         let root = temp("root");
         let content = b"not really a model, but the checks do not care";
-        fs::write(source.join("model.test.gz"), content).unwrap();
+        fs::write(source.join("model.test.bin"), content).unwrap();
         let good_hash = sha256::hex(content);
-        let url = format!("file://{}", source.join("model.test.gz").display());
+        let url = format!("file://{}", source.join("model.test.bin").display());
         let pack = |sha: &str, size: u64| Pack {
             pair: "enfr".to_string(),
             from: "en".to_string(),
             to: "fr".to_string(),
             bytes: size,
-            files: vec![PackFile { name: "model.test.gz".to_string(), sha256: sha.to_string(), size, url: url.clone() }],
+            files: vec![PackFile { name: "model.test.bin".to_string(), sha256: sha.to_string(), size, url: url.clone() }],
         };
 
         // A wrong checksum: nothing is installed and no file is left behind.
         let wrong = "0".repeat(64);
         assert!(install_into(&root, &pack(&wrong, content.len() as u64), "abc").is_err());
-        assert!(!root.join("enfr").join("model.test.gz").exists());
+        assert!(!root.join("enfr").join("model.test.bin").exists());
         assert!(!root.join("enfr").join(MARKER).exists());
 
         // A wrong size is refused too.
@@ -248,7 +252,7 @@ mod tests {
         let good = pack(&good_hash, content.len() as u64);
         install_into(&root, &good, "abc123").expect("install");
         assert!(is_installed_in(&root, &good));
-        assert_eq!(fs::read(root.join("enfr").join("model.test.gz")).unwrap(), content);
+        assert_eq!(fs::read(root.join("enfr").join("model.test.bin")).unwrap(), content);
 
         // Removing it takes the folder away, and only catalogue pairs can be removed.
         let cat = Catalogue { commit: "abc123".to_string(), packs: vec![good.clone()] };
