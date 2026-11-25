@@ -4,17 +4,17 @@
 
 Not released yet. Changes after 0.0.2.1 will be listed here.
 
+## 0.0.2.1
+
+- Restore from file works on Chrome, Edge and Firefox. On Chrome and Edge, 0.0.2.0 stopped with "browser.commands.update is not a function" after the file was chosen. Restore and Reset to defaults no longer call that function on Chromium.
+- Chromium and Edge: the signed build carries its public key in the manifest, so the unpacked zip has the same extension ID as the CRX. Settings are stored per extension ID, so a copy loaded from the 0.0.2.0 zip keeps its own settings. Use Restore from file to move them.
 - Restore from file: a blank Groq or DeepL key in a backup keeps the key saved on this device.
 - Restore from file: Groq or DeepL is turned off when no key is saved, and the translators move to Google. A backup from 0.0.1.9 restores as it is, without its key.
 - Updates: a helper program, atlas-updater (tools/atlas-updater), installs the newest release into an unpacked copy of the extension. It is written in Rust and runs on Windows, macOS and Linux. Its builds are artifacts of the Updater workflow.
-
 - Restore from file no longer fails on Chromium when the browser has no shortcut update call. The shortcut keys are set in chrome://extensions/shortcuts there.
 - Reset to defaults has the same fix.
 - Updates: the Reload extension button reloads Atlas Translation from its folder after the new zip is extracted over it. Chromium cannot install a newer unpacked copy by itself.
 - Options: an open settings page says once that it must be refreshed after the extension is reloaded, instead of showing many errors.
-
-## 0.0.2.1
-
 - Popup: the translate icon is the brand in the header. The Atlas wordmark and the duplicate icon are removed.
 - Popup: tap the service badge to switch the service that translates the page to the next enabled one. It is the same switch as the hotkey.
 - Popup: one Settings button, the gear in the header. The gear at the bottom of the menu and the More options item are removed.
