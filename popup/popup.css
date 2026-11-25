@@ -559,13 +559,6 @@ hr {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.menuFooter {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 6px;
-  padding: 6px 10px 2px;
-  border-top: 1px solid var(--line);
-}
 
 /* Shown while the page service sends the text to another company (Groq, DeepL). */
 .serviceNotice {
@@ -578,24 +571,11 @@ hr {
   display: none;
 }
 
-/* ---- Header and service display: Atlas logo, a service badge (no switch buttons), and the usage line. ---- */
+/* ---- Header and service display: the translate icon as the brand, a tappable service badge, and the usage line. ---- */
 .popupBrand {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-/* The official Atlas logo, used as a mask so its colour follows the theme (dark or light) and turns blue while the page is translated. */
-.popupLogo {
-  display: block;
-  width: 70px;
-  height: 23px;
-  flex: none;
-  background-color: var(--text);
-  -webkit-mask: url("/icons/atlas-logo.png") left center / contain no-repeat;
-  mask: url("/icons/atlas-logo.png") left center / contain no-repeat;
-}
-.popupLogo.translated {
-  background-color: var(--accent);
 }
 .popupActions {
   gap: 6px;
@@ -613,7 +593,15 @@ hr {
   border-radius: 8px;
   background: #ffffff;
   overflow: hidden;
-  cursor: default;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.serviceBadge:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 .serviceBadge img {
   display: block;
@@ -628,11 +616,11 @@ hr {
   max-width: 40px;
   max-height: 11px;
 }
-/* The blue Atlas translate icon, beside the service badge. */
+/* The Atlas translate icon is the brand mark in the header. It is the blue SVG, and it turns to the translated version while the page is translated. */
 .atlasTranslateIcon {
   display: block;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   flex: none;
 }
 /* Shown while DeepL or Groq translates the page: the quota (DeepL) or the approximate tokens used (Groq). */
@@ -644,10 +632,4 @@ hr {
 }
 .serviceUsage[hidden] {
   display: none;
-}
-.menuFooterButton {
-  color: var(--muted);
-}
-.menuFooterButton:hover {
-  color: var(--text);
 }

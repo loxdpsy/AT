@@ -9,6 +9,20 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
   $("#btnSettings").addEventListener("click", () => {
     chrome.tabs.create({ url: chrome.runtime.getURL("/options/options.html") }, closePopupAfter);
   });
+  // Tap the service badge to switch the service that translates this page to the next enabled one. It is the same switch as the hotkey.
+  $("#serviceBadge").addEventListener("click", () => {
+    currentPageTranslatorService = twpConfig.swapPageTranslationService();
+    chrome.tabs.query({
+      active: true,
+      currentWindow: true
+    }, tabs => {
+      chrome.tabs.sendMessage(tabs[0].id, {
+        action: "swapTranslationService",
+        newServiceName: currentPageTranslatorService
+      }, checkedLastError);
+    });
+    updateInterface();
+  });
   $("#btnImproveTranslation").onclick = () => {
     window.location = "improve-translation.html";
   };
@@ -22,16 +36,18 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
   const twpButtons = document.querySelectorAll(".w3-bar > button");
   twpButtons.forEach(button => {
     button.addEventListener("click", event => {
+      // currentTarget is the button. The target can be the label inside it (for example the "Original" sub-label).
+      const chosen = event.currentTarget;
       twpButtons.forEach(button => {
         button.classList.remove("w3-buttonSelected");
       });
-      event.target.classList.add("w3-buttonSelected");
-      currentPageLanguage = event.target.value;
+      chosen.classList.add("w3-buttonSelected");
+      currentPageLanguage = chosen.value;
       if (currentPageLanguage === "original") {
         currentPageLanguageState = "original";
       } else {
         currentPageLanguageState = "translated";
-        twpConfig.setTargetLanguage(event.target.value);
+        twpConfig.setTargetLanguage(chosen.value);
       }
       chrome.tabs.query({
         active: true,
@@ -39,7 +55,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
       }, tabs => {
         chrome.tabs.sendMessage(tabs[0].id, {
           action: "translatePage",
-          targetLanguage: event.target.value || "original"
+          targetLanguage: chosen.value || "original"
         }, checkedLastError);
       });
     });
@@ -63,7 +79,6 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
   function updateInterface() {
     const [logoSrc, serviceName, isWordmark] = serviceLogos[currentPageTranslatorService] || serviceLogos.google;
     // The Atlas logo turns blue (the accent colour) while the page is translated, the same as the toolbar icon.
-    $(".popupLogo").classList.toggle("translated", currentPageLanguageState === "translated");
     // The Atlas translate icon: the blue card with the white A, or the blue A on the grey card while translated.
     $("#atlasTranslateIcon").setAttribute("src", currentPageLanguageState === "translated" ? "/icons/icon-translated.svg" : "/icons/icon.svg");
     const logo = $("#iconTranslate");
@@ -188,7 +203,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     renderMenu();
   }
   function renderMenu() {
-    menuPanel.replaceChildren(...menuGroups(), menuFooter());
+    menuPanel.replaceChildren(...menuGroups());
   }
 
   function menuGroups() {
@@ -247,9 +262,6 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     ]);
 
     const appGroup = menuGroup([
-      menuItem(text("btnMoreOptions", "More options"), "sliders", () => {
-        chrome.tabs.create({ url: chrome.runtime.getURL("/options/options.html") }, closePopupAfter);
-      }),
       menuItem(`${text("lblAbout", "About")} ${chrome.runtime.getManifest().name}`, "info", () => {
         chrome.tabs.create({ url: chrome.runtime.getURL("/options/options.html#about") }, closePopupAfter);
       })
@@ -285,24 +297,6 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     item.addEventListener("click", run);
     return item;
   }
-  // The gear at the bottom right of the options list. It opens Settings, like the gear in the header.
-  function menuFooter() {
-    const label = text("lblSettings", "Settings");
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "iconButton menuFooterButton";
-    button.title = label;
-    button.setAttribute("aria-label", label);
-    button.append($("#btnSettings svg").cloneNode(true));
-    button.addEventListener("click", () => {
-      chrome.tabs.create({ url: chrome.runtime.getURL("/options/options.html") }, closePopupAfter);
-    });
-    const footer = document.createElement("div");
-    footer.className = "menuFooter";
-    footer.append(button);
-    return footer;
-  }
-
   // ---- Helpers for this site and page ----
   function text(key, fallback, substitution) {
     return twpI18n.getMessage(key, substitution) || fallback;
