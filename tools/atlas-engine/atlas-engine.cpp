@@ -126,14 +126,15 @@ static std::string yamlQuote(const std::string &s) {
 
 // Marian's configuration for the pack. The options are the ones Firefox's translation worker passes for these models
 // (toolkit/components/translations/content/translations-engine.worker.js): no quality model, and the same beam,
-// precision and alignment settings. One vocabulary file serves both languages, as Firefox passes it.
+// precision and alignment settings. The vocabulary is listed twice, once for the source and once for the target: this
+// config loader aborts with fewer than two entries, and it loads a file listed twice only once (so the two are shared).
 static std::string modelConfig(const fs::path &dir) {
   const std::string model = findModelFile(dir, "model.", ".intgemm.alphas.bin");
   const std::string vocab = findModelFile(dir, "vocab.", ".spm");
   const std::string lex = findModelFile(dir, "lex.50.50.", ".s2t.bin");
   std::string yaml;
   yaml += "models:\n  - " + yamlQuote(model) + "\n";
-  yaml += "vocabs:\n  - " + yamlQuote(vocab) + "\n";
+  yaml += "vocabs:\n  - " + yamlQuote(vocab) + "\n  - " + yamlQuote(vocab) + "\n";
   // The second value is the shortlist's check flag (0 = off, as Firefox's check-bytearray default). It is read with
   // std::stoi, so it must be a number, not "false".
   yaml += "shortlist:\n  - " + yamlQuote(lex) + "\n  - 0\n";
