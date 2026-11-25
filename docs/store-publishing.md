@@ -58,7 +58,7 @@ After that, each release run uploads the Chromium package and submits it to Edge
 
 Firefox has two listings, with two add-on IDs. Both are published by the Release workflow:
 
-- **GitHub** is the main distribution. Its ID does not change. The GitHub release carries the signed `.xpi` and `updates.json`.
+- **GitHub** is the main distribution. Its ID does not change. The GitHub release carries the unsigned `.xpi`, which is never sent to Mozilla.
 - **Firefox store** is the public listing on addons.mozilla.org. It uses `FIREFOX_STORE_ID` in `.github/workflows/firefox.yml`. It is a different add-on from the GitHub one. The workflow sends it through the API, using the `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` secrets.
 
 Steps:

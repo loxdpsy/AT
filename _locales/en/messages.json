@@ -618,4 +618,19 @@
   "updateBannerHelp": {
     "message": "Download the zip, unzip it over the old folder, then reload the extension."
   }
+  ,"translationCaptchaTitle": {
+    "message": "The translation service needs you to confirm you are not a robot."
+  }
+  ,"translationCaptchaText": {
+    "message": "Solve the check below, then press Translate again. If the box stays blank, use \"Open in a small window\"."
+  }
+  ,"translationCaptchaOpenWindow": {
+    "message": "Open in a small window"
+  }
+  ,"translationCaptchaRetry": {
+    "message": "Translate again"
+  }
+  ,"translationCaptchaClose": {
+    "message": "Close"
+  }
 }

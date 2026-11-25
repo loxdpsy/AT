@@ -1,8 +1,9 @@
 name: Firefox build
 
 # Builds Atlas Translation for Firefox and Firefox for Android. There are two channels, each with its own add-on ID:
-#   - "unlisted" (default): the GitHub build. It keeps update_url and is signed for self-distribution. Its files are
-#     uploaded as the atlas-translation-firefox artifact, which the Release workflow attaches to the GitHub release.
+#   - "unlisted" (default): the GitHub build. It keeps update_url. It is never sent to addons.mozilla.org, so it is not
+#     signed, and standard Firefox will not install it. Its files are uploaded as the atlas-translation-firefox artifact,
+#     which the Release workflow attaches to the GitHub release.
 #   - "listed": the Firefox store (addons.mozilla.org). It uses FIREFOX_STORE_ID below and drops update_url (AMO refuses it
 #     on listed add-ons). Its ZIP is uploaded as atlas-translation-firefox-store. With "submit" on, the version is sent to
 #     Mozilla for review through the API. Mozilla publishes it after approval.
@@ -24,14 +25,14 @@ on:
         type: string
         default: ""
       channel:
-        description: "unlisted = GitHub build (signed). listed = Firefox store version (public after Mozilla approves it)."
+        description: "unlisted = GitHub build (not sent to Mozilla, not signed). listed = Firefox store version (public after Mozilla approves it)."
         type: choice
         options:
           - unlisted
           - listed
         default: unlisted
       submit:
-        description: "Submit to addons.mozilla.org: sign the GitHub build, or send the store version for review (needs the AMO secrets)"
+        description: "Send the store version (listed) to addons.mozilla.org for review. The GitHub build is never sent. Needs the AMO secrets."
         type: boolean
         default: false
   workflow_call:
@@ -137,7 +138,7 @@ jobs:
           if-no-files-found: error
 
       - name: Submit to addons.mozilla.org
-        if: ${{ inputs.submit }}
+        if: ${{ inputs.submit && inputs.channel == 'listed' }}
         env:
           AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
           AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
@@ -175,7 +176,7 @@ jobs:
           fi
 
       - name: Upload the signed add-on
-        if: ${{ inputs.submit }}
+        if: ${{ inputs.submit && inputs.channel == 'listed' }}
         uses: actions/upload-artifact@v4
         with:
           name: atlas-translation-firefox-signed
@@ -192,6 +193,7 @@ jobs:
             echo "- Build result: **${{ job.status }}**"
             echo "- Channel: \`${{ inputs.channel }}\`"
             STATUS=$(cat build/amo-status.txt 2>/dev/null || echo "not requested (submit is off)")
+            if [ "${{ inputs.channel }}" != "listed" ]; then STATUS="not sent. The GitHub build is never sent to addons.mozilla.org."; fi
             if [ -f build/amo-submit.log ] && grep -q "has been blocked" build/amo-submit.log; then
               STATUS="blocked by addons.mozilla.org. Mozilla blocked this runner's IP address after many submissions. Do not run again until the block is lifted. Repeated runs can extend it."
             fi

@@ -6,7 +6,7 @@ name: Release
 #   - version:  the version to build, for example 9.8.2.0 (no "v")
 #   - action:   "build-and-test"    builds both packages and shows checksums in the summary. Nothing is published.
 #               "build-and-release" also commits the version bump, creates the tag v<version>, and publishes a GitHub release.
-#   - submit_amo: with build-and-release, also sign the GitHub Firefox build and send the Firefox store version to
+#   - submit_amo: with build-and-release, send the Firefox store version to
 #     addons.mozilla.org for review. The store step waits for AMO_LISTING_READY to be "true" (a repository variable or a secret of that name).
 #
 # Pushing a tag such as v9.8.2.0 (with manifest.json already at that version) publishes it, the same as build-and-release.
@@ -30,7 +30,7 @@ on:
           - build-and-release
         default: build-and-test
       submit_amo:
-        description: "Firefox: sign the GitHub build and send the store version to addons.mozilla.org (build-and-release only)"
+        description: "Firefox store: send the store version to addons.mozilla.org for review (build-and-release only). The GitHub build is never sent to Mozilla."
         type: boolean
         default: false
 

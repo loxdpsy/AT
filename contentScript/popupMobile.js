@@ -83,6 +83,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
                       </select>
                     </a>
                     <a id="btnTranslateSelectedText" data-i18n="msgTranslateSelectedText">Translate selected text</a>
+                    <a id="btnAlwaysTranslate" data-i18n="btnAlwaysTranslate">Always translate this site</a>
                     <a id="btnNeverTranslate" data-i18n="btnNeverTranslate">Never translate this site</a>
                     <a id="neverTranslateThisLanguage" data-i18n="btnNeverTranslateThisLanguage" display="none">Never translate this language</a>
                     <a id="btnMoreOptions" data-i18n="btnMoreOptions">More options</a>
@@ -97,6 +98,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     </div>
     `));
     shadowRoot.querySelector("link").href = chrome.runtime.getURL("/contentScript/css/popupMobile.css");
+    if (awaysTranslateThisSite) shadowRoot.getElementById("btnAlwaysTranslate").style.display = "none";
     document.body.appendChild(divElement);
     twpI18n.translateDocument(shadowRoot);
     function enableDarkMode() {
@@ -255,6 +257,10 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
       }
       getElemById("menu").style.display = "none";
       e.stopPropagation();
+    };
+    getElemById("btnAlwaysTranslate").onclick = e => {
+      twpConfig.addSiteToAlwaysTranslate(tabHostName);
+      popupMobile.hide();
     };
     getElemById("btnNeverTranslate").onclick = e => {
       twpConfig.addSiteToNeverTranslate(tabHostName);

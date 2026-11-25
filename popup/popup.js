@@ -241,10 +241,9 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     $("#cbShowTranslatedWhenHoveringThisSite").checked = twpConfig.get("sitesToTranslateWhenHovering").indexOf(hostname) !== -1;
   });
   // ---- Options menu ----
-  // One list, built from the current settings each time it opens. Each item has its own label, check state, and action.
-  // Settings items change in place and the list redraws. Items that open a page close the popup.
+  // Opens inline, under the header, and pushes the page content down, so it never covers anything.
+  // It holds the actions for this site and page. Display settings (selected-text button, hover translation) live in Settings.
   const menuButton = $("#btnMenu");
-  const menuLayer = $("#menuLayer");
   const menuPanel = $("#menuPanel");
   let menuPage = { hostname: "", url: "" };
 
@@ -288,9 +287,6 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
       add();
     }
   }
-  function flipYesNo(key) {
-    return () => twpConfig.set(key, twpConfig.get(key) === "yes" ? "no" : "yes");
-  }
   function externalTranslateUrl(pageUrl) {
     const target = twpConfig.get("targetLanguage");
     return currentPageTranslatorService === "yandex" ?
@@ -301,8 +297,6 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
   function syncPopupState(hostname) {
     $("#cbAlwaysTranslateThisSite").checked = isOn("alwaysTranslateSites", hostname);
     $("#cbShowTranslatedWhenHoveringThisSite").checked = isOn("sitesToTranslateWhenHovering", hostname);
-    $("#cbShowTranslateSelectedButton").checked = twpConfig.get("showTranslateSelectedButton") === "yes";
-    $("#cbShowOriginalWhenHovering").checked = twpConfig.get("showOriginalTextWhenHovering") === "yes";
     if (originalTabLanguage !== "und") {
       $("#cbAlwaysTranslateThisLang").checked = isOn("alwaysTranslateLangs", originalTabLanguage);
       $("#cbShowTranslatedWhenHoveringThisLang").checked = isOn("langsToTranslateWhenHovering", originalTabLanguage);
@@ -334,17 +328,13 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     item.addEventListener("click", run);
     return item;
   }
-  // A setting: changes it, then redraws the list and the checkboxes in the popup body.
-  function settingItem(label, checked, change, enabled = true) {
+  // A site or language rule: changes it, then redraws the list and the checkboxes in the popup body.
+  function ruleItem(label, checked, change, enabled = true) {
     return menuItem(label, () => {
       change();
       syncPopupState(menuPage.hostname);
       redrawMenu();
     }, checked, enabled);
-  }
-  // A page or a link: opens it. The popup closes unless the caller says otherwise.
-  function pageItem(label, open) {
-    return menuItem(label, open);
   }
   function menuGroup(items) {
     const group = document.createElement("div");
@@ -361,29 +351,14 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     const langName = hasLang ? twpLang.codeToLanguage(lang) : "";
     const hasSite = hostname !== "";
 
-    const siteGroup = menuGroup([
-      settingItem(text("btnNeverTranslate", "Never translate this site"), isOn("neverTranslateSites", hostname),
+    const ruleGroup = menuGroup([
+      ruleItem(text("btnNeverTranslate", "Never translate this site"), isOn("neverTranslateSites", hostname),
         () => toggleIn("neverTranslateSites", hostname, () => twpConfig.addSiteToNeverTranslate(hostname), () => twpConfig.removeSiteFromNeverTranslate(hostname)), hasSite),
-      settingItem(text("btnAlwaysTranslate", "Always translate this site"), isOn("alwaysTranslateSites", hostname),
+      ruleItem(text("btnAlwaysTranslate", "Always translate this site"), isOn("alwaysTranslateSites", hostname),
         () => toggleIn("alwaysTranslateSites", hostname, () => twpConfig.addSiteToAlwaysTranslate(hostname), () => twpConfig.removeSiteFromAlwaysTranslate(hostname)), hasSite),
       ...(hasLang ? [
-        settingItem(text("btnNeverTranslateThisLanguage", "Never translate this language"), isOn("neverTranslateLangs", lang),
+        ruleItem(text("btnNeverTranslateThisLanguage", "Never translate this language", langName), isOn("neverTranslateLangs", lang),
           () => toggleIn("neverTranslateLangs", lang, () => twpConfig.addLangToNeverTranslate(lang, hostname), () => twpConfig.removeLangFromNeverTranslate(lang)))
-      ] : [])
-    ]);
-
-    const displayGroup = menuGroup([
-      settingItem(text("lblShowTranslateSelectedButton", "Show the button to translate the selected text"),
-        twpConfig.get("showTranslateSelectedButton") === "yes", flipYesNo("showTranslateSelectedButton")),
-      settingItem(text("lblShowOriginalTextWhenHovering", "Show original text when hovering"),
-        twpConfig.get("showOriginalTextWhenHovering") === "yes", flipYesNo("showOriginalTextWhenHovering")),
-      settingItem(text("lblShowTranslatedWhenHoveringThisSite", "Show translation when hovering over this site"),
-        isOn("sitesToTranslateWhenHovering", hostname),
-        () => toggleIn("sitesToTranslateWhenHovering", hostname, () => twpConfig.addSiteToTranslateWhenHovering(hostname), () => twpConfig.removeSiteFromTranslateWhenHovering(hostname)), hasSite),
-      ...(hasLang ? [
-        settingItem(text("lblShowTranslatedWhenHoveringThisLang", `Show translation when hovering over websites in ${langName}`, langName),
-          isOn("langsToTranslateWhenHovering", lang),
-          () => toggleIn("langsToTranslateWhenHovering", lang, () => twpConfig.addLangToTranslateWhenHovering(lang), () => twpConfig.removeLangFromTranslateWhenHovering(lang)))
       ] : [])
     ]);
 
@@ -391,23 +366,23 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
       text("msgOpenOnYandexTranslator", "Open in Yandex Translate") :
       text("btnOpenOnGoogleTranslate", "Open in Google Translate");
     const pageGroup = menuGroup([
-      pageItem(text("msgChooseAnotherLanguage", "Choose another language"), () => {
+      menuItem(text("msgChooseAnotherLanguage", "Choose another language"), () => {
         location = chrome.runtime.getURL("/popup/popup-change-language.html");
       }),
-      pageItem(externalLabel, () => tabsCreate(externalTranslateUrl(url), closePopupAfter)),
-      pageItem(text("msgTranslatePDF", "Translate PDF"), () => tabsCreate("https://pdf.translatewebpages.org/", closePopupAfter))
+      menuItem(externalLabel, () => tabsCreate(externalTranslateUrl(url), closePopupAfter)),
+      menuItem(text("msgTranslatePDF", "Translate PDF"), () => tabsCreate("https://pdf.translatewebpages.org/", closePopupAfter))
     ]);
 
     const appGroup = menuGroup([
-      pageItem(text("btnMoreOptions", "More options"), () => {
+      menuItem(text("btnMoreOptions", "More options"), () => {
         chrome.tabs.create({ url: chrome.runtime.getURL("/options/options.html") }, closePopupAfter);
       }),
-      pageItem(`${text("lblAbout", "About")} ${chrome.runtime.getManifest().name}`, () => {
+      menuItem(`${text("lblAbout", "About")} ${chrome.runtime.getManifest().name}`, () => {
         chrome.tabs.create({ url: chrome.runtime.getURL("/options/options.html#about") }, closePopupAfter);
       })
     ]);
 
-    return [siteGroup, displayGroup, pageGroup, appGroup];
+    return [ruleGroup, pageGroup, appGroup];
   }
 
   // Redraws the list in place. Keeps keyboard focus on the same position.
@@ -425,7 +400,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
       const url = (tabs[0] && tabs[0].url) || "";
       menuPage = { hostname: hostnameOf(url), url };
       menuPanel.replaceChildren(...menuGroups());
-      menuLayer.hidden = false;
+      menuPanel.hidden = false;
       menuButton.setAttribute("aria-expanded", "true");
       const first = menuPanel.querySelector(".menuItem:not(:disabled)");
       if (first) {
@@ -434,10 +409,10 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     });
   }
   function closeMenu(returnFocus) {
-    if (menuLayer.hidden) {
+    if (menuPanel.hidden) {
       return;
     }
-    menuLayer.hidden = true;
+    menuPanel.hidden = true;
     menuButton.setAttribute("aria-expanded", "false");
     if (returnFocus) {
       menuButton.focus();
@@ -445,20 +420,24 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
   }
 
   menuButton.addEventListener("click", () => {
-    if (menuLayer.hidden) {
+    if (menuPanel.hidden) {
       openMenu();
     } else {
       closeMenu(true);
     }
   });
-  // The layer covers the popup. A click on it (outside the list) closes the menu.
-  menuLayer.addEventListener("click", event => {
-    if (event.target === menuLayer) {
+  // A click outside the button and the list closes it. composedPath is read before the list may redraw.
+  document.addEventListener("click", event => {
+    if (menuPanel.hidden) {
+      return;
+    }
+    const path = event.composedPath();
+    if (!path.includes(menuPanel) && !path.includes(menuButton)) {
       closeMenu(false);
     }
   });
   document.addEventListener("keydown", event => {
-    if (menuLayer.hidden) {
+    if (menuPanel.hidden) {
       return;
     }
     if (event.key === "Escape") {
@@ -480,10 +459,11 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
   // ---- Update notice (background/updateCheck.js). Shown only when a newer GitHub release exists and checks are on. ----
   chrome.storage.local.get("updateCheck", result => {
     const state = (result && result.updateCheck) || {};
-    if (state.enabled === false || !state.latest) {
+    const latest = state.latest;
+    // Ignore a stored result that is not newer than the installed version (for example, after an update).
+    if (state.enabled === false || !latest || !twpVersionIsNewer(latest.version, chrome.runtime.getManifest().version)) {
       return;
     }
-    const latest = state.latest;
     $("#updateText").textContent = text("updateBannerText", `Version ${latest.version} is available.`, latest.version);
     $("#updateHelp").textContent = text("updateBannerHelp", "Download the zip, unzip it over the old folder, then reload the extension.");
     $("#btnUpdateDownload").textContent = text("updateBannerDownload", "Download");
@@ -491,3 +471,14 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     $("#updateBanner").hidden = false;
   });
 });
+
+// True when version a is newer than b (numeric parts, like "0.0.1.10").
+function twpVersionIsNewer(a, b) {
+  const x = String(a).replace(/^v/i, "").split(".").map(part => parseInt(part, 10) || 0);
+  const y = String(b).replace(/^v/i, "").split(".").map(part => parseInt(part, 10) || 0);
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    const diff = (x[i] || 0) - (y[i] || 0);
+    if (diff) return diff > 0;
+  }
+  return false;
+}

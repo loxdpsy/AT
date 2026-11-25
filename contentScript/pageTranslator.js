@@ -829,6 +829,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
       currentTargetLanguage = targetLanguage;
     }
     customDictionary = sortDictionary(twpConfig.get("customDictionary"));
+    applyPageDirection(currentTargetLanguage);
 
     if (location.hostname === "sberbank.com" || location.hostname === "www.sberbank.com") {
       document.body.classList.remove("notranslate");
@@ -851,6 +852,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     translationRoutine();
   };
   pageTranslator.restorePage = function () {
+    restorePageDirection();
     fooCount++;
     piecesToTranslate = [];
     showOriginal.disable();
@@ -947,6 +949,8 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
           }
         });
       }
+    } else if (request.action === "translationCaptcha") {
+      if (window.self === window.top) showTranslationCaptcha(request);
     } else if (request.action === "restorePagesWithServiceNames") {
       if (request.serviceNames.includes(currentPageTranslatorService)) {
         pageTranslator.restorePage();
@@ -979,10 +983,137 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     });
   }
 
+  // ---- Page language helpers: auto-translate decisions, language switches on the same page, right-to-left targets ----
+  const rightToLeftLanguages = ["ar", "he", "iw", "fa", "ur", "ps", "sd", "ug", "yi", "dv", "ckb"];
+  function isRightToLeftLanguage(langCode) {
+    return rightToLeftLanguages.indexOf(String(langCode || "").split("-")[0].toLowerCase()) !== -1;
+  }
+  // True when a page in langCode should be translated on load: its language is in alwaysTranslateLangs, or
+  // translateAllLanguages is on and the language is not in neverTranslateLangs.
+  function languageNeedsAutoTranslate(langCode) {
+    if (!langCode || langCode === "und" || langCode === currentTargetLanguage) return false;
+    if (twpConfig.get("alwaysTranslateLangs").indexOf(langCode) !== -1) return true;
+    return twpConfig.get("translateAllLanguages") === "yes" && twpConfig.get("neverTranslateLangs").indexOf(langCode) === -1;
+  }
+  // Some sites switch language on the same page (for example Simplified and Traditional Chinese) and change <html lang>.
+  let languageWatchStarted = false;
+  let languageChangeTimer = null;
+  function watchPageLanguageChanges() {
+    if (languageWatchStarted || !window.MutationObserver) return;
+    languageWatchStarted = true;
+    const observer = new MutationObserver(() => {
+      clearTimeout(languageChangeTimer);
+      languageChangeTimer = setTimeout(onPageLanguageAttributeChanged, 300);
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["lang"] });
+  }
+  function onPageLanguageAttributeChanged() {
+    const langCode = twpLang.fixTLanguageCode(document.documentElement.getAttribute("lang") || "");
+    if (!langCode || langCode === originalTabLanguage) return;
+    originalTabLanguage = langCode;
+    if (pageLanguageState === "translated") {
+      // Translate the new text, or leave the page as it is when the site now shows the target language.
+      if (langCode !== currentTargetLanguage) {
+        pageTranslator.translatePage();
+      } else {
+        pageTranslator.restorePage();
+      }
+    } else if (!platformInfo.isMobile.any && !chrome.extension.inIncognitoContext && twpConfig.get("neverTranslateSites").indexOf(tabHostName) === -1) {
+      if (languageNeedsAutoTranslate(langCode) || twpConfig.get("alwaysTranslateSites").indexOf(tabHostName) !== -1) {
+        pageTranslator.translatePage();
+      }
+    }
+    observers.forEach(callback => callback(originalTabLanguage));
+  }
+  // While translated, the page is flipped (dir="rtl" or "ltr") when its direction differs from the target language's.
+  // restorePage puts the original dir attribute back.
+  let pageDirectionChanged = false;
+  let pageDirectionBefore = null;
+  function applyPageDirection(langCode) {
+    const root = document.documentElement;
+    const wanted = isRightToLeftLanguage(langCode) ? "rtl" : "ltr";
+    if (getComputedStyle(root).direction === wanted) return;
+    pageDirectionBefore = root.getAttribute("dir");
+    root.setAttribute("dir", wanted);
+    pageDirectionChanged = true;
+  }
+  function restorePageDirection() {
+    if (!pageDirectionChanged) return;
+    const root = document.documentElement;
+    if (pageDirectionBefore === null) {
+      root.removeAttribute("dir");
+    } else {
+      root.setAttribute("dir", pageDirectionBefore);
+    }
+    pageDirectionChanged = false;
+    pageDirectionBefore = null;
+  }
+  // A translation service asked for a captcha. It is shown in a dialog on this page (not in a new tab). The user solves
+  // it, then presses "Translate again". "Open in a small window" is the fallback for sites where the box stays blank.
+  let translationCaptchaDialog = null;
+  function showTranslationCaptcha(info) {
+    if (translationCaptchaDialog) translationCaptchaDialog.remove();
+    let captchaUrl;
+    try {
+      captchaUrl = new URL(info.captchaUrl);
+    } catch (e) {
+      return;
+    }
+    if (captchaUrl.protocol !== "https:") return;
+    const host = document.createElement("div");
+    host.className = "notranslate";
+    host.style = "all: initial";
+    const shadow = host.attachShadow({ mode: "closed" });
+    shadow.innerHTML = `
+      <style>
+        .backdrop { position: fixed; inset: 0; z-index: 2147483647; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; font: 14px system-ui, sans-serif; }
+        .card { background: #fff; color: #222; border-radius: 10px; width: min(520px, 94vw); padding: 16px; box-sizing: border-box; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35); }
+        h2 { font-size: 16px; margin: 0 0 8px; }
+        p { margin: 0 0 10px; line-height: 1.4; }
+        iframe { width: 100%; height: 340px; border: 1px solid #ccc; border-radius: 6px; background: #fff; }
+        .row { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 12px; }
+        button { font: inherit; padding: 7px 12px; border-radius: 6px; border: 1px solid #888; background: #f5f5f5; color: #222; cursor: pointer; }
+        button.primary { background: #0061e0; border-color: #0061e0; color: #fff; }
+      </style>
+      <div class="backdrop">
+        <div class="card" role="dialog" aria-modal="true">
+          <h2 id="title"></h2>
+          <p id="text"></p>
+          <iframe id="frame" referrerpolicy="no-referrer"></iframe>
+          <div class="row">
+            <button id="open"></button>
+            <button id="close"></button>
+            <button id="retry" class="primary"></button>
+          </div>
+        </div>
+      </div>`;
+    const msg = (name, fallback) => chrome.i18n.getMessage(name) || fallback;
+    shadow.getElementById("title").textContent = msg("translationCaptchaTitle", "The translation service needs you to confirm you are not a robot.");
+    shadow.getElementById("text").textContent = msg("translationCaptchaText", "Solve the check below, then press Translate again. If the box stays blank, use \"Open in a small window\".");
+    shadow.getElementById("open").textContent = msg("translationCaptchaOpenWindow", "Open in a small window");
+    shadow.getElementById("close").textContent = msg("translationCaptchaClose", "Close");
+    shadow.getElementById("retry").textContent = msg("translationCaptchaRetry", "Translate again");
+    shadow.getElementById("frame").src = captchaUrl.href;
+    const close = () => {
+      host.remove();
+      if (translationCaptchaDialog === host) translationCaptchaDialog = null;
+    };
+    shadow.getElementById("close").addEventListener("click", close);
+    shadow.getElementById("open").addEventListener("click", () => {
+      window.open(captchaUrl.href, "twpTranslationCaptcha", "popup,width=560,height=680");
+    });
+    shadow.getElementById("retry").addEventListener("click", () => {
+      close();
+      pageTranslator.translatePage();
+    });
+    document.body.appendChild(host);
+    translationCaptchaDialog = host;
+  }
+
   // Requests the detection of the tab language in the background
   if (window.self === window.top) {
     // is main frame
-    const onTabVisible = function () {
+    const onTabVisible = function (attempt = 0) {
       chrome.runtime.sendMessage({
         action: "detectTabLanguage"
       }, async result => {
@@ -990,6 +1121,11 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
         result = result || "und";
         if (result === "und") {
           result = await detectPageLanguageFallback();
+        }
+        // A new tab can answer "und" before its text is rendered. Try again a few times, unless a site rule translates it anyway.
+        if (result === "und" && attempt < 2 && twpConfig.get("alwaysTranslateSites").indexOf(tabHostName) === -1) {
+          setTimeout(() => onTabVisible(attempt + 1), 1500);
+          return;
         }
         if (result === "und") {
           originalTabLanguage = result;
@@ -1008,7 +1144,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
             ) {
               if (pageLanguageState === "original" && !platformInfo.isMobile.any && !chrome.extension.inIncognitoContext) {
                 if (twpConfig.get("neverTranslateSites").indexOf(tabHostName) === -1) {
-                  if (langCode && langCode !== currentTargetLanguage && twpConfig.get("alwaysTranslateLangs").indexOf(langCode) !== -1) {
+                  if (languageNeedsAutoTranslate(langCode)) {
                     pageTranslator.translatePage();
                   } else if (twpConfig.get("alwaysTranslateSites").indexOf(tabHostName) !== -1) {
                     pageTranslator.translatePage();
@@ -1020,6 +1156,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
         }
         observers.forEach(callback => callback(originalTabLanguage));
         alreadyGotTheLanguage = true;
+        watchPageLanguageChanges();
       });
     };
     setTimeout(function () {

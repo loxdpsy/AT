@@ -438,6 +438,10 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     twpConfig.set("dontSortResults", e.target.value);
   };
   $("#dontSortResults").value = twpConfig.get("dontSortResults");
+  $("#translateAllLanguages").onchange = e => {
+    twpConfig.set("translateAllLanguages", e.target.value);
+  };
+  $("#translateAllLanguages").value = twpConfig.get("translateAllLanguages");
   $("#translateDynamicallyCreatedContent").onchange = e => {
     twpConfig.set("translateDynamicallyCreatedContent", e.target.value);
   };
@@ -1030,7 +1034,7 @@ function renderUpdateStatus() {
       status.textContent = msg("updateStatusOff", "Checks are turned off.");
     } else if (!state.checkedAt) {
       status.textContent = msg("updateStatusNever", "Not checked yet.");
-    } else if (state.latest) {
+    } else if (state.latest && twpVersionIsNewer(state.latest.version, chrome.runtime.getManifest().version)) {
       status.append(msg("updateStatusNewer", `Version ${state.latest.version} is available.`, state.latest.version) + " ");
       const link = document.createElement("a");
       link.className = "btn btn-primary";
@@ -1070,3 +1074,14 @@ function setupUpdates() {
   });
 }
 setupUpdates();
+
+// True when version a is newer than b (numeric parts, like "0.0.1.10").
+function twpVersionIsNewer(a, b) {
+  const x = String(a).replace(/^v/i, "").split(".").map(part => parseInt(part, 10) || 0);
+  const y = String(b).replace(/^v/i, "").split(".").map(part => parseInt(part, 10) || 0);
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    const diff = (x[i] || 0) - (y[i] || 0);
+    if (diff) return diff > 0;
+  }
+  return false;
+}
