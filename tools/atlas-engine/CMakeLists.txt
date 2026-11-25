@@ -39,6 +39,9 @@ set(COMPILE_PYTHON OFF CACHE BOOL "" FORCE)
 # CMAKE_PREFIX_PATH, and ssplit finds it with find_library.
 if(WIN32)
   set(SSPLIT_USE_INTERNAL_PCRE2 OFF CACHE BOOL "" FORCE)
+  # The vcpkg PCRE2 is a static library. pcre2.h declares its functions as DLL imports unless PCRE2_STATIC is defined,
+  # which gives unresolved __imp_ symbols at link time.
+  add_compile_definitions(PCRE2_STATIC)
 else()
   set(SSPLIT_USE_INTERNAL_PCRE2 ON CACHE BOOL "" FORCE)
 endif()
