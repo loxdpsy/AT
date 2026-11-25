@@ -14,6 +14,7 @@ importScripts(
   "lib/i18n.js",
   "background/translationCache.js",
   "background/translationService.js",
+  "background/updateCheck.js",
   "lib/audioPlayer.js",
   "background/textToSpeech.js",
   "background/background.js"

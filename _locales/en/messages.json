@@ -48,7 +48,7 @@
     "message": "Try again"
   },
   "btnOpenOnGoogleTranslate": {
-    "message": "Open in google translator"
+    "message": "Open in Google Translate"
   },
   "btnNeverTranslate": {
     "message": "Never translate this site"
@@ -566,5 +566,56 @@
   },
   "aboutThanks": {
     "message": "Thank you for using Atlas Translation, and to everyone who helps translate it."
+  },
+  "updateCheckTitle": {
+    "message": "Updates"
+  },
+  "updateCheckDesc": {
+    "message": "Chrome and Edge update only the copies they got from a store. For a copy installed from the GitHub zip, Atlas Translation checks GitHub once a day and tells you when a newer version is out."
+  },
+  "updateCheckToggle": {
+    "message": "Check GitHub once a day"
+  },
+  "updateCheckNow": {
+    "message": "Check now"
+  },
+  "updateStatusNever": {
+    "message": "Not checked yet."
+  },
+  "updateStatusCurrent": {
+    "message": "You have the latest version."
+  },
+  "updateStatusNewer": {
+    "message": "Version $VERSION$ is available.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "0.0.1.3"
+      }
+    }
+  },
+  "updateStatusRateLimited": {
+    "message": "GitHub is limiting requests. Atlas Translation will try again later."
+  },
+  "updateStatusOffline": {
+    "message": "Could not reach GitHub. Atlas Translation will try again later."
+  },
+  "updateStatusOff": {
+    "message": "Checks are turned off."
+  },
+  "updateBannerText": {
+    "message": "Version $VERSION$ is available.",
+    "placeholders": {
+      "VERSION": {
+        "content": "$1",
+        "example": "0.0.1.3"
+      }
+    }
+  },
+  "updateBannerDownload": {
+    "message": "Download"
+  },
+  "updateBannerHelp": {
+    "message": "Download the zip, unzip it over the old folder, then reload the extension."
   }
 }

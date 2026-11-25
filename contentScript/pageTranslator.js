@@ -963,15 +963,34 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     }
   });
 
+  // Used when the browser's detector has no answer (Firefox has none, and Chrome often has none while a page loads).
+  // It uses the page's lang attribute first, then the language of a sample of the visible text.
+  async function detectPageLanguageFallback() {
+    const fromTag = twpLang.fixTLanguageCode(document.documentElement.lang || "");
+    if (fromTag) return fromTag;
+    const sample = (document.body && document.body.innerText || "").replace(/\s+/g, " ").trim().slice(0, 1000);
+    if (sample.length < 20 || !chrome.i18n || !chrome.i18n.detectLanguage) return "und";
+    return new Promise(resolve => {
+      chrome.i18n.detectLanguage(sample, detected => {
+        checkedLastError();
+        const best = detected && detected.languages ? detected.languages.filter(l => l.language !== "und").sort((a, b) => b.percentage - a.percentage)[0] : null;
+        resolve(best && best.percentage >= 50 ? twpLang.fixTLanguageCode(best.language) || "und" : "und");
+      });
+    });
+  }
+
   // Requests the detection of the tab language in the background
   if (window.self === window.top) {
     // is main frame
     const onTabVisible = function () {
       chrome.runtime.sendMessage({
         action: "detectTabLanguage"
-      }, result => {
+      }, async result => {
         checkedLastError();
         result = result || "und";
+        if (result === "und") {
+          result = await detectPageLanguageFallback();
+        }
         if (result === "und") {
           originalTabLanguage = result;
           if (twpConfig.get("alwaysTranslateSites").indexOf(tabHostName) !== -1 || location.hostname === "pdf.translatewebpages.org" && twpConfig.get("neverTranslateSites").indexOf(tabHostName) === -1) {
