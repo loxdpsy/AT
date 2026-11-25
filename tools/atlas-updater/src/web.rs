@@ -169,7 +169,8 @@ fn handle(stream: &mut TcpStream, port: u16, ctx: &Ctx) {
         | ("POST", "/api/packs")
         | ("POST", "/api/packs/install")
         | ("POST", "/api/packs/remove")
-        | ("POST", "/api/engine/install") => {
+        | ("POST", "/api/engine/install")
+        | ("POST", "/api/autostart") => {
             if request.header("x-atlas-token") != Some(ctx.token.as_str()) {
                 return respond_json(
                     stream,
@@ -189,6 +190,7 @@ fn handle(stream: &mut TcpStream, port: u16, ctx: &Ctx) {
                 "/api/packs/install" => packs_install(&body),
                 "/api/packs/remove" => packs_remove(&body),
                 "/api/engine/install" => engine_install(),
+                "/api/autostart" => autostart_route(&body),
                 _ => open_route(&body),
             };
             respond_json(stream, "200 OK", &answer);
@@ -317,6 +319,16 @@ fn install_route(body: &json::Value) -> String {
         ),
         Err(e) => result(false, &e),
     }
+}
+
+/// Reads whether the helper starts at login. With {"enabled": true or false} it changes that first.
+fn autostart_route(body: &json::Value) -> String {
+    if let Some(json::Value::Bool(on)) = body.get("enabled") {
+        if let Err(e) = crate::autostart::set_enabled(*on) {
+            return result(false, &e);
+        }
+    }
+    format!("{{\"ok\":true,\"enabled\":{}}}", crate::autostart::is_enabled())
 }
 
 fn browser_route(body: &json::Value) -> String {

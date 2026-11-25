@@ -10,8 +10,10 @@ Not released yet. This version is in progress; the list grows until it is releas
 
 - Desktop helper: its version is the extension's version (0.0.2.2 for this version), and a README section describes it.
 - Local files (file://): when the browser has not allowed the extension to read file pages, the popup says so and how to allow it (#91, #1051).
-- Planned: a faster offline translation (long texts are split into parts and translated in parallel), a tray icon with
-  the helper's own settings window (no browser, no terminal), and right-to-left layout in the helper.
+- Offline translation is faster: long texts are split at their line breaks, and the parts are translated in parallel on
+  two engine processes per language pair.
+- The helper can start when you log in, in the background (Settings: "Start at login"). Windows, macOS and Linux.
+- Planned: a tray icon with the helper's own settings window (no browser, no terminal), and right-to-left layout in the helper.
 
 ## 0.0.2.1
 

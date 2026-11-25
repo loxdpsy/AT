@@ -1,8 +1,9 @@
 // The offline engine: runs atlas-engine (tools/atlas-engine) and translates texts through it.
 //
-// Each language pair runs in its own atlas-engine process. A process starts the first time its pair is needed and is
-// kept for later requests. At most MAX_RUNNING are kept. A process that fails or does not answer in time is stopped,
-// and the next request starts it again.
+// Each language pair runs up to MAX_PER_PAIR atlas-engine processes. A process starts the first time its pair is
+// needed and is kept for later requests. Long texts are split into pieces, and the pieces run in parallel on those
+// processes. At most MAX_RUNNING are kept. A process that fails or does not answer in time is stopped, and the next
+// request starts it again.
 //
 // The protocol is one line per text, in base64, both ways (see atlas-engine.cpp).
 
@@ -12,14 +13,19 @@ use std::io::{BufRead, BufReader, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Child, ChildStdin, Command, Stdio};
 use std::sync::mpsc::{self, Receiver, RecvTimeoutError};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 
 use crate::sha256;
 use crate::store;
 
-const MAX_RUNNING: usize = 2;
+/// Engine processes per language pair. Texts are split into pieces, and the pieces are translated in parallel by these.
+const MAX_PER_PAIR: usize = 2;
+/// Engine processes in all (each one holds a language pack in memory). Another pair is stopped to stay under this.
+const MAX_RUNNING: usize = 4;
+/// A text longer than this (in characters) is split at its line breaks into pieces of about this size.
+const PIECE_LIMIT: usize = 600;
 const READY_TIMEOUT: Duration = Duration::from_secs(120);
 const REPLY_TIMEOUT: Duration = Duration::from_secs(60);
 const ALPHABET: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -151,8 +157,34 @@ struct Running {
     lines: Receiver<Result<String, String>>,
 }
 
+/// The engine processes of each language pair, in the order they were started.
 pub struct Engine {
-    running: Mutex<HashMap<String, Running>>,
+    running: Mutex<HashMap<String, Vec<Arc<Mutex<Running>>>>>,
+}
+
+/// Splits a text into pieces that are translated separately. The text is cut only at line breaks, and whole lines are
+/// grouped into pieces of about PIECE_LIMIT characters. Joining the pieces with "\n" gives the text back exactly.
+pub fn split_pieces(text: &str) -> Vec<String> {
+    if text.chars().count() <= PIECE_LIMIT {
+        return vec![text.to_string()];
+    }
+    let mut pieces = Vec::new();
+    let mut group: Vec<&str> = Vec::new();
+    let mut length = 0;
+    for line in text.split('\n') {
+        let size = line.chars().count();
+        if !group.is_empty() && length + 1 + size > PIECE_LIMIT {
+            pieces.push(group.join("\n"));
+            group.clear();
+            length = 0;
+        }
+        length += if group.is_empty() { size } else { size + 1 };
+        group.push(line);
+    }
+    if !group.is_empty() {
+        pieces.push(group.join("\n"));
+    }
+    pieces
 }
 
 impl Engine {
@@ -161,48 +193,126 @@ impl Engine {
     }
 
     /// Translates the texts with the pack of one language pair. Returns one translation per text, in order.
+    /// Long texts are split into pieces, the pieces run in parallel on up to MAX_PER_PAIR engine processes, and the
+    /// pieces of each text are joined again.
     pub fn translate(&self, binary: &Path, pack_dir: &Path, pair: &str, texts: &[String]) -> Result<Vec<String>, String> {
-        let mut running = self.running.lock().map_err(|_| "the offline engine lock is broken".to_string())?;
-        if !running.contains_key(pair) {
-            if running.len() >= MAX_RUNNING {
-                let oldest = running.keys().next().cloned();
-                if let Some(name) = oldest {
-                    if let Some(mut stopped) = running.remove(&name) {
-                        stop(&mut stopped);
-                    }
-                }
-            }
-            let started = start(binary, pack_dir)?;
-            running.insert(pair.to_string(), started);
+        let mut pieces: Vec<String> = Vec::new();
+        let mut counts: Vec<usize> = Vec::with_capacity(texts.len());
+        for text in texts {
+            let parts = split_pieces(text);
+            counts.push(parts.len());
+            pieces.extend(parts);
         }
-        let outcome = match running.get_mut(pair) {
-            Some(process) => exchange(process, texts),
-            None => Err("the offline engine did not start".to_string()),
-        };
-        if outcome.is_err() {
-            if let Some(mut broken) = running.remove(pair) {
-                stop(&mut broken);
-            }
+        if pieces.is_empty() {
+            return Ok(Vec::new());
         }
-        outcome
+        let translated = self.translate_pieces(binary, pack_dir, pair, &pieces)?;
+        let mut out = Vec::with_capacity(texts.len());
+        let mut next = 0;
+        for count in counts {
+            out.push(translated[next..next + count].join("\n"));
+            next += count;
+        }
+        Ok(out)
     }
 
     /// Stops every running engine process (called when the helper stops).
     pub fn stop_all(&self) {
         if let Ok(mut running) = self.running.lock() {
-            for (_, mut process) in running.drain() {
-                stop(&mut process);
+            for (_, processes) in running.drain() {
+                for process in processes {
+                    stop_shared(&process);
+                }
+            }
+        }
+    }
+
+    fn translate_pieces(&self, binary: &Path, pack_dir: &Path, pair: &str, pieces: &[String]) -> Result<Vec<String>, String> {
+        let workers = MAX_PER_PAIR.min(pieces.len()).max(1);
+        let processes = self.processes_for(binary, pack_dir, pair, workers)?;
+        let chunk = (pieces.len() + workers - 1) / workers;
+        let results: Vec<Result<Vec<String>, String>> = thread::scope(|scope| {
+            let handles: Vec<_> = pieces
+                .chunks(chunk)
+                .zip(processes.iter())
+                .map(|(part, process)| {
+                    scope.spawn(move || -> Result<Vec<String>, String> {
+                        let mut guard = process.lock().map_err(|_| "the offline engine lock is broken".to_string())?;
+                        exchange(&mut guard, part)
+                    })
+                })
+                .collect();
+            handles
+                .into_iter()
+                .map(|handle| handle.join().unwrap_or_else(|_| Err("the offline engine failed unexpectedly".to_string())))
+                .collect()
+        });
+        let mut out = Vec::with_capacity(pieces.len());
+        for result in results {
+            match result {
+                Ok(part) => out.extend(part),
+                Err(e) => {
+                    // A failed process is stopped and started again by the next request.
+                    self.forget(pair);
+                    return Err(e);
+                }
+            }
+        }
+        Ok(out)
+    }
+
+    /// The processes for a pair, starting them when needed. Keeps the total within MAX_RUNNING.
+    fn processes_for(&self, binary: &Path, pack_dir: &Path, pair: &str, wanted: usize) -> Result<Vec<Arc<Mutex<Running>>>, String> {
+        let mut running = self.running.lock().map_err(|_| "the offline engine lock is broken".to_string())?;
+        let have = running.get(pair).map(|v| v.len()).unwrap_or(0);
+        let needed = wanted.saturating_sub(have);
+        loop {
+            let total: usize = running.values().map(|v| v.len()).sum();
+            if total + needed <= MAX_RUNNING {
+                break;
+            }
+            let other = running.keys().find(|name| name.as_str() != pair).cloned();
+            match other {
+                Some(name) => {
+                    if let Some(processes) = running.remove(&name) {
+                        for process in processes {
+                            stop_shared(&process);
+                        }
+                    }
+                }
+                None => break,
+            }
+        }
+        while running.get(pair).map(|v| v.len()).unwrap_or(0) < wanted {
+            let started = start(binary, pack_dir)?;
+            running.entry(pair.to_string()).or_default().push(Arc::new(Mutex::new(started)));
+        }
+        let picked: Vec<Arc<Mutex<Running>>> = running.get(pair).map(|v| v.iter().take(wanted).cloned().collect()).unwrap_or_default();
+        Ok(picked)
+    }
+
+    /// Stops and removes every process of a pair.
+    fn forget(&self, pair: &str) {
+        if let Ok(mut running) = self.running.lock() {
+            if let Some(processes) = running.remove(pair) {
+                for process in processes {
+                    stop_shared(&process);
+                }
             }
         }
     }
 }
 
+fn stop_shared(process: &Arc<Mutex<Running>>) {
+    if let Ok(mut running) = process.lock() {
+        stop(&mut running);
+    }
+}
+
 fn start(binary: &Path, pack_dir: &Path) -> Result<Running, String> {
-    let mut child = Command::new(binary)
-        .arg(pack_dir)
-        .stdin(Stdio::piped())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
+    let mut command = Command::new(binary);
+    command.arg(pack_dir).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::null());
+    let mut child = crate::autostart::quiet(command)
         .spawn()
         .map_err(|e| format!("cannot start the offline engine ({}): {}", binary.display(), e))?;
     let stdin = child.stdin.take().ok_or("the offline engine has no input")?;
@@ -297,6 +407,17 @@ mod tests {
     #[test]
     fn base64_refuses_characters_outside_the_alphabet() {
         assert!(base64_decode("Zm9v!").is_none());
+    }
+
+    #[test]
+    fn a_short_text_is_one_piece_and_a_long_one_joins_back_exactly() {
+        assert_eq!(split_pieces("hello"), vec!["hello".to_string()]);
+        let line = "word ".repeat(40);
+        let text = (0..30).map(|i| format!("{} {}", i, line)).collect::<Vec<_>>().join("\n\n");
+        let pieces = split_pieces(&text);
+        assert!(pieces.len() > 1);
+        assert!(pieces.iter().all(|p| p.chars().count() <= PIECE_LIMIT || !p.contains('\n')));
+        assert_eq!(pieces.join("\n"), text);
     }
 
     #[cfg(unix)]

@@ -266,6 +266,15 @@
       copyTo($("pairingResult"), $("pairingCode").textContent, "Code copied.");
     });
     $("installEngine").addEventListener("click", installEngine);
+    // Start at login: the state is read when the page opens, and a change is saved at once.
+    call("/api/autostart", {}).then(function (r) { $("autostart").checked = !!r.enabled; });
+    $("autostart").addEventListener("change", function () {
+      var on = $("autostart").checked;
+      call("/api/autostart", { enabled: on }).then(function (r) {
+        $("autostart").checked = !!r.enabled;
+        setResult($("autostartResult"), r.ok ? (r.enabled ? "On. The helper starts when you log in." : "Off.") : r.message, !!r.ok);
+      });
+    });
     // The start-up update check: the window asks for the latest release as soon as it opens.
     refresh("");
     loadOffline();
