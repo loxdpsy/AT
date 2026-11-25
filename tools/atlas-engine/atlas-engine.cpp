@@ -168,6 +168,9 @@ int main(int argc, char **argv) {
     AsyncService::Config serviceConfig;
     serviceConfig.numWorkers = 1;
     serviceConfig.cacheSize = 0;
+    // Bergamot's default log level is "off", and it applies to Marian's loggers too. At "off", a fatal error (an
+    // ABORT in Marian) aborts with no message. "warn" prints warnings and fatal errors to stderr.
+    serviceConfig.logger.level = "warn";
     AsyncService service(serviceConfig);
     // Not validated, as Firefox's TranslationModel constructor does it. The validator aborts on configs that Firefox
     // accepts, and an abort prints nothing when quiet is on.
