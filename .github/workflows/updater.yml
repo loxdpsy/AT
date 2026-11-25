@@ -41,12 +41,15 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Unit tests
-        run: cargo test --release
+        id: tests
+        run: cargo test --release 2>&1 | tee "$RUNNER_TEMP/updater-test.log"
 
       - name: Build
+        id: build
         run: cargo build --release
 
       - name: Refuses a folder that is not Atlas Translation (no network needed)
+        id: refuse
         run: |
           folder="$RUNNER_TEMP/not-atlas"
           mkdir -p "$folder"
@@ -60,6 +63,7 @@ jobs:
           echo "$output" | grep -q "is not the Atlas Translation folder"
 
       - name: Installs the latest release into a test folder (uses GitHub, checksum and unzip)
+        id: install
         run: |
           log="${{ runner.temp }}/install-output.txt"
           : > "$log"
@@ -97,3 +101,63 @@ jobs:
           name: ${{ matrix.artifact }}
           path: tools/atlas-updater/target/release/${{ matrix.binary }}
           if-no-files-found: error
+
+      # Runs even when a step failed. Shows each step's result, the unit test failures and the install output when they
+      # failed, and the size and SHA-256 of the built helper when it was built. A summary problem never fails the job.
+      - name: Job summary
+        if: always()
+        continue-on-error: true
+        env:
+          ASSET: ${{ matrix.artifact }}
+        run: |
+          summary="$GITHUB_STEP_SUMMARY"
+          {
+            echo "## Updater helper: ${{ matrix.os }}"
+            echo ""
+            echo "| Step | Result |"
+            echo "| --- | --- |"
+            echo "| Unit tests | ${{ steps.tests.outcome }} |"
+            echo "| Build | ${{ steps.build.outcome }} |"
+            echo "| Refuses a folder that is not Atlas Translation | ${{ steps.refuse.outcome }} |"
+            echo "| Installs the latest release | ${{ steps.install.outcome }} |"
+            echo ""
+          } >> "$summary"
+
+          if [ "${{ steps.tests.outcome }}" = "failure" ] && [ -f "$RUNNER_TEMP/updater-test.log" ]; then
+            {
+              echo "### Unit test failures"
+              echo ""
+              echo "Lines that name a failed test or a panic (the first 60). The full log is in the Unit tests step."
+              echo ""
+              echo '```'
+              grep -E "panicked|FAILED|failed|error" "$RUNNER_TEMP/updater-test.log" | head -n 60 || true
+              echo '```'
+              echo ""
+            } >> "$summary"
+          fi
+
+          if [ "${{ steps.install.outcome }}" = "failure" ] && [ -f "$RUNNER_TEMP/install-output.txt" ]; then
+            {
+              echo "### Install output (last 40 lines)"
+              echo ""
+              echo '```'
+              tail -n 40 "$RUNNER_TEMP/install-output.txt"
+              echo '```'
+              echo ""
+            } >> "$summary"
+          fi
+
+          if [ "${{ steps.build.outcome }}" = "success" ]; then
+            file="$GITHUB_WORKSPACE/tools/atlas-updater/target/release/${{ matrix.binary }}"
+            if [ -f "$file" ]; then
+              size=$(wc -c < "$file")
+              digest=$(node -e "const c=require('crypto'),f=require('fs');process.stdout.write(c.createHash('sha256').update(f.readFileSync(process.argv[1])).digest('hex'))" "$file")
+              {
+                echo "### Helper: $ASSET"
+                echo ""
+                echo "- Size: $size bytes"
+                echo "- SHA-256: \`$digest\`"
+                echo ""
+              } >> "$summary"
+            fi
+          fi

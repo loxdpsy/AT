@@ -33,8 +33,15 @@ set(COMPILE_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(COMPILE_SERVER OFF CACHE BOOL "" FORCE)
 set(COMPILE_WASM OFF CACHE BOOL "" FORCE)
 set(COMPILE_PYTHON OFF CACHE BOOL "" FORCE)
-# SentencePiece (through ssplit) needs PCRE2. Let the build download and compile it, so every runner gets the same copy.
-set(SSPLIT_USE_INTERNAL_PCRE2 ON CACHE BOOL "" FORCE)
+# SentencePiece (through ssplit) needs PCRE2. On Linux and macOS, let the build download and compile it, so every runner
+# gets the same copy. On Windows the internal build leaves the static library as pcre2-8-static.lib, which the link does
+# not find (ssplit expects pcre2-8.lib). There, PCRE2 comes from vcpkg instead: engine.yml installs it and sets
+# CMAKE_PREFIX_PATH, and ssplit finds it with find_library.
+if(WIN32)
+  set(SSPLIT_USE_INTERNAL_PCRE2 OFF CACHE BOOL "" FORCE)
+else()
+  set(SSPLIT_USE_INTERNAL_PCRE2 ON CACHE BOOL "" FORCE)
+endif()
 
 # CMake 4 no longer accepts "cmake_minimum_required" below 3.5, and SentencePiece (inside marian-dev) declares an older
 # minimum. This lets the vendored code configure with CMake 3.5 rules. CI also sets CMAKE_POLICY_VERSION_MINIMUM=3.5 in
