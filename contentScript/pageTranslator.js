@@ -949,6 +949,8 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
           }
         });
       }
+    } else if (request.action === "translationCaptcha") {
+      if (window.self === window.top) showTranslationCaptcha(request);
     } else if (request.action === "restorePagesWithServiceNames") {
       if (request.serviceNames.includes(currentPageTranslatorService)) {
         pageTranslator.restorePage();
@@ -1046,10 +1048,72 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     pageDirectionChanged = false;
     pageDirectionBefore = null;
   }
+  // A translation service asked for a captcha. It is shown in a dialog on this page (not in a new tab). The user solves
+  // it, then presses "Translate again". "Open in a small window" is the fallback for sites where the box stays blank.
+  let translationCaptchaDialog = null;
+  function showTranslationCaptcha(info) {
+    if (translationCaptchaDialog) translationCaptchaDialog.remove();
+    let captchaUrl;
+    try {
+      captchaUrl = new URL(info.captchaUrl);
+    } catch (e) {
+      return;
+    }
+    if (captchaUrl.protocol !== "https:") return;
+    const host = document.createElement("div");
+    host.className = "notranslate";
+    host.style = "all: initial";
+    const shadow = host.attachShadow({ mode: "closed" });
+    shadow.innerHTML = `
+      <style>
+        .backdrop { position: fixed; inset: 0; z-index: 2147483647; background: rgba(0, 0, 0, 0.45); display: flex; align-items: center; justify-content: center; font: 14px system-ui, sans-serif; }
+        .card { background: #fff; color: #222; border-radius: 10px; width: min(520px, 94vw); padding: 16px; box-sizing: border-box; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35); }
+        h2 { font-size: 16px; margin: 0 0 8px; }
+        p { margin: 0 0 10px; line-height: 1.4; }
+        iframe { width: 100%; height: 340px; border: 1px solid #ccc; border-radius: 6px; background: #fff; }
+        .row { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; margin-top: 12px; }
+        button { font: inherit; padding: 7px 12px; border-radius: 6px; border: 1px solid #888; background: #f5f5f5; color: #222; cursor: pointer; }
+        button.primary { background: #0061e0; border-color: #0061e0; color: #fff; }
+      </style>
+      <div class="backdrop">
+        <div class="card" role="dialog" aria-modal="true">
+          <h2 id="title"></h2>
+          <p id="text"></p>
+          <iframe id="frame" referrerpolicy="no-referrer"></iframe>
+          <div class="row">
+            <button id="open"></button>
+            <button id="close"></button>
+            <button id="retry" class="primary"></button>
+          </div>
+        </div>
+      </div>`;
+    const msg = (name, fallback) => chrome.i18n.getMessage(name) || fallback;
+    shadow.getElementById("title").textContent = msg("translationCaptchaTitle", "The translation service needs you to confirm you are not a robot.");
+    shadow.getElementById("text").textContent = msg("translationCaptchaText", "Solve the check below, then press Translate again. If the box stays blank, use \"Open in a small window\".");
+    shadow.getElementById("open").textContent = msg("translationCaptchaOpenWindow", "Open in a small window");
+    shadow.getElementById("close").textContent = msg("translationCaptchaClose", "Close");
+    shadow.getElementById("retry").textContent = msg("translationCaptchaRetry", "Translate again");
+    shadow.getElementById("frame").src = captchaUrl.href;
+    const close = () => {
+      host.remove();
+      if (translationCaptchaDialog === host) translationCaptchaDialog = null;
+    };
+    shadow.getElementById("close").addEventListener("click", close);
+    shadow.getElementById("open").addEventListener("click", () => {
+      window.open(captchaUrl.href, "twpTranslationCaptcha", "popup,width=560,height=680");
+    });
+    shadow.getElementById("retry").addEventListener("click", () => {
+      close();
+      pageTranslator.translatePage();
+    });
+    document.body.appendChild(host);
+    translationCaptchaDialog = host;
+  }
+
   // Requests the detection of the tab language in the background
   if (window.self === window.top) {
     // is main frame
-    const onTabVisible = function () {
+    const onTabVisible = function (attempt = 0) {
       chrome.runtime.sendMessage({
         action: "detectTabLanguage"
       }, async result => {
@@ -1057,6 +1121,11 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
         result = result || "und";
         if (result === "und") {
           result = await detectPageLanguageFallback();
+        }
+        // A new tab can answer "und" before its text is rendered. Try again a few times, unless a site rule translates it anyway.
+        if (result === "und" && attempt < 2 && twpConfig.get("alwaysTranslateSites").indexOf(tabHostName) === -1) {
+          setTimeout(() => onTabVisible(attempt + 1), 1500);
+          return;
         }
         if (result === "und") {
           originalTabLanguage = result;

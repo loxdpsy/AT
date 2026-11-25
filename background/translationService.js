@@ -184,16 +184,28 @@ const translationService = function () {
       return await YandexHelper.#findPromise;
     }
 
+    /**
+     * Pulls the session id out of the proxy page. The page's markup has changed before (for example the spacing or
+     * the quotes around sid), so the match accepts those variants, case-insensitively, and returns only the id.
+     * @param {string} text
+     * @returns {string | null}
+     */
+    static extractSid(text) {
+      const match = /(?<![\w-])["']?sid["']?\s*:\s*["']([0-9A-Za-z._-]{8,})["']/i.exec(text);
+      return match ? match[1] : null;
+    }
+
     static async #fetchSID() {
       try {
         const response = await fetchWithTimeout("https://translated.turbopages.org/proxy_u/en-es.en/https/example.com/");
         const text = await response.text();
-        const result = text.match(/sid\:\s\'[0-9a-f\.]+/);
-        if (result && result[0] && result[0].length > 7) {
-          YandexHelper.#translateSid = result[0].substring(6);
+        const sid = YandexHelper.extractSid(text);
+        if (sid) {
+          YandexHelper.#translateSid = sid;
           YandexHelper.#SIDNotFound = false;
         } else {
           YandexHelper.#SIDNotFound = true;
+          console.warn("Yandex: no session id on the proxy page (HTTP " + response.status + "). The page layout may have changed.");
         }
       } catch (e) {
         console.error(e);
@@ -315,6 +327,16 @@ const translationService = function () {
     writable: true,
     value: null
   };
+  /** Thrown when a service asks the user to solve a captcha first. `captchaUrl` is the page to show. */
+  class ServiceCaptchaError extends Error {
+    constructor(serviceName, captchaUrl) {
+      super(serviceName + ": captcha required");
+      this.name = "ServiceCaptchaError";
+      this.serviceName = serviceName;
+      this.captchaUrl = captchaUrl;
+    }
+  }
+
   class Service {
     /**
      * Initializes the **Service** class with information about the new translation service.
@@ -446,11 +468,17 @@ const translationService = function () {
      * @param {Array<TranslationInfo>} requests
      * @returns {Promise<*>}
      */
+    /** Returns the captcha page URL when the response is a captcha challenge, otherwise null. Services override it. */
+    captchaUrlFromResponse(xhr) {
+      return null;
+    }
+
     async makeRequest(sourceLanguage, targetLanguage, requests) {
       return await new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        xhr.withCredentials = false;
-        if ("mozAnon" in xhr) xhr.mozAnon = true; // Firefox: never send cookies with translation requests
+        // Cookies are not sent unless a service asked for them after a captcha (see sendCookies).
+        xhr.withCredentials = this.sendCookies === true;
+        if ("mozAnon" in xhr) xhr.mozAnon = this.sendCookies !== true; // Firefox: no cookies unless a captcha was solved
         xhr.open(this.xhrMethod, this.baseURL + (this.cbGetExtraParameters ? this.cbGetExtraParameters(sourceLanguage, targetLanguage, requests) : ""));
         if (this.cbGetExtraHeaders) {
           const headers = this.cbGetExtraHeaders();
@@ -461,6 +489,11 @@ const translationService = function () {
         xhr.responseType = "json";
         xhr.timeout = 30000; // a hung request must not block the translation queue forever
         xhr.onload = event => {
+          const captchaUrl = this.captchaUrlFromResponse(xhr);
+          if (captchaUrl) {
+            reject(new ServiceCaptchaError(this.serviceName, captchaUrl));
+            return;
+          }
           resolve(xhr.response);
         };
         xhr.onerror = xhr.onabort = xhr.ontimeout = event => {
@@ -488,6 +521,7 @@ const translationService = function () {
       const [requests, currentTranslationsInProgress] = await this.getRequests(sourceLanguage, targetLanguage, sourceArray2d);
       /** @type {Promise<void>[]} */
       const promises = [];
+      let captchaError = null;
       for (const request of requests) {
         promises.push(this.makeRequest(sourceLanguage, targetLanguage, request).then(response => {
           const results = this.cbParseResponse(response);
@@ -504,6 +538,10 @@ const translationService = function () {
           }
         }).catch(e => {
           console.error(e);
+          if (e instanceof ServiceCaptchaError) {
+            captchaError = e;
+            this.sendCookies = true; // the captcha is solved in the browser, so its cookie must be sent next time
+          }
           for (const transInfo of request) {
             transInfo.status = "error";
             //this.translationsInProgress.delete([sourceLanguage, targetLanguage, transInfo.originalText])
@@ -518,6 +556,8 @@ const translationService = function () {
           this.translationsInProgress.delete(transInfo.requestHash);
         }
       }
+      await Promise.all(promises);
+      if (captchaError) throw captchaError;
       return currentTranslationsInProgress.map(transInfo => this.cbTransformResponse(transInfo.translatedText, dontSortResults));
     }
 
@@ -722,6 +762,11 @@ const translationService = function () {
     /**
      * @param {boolean} dontSortResults This parameter is not needed in this translation service
      */
+    /** Yandex sends a captcha challenge by redirecting to its showcaptcha page. */
+    captchaUrlFromResponse(xhr) {
+      return xhr.responseURL && /captcha/i.test(xhr.responseURL) ? xhr.responseURL : null;
+    }
+
     async translate(sourceLanguage, targetLanguage, sourceArray2d, dontSaveInPersistentCache, dontSortResults = false) {
       await YandexHelper.findSID();
       if (!YandexHelper.translateSid) throw new Error("Yandex: the translator session id (SID) could not be found");
@@ -1002,6 +1047,12 @@ const translationService = function () {
     const service = getSafeServiceByName(serviceName);
     return (await service.translate(sourceLanguage, targetLanguage, [[originalText]], dontSaveInPersistentCache))[0][0];
   };
+  // A Yandex captcha is shown on the page that asked for the translation, so the user can solve it there.
+  function notifyCaptchaRequired(e, sender) {
+    if (!(e instanceof ServiceCaptchaError) || !sender || !sender.tab) return;
+    chrome.tabs.sendMessage(sender.tab.id, { action: "translationCaptcha", serviceName: e.serviceName, captchaUrl: e.captchaUrl }, () => void chrome.runtime.lastError);
+  }
+
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // If the translation request came from an incognito window, the translation should not be cached on disk.
     let dontSaveInPersistentCache = true;
@@ -1014,6 +1065,7 @@ const translationService = function () {
       translationService.translateHTML(request.translationService, request.sourceLanguage, request.targetLanguage, request.sourceArray2d, dontSaveInPersistentCache, request.dontSortResults).then(results => sendResponse(results)).catch(e => {
         sendResponse();
         console.error(e);
+        notifyCaptchaRequired(e, sender);
       });
       return true;
     } else if (request.action === "translateText") {
