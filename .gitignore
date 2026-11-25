@@ -8,5 +8,5 @@ build/
 Thumbs.db
 tools/atlas-updater/target/
 
-# CI puts Bergamot (the inference folder of mozilla/translations) here for the offline engine (see tools/atlas-engine/CMakeLists.txt).
-tools/atlas-engine/bergamot/
+# The offline engine's Bergamot source: a git checkout of mozilla/translations (see tools/atlas-engine/CMakeLists.txt).
+tools/atlas-engine/translations-source/

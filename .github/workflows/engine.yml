@@ -61,31 +61,33 @@ jobs:
           ref: ${{ inputs.ref }}
 
       # Bergamot is the inference/ folder of mozilla/translations, at the commit Firefox builds from (see
-      # tools/atlas-engine/CMakeLists.txt). Only that folder is checked out. Its submodules are not checked out by
-      # actions/checkout, because CMake would then try to clone all of them. The three that the native build needs are
-      # fetched below as tarballs at their pinned commits. The other submodules are for WASM, CUDA, or the ARM build.
-      - name: Check out Bergamot (inference/ of mozilla/translations)
-        uses: actions/checkout@v4
-        with:
-          repository: mozilla/translations
-          ref: eea6e5a80aa4ddd86d9cc35ce9a65b79aa3ab96d
-          sparse-checkout: inference
-          path: translations-source
-          submodules: false
-
-      - name: Move Bergamot into place and fetch its pinned submodules
+      # tools/atlas-engine/CMakeLists.txt). It comes from the commit's source tarball. Marian reads a .git next to the
+      # folder for its version header, so the folder gets a git repository with one empty commit. That repository has no
+      # submodule entries, so CMake's own submodule updates do nothing. The three submodules that the native build needs
+      # are fetched as tarballs at their pinned commits. The other submodules are for WASM, CUDA, or the ARM build.
+      - name: Fetch Bergamot (inference/ of mozilla/translations at eea6e5a8)
         run: |
           set -euo pipefail
-          mv translations-source/inference tools/atlas-engine/bergamot
-          rm -rf translations-source
-          fetch() { # <owner/repo> <commit> <destination>
+          src=tools/atlas-engine/translations-source
+          tmp=$(mktemp -d)
+          mkdir -p "$src"
+          curl -fsSL https://codeload.github.com/mozilla/translations/tar.gz/eea6e5a80aa4ddd86d9cc35ce9a65b79aa3ab96d \
+            | tar xz -C "$tmp"
+          mv "$tmp"/translations-*/inference "$src/inference"
+          rm -rf "$tmp"
+          git init -q "$src"
+          git -C "$src" -c user.name=ci -c user.email=ci@localhost commit -q --allow-empty \
+            -m "mozilla/translations eea6e5a80aa4ddd86d9cc35ce9a65b79aa3ab96d (inference/ from the source tarball)"
+          fetch() { # <owner/repo> <commit> <destination> [extra tar options]
             mkdir -p "$3"
-            curl -fsSL "https://codeload.github.com/$1/tar.gz/$2" | tar xz --strip-components=1 -C "$3"
+            curl -fsSL "https://codeload.github.com/$1/tar.gz/$2" | tar xz --strip-components=1 -C "$3" "${@:4}"
           }
           # Commits are the gitlinks of eea6e5a8 (inference/3rd_party/ssplit-cpp, marian-fork/src/3rd_party/...).
-          fetch browsermt/ssplit-cpp a311f9865ade34db1e8e080e6cc146f55dafb067 tools/atlas-engine/bergamot/3rd_party/ssplit-cpp
-          fetch browsermt/sentencepiece ae41b7740d7006596bb9257e83340b2620db9d00 tools/atlas-engine/bergamot/marian-fork/src/3rd_party/sentencepiece
-          fetch kpu/intgemm f7401513da71758dacce52fed1c7855549abee59 tools/atlas-engine/bergamot/marian-fork/src/3rd_party/intgemm
+          fetch browsermt/ssplit-cpp a311f9865ade34db1e8e080e6cc146f55dafb067 "$src/inference/3rd_party/ssplit-cpp"
+          # One file is left out of sentencepiece: a symlink to a Python test fixture. Windows cannot always create symlinks.
+          fetch browsermt/sentencepiece ae41b7740d7006596bb9257e83340b2620db9d00 "$src/inference/marian-fork/src/3rd_party/sentencepiece" \
+            --exclude='*/python/test/botchan.txt'
+          fetch kpu/intgemm f7401513da71758dacce52fed1c7855549abee59 "$src/inference/marian-fork/src/3rd_party/intgemm"
 
       - name: Set up Node
         uses: actions/setup-node@v4

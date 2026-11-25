@@ -2,11 +2,17 @@
 #
 # It is built from Bergamot v0.6.0, the translation engine Firefox uses. Firefox builds it from the inference/ folder of
 # mozilla/translations at commit eea6e5a80aa4ddd86d9cc35ce9a65b79aa3ab96d (toolkit/components/translations/bergamot-translator
-# in Firefox's source records the same commit). Bergamot is not copied into this repository. CI checks out that folder
-# into bergamot/ next to this file, along with three of its submodules (see engine.yml). To build locally, do the same:
-#   curl -L https://codeload.github.com/mozilla/translations/tar.gz/eea6e5a80aa4ddd86d9cc35ce9a65b79aa3ab96d | tar xz
-#   mv translations-eea6e5a80aa4ddd86d9cc35ce9a65b79aa3ab96d/inference tools/atlas-engine/bergamot
-#   (then clone ssplit-cpp, sentencepiece and intgemm at the commits in engine.yml into the paths it lists)
+# in Firefox's source records the same commit). Bergamot is not copied into this repository.
+#
+# The folder is used with a git repository next to it, tools/atlas-engine/translations-source/.git. Marian reads that
+# .git for its version header. CI creates it from the commit's source tarball (see engine.yml), with one empty commit,
+# and fetches three submodules as tarballs. To build locally, do the same:
+#   mkdir -p tools/atlas-engine/translations-source
+#   curl -fsSL https://codeload.github.com/mozilla/translations/tar.gz/eea6e5a80aa4ddd86d9cc35ce9a65b79aa3ab96d | tar xz -C /tmp
+#   mv /tmp/translations-eea6e5a80aa4ddd86d9cc35ce9a65b79aa3ab96d/inference tools/atlas-engine/translations-source/
+#   git init -q tools/atlas-engine/translations-source && git -C tools/atlas-engine/translations-source \
+#     -c user.name=ci -c user.email=ci@localhost commit -q --allow-empty -m "mozilla/translations eea6e5a8"
+#   (then fetch ssplit-cpp, sentencepiece and intgemm at the commits in engine.yml into the paths it lists)
 #   cmake -S tools/atlas-engine -B build/engine && cmake --build build/engine --config Release
 cmake_minimum_required(VERSION 3.16)
 project(atlas-engine LANGUAGES C CXX)
@@ -17,8 +23,12 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/bergamot/CMakeLists.txt")
-  message(FATAL_ERROR "Bergamot (the inference folder of mozilla/translations) is missing in tools/atlas-engine/bergamot. See the comment at the top of this file.")
+set(ATLAS_BERGAMOT_SOURCE "${CMAKE_CURRENT_SOURCE_DIR}/translations-source/inference")
+if(NOT EXISTS "${ATLAS_BERGAMOT_SOURCE}/CMakeLists.txt")
+  message(FATAL_ERROR "Bergamot (the inference folder of mozilla/translations) is missing in tools/atlas-engine/translations-source. See the comment at the top of this file.")
+endif()
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/translations-source/.git")
+  message(FATAL_ERROR "tools/atlas-engine/translations-source must be a git checkout of mozilla/translations (marian reads its .git). See the comment at the top of this file.")
 endif()
 
 # The CPU build that Firefox uses for these models: no GPU, no MKL, intgemm for the int8 models, no tests.
@@ -90,7 +100,7 @@ if(MSVC)
   add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/FI${CMAKE_CURRENT_SOURCE_DIR}/compat/msvc_hash_compare.h>")
 endif()
 
-add_subdirectory(bergamot)
+add_subdirectory("${ATLAS_BERGAMOT_SOURCE}" bergamot)
 
 # marian gives each of its own targets -Wall and -Wextra, and those come after the directory options added above.
 # So a -Wno- option set at directory level does not reach them: -Wall turns the warning back on. Apple clang reports
