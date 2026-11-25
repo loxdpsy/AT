@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-Not released yet. Changes after 0.0.2.0 will be listed here.
+Not released yet. Changes after 0.0.2.1 will be listed here.
+
+## 0.0.2.1
 
 - Popup: the translate icon is the brand in the header. The Atlas wordmark and the duplicate icon are removed.
 - Popup: tap the service badge to switch the service that translates the page to the next enabled one. It is the same switch as the hotkey.
