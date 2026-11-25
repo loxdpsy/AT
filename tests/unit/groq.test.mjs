@@ -46,7 +46,9 @@ const ctx = {
 };
 ctx.self = ctx;
 vm.createContext(ctx);
-vm.runInContext(src + "\n;globalThis.__ts = translationService;", ctx, { filename: "translationService.js" });
+// serviceHealth.js is a plain script that translationService.js uses (createServiceHealth, runWithServiceFallback).
+const healthSrc = fs.readFileSync(ROOT + "background/serviceHealth.js", "utf8");
+vm.runInContext(healthSrc + "\n" + src + "\n;globalThis.__ts = translationService;", ctx, { filename: "translationService.js" });
 const ts = ctx.__ts;
 assert.ok(ts && typeof ts.translateHTML === "function", "translationService not exposed");
 

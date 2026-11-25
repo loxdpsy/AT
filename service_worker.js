@@ -13,6 +13,7 @@ importScripts(
   "lib/platformInfo.js",
   "lib/i18n.js",
   "background/translationCache.js",
+  "background/serviceHealth.js",
   "background/translationService.js",
   "background/updateCheck.js",
   "lib/audioPlayer.js",
