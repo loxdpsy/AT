@@ -24,7 +24,7 @@ On macOS, run `xattr -d com.apple.quarantine ./atlas-updater-macos` once, and on
 ## Use
 
 **The helper window.** Start the program with no arguments (double-click it on Windows, or run `./atlas-updater-macos`
-or `./atlas-updater-linux` from a terminal). The helper opens its own window, not a browser tab, and puts an icon in the
+or `./atlas-updater-linux` from a terminal). The helper opens its own native window (drawn with egui, not a browser page), and puts an icon in the
 tray (Windows and Linux) or the menu bar (macOS). It checks GitHub for a new version, then shows:
 
 - **Update:** shows the version you have and the newest release, and installs the update in one click.
@@ -32,7 +32,7 @@ tray (Windows and Linux) or the menu bar (macOS). It checks GitHub for a new ver
 - **Which browser?** Pick Chrome, Edge, Brave, Opera, Vivaldi, Comet, Iopera or Firefox. Firefox links to the
   Firefox Add-ons page. The Chromium browsers get the steps to load the folder with *Load unpacked*.
 
-- **Offline translation:** shows the pairing code for the extension, installs the offline engine, and installs or
+- **Offline translation:** installs the offline engine, installs or
   removes language packs. A pack is one language pair, such as English to French, from Mozilla's translation models
   (the base models where Mozilla has them, otherwise the tiny ones). The files come from Firefox's Remote Settings. The engine is Mozilla's Bergamot engine, built by the Engine workflow and attached to each release as
   `atlas-engine-windows.exe`, `atlas-engine-macos` or `atlas-engine-linux`. See "Offline translation" below.
@@ -40,7 +40,8 @@ tray (Windows and Linux) or the menu bar (macOS). It checks GitHub for a new ver
 - **Start at login:** starts the helper in the tray when you log in, with no window. The entry is the Windows Run key,
   a LaunchAgent on macOS, or an autostart file on Linux.
 
-The window talks only to the helper on this computer, and every action needs the token the helper keeps for its window.
+The window is a native app: it opens no web page and listens on no network port. Only the offline service listens, on
+`127.0.0.1:47632`, for extension pages (see "Offline translation").
 Closing the window keeps the helper in the tray. Choose **Quit** in the tray menu to stop it. `--serve` starts the
 helper in the tray only, with no window, and clicking the tray icon opens the window.
 
@@ -67,17 +68,18 @@ uses it as the service named **Offline (desktop helper)**.
 2. Install one or more language packs. Each pack is about 37 MB. A pack is downloaded from the catalogue in the
    program, checked against its SHA-256, and only then kept. A file that fails the check is removed, and nothing is
    left behind.
-3. In the extension's options, under Translation services, turn on Offline (desktop helper), paste the pairing code
-   from the helper window, and choose **Save and test**.
+3. In the extension's options, under Translation services, turn on Offline (desktop helper) and choose **Bind this
+   browser**. The helper window asks you to allow it (Allow or Deny). Nothing is sent until you allow it.
 
 The engine and the packs are kept in the data folder of the helper: `%LOCALAPPDATA%\AtlasTranslation` on Windows,
 `~/Library/Application Support/AtlasTranslation` on macOS, and `~/.local/share/AtlasTranslation` on Linux. Updating
 the extension does not remove them.
 
 While the helper is running, it answers translation requests on `127.0.0.1:47632`. It accepts only requests from the
-extension (its origin must be `chrome-extension://` or `moz-extension://`), and only with the pairing code. The
-pairing code is created once and kept in `pairing-code.txt` in the data folder. A missing pack, or a language pair the
-packs do not cover, makes the extension use its next enabled service.
+extension (its origin must be `chrome-extension://` or `moz-extension://`), and only with a token. The helper gives the
+token once, when you allow a bind; it keeps only a SHA-256 hash of it, in `bindings.json` in the data folder. Each
+binding is listed under **Connections** in the helper window, and removing it refuses that browser from then on. A
+missing pack, or a language pair the packs do not cover, makes the extension use its next enabled service.
 
 Mozilla's packs translate between English and one other language, so a pair such as French to German is not
 available offline.
@@ -90,6 +92,5 @@ cargo test
 cargo build --release
 ```
 
-It needs Rust 1.92 or later. The window and the tray icon use the crates `tao`, `wry` and `tray-icon`, so the Linux build
-needs the GTK 3 and WebKitGTK development files: `sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev` on Debian and Ubuntu.
-Windows needs the WebView2 runtime, which Windows 10 and 11 normally have. macOS needs nothing extra.
+It needs Rust 1.92 or later. The window uses `eframe` (egui, with the OpenGL backend) and the tray icon uses
+`tray-icon`. The window and the tray icon use the logo in `icons/atlas-logo.png`. No web view or GTK library is needed.

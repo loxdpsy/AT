@@ -16,10 +16,10 @@ Not released yet. Changes after 0.0.2.1 will be listed here.
 - Offline translation is faster: long texts are split at their line breaks, and the parts are translated in parallel on
   two engine processes per language pair.
 - The helper tries a download again when the network cuts it short.
-- The helper can start when you log in, in the background (Settings: "Start at login"). Windows, macOS and Linux.
+- The helper can start when you log in, in the background (its window: "Start the helper when I sign in"). Windows, macOS and Linux.
 - Paragraphs (#727), optional: Options, "Translate each paragraph as one text" (off by default). A sentence split by inline tags (links, bold, spans) is then sent and translated as one text, instead of in fragments.
-- Desktop helper: its settings open in the helper's own window, not a browser tab, with a tray icon (Windows, macOS, Linux). Closing the window keeps the helper in the tray; Quit in the tray menu stops it.
-- Desktop helper: the window lays out right to left when the system language is Arabic, Hebrew, Persian, Urdu or another right-to-left language.
+- Desktop helper: a native window (not a browser page) with a tray icon, on Windows, macOS and Linux. It has three tabs: the extension (install or update, browser guides, start at login), offline translation (the engine and the language packs), and connections. Closing the window keeps the helper in the tray; Quit in the tray menu stops it.
+- Offline translation is bound, not paired by code: on a page or in the options, Bind this browser asks you in the helper window to Allow it. Remove a browser under Connections, or click Unbind in the options. The helper keeps only a hash of the token.
 - OpenRouter (AI): a new translator with your own OpenRouter key (Settings → Services). Choose any model OpenRouter offers; the default is openai/gpt-4o-mini. Like Groq, the text goes only to OpenRouter with that key, and the answer must match the request, so a broken answer is not shown as a translation (#1029).
 - Translation failures: OpenRouter is included in the retry-with-the-next-service rule and in the removal of failed translations.
 

@@ -428,18 +428,14 @@
           <div class="service-head">
             <div>
               <h2 class="card-title" data-i18n="msgOfflineTitle">Offline (desktop helper)</h2>
-              <p class="card-desc" data-i18n="msgOfflineDescription">Translates on this computer, with no text sent to a web service. The Atlas helper runs the offline engine and keeps the language packs. Install the helper and a language pack, then paste the pairing code from the helper window here. If the helper is not running or a pack is missing, the next enabled service translates the text.</p>
+              <p class="card-desc" data-i18n="msgOfflineDescription">Translates on this computer, with no text sent to a web service. The Atlas helper runs the offline engine and keeps the language packs. Install the helper and a language pack, then click Bind this browser here and allow it in the helper window. If the helper is not running or a pack is missing, the next enabled service translates the text.</p>
             </div>
             <span class="status-pill" id="offlineStatus" hidden></span>
           </div>
-          <label class="field-label" for="offlineCode" data-i18n="msgOfflineCodeLabel">Pairing code (from the helper window)</label>
-          <div class="input-row">
-            <input type="password" id="offlineCode" class="input" placeholder="64 characters from the helper window" autocomplete="off" spellcheck="false" />
-            <button class="btn btn-ghost" id="toggleOfflineCode" type="button">Show</button>
-          </div>
+          <p class="message" id="offlinePrompt" role="status" style="display:none"></p>
           <div class="btn-row">
-            <button id="addOffline" class="btn btn-primary" data-i18n="msgOfflineSave">Save and test</button>
-            <button id="removeOffline" class="btn btn-danger" data-i18n="msgOfflineRemove">Remove code</button>
+            <button id="addOffline" class="btn btn-primary" data-i18n="msgOfflineBind">Bind this browser</button>
+            <button id="removeOffline" class="btn btn-danger" data-i18n="msgOfflineUnbind" style="display:none">Unbind</button>
             <a class="btn btn-ghost" id="offlineGetHelper" href="https://github.com/loxdpsy/AT/releases" target="_blank" rel="noopener" data-i18n="msgOfflineGetHelper">Get the helper</a>
           </div>
           <p class="message" id="offlineApiResponse" role="status"></p>

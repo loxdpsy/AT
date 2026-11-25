@@ -5,7 +5,7 @@ import vm from "vm";
 import assert from "assert";
 
 const ROOT = new URL("../../", import.meta.url).pathname;
-const settings = { enabledServices: ["offline"], offlineHelperCode: "c".repeat(64), customServices: [], useAlternativeService: "yes", textTranslatorService: "offline", pageTranslatorService: "offline" };
+const settings = { enabledServices: ["offline"], offlineHelperToken: "c".repeat(64), customServices: [], useAlternativeService: "yes", textTranslatorService: "offline", pageTranslatorService: "offline" };
 const clock = { t: 1_000_000_000_000 };
 const logs = { warn: [], info: [], error: [] };
 const helper = { engine: true, packs: ["enfr", "fren"], code: "c".repeat(64), down: false, requests: [] };
@@ -19,7 +19,7 @@ async function fakeFetch(url, init = {}) {
   if (url.endsWith("/api/offline/translate")) {
     const body = JSON.parse(init.body);
     helper.requests.push(body);
-    if (body.pairing !== helper.code) return resp(403, { ok: false, message: "the pairing code is wrong." });
+    if ((init.headers || {}).Authorization !== "Bearer " + helper.code) return resp(403, { ok: false, message: "this browser is not bound." });
     if (!helper.packs.includes(body.pair)) return resp(409, { ok: false, message: "the pack is not installed" });
     if (body.texts.length > 500) return resp(400, { ok: false, message: "too many" });
     return resp(200, { ok: true, translations: body.texts.map(t => `[${body.pair}] ${t.toUpperCase()}`) });
@@ -78,17 +78,17 @@ assert.strictEqual(helper.requests.length, 0, "not-installed pack: nothing sent"
 helper.packs = ["enfr", "fren"];
 clock.t += 11000;
 
-// 5. A wrong pairing code is reported as a failure from the helper.
-settings.offlineHelperCode = "d".repeat(64);
+// 5. A wrong binding token is reported as a failure from the helper.
+settings.offlineHelperToken = "d".repeat(64);
 await assert.rejects(translate("en", "fr", "hello"));
-settings.offlineHelperCode = helper.code;
+settings.offlineHelperToken = helper.code;
 
-// 6. No pairing code: skipped, nothing sent.
-settings.offlineHelperCode = "";
+// 6. No binding token: skipped, nothing sent.
+settings.offlineHelperToken = "";
 helper.requests.length = 0;
-await assert.rejects(translate("en", "fr", "hello"), /pairing code/);
+await assert.rejects(translate("en", "fr", "hello"), /bind this browser/);
 assert.strictEqual(helper.requests.length, 0);
-settings.offlineHelperCode = helper.code;
+settings.offlineHelperToken = helper.code;
 
 // 7. Helper not running: the request fails (a real failure).
 helper.down = true;
@@ -107,7 +107,7 @@ assert.notStrictEqual(alt, "offline");
 
 // 10. The helper's "offline" is found in fallback: offline skipped, next candidate tried, the log says so.
 settings.enabledServices = ["offline", "google"];
-settings.offlineHelperCode = helper.code;
+settings.offlineHelperToken = helper.code;
 helper.packs = ["enfr"];
 clock.t += 11000;
 logs.warn.length = 0;

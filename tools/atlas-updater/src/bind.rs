@@ -108,6 +108,20 @@ impl Bindings {
         Ok(())
     }
 
+    /// Removes the binding that belongs to `token`, so that extension is refused from then on. The extension calls
+    /// this when the user unbinds it. Returns false when no binding has that token.
+    pub fn remove_token(&mut self, token: &str) -> bool {
+        let wanted = hash_token(token);
+        match self.items.iter().position(|b| b.hash == wanted) {
+            Some(index) => {
+                self.items.remove(index);
+                let _ = self.save();
+                true
+            }
+            None => false,
+        }
+    }
+
     /// True when the token belongs to one of the bindings.
     pub fn verify(&self, token: &str) -> bool {
         if token.is_empty() {

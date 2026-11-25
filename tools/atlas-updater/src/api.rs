@@ -2,6 +2,7 @@
 //
 // The helper listens on 127.0.0.1:47632 only, a fixed port the extension knows. It answers:
 //   GET  /api/offline/ping                  what is installed (no secret)
+//   POST /api/offline/unbind                 Authorization: Bearer <token> (removes this binding)
 //   POST /api/offline/translate              Authorization: Bearer <token>, {"pair": "enfr", "texts": ["..."]}
 //
 // Only extension pages may call it: the Origin must be chrome-extension:// or moz-extension://, and the Host must be
@@ -168,6 +169,19 @@ fn handle(stream: &mut TcpStream, engine: &Engine, bindings: &Shared, requests: 
         ("POST", "/api/offline/bind") => {
             let (status, body) = bind_request(&request.body, origin.as_deref(), requests);
             send(stream, status, allow, &body)
+        }
+        ("POST", "/api/offline/unbind") => {
+            // The token itself proves which binding to remove, so only the extension that holds it can unbind.
+            let token = request.header("authorization").and_then(|h| h.strip_prefix("Bearer ")).unwrap_or("");
+            let removed = {
+                let mut guard = bindings.lock().unwrap_or_else(|p| p.into_inner());
+                guard.remove_token(token)
+            };
+            if removed {
+                send(stream, 200, allow, "{\"ok\":true}")
+            } else {
+                send(stream, 403, allow, &error_body("this browser is not bound"))
+            }
         }
         ("POST", "/api/offline/translate") => {
             let token = request.header("authorization").and_then(|h| h.strip_prefix("Bearer "));

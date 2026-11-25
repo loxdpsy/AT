@@ -718,7 +718,25 @@
     "message": "Offline (desktop helper)"
   },
   "msgOfflineDescription": {
-    "message": "Translates on this computer, with no text sent to a web service. The Atlas helper runs the offline engine and keeps the language packs. Install the helper and a language pack, then paste the pairing code from the helper window here. If the helper is not running or a pack is missing, the next enabled service translates the text."
+    "message": "Translates on this computer, with no text sent to a web service. The Atlas helper runs the offline engine and keeps the language packs. Install the helper and a language pack, then click Bind this browser here and allow it in the helper window. If the helper is not running or a pack is missing, the next enabled service translates the text."
+  },
+  "msgOfflineBind": {
+    "message": "Bind this browser"
+  },
+  "msgOfflineUnbind": {
+    "message": "Unbind"
+  },
+  "msgOfflinePrompt": {
+    "message": "The Atlas helper is running. Bind this browser to use offline translation."
+  },
+  "msgOfflineWaiting": {
+    "message": "Waiting for your answer in the Atlas helper window..."
+  },
+  "msgOfflineBindRefused": {
+    "message": "The helper window did not allow this browser. Click Bind this browser again and choose Allow."
+  },
+  "msgOfflineNoPacksYet": {
+    "message": "Connected. Install a language pack in the helper window."
   },
   "msgOfflineCodeLabel": {
     "message": "Pairing code (from the helper window)"
@@ -748,7 +766,7 @@
     }
   },
   "msgOfflineNotRunning": {
-    "message": "The helper is not running. Open the Atlas helper, then copy its pairing code here."
+    "message": "The helper is not running. Open the Atlas helper, then try again."
   },
   "msgOfflineWrongCode": {
     "message": "The pairing code is wrong. Copy it again from the helper window."
@@ -763,7 +781,7 @@
     "message": "The pairing code has 64 letters and digits. Copy it from the helper window."
   },
   "msgOfflineRemoved": {
-    "message": "Code removed. Offline (desktop helper) is off."
+    "message": "Unbound. Offline (desktop helper) is off."
   },
   "fileAccessNotice": {
     "message": "This is a local file. Allow this extension to read file pages in your browser's extension settings, then reload the page.",

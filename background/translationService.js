@@ -1260,7 +1260,7 @@ const translationService = function () {
 
   /**
    * Offline (desktop helper). The Atlas helper runs an offline engine (Mozilla's Bergamot models) on this computer and
-   * serves it on 127.0.0.1 (see tools/atlas-updater/src/api.rs). The helper needs the pairing code from its window.
+   * serves it on 127.0.0.1 (see tools/atlas-updater/src/api.rs). The helper needs this browser bound to it (Options, Offline).
    */
   const OFFLINE_HELPER_URL = "http://127.0.0.1:47632";
   const OFFLINE_MAX_TEXTS_PER_REQUEST = 500;
@@ -1307,7 +1307,7 @@ const translationService = function () {
   }
 
   /**
-   * Creates the Offline (desktop helper) service. A missing helper, engine, pack or pairing code makes it skip the text
+   * Creates the Offline (desktop helper) service. A missing helper, engine, pack or binding makes it skip the text
    * (see offlineUnavailable), and the next enabled service that supports the language translates instead.
    * @returns {Service}
    */
@@ -1339,7 +1339,7 @@ const translationService = function () {
         const packs = await getOfflinePacks();
         if (!packs.engine) throw offlineUnavailable("the offline engine is not installed in the helper");
         if (!packs.pairs.includes(pair)) throw offlineUnavailable(`the ${pair} language pack is not installed in the helper`);
-        if (!(twpConfig.get("offlineHelperCode") || "").trim()) throw offlineUnavailable("enter the pairing code from the helper window");
+        if (!(twpConfig.get("offlineHelperToken") || "").trim()) throw offlineUnavailable("bind this browser to the helper in the Offline settings");
         const pieces = [];
         for (const sourceArray of sourceArray2d) {
           for (const text of sourceArray) pieces.push([text]);
@@ -1350,26 +1350,26 @@ const translationService = function () {
       }
 
       /**
-       * Sends one batch of texts to the helper. The helper checks the pairing code and the pack.
+       * Sends one batch of texts to the helper. The helper checks the binding token and the pack.
        * @param {string} sourceLanguage
        * @param {string} targetLanguage
        * @param {Array<TranslationInfo>} requests
        */
       async makeRequest(sourceLanguage, targetLanguage, requests) {
-        const pairing = (twpConfig.get("offlineHelperCode") || "").trim();
+        const token = (twpConfig.get("offlineHelperToken") || "").trim();
         const pair = offlinePair(sourceLanguage, targetLanguage);
         const translations = [];
         for (let i = 0; i < requests.length; i += OFFLINE_MAX_TEXTS_PER_REQUEST) {
           const texts = requests.slice(i, i + OFFLINE_MAX_TEXTS_PER_REQUEST).map(info => info.originalText);
           const response = await fetchWithTimeout(this.baseURL, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ pairing, pair, texts })
+            headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+            body: JSON.stringify({ pair, texts })
           }, 60000);
           const body = await response.json().catch(() => null);
           if (!response.ok || !body || !Array.isArray(body.translations)) {
             const message = (body && body.message) || "HTTP " + response.status;
-            if (response.status === 403) throw offlineUnavailable("the pairing code is wrong. " + message);
+            if (response.status === 403) throw offlineUnavailable("this browser is not bound to the helper. " + message);
             throw new Error("offline: " + message);
           }
           translations.push(...body.translations);
