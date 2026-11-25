@@ -265,7 +265,7 @@ fn status(body: &json::Value) -> String {
         .collect();
     format!(
         "{{\"helperVersion\":{},\"defaultFolder\":{},\"folder\":{},\"fresh\":{},\"latest\":{},\"latestError\":{},\"installed\":{},\"installedError\":{},\"updateAvailable\":{},\"browsers\":[{}]}}",
-        json::quote(env!("CARGO_PKG_VERSION")),
+        json::quote(&crate::app_version()),
         json::quote(&default_folder()),
         json::quote(&folder),
         fresh,

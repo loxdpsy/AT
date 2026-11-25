@@ -68,6 +68,21 @@ Firefox for Android: install from addons.mozilla.org once the store listing is p
 
 When the add-on is listed on addons.mozilla.org, the workflow sends a build without `update_url`, because AMO refuses that key on listed add-ons. Listed updates come from AMO.
 
+## Desktop helper (Atlas Helper)
+
+The helper is a small desktop program (Windows, macOS, Linux) written in Rust, in `tools/atlas-updater`. It is
+optional. It does three things for the extension:
+
+- **Updates your unpacked copy.** Chrome, Edge and Brave never update a folder you loaded with "Load unpacked". The
+  helper installs the newest release into that folder, after checking its SHA-256.
+- **Offline translation.** It runs the offline engine (`tools/atlas-engine`) with the language packs you install, so
+  pages and selected text can be translated without sending them to a web service.
+- **A window of its own.** A tray icon opens the helper's settings: the folder, the language packs, and the update
+  check. It runs in the background from the tray, not in a terminal.
+
+The helper has the same version as the extension (for example 0.0.2.1). Download it from the release next to the
+extension zip. See [tools/atlas-updater/README.md](tools/atlas-updater/README.md) for the details.
+
 ## Build from source
 
 Requirements: Node.js 22 or newer.
@@ -113,7 +128,7 @@ Repository secrets used by the workflows (all optional):
 
 ### Keeping the version in sync
 
-The version lives in four files: `manifest.json`, `firefox_manifest.json`, `package.json`, and `package-lock.json`.
+The version lives in five files: `manifest.json`, `firefox_manifest.json`, `package.json`, `package-lock.json`, and `tools/atlas-updater/Cargo.toml` (the helper). Cargo needs three numbers, so the fourth part is stored after a `+`: 0.0.2.1 is `0.0.2+1`.
 The version badge at the top of this README shows the latest published release. The release workflow sets it, and the
 daily README sync sets it when a release is made by hand. So it can show the previous version until a new release is
 published. Set the files at once:

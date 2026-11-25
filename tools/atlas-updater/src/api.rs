@@ -179,7 +179,7 @@ fn ping_body() -> String {
     };
     format!(
         "{{\"ok\":true,\"name\":\"Atlas Translation helper\",\"version\":{},\"engine\":{},\"packs\":[{}]}}",
-        json::quote(env!("CARGO_PKG_VERSION")),
+        json::quote(&crate::app_version()),
         engine::find_binary().is_some(),
         installed.join(",")
     )

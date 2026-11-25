@@ -41,6 +41,12 @@ struct Release {
     sha256_hex: String,
 }
 
+/// The helper's version, the same as the extension's (for example 0.0.2.1). Cargo.toml stores it as 0.0.2+1,
+/// because Cargo needs three numbers; the fourth part is build metadata. See scripts/sync-version.mjs.
+pub fn app_version() -> String {
+    env!("CARGO_PKG_VERSION").replace('+', ".")
+}
+
 fn main() {
     if let Err(message) = run() {
         eprintln!("Error: {}", message);
