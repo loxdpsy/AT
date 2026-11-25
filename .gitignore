@@ -6,3 +6,4 @@ build/
 *.zip
 .DS_Store
 Thumbs.db
+tools/atlas-updater/target/

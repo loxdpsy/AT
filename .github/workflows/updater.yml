@@ -1,0 +1,67 @@
+# Builds and tests the atlas-updater helper (tools/atlas-updater) on Windows, macOS and Linux.
+# Each build is kept as an artifact, so it can be downloaded from the run page.
+name: Updater
+
+on:
+  push:
+    paths:
+      - "tools/atlas-updater/**"
+      - ".github/workflows/updater.yml"
+  pull_request:
+    paths:
+      - "tools/atlas-updater/**"
+      - ".github/workflows/updater.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            binary: atlas-updater
+            artifact: atlas-updater-linux
+          - os: macos-latest
+            binary: atlas-updater
+            artifact: atlas-updater-macos
+          - os: windows-latest
+            binary: atlas-updater.exe
+            artifact: atlas-updater-windows
+    defaults:
+      run:
+        shell: bash
+        working-directory: tools/atlas-updater
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unit tests
+        run: cargo test --release
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Refuses a folder that is not Atlas Translation (no network needed)
+        run: |
+          folder="$RUNNER_TEMP/not-atlas"
+          mkdir -p "$folder"
+          echo '{"name": "Something else", "version": "1.0"}' > "$folder/manifest.json"
+          set +e
+          output=$("./target/release/${{ matrix.binary }}" "$folder" 2>&1)
+          code=$?
+          set -e
+          echo "$output"
+          test "$code" -eq 1
+          echo "$output" | grep -q "is not the Atlas Translation folder"
+
+      - name: Upload the build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: tools/atlas-updater/target/release/${{ matrix.binary }}
+          if-no-files-found: error

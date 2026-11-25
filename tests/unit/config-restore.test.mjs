@@ -129,4 +129,34 @@ const resetNoUpdate = world({ hotkeys: { "hotkey-toggle-translation": "Alt+X" } 
 resetNoUpdate.cfg.restoreToDefault();
 assert.equal(resetNoUpdate.reloaded, true, "reset reloads when commands.update is missing");
 console.log("ok   reset to defaults works when browser.commands.update is missing");
+// 8) The 0.0.1.9 settings file from the user (the key is a placeholder here) restores on this version with its services and key.
+const userFile = JSON.parse(fs.readFileSync(new URL("./fixtures/user-backup-0.0.1.9.json", import.meta.url), "utf8"));
+const fromUser = world({});
+fromUser.cfg.import(JSON.stringify(userFile));
+const userNow = world(fromUser.storage).cfg;
+assert.equal(userNow.get("groqApiKey"), "gsk_PLACEHOLDER_FOR_TESTS");
+assert.ok(userNow.get("enabledServices").includes("groq"));
+assert.equal(userNow.get("textTranslatorService"), "groq");
+assert.equal(userNow.get("groqModel"), "openai/gpt-oss-20b");
+console.log("ok   the 0.0.1.9 settings file restores on this version");
+
+// 9) A file with a blank Groq key, on a device with no key: Groq is turned off and the translators move to Google.
+const blankKey = world({});
+blankKey.cfg.import(JSON.stringify({ ...userFile, groqApiKey: "" }));
+const blankNow = world(blankKey.storage).cfg;
+assert.equal(blankNow.get("groqApiKey"), "");
+assert.ok(!blankNow.get("enabledServices").includes("groq"), "groq is off without a key");
+assert.notEqual(blankNow.get("textTranslatorService"), "groq");
+assert.notEqual(blankNow.get("pageTranslatorService"), "groq");
+assert.ok(blankNow.get("enabledServices").includes("google"));
+console.log("ok   a blank Groq key turns Groq off and keeps the translators working");
+
+// 10) A file with a blank key, on a device that already has a key: the saved key is kept and Groq stays on.
+const keepKey = world({ groqApiKey: "gsk_saved_on_this_device", enabledServices: ["google", "groq"] });
+keepKey.cfg.import(JSON.stringify({ ...userFile, groqApiKey: "" }));
+const keptNow = world(keepKey.storage).cfg;
+assert.equal(keptNow.get("groqApiKey"), "gsk_saved_on_this_device", "a blank key in the file keeps the saved key");
+assert.ok(keptNow.get("enabledServices").includes("groq"));
+console.log("ok   a blank key in the file keeps the key saved on this device");
+
 console.log("all config restore checks passed");
