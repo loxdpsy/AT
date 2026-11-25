@@ -30,9 +30,19 @@ jobs:
         id: install
         run: npm ci
 
+      # The output is kept so that a failure shows its messages as annotations, which can be read without the job log.
       - name: Check the repository
         id: check
-        run: npm run check
+        run: |
+          set -o pipefail
+          npm run check 2>&1 | tee "$RUNNER_TEMP/check.log"
+
+      - name: Annotate the check failures
+        if: failure() && steps.check.outcome == 'failure'
+        run: |
+          grep -E "FAIL|failed|error" "$RUNNER_TEMP/check.log" | head -n 30 | while IFS= read -r line; do
+            echo "::error title=npm run check::${line//%/%25}"
+          done
 
       - name: Run the unit tests
         id: test
