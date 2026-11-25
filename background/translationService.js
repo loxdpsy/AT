@@ -1102,7 +1102,8 @@ const translationService = function () {
           params.append("source", sourceLanguage);
           params.append("target", targetLanguage);
           params.append("format", "text");
-          params.append("api_key", apiKey);
+          // Many LibreTranslate servers need no key. The key is sent only when one is saved.
+          if (apiKey) params.append("api_key", apiKey);
           return params.toString();
         }, function cbGetExtraHeaders() {
           return [{
@@ -1110,6 +1111,19 @@ const translationService = function () {
             value: "application/x-www-form-urlencoded"
           }];
         });
+      }
+
+      /**
+       * LibreTranslate takes one text per request, so a batch of page texts is split into one request per text.
+       * Without this, only the first text of a batch would be sent.
+       * @param {string} sourceLanguage
+       * @param {string} targetLanguage
+       * @param {Array<string[]>} sourceArray2d
+       * @returns {Promise<[Array<TranslationInfo[]>, TranslationInfo[]]>}
+       */
+      async getRequests(sourceLanguage, targetLanguage, sourceArray2d) {
+        const [batches, inProgress] = await super.getRequests(sourceLanguage, targetLanguage, sourceArray2d);
+        return [batches.flatMap(batch => batch.map(info => [info])), inProgress];
       }
 
       /**

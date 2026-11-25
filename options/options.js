@@ -695,7 +695,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     twpConfig.set("useAlternativeService", e.target.value);
   };
   $("#useAlternativeService").value = twpConfig.get("useAlternativeService");
-  const pageTranslationServices = ["google", "bing", "yandex", "deepl", "groq", "offline"];
+  const pageTranslationServices = ["google", "bing", "yandex", "deepl", "groq", "offline", "libre"];
   const updateServiceSelector = enabledServices => {
     document.querySelectorAll("#pageTranslatorService option").forEach(option => option.setAttribute("hidden", ""));
     document.querySelectorAll("#textTranslatorService option").forEach(option => option.setAttribute("hidden", ""));
@@ -710,6 +710,10 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
         option.removeAttribute("hidden");
       }
     });
+    // LibreTranslate is a saved server, not in enabledServices. Its page option is shown while a server is saved.
+    if (twpConfig.get("customServices").find(cs => cs.name === "libre")) {
+      $('#pageTranslatorService option[value="libre"]').removeAttribute("hidden");
+    }
   };
   const servicesInfo = [{
     selector: "#btnEnableGoogle",
@@ -868,9 +872,9 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
       apiKey: $("#libreKEY").value
     };
     try {
-      new URL(libre.url);
-      if (libre.apiKey.length < 10) {
-        throw new Error("Provides an API Key");
+      const parsed = new URL(libre.url);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        throw new Error("The server URL must start with http:// or https://");
       }
       const customServices = twpConfig.get("customServices");
       const index = customServices.findIndex(cs => cs.name === "libre");
@@ -879,6 +883,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
       }
       customServices.push(libre);
       twpConfig.set("customServices", customServices);
+      $('#pageTranslatorService option[value="libre"]').removeAttribute("hidden");
       chrome.runtime.sendMessage({
         action: "createLibreService",
         libre
@@ -899,6 +904,12 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     }
     if (twpConfig.get("textTranslatorService") === "libre") {
       twpConfig.set("textTranslatorService", twpConfig.get("pageTranslatorService"));
+    }
+    // Without a saved server, LibreTranslate is no longer a page service either.
+    $('#pageTranslatorService option[value="libre"]').setAttribute("hidden", "");
+    if (twpConfig.get("pageTranslatorService") === "libre") {
+      twpConfig.set("pageTranslatorService", "google");
+      $("#pageTranslatorService").value = "google";
     }
     $("#libreURL").value = "";
     $("#libreKEY").value = "";

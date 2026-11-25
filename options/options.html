@@ -202,7 +202,7 @@
 <option value="google">Google</option>
 <option value="bing">Bing</option>
 <option value="yandex">Yandex</option>
-<option value="deepl">DeepL</option><option value="groq">Groq (AI)</option><option value="offline">Offline (desktop helper)</option>
+<option value="deepl">DeepL</option><option value="groq">Groq (AI)</option><option value="offline">Offline (desktop helper)</option><option value="libre" hidden>LibreTranslate</option>
 </select></div>
           </div>
           <div class="row">
@@ -414,12 +414,12 @@
           <div class="service-head">
             <div>
               <h2 class="card-title">LibreTranslate</h2>
-              <p class="card-desc" data-i18n="msgLibreDescription">Text translation through your own LibreTranslate server.</p>
+              <p class="card-desc" data-i18n="msgLibreDescription">Text and page translation through your own LibreTranslate server. Some public servers need no API key.</p>
             </div>
           </div>
           <label class="field-label" for="libreURL" data-i18n="msgLibreURL">Server URL</label>
           <input type="text" id="libreURL" class="input" placeholder="https://my-libretranslate-server.com/translate" autocomplete="off" spellcheck="false" />
-          <label class="field-label" for="libreKEY" data-i18n="msgLibreKey">API key</label>
+          <label class="field-label" for="libreKEY" data-i18n="msgLibreKey">API key (optional)</label>
           <input type="text" id="libreKEY" class="input" placeholder="c02976e6-ec19-11ed-a05b-0242ac120003" autocomplete="off" spellcheck="false" />
           <div class="btn-row">
             <button id="addLibre" class="btn btn-primary" data-i18n="msgLibreSave">Save</button>
