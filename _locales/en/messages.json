@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "Translate web pages and selected text in place, with the translation service you choose."
+  },
+  "aboutVersion": {
+    "message": "Version"
+  },
+  "aboutCreditsTitle": {
+    "message": "Credits and license"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation is a modified fork of TWP - Translate Web Pages, created by [[author]]. Thank you for the original work. The code is released under the [[license]]. See NOTICE.md and LICENSE in the source."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "Source code"
+  },
+  "aboutLinkIssue": {
+    "message": "Report an issue"
+  },
+  "aboutLinkPrivacy": {
+    "message": "Privacy policy"
+  },
+  "aboutLinkSecurity": {
+    "message": "Security and privacy"
+  },
+  "aboutLinkOriginal": {
+    "message": "Original project"
+  },
+  "aboutBentoTitle": {
+    "message": "More from Etherealmber"
+  },
+  "aboutWebKicker": {
+    "message": "Web app"
+  },
+  "aboutWebDesc": {
+    "message": "Point of sale and ERP that runs on Cloudflare Workers. The Atlas logo and colour theme in this extension come from this project."
+  },
+  "aboutAndroidKicker": {
+    "message": "Android app"
+  },
+  "aboutAndroidDesc": {
+    "message": "The Atlas Commerce app for Android, built with Kotlin and Jetpack Compose."
+  },
+  "aboutDesktopKicker": {
+    "message": "Desktop app"
+  },
+  "aboutDesktopDesc": {
+    "message": "The Atlas Commerce app for desktop, written in Rust with egui. MIT licensed."
+  },
+  "aboutThanks": {
+    "message": "Thank you for using Atlas Translation, and to everyone who helps translate it."
   }
 }

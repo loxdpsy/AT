@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "แปลหน้าเว็บและข้อความที่เลือกในหน้าเดิมได้ทันที ด้วยบริการแปลที่คุณเลือก"
+  },
+  "aboutVersion": {
+    "message": "เวอร์ชัน"
+  },
+  "aboutCreditsTitle": {
+    "message": "เครดิตและลิขสิทธิ์"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation เป็นเวอร์ชันที่ดัดแปลงจาก TWP - Translate Web Pages ซึ่งสร้างโดย [[author]] ขอขอบคุณสำหรับงานต้นฉบับ โค้ดเผยแพร่ภายใต้ [[license]] ดู NOTICE.md และ LICENSE ในซอร์สโค้ด"
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "ซอร์สโค้ด"
+  },
+  "aboutLinkIssue": {
+    "message": "รายงานปัญหา"
+  },
+  "aboutLinkPrivacy": {
+    "message": "นโยบายความเป็นส่วนตัว"
+  },
+  "aboutLinkSecurity": {
+    "message": "ความปลอดภัยและความเป็นส่วนตัว"
+  },
+  "aboutLinkOriginal": {
+    "message": "โปรเจกต์ต้นฉบับ"
+  },
+  "aboutBentoTitle": {
+    "message": "โปรเจกต์อื่นจาก Etherealmber"
+  },
+  "aboutWebKicker": {
+    "message": "เว็บแอป"
+  },
+  "aboutWebDesc": {
+    "message": "ระบบขายหน้าร้านและ ERP ที่ทำงานบน Cloudflare Workers โลโก้ Atlas และธีมสีของส่วนขยายนี้มาจากโปรเจกต์นี้"
+  },
+  "aboutAndroidKicker": {
+    "message": "แอป Android"
+  },
+  "aboutAndroidDesc": {
+    "message": "แอป Atlas Commerce สำหรับ Android สร้างด้วย Kotlin และ Jetpack Compose"
+  },
+  "aboutDesktopKicker": {
+    "message": "แอปเดสก์ท็อป"
+  },
+  "aboutDesktopDesc": {
+    "message": "แอป Atlas Commerce สำหรับเดสก์ท็อป เขียนด้วย Rust และ egui สัญญาอนุญาต MIT"
+  },
+  "aboutThanks": {
+    "message": "ขอบคุณที่ใช้ Atlas Translation และขอบคุณทุกคนที่ช่วยแปล"
   }
 }

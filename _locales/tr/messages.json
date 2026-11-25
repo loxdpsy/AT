@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "Web sayfalarını ve seçili metni, seçtiğiniz çeviri hizmetiyle yerinde çevirin."
+  },
+  "aboutVersion": {
+    "message": "Sürüm"
+  },
+  "aboutCreditsTitle": {
+    "message": "Teşekkür ve lisans"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation, [[author]] tarafından oluşturulan TWP - Translate Web Pages projesinin değiştirilmiş bir sürümüdür. Özgün çalışma için teşekkürler. Kod [[license]] altında yayımlanır. Kaynak koddaki NOTICE.md ve LICENSE dosyalarına bakın."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "Kaynak kod"
+  },
+  "aboutLinkIssue": {
+    "message": "Sorun bildir"
+  },
+  "aboutLinkPrivacy": {
+    "message": "Gizlilik politikası"
+  },
+  "aboutLinkSecurity": {
+    "message": "Güvenlik ve gizlilik"
+  },
+  "aboutLinkOriginal": {
+    "message": "Özgün proje"
+  },
+  "aboutBentoTitle": {
+    "message": "Etherealmber'dan diğer projeler"
+  },
+  "aboutWebKicker": {
+    "message": "Web uygulaması"
+  },
+  "aboutWebDesc": {
+    "message": "Cloudflare Workers üzerinde çalışan satış noktası ve ERP sistemi. Bu eklentinin Atlas logosu ve renk teması bu projeden alınmıştır."
+  },
+  "aboutAndroidKicker": {
+    "message": "Android uygulaması"
+  },
+  "aboutAndroidDesc": {
+    "message": "Kotlin ve Jetpack Compose ile geliştirilmiş, Android için Atlas Commerce uygulaması."
+  },
+  "aboutDesktopKicker": {
+    "message": "Masaüstü uygulaması"
+  },
+  "aboutDesktopDesc": {
+    "message": "egui ile Rust'ta yazılmış, masaüstü için Atlas Commerce uygulaması. MIT lisanslı."
+  },
+  "aboutThanks": {
+    "message": "Atlas Translation'ı kullandığınız için teşekkürler, ve çevirisine yardım eden herkese teşekkürler."
   }
 }

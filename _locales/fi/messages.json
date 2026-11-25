@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "Käännä verkkosivut ja valittu teksti paikan päällä valitsemallasi käännöspalvelulla."
+  },
+  "aboutVersion": {
+    "message": "Versio"
+  },
+  "aboutCreditsTitle": {
+    "message": "Tekijänoikeudet ja lisenssi"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation on muokattu versio TWP - Translate Web Pagesistä, jonka on tehnyt [[author]]. Kiitos alkuperäisestä työstä. Koodi julkaistaan lisenssillä [[license]]. Katso NOTICE.md ja LICENSE lähdekoodista."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "Lähdekoodi"
+  },
+  "aboutLinkIssue": {
+    "message": "Ilmoita ongelmasta"
+  },
+  "aboutLinkPrivacy": {
+    "message": "Tietosuojakäytäntö"
+  },
+  "aboutLinkSecurity": {
+    "message": "Turvallisuus ja yksityisyys"
+  },
+  "aboutLinkOriginal": {
+    "message": "Alkuperäinen projekti"
+  },
+  "aboutBentoTitle": {
+    "message": "Lisää Etherealmberilta"
+  },
+  "aboutWebKicker": {
+    "message": "Verkkosovellus"
+  },
+  "aboutWebDesc": {
+    "message": "Kassa- ja ERP-järjestelmä, joka toimii Cloudflare Workersissa. Tämän laajennuksen Atlas-logo ja väriteema ovat peräisin tästä projektista."
+  },
+  "aboutAndroidKicker": {
+    "message": "Android-sovellus"
+  },
+  "aboutAndroidDesc": {
+    "message": "Atlas Commerce -sovellus Androidille, tehty Kotlinilla ja Jetpack Composella."
+  },
+  "aboutDesktopKicker": {
+    "message": "Työpöytäsovellus"
+  },
+  "aboutDesktopDesc": {
+    "message": "Atlas Commerce -sovellus työpöydälle, kirjoitettu Rustilla ja egui-kirjastolla. MIT-lisenssi."
+  },
+  "aboutThanks": {
+    "message": "Kiitos, että käytät Atlas Translationia, ja kaikille, jotka auttavat kääntämisessä."
   }
 }

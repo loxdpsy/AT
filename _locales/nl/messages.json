@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "Vertaal webpagina's en geselecteerde tekst ter plaatse, met de vertaaldienst van je keuze."
+  },
+  "aboutVersion": {
+    "message": "Versie"
+  },
+  "aboutCreditsTitle": {
+    "message": "Credits en licentie"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation is een gewijzigde versie van TWP - Translate Web Pages, gemaakt door [[author]]. Dank voor het oorspronkelijke werk. De code wordt uitgebracht onder de [[license]]. Zie NOTICE.md en LICENSE in de broncode."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "Broncode"
+  },
+  "aboutLinkIssue": {
+    "message": "Een probleem melden"
+  },
+  "aboutLinkPrivacy": {
+    "message": "Privacybeleid"
+  },
+  "aboutLinkSecurity": {
+    "message": "Beveiliging en privacy"
+  },
+  "aboutLinkOriginal": {
+    "message": "Oorspronkelijk project"
+  },
+  "aboutBentoTitle": {
+    "message": "Meer van Etherealmber"
+  },
+  "aboutWebKicker": {
+    "message": "Webapp"
+  },
+  "aboutWebDesc": {
+    "message": "Kassa- en ERP-systeem dat draait op Cloudflare Workers. Het Atlas-logo en het kleurenthema van deze extensie komen uit dit project."
+  },
+  "aboutAndroidKicker": {
+    "message": "Android-app"
+  },
+  "aboutAndroidDesc": {
+    "message": "De Atlas Commerce-app voor Android, gebouwd met Kotlin en Jetpack Compose."
+  },
+  "aboutDesktopKicker": {
+    "message": "Desktopapp"
+  },
+  "aboutDesktopDesc": {
+    "message": "De Atlas Commerce-app voor desktop, geschreven in Rust met egui. MIT-licentie."
+  },
+  "aboutThanks": {
+    "message": "Bedankt dat je Atlas Translation gebruikt, en iedereen die helpt het te vertalen."
   }
 }

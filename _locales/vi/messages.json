@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "Dịch trang web và văn bản đã chọn ngay tại chỗ, bằng dịch vụ dịch bạn chọn."
+  },
+  "aboutVersion": {
+    "message": "Phiên bản"
+  },
+  "aboutCreditsTitle": {
+    "message": "Ghi công và giấy phép"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation là một bản chỉnh sửa của TWP - Translate Web Pages, do [[author]] tạo ra. Cảm ơn công việc gốc. Mã nguồn được phát hành theo [[license]]. Xem NOTICE.md và LICENSE trong mã nguồn."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "Mã nguồn"
+  },
+  "aboutLinkIssue": {
+    "message": "Báo cáo sự cố"
+  },
+  "aboutLinkPrivacy": {
+    "message": "Chính sách quyền riêng tư"
+  },
+  "aboutLinkSecurity": {
+    "message": "Bảo mật và quyền riêng tư"
+  },
+  "aboutLinkOriginal": {
+    "message": "Dự án gốc"
+  },
+  "aboutBentoTitle": {
+    "message": "Các dự án khác của Etherealmber"
+  },
+  "aboutWebKicker": {
+    "message": "Ứng dụng web"
+  },
+  "aboutWebDesc": {
+    "message": "Hệ thống bán hàng và ERP chạy trên Cloudflare Workers. Logo Atlas và chủ đề màu của tiện ích này lấy từ dự án này."
+  },
+  "aboutAndroidKicker": {
+    "message": "Ứng dụng Android"
+  },
+  "aboutAndroidDesc": {
+    "message": "Ứng dụng Atlas Commerce cho Android, được xây dựng bằng Kotlin và Jetpack Compose."
+  },
+  "aboutDesktopKicker": {
+    "message": "Ứng dụng máy tính"
+  },
+  "aboutDesktopDesc": {
+    "message": "Ứng dụng Atlas Commerce cho máy tính, viết bằng Rust với egui. Giấy phép MIT."
+  },
+  "aboutThanks": {
+    "message": "Cảm ơn bạn đã sử dụng Atlas Translation và tất cả những ai giúp dịch ứng dụng này."
   }
 }

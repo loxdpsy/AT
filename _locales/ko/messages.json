@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "원하는 번역 서비스로 웹 페이지와 선택한 텍스트를 제자리에서 번역합니다."
+  },
+  "aboutVersion": {
+    "message": "버전"
+  },
+  "aboutCreditsTitle": {
+    "message": "크레딧 및 라이선스"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation은 [[author]]가 만든 TWP - Translate Web Pages를 수정한 버전입니다. 원본 작업에 감사드립니다. 코드는 [[license]]에 따라 공개됩니다. 소스의 NOTICE.md와 LICENSE를 확인하세요."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "소스 코드"
+  },
+  "aboutLinkIssue": {
+    "message": "문제 신고"
+  },
+  "aboutLinkPrivacy": {
+    "message": "개인정보 처리방침"
+  },
+  "aboutLinkSecurity": {
+    "message": "보안 및 개인정보"
+  },
+  "aboutLinkOriginal": {
+    "message": "원본 프로젝트"
+  },
+  "aboutBentoTitle": {
+    "message": "Etherealmber의 다른 프로젝트"
+  },
+  "aboutWebKicker": {
+    "message": "웹 앱"
+  },
+  "aboutWebDesc": {
+    "message": "Cloudflare Workers에서 실행되는 판매 시점 관리 및 ERP입니다. 이 확장 프로그램의 Atlas 로고와 색상 테마는 이 프로젝트에서 가져왔습니다."
+  },
+  "aboutAndroidKicker": {
+    "message": "Android 앱"
+  },
+  "aboutAndroidDesc": {
+    "message": "Kotlin과 Jetpack Compose로 만든 Android용 Atlas Commerce 앱입니다."
+  },
+  "aboutDesktopKicker": {
+    "message": "데스크톱 앱"
+  },
+  "aboutDesktopDesc": {
+    "message": "Rust와 egui로 작성한 데스크톱용 Atlas Commerce 앱입니다. MIT 라이선스."
+  },
+  "aboutThanks": {
+    "message": "Atlas Translation을 사용해 주셔서 감사합니다. 번역에 도움을 주신 모든 분께도 감사드립니다."
   }
 }

@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "ウェブページと選択したテキストを、お好みの翻訳サービスでその場で翻訳します。"
+  },
+  "aboutVersion": {
+    "message": "バージョン"
+  },
+  "aboutCreditsTitle": {
+    "message": "クレジットとライセンス"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation は、[[author]] が作成した TWP - Translate Web Pages を改変したものです。元の作品に感謝します。コードは [[license]] の下で公開されています。ソースの NOTICE.md と LICENSE をご覧ください。"
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "ソースコード"
+  },
+  "aboutLinkIssue": {
+    "message": "問題を報告"
+  },
+  "aboutLinkPrivacy": {
+    "message": "プライバシーポリシー"
+  },
+  "aboutLinkSecurity": {
+    "message": "セキュリティとプライバシー"
+  },
+  "aboutLinkOriginal": {
+    "message": "オリジナルのプロジェクト"
+  },
+  "aboutBentoTitle": {
+    "message": "Etherealmber のその他のプロジェクト"
+  },
+  "aboutWebKicker": {
+    "message": "ウェブアプリ"
+  },
+  "aboutWebDesc": {
+    "message": "Cloudflare Workers で動作する販売管理・ERPです。この拡張機能の Atlas ロゴとカラーテーマは、このプロジェクトのものです。"
+  },
+  "aboutAndroidKicker": {
+    "message": "Android アプリ"
+  },
+  "aboutAndroidDesc": {
+    "message": "Kotlin と Jetpack Compose で作られた Android 版の Atlas Commerce アプリです。"
+  },
+  "aboutDesktopKicker": {
+    "message": "デスクトップアプリ"
+  },
+  "aboutDesktopDesc": {
+    "message": "Rust と egui で書かれたデスクトップ版の Atlas Commerce アプリです。MIT ライセンス。"
+  },
+  "aboutThanks": {
+    "message": "Atlas Translation をご利用いただきありがとうございます。翻訳に協力してくださるすべての方にも感謝します。"
   }
 }

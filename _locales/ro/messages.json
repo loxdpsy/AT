@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "Traduceți paginile web și textul selectat pe loc, cu serviciul de traducere pe care îl alegeți."
+  },
+  "aboutVersion": {
+    "message": "Versiune"
+  },
+  "aboutCreditsTitle": {
+    "message": "Mulțumiri și licență"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation este o versiune modificată a TWP - Translate Web Pages, creată de [[author]]. Mulțumim pentru munca originală. Codul este publicat sub [[license]]. Consultați NOTICE.md și LICENSE din codul sursă."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "Cod sursă"
+  },
+  "aboutLinkIssue": {
+    "message": "Raportează o problemă"
+  },
+  "aboutLinkPrivacy": {
+    "message": "Politica de confidențialitate"
+  },
+  "aboutLinkSecurity": {
+    "message": "Securitate și confidențialitate"
+  },
+  "aboutLinkOriginal": {
+    "message": "Proiectul original"
+  },
+  "aboutBentoTitle": {
+    "message": "Mai multe de la Etherealmber"
+  },
+  "aboutWebKicker": {
+    "message": "Aplicație web"
+  },
+  "aboutWebDesc": {
+    "message": "Sistem de vânzare și ERP care rulează pe Cloudflare Workers. Logo-ul Atlas și tema de culori ale acestei extensii provin din acest proiect."
+  },
+  "aboutAndroidKicker": {
+    "message": "Aplicație Android"
+  },
+  "aboutAndroidDesc": {
+    "message": "Aplicația Atlas Commerce pentru Android, realizată cu Kotlin și Jetpack Compose."
+  },
+  "aboutDesktopKicker": {
+    "message": "Aplicație pentru desktop"
+  },
+  "aboutDesktopDesc": {
+    "message": "Aplicația Atlas Commerce pentru desktop, scrisă în Rust cu egui. Licență MIT."
+  },
+  "aboutThanks": {
+    "message": "Vă mulțumim că utilizați Atlas Translation și tuturor celor care ajută la traducerea lui."
   }
 }

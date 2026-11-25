@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "Fordítsa le a weboldalakat és a kijelölt szöveget helyben, a kiválasztott fordítószolgáltatással."
+  },
+  "aboutVersion": {
+    "message": "Verzió"
+  },
+  "aboutCreditsTitle": {
+    "message": "Köszönetnyilvánítás és licenc"
+  },
+  "aboutCredits": {
+    "message": "Az Atlas Translation a TWP - Translate Web Pages módosított változata, amelyet [[author]] készített. Köszönet az eredeti munkáért. A kód a [[license]] alatt érhető el. A NOTICE.md és a LICENSE fájl a forráskódban található."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "Forráskód"
+  },
+  "aboutLinkIssue": {
+    "message": "Hiba jelentése"
+  },
+  "aboutLinkPrivacy": {
+    "message": "Adatvédelmi szabályzat"
+  },
+  "aboutLinkSecurity": {
+    "message": "Biztonság és adatvédelem"
+  },
+  "aboutLinkOriginal": {
+    "message": "Eredeti projekt"
+  },
+  "aboutBentoTitle": {
+    "message": "További projektek az Etherealmbertől"
+  },
+  "aboutWebKicker": {
+    "message": "Webalkalmazás"
+  },
+  "aboutWebDesc": {
+    "message": "Pénztári és ERP-rendszer, amely a Cloudflare Workers platformon fut. Ennek a bővítménynek az Atlas-logója és színtémája ebből a projektből származik."
+  },
+  "aboutAndroidKicker": {
+    "message": "Android-alkalmazás"
+  },
+  "aboutAndroidDesc": {
+    "message": "Az Atlas Commerce alkalmazás Androidra, Kotlinnal és Jetpack Composeal készült."
+  },
+  "aboutDesktopKicker": {
+    "message": "Asztali alkalmazás"
+  },
+  "aboutDesktopDesc": {
+    "message": "Az Atlas Commerce asztali alkalmazása, Rustban írva, egui-val. MIT licenc."
+  },
+  "aboutThanks": {
+    "message": "Köszönjük, hogy az Atlas Translationt használja, és mindenkinek, aki segít a fordításában."
   }
 }

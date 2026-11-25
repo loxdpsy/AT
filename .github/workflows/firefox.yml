@@ -1,14 +1,19 @@
 name: Firefox build
 
-# Builds Atlas Translation for Firefox and Firefox for Android: a ZIP and an unsigned XPI.
-# With "submit" turned on, the add-on is also submitted to addons.mozilla.org (AMO).
-#   - Secrets AMO_JWT_ISSUER and AMO_JWT_SECRET are required for submission.
-#   - Repository variable AMO_CHANNEL: "unlisted" (default: signed for self-distribution, no public listing) or "listed".
-#   - "listed" is skipped unless the repository variable AMO_LISTING_READY is "true". Set it only after the listing has its
-#     icon, screenshots, description, and license, so Mozilla never reviews an empty listing.
-#   - .github/amo-metadata.json supplies the license, category, and summary AMO requires.
+# Builds Atlas Translation for Firefox and Firefox for Android. There are two channels, each with its own add-on ID:
+#   - "unlisted" (default): the GitHub build. It keeps update_url and is signed for self-distribution. Its files are
+#     uploaded as the atlas-translation-firefox artifact, which the Release workflow attaches to the GitHub release.
+#   - "listed": the Firefox store (addons.mozilla.org). It uses FIREFOX_STORE_ID below and drops update_url (AMO refuses it
+#     on listed add-ons). Its ZIP is uploaded as atlas-translation-firefox-store. With "submit" on, the version is sent to
+#     Mozilla for review through the API. Mozilla publishes it after approval.
+#   - "submit" needs the secrets AMO_JWT_ISSUER and AMO_JWT_SECRET.
+#   - The listed submission is skipped until the repository variable AMO_LISTING_READY is "true". Set it once the listing
+#     text, icon, and privacy policy are in place. Screenshots are added once in the Developer Hub. The API cannot upload them.
+#   - The listed submission does not wait for approval (--approval-timeout 0). Review takes days, so the job ends after
+#     Mozilla has the version.
+#   - .github/amo-metadata.json supplies the license, category, summary, description, and privacy policy.
 #
-# Run it by hand: Actions > Firefox build > Run workflow. The Release workflow also calls this file.
+# Run it by hand: Actions > Firefox build > Run workflow. The Release workflow also calls this file for both channels.
 
 on:
   workflow_dispatch:
@@ -17,8 +22,15 @@ on:
         description: "Version to build, for example 9.8.2.0 (leave empty for the version in firefox_manifest.json)"
         type: string
         default: ""
+      channel:
+        description: "unlisted = GitHub build (signed). listed = Firefox store version (public after Mozilla approves it)."
+        type: choice
+        options:
+          - unlisted
+          - listed
+        default: unlisted
       submit:
-        description: "Submit to addons.mozilla.org (needs the AMO secrets)"
+        description: "Submit to addons.mozilla.org: sign the GitHub build, or send the store version for review (needs the AMO secrets)"
         type: boolean
         default: false
   workflow_call:
@@ -30,12 +42,20 @@ on:
         description: "Commit to build (defaults to the commit that started the run)"
         type: string
         default: ""
+      channel:
+        type: string
+        default: unlisted
       submit:
         type: boolean
         default: false
 
 permissions:
   contents: read
+
+env:
+  # Firefox store add-on ID. It differs from the GitHub add-on ID in firefox_manifest.json, so the store and GitHub
+  # installs are separate add-ons. Changing it creates a new add-on on addons.mozilla.org.
+  FIREFOX_STORE_ID: "{863f4958-b7f6-48c2-b9c9-33dddf81366c}"
 
 jobs:
   build:
@@ -63,10 +83,42 @@ jobs:
       - name: Check and build the Firefox package
         run: npm run build:firefox
 
-      - name: Lint the extension with web-ext
-        run: npx --yes web-ext@8 lint --source-dir build/staging/firefox --self-hosted --output text > build/web-ext-lint.txt 2>&1 || true
+      - name: Prepare the store build (listed only)
+        if: ${{ inputs.channel == 'listed' }}
+        env:
+          STORE_ID: ${{ env.FIREFOX_STORE_ID }}
+        run: |
+          python3 - <<'PY'
+          import json, os, pathlib
+          p = pathlib.Path("build/staging/firefox/manifest.json")
+          m = json.loads(p.read_text(encoding="utf-8"))
+          gecko = m["browser_specific_settings"]["gecko"]
+          gecko["id"] = os.environ["STORE_ID"]
+          # AMO refuses update_url on a listed add-on (MANIFEST_UPDATE_URL). AMO updates listed add-ons itself.
+          gecko.pop("update_url", None)
+          p.write_text(json.dumps(m, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          print("Store build ID:", gecko["id"], "| update_url removed")
+          # The store ZIP. It has the store ID, so it is a different file from the GitHub ZIP.
+          import zipfile
+          version = m["version"]
+          out = pathlib.Path(f"build/atlas-translation-{version}-firefox-store.zip")
+          with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as z:
+              for f in sorted(pathlib.Path("build/staging/firefox").rglob("*")):
+                  if f.is_file():
+                      z.write(f, f.relative_to("build/staging/firefox").as_posix())
+          print("Wrote", out)
+          PY
 
-      - name: Upload artifacts
+      - name: Lint the extension with web-ext
+        env:
+          CHANNEL: ${{ inputs.channel }}
+        run: |
+          # The GitHub build keeps update_url, so it is linted in self-hosted mode. The store build is linted as listed.
+          if [ "$CHANNEL" = "listed" ]; then FLAG=""; else FLAG="--self-hosted"; fi
+          npx --yes web-ext@8 lint --source-dir build/staging/firefox $FLAG --output text > build/web-ext-lint.txt 2>&1 || true
+
+      - name: Upload the GitHub build
+        if: ${{ inputs.channel != 'listed' }}
         uses: actions/upload-artifact@v4
         with:
           name: atlas-translation-firefox
@@ -75,39 +127,49 @@ jobs:
             build/*.xpi
           if-no-files-found: error
 
+      - name: Upload the store build
+        if: ${{ inputs.channel == 'listed' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-translation-firefox-store
+          path: build/*-store.zip
+          if-no-files-found: error
+
       - name: Submit to addons.mozilla.org
         if: ${{ inputs.submit }}
         env:
           AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
           AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
-          AMO_CHANNEL: ${{ vars.AMO_CHANNEL || 'unlisted' }}
+          CHANNEL: ${{ inputs.channel }}
           AMO_LISTING_READY: ${{ vars.AMO_LISTING_READY }}
         run: |
+          mkdir -p build
           if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ]; then
             echo "AMO keys are not set. Skipping the submission." | tee build/amo-submit.log
+            echo "skipped: the AMO secrets are not set" > build/amo-status.txt
             exit 0
           fi
-          if [ "$AMO_CHANNEL" = "listed" ] && [ "$AMO_LISTING_READY" != "true" ]; then
-            echo "Skipping the listed submission. Set the repository variable AMO_LISTING_READY to true once the AMO listing has its icon, screenshots, description, and license." | tee build/amo-submit.log
+          if [ "$CHANNEL" = "listed" ] && [ "$AMO_LISTING_READY" != "true" ]; then
+            echo "Skipping the store submission. Set the repository variable AMO_LISTING_READY to true once the listing text, icon, and privacy policy are in place." | tee build/amo-submit.log
+            echo "skipped: AMO_LISTING_READY is not true" > build/amo-status.txt
             exit 0
           fi
-          if [ "$AMO_CHANNEL" = "listed" ]; then
-            # AMO refuses update_url on a listed add-on (MANIFEST_UPDATE_URL). AMO updates listed add-ons itself.
-            python3 - <<'PY'
-          import json, pathlib
-          p = pathlib.Path("build/staging/firefox/manifest.json")
-          m = json.loads(p.read_text(encoding="utf-8"))
-          m["browser_specific_settings"]["gecko"].pop("update_url", None)
-          p.write_text(json.dumps(m, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-          PY
-          fi
+          # A listed version is sent for review and the job does not wait for the approval (that can take days).
+          if [ "$CHANNEL" = "listed" ]; then APPROVAL="--approval-timeout 0"; else APPROVAL=""; fi
+          set -o pipefail
           npx --yes web-ext@8 sign \
             --source-dir build/staging/firefox \
             --artifacts-dir build/signed \
-            --channel "$AMO_CHANNEL" \
+            --channel "$CHANNEL" \
             --amo-metadata .github/amo-metadata.json \
             --api-key "$AMO_JWT_ISSUER" \
-            --api-secret "$AMO_JWT_SECRET" 2>&1 | tee build/amo-submit.log
+            --api-secret "$AMO_JWT_SECRET" \
+            $APPROVAL 2>&1 | tee build/amo-submit.log
+          if [ "$CHANNEL" = "listed" ]; then
+            echo "sent: the store version is with Mozilla for review. It is public after approval." > build/amo-status.txt
+          else
+            echo "sent: the GitHub build is signed." > build/amo-status.txt
+          fi
 
       - name: Upload the signed add-on
         if: ${{ inputs.submit }}
@@ -125,13 +187,14 @@ jobs:
             echo "## Firefox build: Atlas Translation $VERSION"
             echo ""
             echo "- Build result: **${{ job.status }}**"
-            echo "- Submitted to addons.mozilla.org: **${{ inputs.submit }}**"
-            echo "- Channel: \`${{ vars.AMO_CHANNEL || 'unlisted' }}\`"
+            echo "- Channel: \`${{ inputs.channel }}\`"
+            echo "- addons.mozilla.org: **$(cat build/amo-status.txt 2>/dev/null || echo "not requested (submit is off)")**"
             echo "- Commit: \`${GITHUB_SHA:0:7}\`"
             echo ""
             echo "| File | Size | SHA-256 (first 16) |"
             echo "| --- | --- | --- |"
-            for f in build/*.zip build/*.xpi build/signed/*.xpi; do
+            if [ "${{ inputs.channel }}" = "listed" ]; then FILES="build/*-store.zip build/signed/*.xpi"; else FILES="build/*.zip build/*.xpi build/signed/*.xpi"; fi
+            for f in $FILES; do
               [ -f "$f" ] || continue
               echo "| \`$(basename "$f")\` | $(du -h "$f" | cut -f1) | \`$(sha256sum "$f" | cut -c1-16)\` |"
             done

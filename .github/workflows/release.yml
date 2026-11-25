@@ -6,7 +6,8 @@ name: Release
 #   - version:  the version to build, for example 9.8.2.0 (no "v")
 #   - action:   "build-and-test"    builds both packages and shows checksums in the summary. Nothing is published.
 #               "build-and-release" also commits the version bump, creates the tag v<version>, and publishes a GitHub release.
-#   - submit_amo: also submit the Firefox add-on to addons.mozilla.org (only with build-and-release)
+#   - submit_amo: with build-and-release, also sign the GitHub Firefox build and send the Firefox store version to
+#     addons.mozilla.org for review. The store step waits for the repository variable AMO_LISTING_READY to be "true".
 #
 # Pushing a tag such as v9.8.2.0 (with manifest.json already at that version) publishes it, the same as build-and-release.
 # The release notes come from the matching "## <version>" section in CHANGELOG.md.
@@ -29,7 +30,7 @@ on:
           - build-and-release
         default: build-and-test
       submit_amo:
-        description: "Submit the Firefox add-on to addons.mozilla.org (build-and-release only)"
+        description: "Firefox: sign the GitHub build and send the store version to addons.mozilla.org (build-and-release only)"
         type: boolean
         default: false
 
@@ -144,12 +145,26 @@ jobs:
     secrets: inherit
 
   firefox:
-    name: Firefox
+    name: Firefox (GitHub)
     needs: prepare
     uses: ./.github/workflows/firefox.yml
     with:
       version: ${{ needs.prepare.outputs.version }}
       ref: ${{ needs.prepare.outputs.sha }}
+      channel: unlisted
+      submit: ${{ needs.prepare.outputs.submit == 'true' }}
+    secrets: inherit
+
+  # The Firefox store version. It is not attached to the GitHub release. It is sent to addons.mozilla.org for review
+  # when submit is on, and it runs independently, so a store problem does not hold up the GitHub release.
+  firefox-store:
+    name: Firefox (store)
+    needs: prepare
+    uses: ./.github/workflows/firefox.yml
+    with:
+      version: ${{ needs.prepare.outputs.version }}
+      ref: ${{ needs.prepare.outputs.sha }}
+      channel: listed
       submit: ${{ needs.prepare.outputs.submit == 'true' }}
     secrets: inherit
 
@@ -223,6 +238,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.prepare.outputs.version }}
+          SUBMIT: ${{ needs.prepare.outputs.submit }}
         run: |
           TAG="v$VERSION"
           awk -v v="$VERSION" 'BEGIN { p = 0 } /^## / { if (p) exit; if ($2 == v) p = 1; next } p' CHANGELOG.md > notes.md
@@ -242,7 +258,11 @@ jobs:
             else
               echo "- **Firefox:** install from addons.mozilla.org. This release has no signed \`.xpi\`, so self-hosted installs and updates are not available for it."
             fi
-            echo "- **Firefox store upload:** \`atlas-translation-$VERSION-firefox.zip\`"
+            if [ "$SUBMIT" = "true" ]; then
+              echo "- **Firefox store:** submitted to addons.mozilla.org for review with this release. It appears in the store after Mozilla approves it. The store file is not attached here."
+            else
+              echo "- **Firefox store:** not submitted in this run. The store file is not attached to the release."
+            fi
           } >> notes.md
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" dist/* --clobber
@@ -260,5 +280,5 @@ jobs:
             echo "## Published: Atlas Translation $VERSION"
             echo ""
             echo "- Release: https://github.com/${{ github.repository }}/releases/tag/v$VERSION"
-            echo "- Firefox submission to addons.mozilla.org: see the Firefox job summary."
+            echo "- Firefox GitHub build: attached to the release. Store submission: see the Firefox (store) job summary."
           } >> "$GITHUB_STEP_SUMMARY"

@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "Μεταφράστε ιστοσελίδες και επιλεγμένο κείμενο επιτόπου, με την υπηρεσία μετάφρασης που προτιμάτε."
+  },
+  "aboutVersion": {
+    "message": "Έκδοση"
+  },
+  "aboutCreditsTitle": {
+    "message": "Αναγνωρίσεις και άδεια"
+  },
+  "aboutCredits": {
+    "message": "Το Atlas Translation είναι τροποποιημένη έκδοση του TWP - Translate Web Pages, που δημιούργησε ο/η [[author]]. Ευχαριστούμε για το αρχικό έργο. Ο κώδικας διατίθεται με την [[license]]. Δείτε τα NOTICE.md και LICENSE στον πηγαίο κώδικα."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "Πηγαίος κώδικας"
+  },
+  "aboutLinkIssue": {
+    "message": "Αναφορά προβλήματος"
+  },
+  "aboutLinkPrivacy": {
+    "message": "Πολιτική απορρήτου"
+  },
+  "aboutLinkSecurity": {
+    "message": "Ασφάλεια και απόρρητο"
+  },
+  "aboutLinkOriginal": {
+    "message": "Αρχικό έργο"
+  },
+  "aboutBentoTitle": {
+    "message": "Περισσότερα από την Etherealmber"
+  },
+  "aboutWebKicker": {
+    "message": "Εφαρμογή ιστού"
+  },
+  "aboutWebDesc": {
+    "message": "Σύστημα πωλήσεων και ERP που λειτουργεί σε Cloudflare Workers. Το λογότυπο Atlas και το χρωματικό θέμα αυτής της επέκτασης προέρχονται από αυτό το έργο."
+  },
+  "aboutAndroidKicker": {
+    "message": "Εφαρμογή για Android"
+  },
+  "aboutAndroidDesc": {
+    "message": "Η εφαρμογή Atlas Commerce για Android, φτιαγμένη με Kotlin και Jetpack Compose."
+  },
+  "aboutDesktopKicker": {
+    "message": "Εφαρμογή για υπολογιστή"
+  },
+  "aboutDesktopDesc": {
+    "message": "Η εφαρμογή Atlas Commerce για υπολογιστή, γραμμένη σε Rust με egui. Με άδεια MIT."
+  },
+  "aboutThanks": {
+    "message": "Ευχαριστούμε που χρησιμοποιείτε το Atlas Translation και όσους βοηθούν στη μετάφρασή του."
   }
 }

@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "Traduisez les pages web et le texte sélectionné sur place, avec le service de traduction de votre choix."
+  },
+  "aboutVersion": {
+    "message": "Version"
+  },
+  "aboutCreditsTitle": {
+    "message": "Crédits et licence"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation est une version modifiée de TWP - Translate Web Pages, créée par [[author]]. Merci pour le travail original. Le code est publié sous la [[license]]. Voir NOTICE.md et LICENSE dans le code source."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "Code source"
+  },
+  "aboutLinkIssue": {
+    "message": "Signaler un problème"
+  },
+  "aboutLinkPrivacy": {
+    "message": "Politique de confidentialité"
+  },
+  "aboutLinkSecurity": {
+    "message": "Sécurité et confidentialité"
+  },
+  "aboutLinkOriginal": {
+    "message": "Projet d'origine"
+  },
+  "aboutBentoTitle": {
+    "message": "Plus de projets d'Etherealmber"
+  },
+  "aboutWebKicker": {
+    "message": "Application web"
+  },
+  "aboutWebDesc": {
+    "message": "Caisse et ERP qui fonctionne sur Cloudflare Workers. Le logo Atlas et le thème de couleurs de cette extension viennent de ce projet."
+  },
+  "aboutAndroidKicker": {
+    "message": "Application Android"
+  },
+  "aboutAndroidDesc": {
+    "message": "L'application Atlas Commerce pour Android, développée avec Kotlin et Jetpack Compose."
+  },
+  "aboutDesktopKicker": {
+    "message": "Application de bureau"
+  },
+  "aboutDesktopDesc": {
+    "message": "L'application Atlas Commerce pour ordinateur, écrite en Rust avec egui. Licence MIT."
+  },
+  "aboutThanks": {
+    "message": "Merci d'utiliser Atlas Translation, et à toutes celles et tous ceux qui aident à le traduire."
   }
 }
