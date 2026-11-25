@@ -75,6 +75,8 @@ jobs:
         id: install
         env:
           GH_TOKEN: ${{ github.token }}
+          # The helper reads this to ask GitHub for the release without the shared-IP rate limit.
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           log="${{ runner.temp }}/install-output.txt"
           : > "$log"

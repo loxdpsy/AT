@@ -120,10 +120,10 @@ fn read_installed_version(folder: &Path) -> Result<String, String> {
 /// The release that the helper installs from, as GitHub's JSON. See INCLUDE_PRERELEASES.
 fn newest_release_json() -> Result<json::Value, String> {
     if !INCLUDE_PRERELEASES {
-        let body = curl_text(LATEST_RELEASE_API)?;
+        let body = github_text(LATEST_RELEASE_API)?;
         return json::parse(&body).map_err(|e| format!("GitHub sent an unexpected answer: {}", e));
     }
-    let body = curl_text(RELEASES_API)?;
+    let body = github_text(RELEASES_API)?;
     let list = json::parse(&body).map_err(|e| format!("GitHub sent an unexpected answer: {}", e))?;
     let releases = list.as_array().ok_or("GitHub sent an unexpected answer: no release list")?;
     releases
@@ -247,22 +247,38 @@ fn download(url: &str, dest: &Path) -> Result<(), String> {
     Err(format!("the download failed ({}). Check your internet connection.", url))
 }
 
+/// GitHub allows 60 requests an hour per IP address without a token, and runners on shared networks can use that up.
+/// When GITHUB_TOKEN is set (the install test in CI sets it), requests to api.github.com are sent with it, which allows far more.
+fn github_token() -> Option<String> {
+    std::env::var("GITHUB_TOKEN").ok().map(|t| t.trim().to_string()).filter(|t| !t.is_empty())
+}
+
 fn curl_text(url: &str) -> Result<String, String> {
+    let mut args: Vec<String> = [
+        "-fsSL",
+        "--retry",
+        "3",
+        "--retry-delay",
+        "5",
+        "--max-time",
+        "60",
+        "-H",
+        "Accept: application/vnd.github+json",
+        "-H",
+        "User-Agent: atlas-updater",
+    ]
+    .iter()
+    .map(|s| s.to_string())
+    .collect();
+    if url.starts_with("https://api.github.com/") {
+        if let Some(token) = github_token() {
+            args.push("-H".to_string());
+            args.push(format!("Authorization: Bearer {}", token));
+        }
+    }
+    args.push(url.to_string());
     let output = Command::new("curl")
-        .args([
-            "-fsSL",
-            "--retry",
-            "3",
-            "--retry-delay",
-            "5",
-            "--max-time",
-            "60",
-            "-H",
-            "Accept: application/vnd.github+json",
-            "-H",
-            "User-Agent: atlas-updater",
-            url,
-        ])
+        .args(&args)
         .output()
         .map_err(|e| format!("cannot run curl ({}). Install curl, then try again.", e))?;
     if !output.status.success() {
@@ -270,6 +286,23 @@ fn curl_text(url: &str) -> Result<String, String> {
         return Err(format!("could not reach GitHub. {}", detail));
     }
     String::from_utf8(output.stdout).map_err(|_| "GitHub sent text that is not UTF-8".to_string())
+}
+
+/// curl_text, tried again when GitHub does not answer (curl's own --retry does not retry a 403 rate limit).
+fn github_text(url: &str) -> Result<String, String> {
+    const ATTEMPTS: u32 = 3;
+    let mut last = String::new();
+    for attempt in 1..=ATTEMPTS {
+        match curl_text(url) {
+            Ok(body) => return Ok(body),
+            Err(e) => last = e,
+        }
+        if attempt < ATTEMPTS {
+            println!("GitHub did not answer. Trying again ({} of {}) ...", attempt + 1, ATTEMPTS);
+            std::thread::sleep(std::time::Duration::from_secs(10));
+        }
+    }
+    Err(last)
 }
 
 /// Unzips with PowerShell on Windows and with unzip on macOS and Linux.
