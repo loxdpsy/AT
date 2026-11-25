@@ -11,6 +11,7 @@ name: Release
 #
 # Pushing a tag such as v9.8.2.0 (with manifest.json already at that version) publishes it, the same as build-and-release.
 # The release notes come from the matching "## <version>" section in CHANGELOG.md.
+# If the version is already published (its tag and GitHub release both exist), the run reports it and publishes nothing again. It does not fail.
 
 on:
   push:
@@ -50,6 +51,7 @@ jobs:
       sha: ${{ steps.plan.outputs.sha }}
       publish: ${{ steps.plan.outputs.publish }}
       submit: ${{ steps.plan.outputs.submit }}
+      already: ${{ steps.plan.outputs.already }}
     steps:
       - name: Check out the code
         uses: actions/checkout@v4
@@ -59,6 +61,8 @@ jobs:
       - name: Work out what to do
         id: plan
         env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
           EVENT: ${{ github.event_name }}
           REF_NAME: ${{ github.ref_name }}
           INPUT_VERSION: ${{ github.event.inputs.version }}
@@ -79,9 +83,19 @@ jobs:
             echo "::error::Version '$VERSION' is not valid. Use 1 to 4 numbers separated by dots, for example 9.8.2.0."
             exit 1
           fi
+          ALREADY=false
           if [ "$PUBLISH" = "true" ] && git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
-            echo "::error::The tag v$VERSION already exists. Choose a new version."
-            exit 1
+            if gh release view "v$VERSION" >/dev/null 2>&1; then
+              # Already published: the tag and the GitHub release both exist. This counts as done.
+              # Nothing is committed, tagged, or published again, and the run does not fail.
+              echo "Atlas Translation $VERSION is already published (release v$VERSION exists). Nothing is published again."
+              ALREADY=true
+              PUBLISH=false
+              SUBMIT=false
+            else
+              echo "::error::The tag v$VERSION exists but has no GitHub release. Choose a new version, or finish that release by hand."
+              exit 1
+            fi
           fi
 
           if [ "$EVENT" = "push" ]; then
@@ -120,6 +134,7 @@ jobs:
             echo "sha=$SHA"
             echo "publish=$PUBLISH"
             echo "submit=$SUBMIT"
+            echo "already=$ALREADY"
           } >> "$GITHUB_OUTPUT"
 
       - name: Write job summary
@@ -128,6 +143,7 @@ jobs:
           VERSION: ${{ steps.plan.outputs.version }}
           PUBLISH: ${{ steps.plan.outputs.publish }}
           SUBMIT: ${{ steps.plan.outputs.submit }}
+          ALREADY: ${{ steps.plan.outputs.already }}
         run: |
           {
             echo "## Release plan: Atlas Translation ${VERSION:-?}"
@@ -135,6 +151,9 @@ jobs:
             echo "- Result: **${{ job.status }}**"
             echo "- Mode: $([ "$PUBLISH" = "true" ] && echo "**publish** (tag v$VERSION and a GitHub release)" || echo "**build and test only** (nothing published)")"
             echo "- Submit to addons.mozilla.org: ${SUBMIT:-false}"
+            if [ "$ALREADY" = "true" ]; then
+              echo "- Already published: release v$VERSION already exists, so nothing was published again. This run is treated as done."
+            fi
             echo ""
             echo "The Chromium and Firefox builds below use version $VERSION."
           } >> "$GITHUB_STEP_SUMMARY"
