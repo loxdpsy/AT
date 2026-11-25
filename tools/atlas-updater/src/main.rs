@@ -185,7 +185,7 @@ fn install_from(folder: &Path, release: &Release, work: &Path) -> Result<(), Str
 /// Downloads with curl, which ships with Windows 10 and later, macOS and most Linux systems.
 fn download(url: &str, dest: &Path) -> Result<(), String> {
     let status = Command::new("curl")
-        .args(["-fsSL", "--max-time", "300", "-o"])
+        .args(["-fsSL", "--retry", "3", "--retry-delay", "5", "--max-time", "300", "-o"])
         .arg(dest)
         .arg(url)
         .status()
@@ -201,6 +201,10 @@ fn curl_text(url: &str) -> Result<String, String> {
     let output = Command::new("curl")
         .args([
             "-fsSL",
+            "--retry",
+            "3",
+            "--retry-delay",
+            "5",
             "--max-time",
             "60",
             "-H",
