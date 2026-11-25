@@ -2,7 +2,19 @@
 
 ## Unreleased
 
-Not released yet. These changes are in the branch and will appear in the next version.
+Not released yet. Changes after 0.0.1.5 will be listed here.
+
+## 0.0.1.5
+
+**Important information**
+
+- Atlas Translation is a fork of TWP - Translate Web Pages by FilipePS. It is not the official TWP extension.
+- Groq and DeepL: the popup shows a notice while the page text is sent to that service.
+
+### Differences compared to version 0.0.1.4
+
+- Added: a Groq (AI) translator with your own API key, and a Firefox toolbar icon colour setting.
+- Fixed: Chinese pages with large blocks (#922), and auto-translate after a site or page language change (#934).
 
 ### Full Release Notes
 
@@ -22,7 +34,9 @@ Not released yet. These changes are in the branch and will appear in the next ve
   * Page translation starts faster: cache reads run together instead of one by one.
   * Right-to-left pages also flip for Dari (prs) and Sindhi (sd).
 
-**Thanks** to @loxdpsy (maintainer) and arena-agent (AI coding agent, co-author on this work). The full comparison is added when this work is released.
+**Full comparison:** [v0.0.1.4...v0.0.1.5](https://github.com/loxdpsy/AT/compare/v0.0.1.4...v0.0.1.5)
+
+**Thanks** to @loxdpsy (maintainer) and arena-agent (AI coding agent, co-author on this work).
 
 ## 0.0.1.4
 

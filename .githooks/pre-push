@@ -1,0 +1,13 @@
+#!/bin/sh
+# Runs before every push: the checks, the unit tests, and both builds.
+# Skip once with: git push --no-verify (CI still runs the same checks).
+set -e
+cd "$(git rev-parse --show-toplevel)"
+echo "pre-push: npm run check"
+npm run check --silent
+echo "pre-push: npm test"
+npm test --silent
+echo "pre-push: npm run build:chromium"
+npm run build:chromium --silent
+echo "pre-push: npm run build:firefox"
+npm run build:firefox --silent
