@@ -5,8 +5,8 @@
 // and copies it over the folder you point it at. Then you click "Reload extension" in the Updates section of Settings.
 //
 // Usage:
-//   atlas-updater                 open the helper window (the browser picker, updates and install)
-//   atlas-updater --serve         start the helper window without opening a browser
+//   atlas-updater                 open the helper window and its tray icon (the browser picker, updates and install)
+//   atlas-updater --serve         start the helper in the tray only; its window opens from the tray icon
 //   atlas-updater [--check] <folder>
 //     <folder>  the folder with manifest.json of the unpacked Atlas Translation
 //     --check   only report whether a newer release exists
@@ -20,6 +20,7 @@ mod engine;
 mod json;
 mod packs;
 mod sha256;
+mod shell;
 mod store;
 mod web;
 
@@ -56,13 +57,13 @@ fn main() {
 }
 
 fn usage() -> String {
-    "Usage: atlas-updater [--serve] | atlas-updater [--check] <folder>\n  no arguments  open the helper window\n  --serve       start the helper window without opening a browser\n  <folder>      the folder with manifest.json of the unpacked Atlas Translation\n  --check       only report whether a newer release exists".to_string()
+    "Usage: atlas-updater [--serve] | atlas-updater [--check] <folder>\n  no arguments  open the helper window and its tray icon\n  --serve       start the helper in the tray only (no window until you click its icon)\n  <folder>      the folder with manifest.json of the unpacked Atlas Translation\n  --check       only report whether a newer release exists".to_string()
 }
 
 fn run() -> Result<(), String> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     if args.is_empty() {
-        // Started by a double click: the helper window opens in the browser.
+        // Started by a double click: the helper window and its tray icon open.
         return web::serve(true);
     }
     if args.iter().any(|a| a.as_str() == "--serve") {

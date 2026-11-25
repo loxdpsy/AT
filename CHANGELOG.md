@@ -20,7 +20,8 @@ Not released yet. This version is in progress; the list grows until it is releas
 - The helper tries a download again when the network cuts it short.
 - The helper can start when you log in, in the background (Settings: "Start at login"). Windows, macOS and Linux.
 - Paragraphs (#727), optional: Options, "Translate each paragraph as one text" (off by default). A sentence split by inline tags (links, bold, spans) is then sent and translated as one text, instead of in fragments.
-- Planned: a tray icon with the helper's own settings window (no browser, no terminal), and right-to-left layout in the helper.
+- Desktop helper: its settings open in the helper's own window, not a browser tab, with a tray icon (Windows, macOS, Linux). Closing the window keeps the helper in the tray; Quit in the tray menu stops it.
+- Desktop helper: the window lays out right to left when the system language is Arabic, Hebrew, Persian, Urdu or another right-to-left language.
 
 ## 0.0.2.1
 

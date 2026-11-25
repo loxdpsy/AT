@@ -24,8 +24,8 @@ On macOS, run `xattr -d com.apple.quarantine ./atlas-updater-macos` once, and on
 ## Use
 
 **The helper window.** Start the program with no arguments (double-click it on Windows, or run `./atlas-updater-macos`
-or `./atlas-updater-linux` from a terminal). It checks GitHub for a new version, then opens a page in your default
-browser:
+or `./atlas-updater-linux` from a terminal). The helper opens its own window, not a browser tab, and puts an icon in the
+tray (Windows and Linux) or the menu bar (macOS). It checks GitHub for a new version, then shows:
 
 - **Update:** shows the version you have and the newest release, and installs the update in one click.
 - **Folder:** where the extension lives. A new folder (empty or missing) gets a fresh copy.
@@ -37,8 +37,12 @@ browser:
   (the base models where Mozilla has them, otherwise the tiny ones). The files come from Firefox's Remote Settings. The engine is Mozilla's Bergamot engine, built by the Engine workflow and attached to each release as
   `atlas-engine-windows.exe`, `atlas-engine-macos` or `atlas-engine-linux`. See "Offline translation" below.
 
-The page only talks to the helper on this computer, and every action needs the token in the address the helper
-prints. Close the helper's window to stop it. `--serve` starts the same page without opening a browser.
+- **Start at login:** starts the helper in the tray when you log in, with no window. The entry is the Windows Run key,
+  a LaunchAgent on macOS, or an autostart file on Linux.
+
+The window talks only to the helper on this computer, and every action needs the token the helper keeps for its window.
+Closing the window keeps the helper in the tray. Choose **Quit** in the tray menu to stop it. `--serve` starts the
+helper in the tray only, with no window, and clicking the tray icon opens the window.
 
 **Command line** (for scripts):
 
@@ -86,4 +90,6 @@ cargo test
 cargo build --release
 ```
 
-It has no dependencies, so it builds from the Rust standard library alone.
+It needs Rust 1.92 or later. The window and the tray icon use the crates `tao`, `wry` and `tray-icon`, so the Linux build
+needs the GTK 3 and WebKitGTK development files: `sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev` on Debian and Ubuntu.
+Windows needs the WebView2 runtime, which Windows 10 and 11 normally have. macOS needs nothing extra.

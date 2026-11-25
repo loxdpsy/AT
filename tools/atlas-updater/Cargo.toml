@@ -6,8 +6,20 @@ description = "Installs the newest Atlas Translation release into an unpacked (z
 license = "MPL-2.0"
 publish = false
 
-# No dependencies on purpose: it builds from the Rust standard library alone.
+# The helper's own window and its tray icon (Phase 2, see src/shell.rs). Everything else is the Rust standard library.
 [dependencies]
+# Window and event loop (tao) and the webview that shows the helper's page (wry). Their GTK parts build on Linux only.
+# tao's dbus feature is off, so the Linux build needs no D-Bus headers.
+tao = { version = "0.38", default-features = false, features = ["rwh_06", "x11"] }
+wry = "0.58"
+
+# The tray icon. On Linux the ksni backend is used: it talks to the desktop over D-Bus and needs no GTK 3 AppIndicator
+# library, so it does not add a second GTK to the build.
+[target.'cfg(target_os = "linux")'.dependencies]
+tray-icon = { version = "0.27", default-features = false, features = ["ksni"] }
+
+[target.'cfg(not(target_os = "linux"))'.dependencies]
+tray-icon = "0.27"
 
 [profile.release]
 strip = true

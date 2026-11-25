@@ -16,6 +16,7 @@ use crate::browsers::{self, Kind, BROWSERS, FIREFOX_STORE_URL};
 use crate::engine::{self, Engine};
 use crate::json;
 use crate::packs;
+use crate::shell;
 use crate::store;
 
 /// What the window's handlers need: the tokens, the offline service's state, and the engine.
@@ -39,10 +40,11 @@ const MAX_BODY: usize = 16 * 1024;
 
 const SECURITY_HEADERS: &str = "Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'\r\nX-Content-Type-Options: nosniff\r\nReferrer-Policy: no-referrer\r\nCache-Control: no-store\r\n";
 
-/// Starts the window. When `open_window` is true, the address is opened in the default browser. The offline translation
-/// service starts with it, on its fixed port (see api.rs).
-pub fn serve(open_window: bool) -> Result<(), String> {
-    let listener = TcpListener::bind(("127.0.0.1", 0)).map_err(|e| format!("cannot start the helper window: {}", e))?;
+/// Starts the helper: the page server (on 127.0.0.1, with a token) and the helper's window and tray icon (shell.rs).
+/// When `show_window` is true the window opens at once. When false, the helper starts in the tray only. The offline
+/// translation service starts with it, on its fixed port (see api.rs).
+pub fn serve(show_window: bool) -> Result<(), String> {
+    let listener = TcpListener::bind(("127.0.0.1", 0)).map_err(|e| format!("cannot start the helper: {}", e))?;
     let port = listener.local_addr().map_err(|e| e.to_string())?.port();
     let token = store::new_token();
     let pairing = store::pairing_code()?;
@@ -54,14 +56,18 @@ pub fn serve(open_window: bool) -> Result<(), String> {
     }
     let url = format!("http://127.0.0.1:{}/?t={}", port, token);
     println!("Atlas Translation helper is running.");
-    println!("If no window opens, copy this address into your browser:");
-    println!("{}", url);
-    println!("Close this window to stop the helper.");
-    if open_window && !open_url(&url) {
-        println!("The browser could not be opened. Copy the address above into your browser.");
-    }
+    println!("Closing its window keeps the helper in the tray. Choose Quit in the tray menu to stop it.");
     let ctx = Arc::new(Ctx { token, pairing, api_error, engine });
-    serve_listener(listener, ctx)
+    if !shell::has_display() {
+        // No desktop (for example over SSH): the page is still served, so the address can be opened in a browser.
+        println!("No desktop was found. Copy this address into a browser on this computer:");
+        println!("{}", url);
+        return serve_listener(listener, ctx);
+    }
+    thread::spawn(move || {
+        let _ = serve_listener(listener, ctx);
+    });
+    shell::run(url, show_window)
 }
 
 /// Accepts connections forever. Each request is handled on its own thread.

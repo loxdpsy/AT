@@ -239,7 +239,15 @@
     });
   }
 
+  // The window follows the system language for its layout. Its text is English, so right-to-left only mirrors the layout.
+  var RTL_LANGUAGES = /^(ar|he|iw|fa|ur|ps|sd|ug|yi|dv|ckb)(-|$)/i;
+  function applyDirection() {
+    var language = (navigator.language || "").toLowerCase();
+    document.documentElement.dir = RTL_LANGUAGES.test(language) ? "rtl" : "ltr";
+  }
+
   function init() {
+    applyDirection();
     if (!token) {
       $("tokenWarning").hidden = false;
       $("tokenWarning").textContent = "Open this page from the address the helper printed. It ends with ?t=... and every action needs it.";
