@@ -175,3 +175,17 @@ jobs:
               echo ""
             } >> "$summary"
           fi
+
+      # The raw logs, as an artifact. Log text from a run is not readable without signing in, so this keeps the
+      # compiler output and the test output for debugging. It is not an atlas-engine-* artifact, so release.yml does not
+      # download it.
+      - name: Keep the logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engine-logs-${{ matrix.asset }}
+          path: |
+            ${{ runner.temp }}/engine-build.log
+            ${{ runner.temp }}/engine-smoke.log
+          if-no-files-found: ignore
+          retention-days: 7
