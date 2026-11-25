@@ -27,20 +27,43 @@ jobs:
           cache: npm
 
       - name: Install dependencies
+        id: install
         run: npm ci
 
       - name: Check the repository
+        id: check
         run: npm run check
 
       - name: Run the unit tests
+        id: test
         run: npm test
 
       # The Chromium build needs a signing key on GitHub. The release key stays in the Release workflow; this check
       # makes a throwaway key that is used only here and never published.
       - name: Build Chromium
+        id: chromium
         run: |
           openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$RUNNER_TEMP/check-key.pem"
           CRX_PRIVATE_KEY="$(cat "$RUNNER_TEMP/check-key.pem")" npm run build:chromium
 
       - name: Build Firefox
+        id: firefox
         run: npm run build:firefox
+
+      # Runs even when a step failed. Shows the result of each step, so the cause is visible on the run page.
+      # A summary problem never fails the job.
+      - name: Job summary
+        if: always()
+        continue-on-error: true
+        run: |
+          {
+            echo "## Checks, tests and builds"
+            echo ""
+            echo "| Step | Result |"
+            echo "| --- | --- |"
+            echo "| Install dependencies | ${{ steps.install.outcome }} |"
+            echo "| Check the repository | ${{ steps.check.outcome }} |"
+            echo "| Unit tests | ${{ steps.test.outcome }} |"
+            echo "| Build Chromium | ${{ steps.chromium.outcome }} |"
+            echo "| Build Firefox | ${{ steps.firefox.outcome }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
