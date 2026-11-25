@@ -5,14 +5,18 @@
 // and copies it over the folder you point it at. Then you click "Reload extension" in the Updates section of Settings.
 //
 // Usage:
+//   atlas-updater                 open the helper window (the browser picker, updates and install)
+//   atlas-updater --serve         start the helper window without opening a browser
 //   atlas-updater [--check] <folder>
 //     <folder>  the folder with manifest.json of the unpacked Atlas Translation
 //     --check   only report whether a newer release exists
 //
 // It stores nothing and sends nothing except the request to api.github.com and the zip download from github.com.
 
+mod browsers;
 mod json;
 mod sha256;
+mod web;
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -36,11 +40,18 @@ fn main() {
 }
 
 fn usage() -> String {
-    "Usage: atlas-updater [--check] <folder>\n  <folder>  the folder with manifest.json of the unpacked Atlas Translation\n  --check   only report whether a newer release exists".to_string()
+    "Usage: atlas-updater [--serve] | atlas-updater [--check] <folder>\n  no arguments  open the helper window\n  --serve       start the helper window without opening a browser\n  <folder>      the folder with manifest.json of the unpacked Atlas Translation\n  --check       only report whether a newer release exists".to_string()
 }
 
 fn run() -> Result<(), String> {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.is_empty() {
+        // Started by a double click: the helper window opens in the browser.
+        return web::serve(true);
+    }
+    if args.iter().any(|a| a.as_str() == "--serve") {
+        return web::serve(false);
+    }
     let check_only = args.iter().any(|a| a.as_str() == "--check");
     let folder_args: Vec<&String> = args.iter().filter(|a| a.as_str() != "--check").collect();
     if folder_args.len() != 1 {

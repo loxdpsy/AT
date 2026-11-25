@@ -23,13 +23,28 @@ On macOS, run `xattr -d com.apple.quarantine ./atlas-updater-macos` once, and on
 
 ## Use
 
+**The helper window.** Start the program with no arguments (double-click it on Windows, or run `./atlas-updater-macos`
+or `./atlas-updater-linux` from a terminal). It checks GitHub for a new version, then opens a page in your default
+browser:
+
+- **Update:** shows the version you have and the newest release, and installs the update in one click.
+- **Folder:** where the extension lives. A new folder (empty or missing) gets a fresh copy.
+- **Which browser?** Pick Chrome, Edge, Brave, Opera, Vivaldi, Comet, Iopera or Firefox. Firefox links to the
+  Firefox Add-ons page. The Chromium browsers get the steps to load the folder with *Load unpacked*.
+
+The page only talks to the helper on this computer, and every action needs the token in the address the helper
+prints. Close the helper's window to stop it. `--serve` starts the same page without opening a browser.
+
+**Command line** (for scripts):
+
 ```
 atlas-updater --check "C:\path\to\atlas-translation"    # Windows: only report
 atlas-updater "C:\path\to\atlas-translation"            # Windows: install
 atlas-updater --check ~/atlas-translation               # macOS and Linux
 ```
 
-The folder is the one that holds `manifest.json` of the unpacked extension. The program refuses any other folder.
+The folder is the one that holds `manifest.json` of the unpacked extension. The program refuses any other folder (the window
+only makes a new folder when it is empty or missing).
 
 Needs `curl` (built in on Windows 10 and later, macOS and most Linux systems). Unzipping uses PowerShell on Windows
 and `unzip` on macOS and Linux (install it with your package manager if it is missing).

@@ -34,6 +34,25 @@ impl Value {
     }
 }
 
+/// A JSON string literal: the text in quotes, with the characters that must be escaped.
+pub fn quote(text: &str) -> String {
+    let mut out = String::with_capacity(text.len() + 2);
+    out.push('"');
+    for c in text.chars() {
+        match c {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            '\n' => out.push_str("\\n"),
+            '\r' => out.push_str("\\r"),
+            '\t' => out.push_str("\\t"),
+            c if (c as u32) < 0x20 => out.push_str(&format!("\\u{:04x}", c as u32)),
+            c => out.push(c),
+        }
+    }
+    out.push('"');
+    out
+}
+
 pub fn parse(text: &str) -> Result<Value, String> {
     let mut parser = Parser { bytes: text.as_bytes(), pos: 0 };
     let value = parser.value()?;
@@ -242,6 +261,13 @@ mod tests {
     fn accepts_crlf_whitespace() {
         let v = parse("{\r\n  \"name\": \"Atlas Translation\"\r\n}\r\n").unwrap();
         assert_eq!(v.get("name").and_then(|s| s.as_str()), Some("Atlas Translation"));
+    }
+
+    #[test]
+    fn quote_escapes_and_round_trips() {
+        let text = "C:\\Atlas \"x\"\nline\u{1}";
+        assert_eq!(quote(text), "\"C:\\\\Atlas \\\"x\\\"\\nline\\u0001\"");
+        assert_eq!(parse(&quote(text)).unwrap().as_str(), Some(text));
     }
 
     #[test]
