@@ -35,8 +35,12 @@ jobs:
       - name: Run the unit tests
         run: npm test
 
+      # The Chromium build needs a signing key on GitHub. The release key stays in the Release workflow; this check
+      # makes a throwaway key that is used only here and never published.
       - name: Build Chromium
-        run: npm run build:chromium
+        run: |
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$RUNNER_TEMP/check-key.pem"
+          CRX_PRIVATE_KEY="$(cat "$RUNNER_TEMP/check-key.pem")" npm run build:chromium
 
       - name: Build Firefox
         run: npm run build:firefox
