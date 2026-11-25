@@ -201,10 +201,56 @@ jobs:
       ref: ${{ needs.prepare.outputs.sha }}
     secrets: inherit
 
+  # The atlas-updater helper, built for Windows, macOS and Linux. Every release carries all three programs,
+  # so the helper is always the version that matches the release. A build failure stops the publish job.
+  helper:
+    name: Helper (${{ matrix.os }})
+    needs: prepare
+    if: ${{ needs.prepare.result == 'success' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            binary: atlas-updater
+            asset: atlas-updater-linux
+          - os: macos-latest
+            binary: atlas-updater
+            asset: atlas-updater-macos
+          - os: windows-latest
+            binary: atlas-updater.exe
+            asset: atlas-updater-windows.exe
+    defaults:
+      run:
+        shell: bash
+        working-directory: tools/atlas-updater
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.sha }}
+
+      - name: Unit tests
+        run: cargo test --release
+
+      - name: Build
+        run: cargo build --release
+
+      - name: Name the program for the release
+        run: cp "target/release/${{ matrix.binary }}" "$RUNNER_TEMP/${{ matrix.asset }}"
+
+      - name: Keep the program for the publish job
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ runner.temp }}/${{ matrix.asset }}
+          if-no-files-found: error
+
   publish:
     name: Publish GitHub release
-    needs: [prepare, chromium, firefox]
-    if: ${{ always() && needs.prepare.result == 'success' && needs.prepare.outputs.publish == 'true' && needs.chromium.result == 'success' && needs.firefox.result != 'cancelled' }}
+    needs: [prepare, chromium, firefox, helper]
+    if: ${{ always() && needs.prepare.result == 'success' && needs.prepare.outputs.publish == 'true' && needs.chromium.result == 'success' && needs.firefox.result != 'cancelled' && needs.helper.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out the code
@@ -222,6 +268,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: atlas-translation-firefox
+          path: dist
+
+      - name: Download the helper programs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: atlas-updater-*
+          merge-multiple: true
           path: dist
 
       - name: Write the Firefox update manifest
@@ -270,6 +323,7 @@ jobs:
             echo "- **Chrome Web Store:** \`atlas-translation-$VERSION-chromium.zip\`"
             echo "- **Microsoft Edge Add-ons:** \`atlas-translation-$VERSION-edge.zip\` (same package as Chromium). It is submitted to Edge automatically when the Edge secrets are set."
             echo "- **Chromium, self-hosting:** \`atlas-translation-$VERSION-chromium.crx\` (Chromium 109 or newer)"
+            echo "- **Helper (atlas-updater):** \`atlas-updater-windows.exe\`, \`atlas-updater-macos\`, \`atlas-updater-linux\`. It installs the newest release into your unpacked copy. See tools/atlas-updater/README.md."
             if [ -f "dist/atlas-translation-$VERSION-firefox-signed.xpi" ]; then
               echo "- **Firefox, self-hosted:** \`atlas-translation-$VERSION-firefox-signed.xpi\` is signed. Open it in Firefox to install. Firefox then updates it from \`updates.json\` in this release. Firefox for Android installs from addons.mozilla.org only."
             else
