@@ -1,17 +1,19 @@
 name: Firefox build
 
-# Builds Atlas Translation for Firefox and Firefox for Android: a ZIP and an unsigned XPI.
-# With "submit" turned on, the add-on is also submitted to addons.mozilla.org (AMO).
-#   - Secrets AMO_JWT_ISSUER and AMO_JWT_SECRET are required for submission.
-#   - Input "channel":
-#       "unlisted" (default): signed for GitHub distribution. Uses the add-on ID in firefox_manifest.json and keeps update_url.
-#       "listed": the Firefox store (addons.mozilla.org). Uses the store ID in FIREFOX_STORE_ID below, which is a separate
-#         add-on, and drops update_url (AMO refuses it on listed add-ons).
-#   - "listed" is skipped unless the repository variable AMO_LISTING_READY is "true". Set it only after the listing has its
-#     icon, screenshots, description, and license, so Mozilla never reviews an empty listing.
-#   - .github/amo-metadata.json supplies the license, category, and summary AMO requires.
+# Builds Atlas Translation for Firefox and Firefox for Android. There are two channels, each with its own add-on ID:
+#   - "unlisted" (default): the GitHub build. It keeps update_url and is signed for self-distribution. Its files are
+#     uploaded as the atlas-translation-firefox artifact, which the Release workflow attaches to the GitHub release.
+#   - "listed": the Firefox store (addons.mozilla.org). It uses FIREFOX_STORE_ID below and drops update_url (AMO refuses it
+#     on listed add-ons). Its ZIP is uploaded as atlas-translation-firefox-store. With "submit" on, the version is sent to
+#     Mozilla for review through the API. Mozilla publishes it after approval.
+#   - "submit" needs the secrets AMO_JWT_ISSUER and AMO_JWT_SECRET.
+#   - The listed submission is skipped until the repository variable AMO_LISTING_READY is "true". Set it once the listing
+#     text, icon, and privacy policy are in place. Screenshots are added once in the Developer Hub. The API cannot upload them.
+#   - The listed submission does not wait for approval (--approval-timeout 0). Review takes days, so the job ends after
+#     Mozilla has the version.
+#   - .github/amo-metadata.json supplies the license, category, summary, description, and privacy policy.
 #
-# Run it by hand: Actions > Firefox build > Run workflow. The Release workflow also calls this file.
+# Run it by hand: Actions > Firefox build > Run workflow. The Release workflow also calls this file for both channels.
 
 on:
   workflow_dispatch:
@@ -21,14 +23,14 @@ on:
         type: string
         default: ""
       channel:
-        description: "unlisted = GitHub distribution (signed). listed = Firefox store (public after review)."
+        description: "unlisted = GitHub build (signed). listed = Firefox store version (public after Mozilla approves it)."
         type: choice
         options:
           - unlisted
           - listed
         default: unlisted
       submit:
-        description: "Submit to addons.mozilla.org (needs the AMO secrets)"
+        description: "Submit to addons.mozilla.org: sign the GitHub build, or send the store version for review (needs the AMO secrets)"
         type: boolean
         default: false
   workflow_call:
@@ -96,7 +98,7 @@ jobs:
           gecko.pop("update_url", None)
           p.write_text(json.dumps(m, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
           print("Store build ID:", gecko["id"], "| update_url removed")
-          # The ZIP for uploading the store listing by hand. It has the store ID, so it is a different file from the GitHub ZIP.
+          # The store ZIP. It has the store ID, so it is a different file from the GitHub ZIP.
           import zipfile
           version = m["version"]
           out = pathlib.Path(f"build/atlas-translation-{version}-firefox-store.zip")
@@ -115,13 +117,22 @@ jobs:
           if [ "$CHANNEL" = "listed" ]; then FLAG=""; else FLAG="--self-hosted"; fi
           npx --yes web-ext@8 lint --source-dir build/staging/firefox $FLAG --output text > build/web-ext-lint.txt 2>&1 || true
 
-      - name: Upload artifacts
+      - name: Upload the GitHub build
+        if: ${{ inputs.channel != 'listed' }}
         uses: actions/upload-artifact@v4
         with:
           name: atlas-translation-firefox
           path: |
             build/*.zip
             build/*.xpi
+          if-no-files-found: error
+
+      - name: Upload the store build
+        if: ${{ inputs.channel == 'listed' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-translation-firefox-store
+          path: build/*-store.zip
           if-no-files-found: error
 
       - name: Submit to addons.mozilla.org
@@ -132,21 +143,33 @@ jobs:
           CHANNEL: ${{ inputs.channel }}
           AMO_LISTING_READY: ${{ vars.AMO_LISTING_READY }}
         run: |
+          mkdir -p build
           if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ]; then
             echo "AMO keys are not set. Skipping the submission." | tee build/amo-submit.log
+            echo "skipped: the AMO secrets are not set" > build/amo-status.txt
             exit 0
           fi
           if [ "$CHANNEL" = "listed" ] && [ "$AMO_LISTING_READY" != "true" ]; then
-            echo "Skipping the listed submission. Set the repository variable AMO_LISTING_READY to true once the AMO listing has its icon, screenshots, description, and license." | tee build/amo-submit.log
+            echo "Skipping the store submission. Set the repository variable AMO_LISTING_READY to true once the listing text, icon, and privacy policy are in place." | tee build/amo-submit.log
+            echo "skipped: AMO_LISTING_READY is not true" > build/amo-status.txt
             exit 0
           fi
+          # A listed version is sent for review and the job does not wait for the approval (that can take days).
+          if [ "$CHANNEL" = "listed" ]; then APPROVAL="--approval-timeout 0"; else APPROVAL=""; fi
+          set -o pipefail
           npx --yes web-ext@8 sign \
             --source-dir build/staging/firefox \
             --artifacts-dir build/signed \
             --channel "$CHANNEL" \
             --amo-metadata .github/amo-metadata.json \
             --api-key "$AMO_JWT_ISSUER" \
-            --api-secret "$AMO_JWT_SECRET" 2>&1 | tee build/amo-submit.log
+            --api-secret "$AMO_JWT_SECRET" \
+            $APPROVAL 2>&1 | tee build/amo-submit.log
+          if [ "$CHANNEL" = "listed" ]; then
+            echo "sent: the store version is with Mozilla for review. It is public after approval." > build/amo-status.txt
+          else
+            echo "sent: the GitHub build is signed." > build/amo-status.txt
+          fi
 
       - name: Upload the signed add-on
         if: ${{ inputs.submit }}
@@ -164,13 +187,14 @@ jobs:
             echo "## Firefox build: Atlas Translation $VERSION"
             echo ""
             echo "- Build result: **${{ job.status }}**"
-            echo "- Submitted to addons.mozilla.org: **${{ inputs.submit }}**"
             echo "- Channel: \`${{ inputs.channel }}\`"
+            echo "- addons.mozilla.org: **$(cat build/amo-status.txt 2>/dev/null || echo "not requested (submit is off)")**"
             echo "- Commit: \`${GITHUB_SHA:0:7}\`"
             echo ""
             echo "| File | Size | SHA-256 (first 16) |"
             echo "| --- | --- | --- |"
-            for f in build/*.zip build/*.xpi build/signed/*.xpi; do
+            if [ "${{ inputs.channel }}" = "listed" ]; then FILES="build/*-store.zip build/signed/*.xpi"; else FILES="build/*.zip build/*.xpi build/signed/*.xpi"; fi
+            for f in $FILES; do
               [ -f "$f" ] || continue
               echo "| \`$(basename "$f")\` | $(du -h "$f" | cut -f1) | \`$(sha256sum "$f" | cut -c1-16)\` |"
             done

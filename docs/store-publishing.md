@@ -56,23 +56,21 @@ After that, each release run uploads the Chromium package and submits it to Edge
 
 ## Firefox (addons.mozilla.org) and Firefox for Android
 
-Firefox has two separate listings, with two add-on IDs:
+Firefox has two listings, with two add-on IDs. Both are published by the Release workflow:
 
 - **GitHub** is the main distribution. Its ID does not change. The GitHub release carries the signed `.xpi` and `updates.json`.
-- **Firefox store** is the public listing on addons.mozilla.org. It uses `FIREFOX_STORE_ID`, which is set in `.github/workflows/firefox.yml`. It is a different add-on from the GitHub one, so both can exist at the same time.
+- **Firefox store** is the public listing on addons.mozilla.org. It uses `FIREFOX_STORE_ID` in `.github/workflows/firefox.yml`. It is a different add-on from the GitHub one. The workflow sends it through the API, using the `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` secrets.
 
 Steps:
 
-1. Go to **https://addons.mozilla.org/developers/** and sign in with a Firefox Account.
-2. Accept the developer agreement.
-3. Run the *Firefox build* workflow with `channel: listed` and `submit` off. Download the `atlas-translation-<version>-firefox-store.zip` file from the artifacts.
-4. On addons.mozilla.org choose **Submit a New Add-on**, upload that zip, and choose **On this site** (listed). Fill in the listing from `.github/amo-metadata.json`: name, summary, description, category (*Productivity*), license (MPL-2.0), and the privacy policy.
-5. Do not submit a listed version until the listing is complete: icon, at least one screenshot, the description, and the privacy policy URL. A review of an empty listing is rejected or wasted time.
-6. When it is ready, set the repository variable `AMO_LISTING_READY` to `true` (**Settings → Secrets and variables → Actions → Variables**). From then on, a *Firefox build* run with `channel: listed` and `submit` on sends each store version for review, and Mozilla reviews it before it goes public.
+1. Go to **https://addons.mozilla.org/developers/** and sign in with a Firefox Account. Accept the developer agreement.
+2. Create the API keys (Developer Hub → **Manage API Keys**) and add them as `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` (see README, *Release secrets*).
+3. Check the listing text in `.github/amo-metadata.json`: name, summary, description, category (*Productivity*), license (MPL-2.0), tags, and privacy policy.
+4. Set the repository variable `AMO_LISTING_READY` to `true`. Until then the store step is skipped, so Mozilla never reviews an empty listing.
+5. Run **Release** with `submit_amo` on, or push a tag. The store version is sent for review. The first version creates the store add-on.
+6. Upload the screenshots from `store/screenshots/` once in the Developer Hub (**Manage listing → Screenshots**). The API cannot upload them. Later versions keep them.
 
-Firefox for Android installs listed add-ons from the same store listing, so there is no separate Android submission.
-
-The automatic submission needs the secrets `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` (see README, *Release secrets*). The release workflow always builds the GitHub channel, so a release never sends a version to the store.
+Mozilla reviews every store version before it is public. Firefox for Android installs listed add-ons from the same store listing, so there is no separate Android submission.
 
 ## Checklist for each release
 
