@@ -14,11 +14,12 @@ Then, in the browser, open Atlas Translation's Settings and click **Reload exten
 
 ## Get the program
 
-Each build is an artifact of the **Updater** workflow run in GitHub Actions (Actions tab, then the newest run).
-The artifacts are `atlas-updater-windows`, `atlas-updater-macos` and `atlas-updater-linux`.
+Every release attaches the three programs to its GitHub release: `atlas-updater-windows.exe`, `atlas-updater-macos`
+and `atlas-updater-linux`. Between releases, each build is an artifact of the **Updater** workflow run in GitHub Actions
+(Actions tab, then the newest run), under the same names without `.exe`.
 
 The programs are not code-signed. Windows may show a SmartScreen warning (choose **More info**, then **Run anyway**).
-On macOS, run `xattr -d com.apple.quarantine ./atlas-updater` once, and on Linux and macOS run `chmod +x ./atlas-updater`.
+On macOS, run `xattr -d com.apple.quarantine ./atlas-updater-macos` once, and on Linux and macOS run `chmod +x ./atlas-updater-linux` (or `./atlas-updater-macos`).
 
 ## Use
 
