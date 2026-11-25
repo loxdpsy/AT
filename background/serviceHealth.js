@@ -3,6 +3,8 @@
 // Google, Bing and Yandex use endpoints that are not official APIs. They break from time to time, and they can ask
 // for a captcha. When a service fails several times in a row, it is left out for a while, and the next enabled service
 // that supports the language translates instead. A service that works again is used again.
+// An error marked notAFailure (for example, an offline language pack that is not installed) only skips that service for
+// this text. It does not count toward the cooldown.
 //
 // This is a plain script (no import/export), so it loads with importScripts() in the service worker and with the
 // background scripts in Firefox, and the unit tests load it into a sandbox.
@@ -62,7 +64,7 @@ async function runWithServiceFallback(candidates, health, run, onError) {
       health.recordSuccess(name);
       return { result, service: name };
     } catch (error) {
-      health.recordFailure(name);
+      if (!(error && error.notAFailure)) health.recordFailure(name);
       if (onError) onError(error, name);
       lastError = error;
     }

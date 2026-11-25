@@ -1134,11 +1134,133 @@ const translationService = function () {
     }();
   };
 
+  /**
+   * Offline (desktop helper). The Atlas helper runs an offline engine (Mozilla's Bergamot models) on this computer and
+   * serves it on 127.0.0.1 (see tools/atlas-updater/src/api.rs). The helper needs the pairing code from its window.
+   */
+  const OFFLINE_HELPER_URL = "http://127.0.0.1:47632";
+  const OFFLINE_MAX_TEXTS_PER_REQUEST = 500;
+  const OFFLINE_PACKS_CACHE_MS = 10000;
+  /** @type {{at: number, pairs: string[]}|null} */
+  let offlinePacksCache = null;
+
+  /**
+   * A service that cannot take this request is not broken, so it does not count as a failure (see serviceHealth.js).
+   * @param {string} message
+   */
+  function offlineUnavailable(message) {
+    const error = new Error("offline: " + message);
+    error.notAFailure = true;
+    return error;
+  }
+
+  /**
+   * The pack pair for a translation, such as "enfr" or "fren". Null when no offline pack translates it.
+   * @param {string} sourceLanguage
+   * @param {string} targetLanguage
+   * @returns {string|null}
+   */
+  function offlinePair(sourceLanguage, targetLanguage) {
+    const from = String(sourceLanguage || "");
+    const to = String(targetLanguage || "");
+    const languages = twpLang.SupportedLanguages.offline;
+    if (from === to || !languages.includes(from) || !languages.includes(to)) return null;
+    if (from !== "en" && to !== "en") return null;
+    return from + to;
+  }
+
+  /**
+   * The language packs the helper has installed, and whether its engine is there. Asked at most every few seconds.
+   * @returns {Promise<{pairs: string[], engine: boolean}>}
+   */
+  async function getOfflinePacks() {
+    if (offlinePacksCache && Date.now() - offlinePacksCache.at < OFFLINE_PACKS_CACHE_MS) return offlinePacksCache;
+    const response = await fetchWithTimeout(OFFLINE_HELPER_URL + "/api/offline/ping", {}, 3000);
+    const body = await response.json();
+    if (!body || !body.ok) throw new Error("offline: the helper did not answer");
+    offlinePacksCache = { at: Date.now(), pairs: Array.isArray(body.packs) ? body.packs : [], engine: body.engine === true };
+    return offlinePacksCache;
+  }
+
+  /**
+   * Creates the Offline (desktop helper) service. A missing helper, engine, pack or pairing code makes it skip the text
+   * (see offlineUnavailable), and the next enabled service that supports the language translates instead.
+   * @returns {Service}
+   */
+  const createOfflineService = () => {
+    return new class extends Service {
+      constructor() {
+        super("offline", OFFLINE_HELPER_URL + "/api/offline/translate", "POST", function cbTransformRequest(sourceArray) {
+          // translate() sends one piece per request, so there is one entry in the array here.
+          return sourceArray[0];
+        }, function cbParseResponse(response) {
+          return response.translations.map(text => ({ text, detectedLanguage: response.detectedLanguage }));
+        }, function cbTransformResponse(result) {
+          return [result];
+        }, null, null, null);
+      }
+
+      /**
+       * Each piece of text is translated on its own, so the results keep the shape of sourceArray2d.
+       * @param {string} sourceLanguage
+       * @param {string} targetLanguage
+       * @param {Array<string[]>} sourceArray2d
+       * @param {boolean} dontSaveInPersistentCache
+       * @param {boolean} dontSortResults
+       * @returns {Promise<string[][]>}
+       */
+      async translate(sourceLanguage, targetLanguage, sourceArray2d, dontSaveInPersistentCache = false, dontSortResults = false) {
+        const pair = offlinePair(sourceLanguage, targetLanguage);
+        if (!pair) throw offlineUnavailable(`no language pack translates ${sourceLanguage} to ${targetLanguage}`);
+        const packs = await getOfflinePacks();
+        if (!packs.engine) throw offlineUnavailable("the offline engine is not installed in the helper");
+        if (!packs.pairs.includes(pair)) throw offlineUnavailable(`the ${pair} language pack is not installed in the helper`);
+        if (!(twpConfig.get("offlineHelperCode") || "").trim()) throw offlineUnavailable("enter the pairing code from the helper window");
+        const pieces = [];
+        for (const sourceArray of sourceArray2d) {
+          for (const text of sourceArray) pieces.push([text]);
+        }
+        const results = await super.translate(sourceLanguage, targetLanguage, pieces, dontSaveInPersistentCache, dontSortResults);
+        let next = 0;
+        return sourceArray2d.map(sourceArray => sourceArray.map(() => results[next++][0]));
+      }
+
+      /**
+       * Sends one batch of texts to the helper. The helper checks the pairing code and the pack.
+       * @param {string} sourceLanguage
+       * @param {string} targetLanguage
+       * @param {Array<TranslationInfo>} requests
+       */
+      async makeRequest(sourceLanguage, targetLanguage, requests) {
+        const pairing = (twpConfig.get("offlineHelperCode") || "").trim();
+        const pair = offlinePair(sourceLanguage, targetLanguage);
+        const translations = [];
+        for (let i = 0; i < requests.length; i += OFFLINE_MAX_TEXTS_PER_REQUEST) {
+          const texts = requests.slice(i, i + OFFLINE_MAX_TEXTS_PER_REQUEST).map(info => info.originalText);
+          const response = await fetchWithTimeout(this.baseURL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pairing, pair, texts })
+          }, 60000);
+          const body = await response.json().catch(() => null);
+          if (!response.ok || !body || !Array.isArray(body.translations)) {
+            const message = (body && body.message) || "HTTP " + response.status;
+            if (response.status === 403) throw offlineUnavailable("the pairing code is wrong. " + message);
+            throw new Error("offline: " + message);
+          }
+          translations.push(...body.translations);
+        }
+        return { translations, detectedLanguage: sourceLanguage };
+      }
+    }();
+  };
+
   /** @type {Map<string, Service>} */
   const serviceList = new Map();
   serviceList.set("google", googleService);
   serviceList.set("yandex", yandexService);
   serviceList.set("bing", bingService);
+  serviceList.set("offline", createOfflineService());
 
   /**
    * Get translation service from your name

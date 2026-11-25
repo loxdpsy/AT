@@ -154,6 +154,91 @@
     );
   }
 
+  // Offline translation: the pairing code, the offline engine and the language packs.
+  function copyTo(node, text, done) {
+    if (!navigator.clipboard) {
+      setResult(node, "Select the text and copy it by hand.", false);
+      return;
+    }
+    navigator.clipboard.writeText(text).then(
+      function () { setResult(node, done, true); },
+      function () { setResult(node, "Select the text and copy it by hand.", false); }
+    );
+  }
+
+  function setBusy(list, busy) {
+    Array.prototype.forEach.call(list.querySelectorAll("button"), function (b) { b.disabled = busy; });
+  }
+
+  function packAction(path, pair, busyText) {
+    setBusy($("packs"), true);
+    setResult($("packsResult"), busyText, false);
+    call(path, { pair: pair }).then(function (r) {
+      setResult($("packsResult"), r.message, r.ok);
+      return loadOffline();
+    });
+  }
+
+  function renderPacks(packs) {
+    var list = $("packs");
+    list.textContent = "";
+    packs.forEach(function (p) {
+      var li = document.createElement("li");
+      var name = document.createElement("span");
+      name.className = "pack-name";
+      name.textContent = p.from.toUpperCase() + " \u2192 " + p.to.toUpperCase();
+      var size = document.createElement("span");
+      size.className = "pack-size";
+      size.textContent = Math.round(p.bytes / 1000000) + " MB";
+      li.appendChild(name);
+      li.appendChild(size);
+      if (p.installed) {
+        var done = document.createElement("span");
+        done.className = "installed";
+        done.textContent = "Installed";
+        li.appendChild(done);
+        li.appendChild(button("Remove", function () {
+          packAction("/api/packs/remove", p.pair, "Removing " + p.pair + "\u2026");
+        }));
+      } else {
+        li.appendChild(button("Install", function () {
+          packAction("/api/packs/install", p.pair, "Downloading and checking " + p.pair + "\u2026");
+        }));
+      }
+      list.appendChild(li);
+    });
+  }
+
+  function installEngine() {
+    $("installEngine").disabled = true;
+    setResult($("engineResult"), "Downloading and checking the engine\u2026", false);
+    call("/api/engine/install", {}).then(function (r) {
+      setResult($("engineResult"), r.message, r.ok);
+      return loadOffline();
+    });
+  }
+
+  function loadOffline() {
+    return call("/api/packs", {}).then(function (s) {
+      if (!s.packs) {
+        $("offlineStatus").textContent = s.message || "The offline translation status is not available.";
+        $("packs").textContent = "";
+        return;
+      }
+      $("dataFolder").textContent = s.dataFolder || "";
+      $("offlineStatus").textContent = s.apiRunning
+        ? "The offline service runs on this computer, on port " + s.port + ". The extension uses it when Offline is chosen."
+        : "The offline service is not running. " + (s.apiError || "");
+      $("pairingCode").textContent = s.pairing || "";
+      $("engineStatus").textContent = s.engine
+        ? "The offline engine is installed."
+        : (s.engineAsset ? "The offline engine is not installed yet." : "There is no offline engine for this system.");
+      $("installEngine").textContent = s.engine ? "Update the offline engine" : "Install the offline engine";
+      $("installEngine").disabled = !s.engineAsset;
+      renderPacks(s.packs);
+    });
+  }
+
   function init() {
     if (!token) {
       $("tokenWarning").hidden = false;
@@ -177,8 +262,13 @@
         return refresh(folder);
       }).then(showGuide);
     });
+    $("copyPairing").addEventListener("click", function () {
+      copyTo($("pairingResult"), $("pairingCode").textContent, "Code copied.");
+    });
+    $("installEngine").addEventListener("click", installEngine);
     // The start-up update check: the window asks for the latest release as soon as it opens.
     refresh("");
+    loadOffline();
   }
 
   init();

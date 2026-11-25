@@ -157,6 +157,40 @@ button.primary {
 .guide ol { margin: 0 0 14px; padding-left: 22px; }
 .guide li { margin: 4px 0; }
 
+.code {
+  font: 14px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--bg);
+  word-break: break-all;
+  flex: 1 1 280px;
+  min-width: 0;
+}
+
+.packs {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  max-height: 340px;
+  overflow: auto;
+}
+.packs li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.packs li:last-child { border-bottom: 0; }
+.pack-name { flex: 1 1 auto; font-weight: 600; }
+.pack-name small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; }
+.pack-size { color: var(--muted); font-size: 13px; white-space: nowrap; }
+.packs li button { padding: 6px 12px; }
+.packs li .installed { color: var(--ok); font-size: 13px; white-space: nowrap; }
+
 footer {
   padding: 16px 20px 24px;
   color: var(--muted);

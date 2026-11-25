@@ -72,7 +72,8 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     yandex: ["/icons/yandex-translate-32.png", "Yandex Translate", false],
     bing: ["/icons/bing-translate-32.png", "Bing Translator", false],
     deepl: ["/icons/deepl-mark-128.png", "DeepL", false],
-    groq: ["/icons/groq-wordmark.png", "Groq", true]
+    groq: ["/icons/groq-wordmark.png", "Groq", true],
+    offline: ["/icons/icon-32.png", "Offline (desktop helper)", false]
   };
   let usageService = null;
 

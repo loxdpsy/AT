@@ -693,7 +693,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     twpConfig.set("useAlternativeService", e.target.value);
   };
   $("#useAlternativeService").value = twpConfig.get("useAlternativeService");
-  const pageTranslationServices = ["google", "bing", "yandex", "deepl", "groq"];
+  const pageTranslationServices = ["google", "bing", "yandex", "deepl", "groq", "offline"];
   const updateServiceSelector = enabledServices => {
     document.querySelectorAll("#pageTranslatorService option").forEach(option => option.setAttribute("hidden", ""));
     document.querySelectorAll("#textTranslatorService option").forEach(option => option.setAttribute("hidden", ""));
@@ -724,6 +724,9 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
   }, {
     selector: "#btnEnableGroq",
     svName: "groq"
+  }, {
+    selector: "#btnEnableOffline",
+    svName: "offline"
   }];
   servicesInfo.forEach(svInfo => {
     $(svInfo.selector).oninput = e => {
@@ -734,7 +737,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
           enabledCount++;
         }
       });
-      if (enabledCount === 0 || enabledCount === 1 && $("#btnEnableDeepL").checked) {
+      if (enabledCount === 0 || enabledCount === 1 && ($("#btnEnableDeepL").checked || $("#btnEnableOffline").checked)) {
         if (e.target === $("#btnEnableGoogle")) {
           $("#btnEnableBing").checked = true;
         } else {
@@ -991,6 +994,110 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
   groqKeyInput.value = storedGroqKey;
   groqCheckbox.disabled = !storedGroqKey;
   groqCheckbox.checked = storedGroqKey !== "" && twpConfig.get("enabledServices").includes("groq");
+
+  // Offline (desktop helper). The Atlas helper runs on this computer at 127.0.0.1:47632 (tools/atlas-updater/src/api.rs).
+  // The pairing code is shown in the helper window. The helper's status does not need it; a test translation does.
+  const offlineURL = "http://127.0.0.1:47632";
+  const offlineCodeInput = $("#offlineCode");
+  const offlineStatus = $("#offlineStatus");
+  const offlineMessage = $("#offlineApiResponse");
+  const offlineCheckbox = $("#btnEnableOffline");
+  const offlineText = (key, fallback, substitution) => twpI18n.getMessage(key, substitution) || fallback;
+  function setOfflineMessage(text, kind) {
+    offlineMessage.textContent = text;
+    offlineMessage.className = "message" + (kind ? " " + kind : "");
+  }
+  function setOfflineRunning(running) {
+    offlineStatus.hidden = false;
+    offlineStatus.textContent = running ? offlineText("msgOfflineRunning", "Helper running") : offlineText("msgOfflineStopped", "Helper not running");
+    offlineStatus.classList.toggle("ok", running);
+  }
+  /** Asks the helper. Throws the "not running" message when nothing answers on the port. */
+  async function callOfflineHelper(path, init) {
+    try {
+      return await fetch(offlineURL + path, init);
+    } catch (e) {
+      const error = new Error(offlineText("msgOfflineNotRunning", "The helper is not running. Open the Atlas helper, then copy its pairing code here."));
+      error.helperDown = true;
+      throw error;
+    }
+  }
+  /** Checks the code with a test translation of "Hello" using the first installed pack. Returns the installed packs. */
+  async function testOfflineCode(code) {
+    const statusResponse = await callOfflineHelper("/api/offline/ping", {});
+    const status = await statusResponse.json();
+    if (!status.ok) {
+      const error = new Error(offlineText("msgOfflineNotRunning", "The helper is not running. Open the Atlas helper, then copy its pairing code here."));
+      error.helperDown = true;
+      throw error;
+    }
+    if (!status.engine) throw new Error(offlineText("msgOfflineNoEngine", "The offline engine is not installed in the helper. Install it from the helper window."));
+    if (!status.packs || status.packs.length === 0) throw new Error(offlineText("msgOfflineNoPacks", "No language pack is installed. Install one in the helper window."));
+    const response = await callOfflineHelper("/api/offline/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pairing: code, pair: status.packs[0], texts: ["Hello"] })
+    });
+    if (response.status === 403) throw new Error(offlineText("msgOfflineWrongCode", "The pairing code is wrong. Copy it again from the helper window."));
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.message || "HTTP " + response.status);
+    }
+    return status.packs;
+  }
+  $("#toggleOfflineCode").onclick = () => {
+    offlineCodeInput.type = offlineCodeInput.type === "text" ? "password" : "text";
+  };
+  $("#addOffline").onclick = async () => {
+    const code = offlineCodeInput.value.trim();
+    if (!/^[0-9a-fA-F]{64}$/.test(code)) {
+      setOfflineMessage(offlineText("msgOfflineCodeFormat", "The pairing code has 64 letters and digits. Copy it from the helper window."), "error");
+      return;
+    }
+    try {
+      const packs = await testOfflineCode(code);
+      twpConfig.set("offlineHelperCode", code);
+      let enabledServices = twpConfig.get("enabledServices");
+      if (!enabledServices.includes("offline")) {
+        enabledServices = [...enabledServices, "offline"];
+        twpConfig.set("enabledServices", enabledServices);
+      }
+      offlineCheckbox.disabled = false;
+      offlineCheckbox.checked = true;
+      updateServiceSelector(enabledServices);
+      setOfflineRunning(true);
+      setOfflineMessage(offlineText("msgOfflineConnected", "Connected. Language packs: " + packs.join(", "), packs.join(", ")), "ok");
+    } catch (e) {
+      setOfflineRunning(!e.helperDown);
+      setOfflineMessage(e.message || String(e), "error");
+    }
+  };
+  $("#removeOffline").onclick = () => {
+    twpConfig.set("offlineHelperCode", "");
+    offlineCodeInput.value = "";
+    setOfflineMessage(offlineText("msgOfflineRemoved", "Code removed. Offline (desktop helper) is off."));
+    offlineCheckbox.checked = false;
+    offlineCheckbox.disabled = true;
+    let enabledServices = twpConfig.get("enabledServices").filter(sv => sv !== "offline");
+    if (enabledServices.length === 0) {
+      enabledServices = ["google"];
+    }
+    twpConfig.set("enabledServices", enabledServices);
+    if (twpConfig.get("textTranslatorService") === "offline") {
+      twpConfig.set("textTranslatorService", enabledServices[0]);
+    }
+    if (twpConfig.get("pageTranslatorService") === "offline") {
+      twpConfig.set("pageTranslatorService", enabledServices[0]);
+    }
+    updateServiceSelector(enabledServices);
+    $("#pageTranslatorService").value = twpConfig.get("pageTranslatorService");
+    $("#textTranslatorService").value = twpConfig.get("textTranslatorService");
+  };
+  const storedOfflineCode = twpConfig.get("offlineHelperCode") || "";
+  offlineCodeInput.value = storedOfflineCode;
+  offlineCheckbox.disabled = !storedOfflineCode;
+  offlineCheckbox.checked = storedOfflineCode !== "" && twpConfig.get("enabledServices").includes("offline");
+  callOfflineHelper("/api/offline/ping", {}).then(r => r.json()).then(status => setOfflineRunning(status.ok === true), () => setOfflineRunning(false));
 
   // Firefox toolbar icon colour (background/background.js)
   $("#toolbarIconStyle").onchange = e => {

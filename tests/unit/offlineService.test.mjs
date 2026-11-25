@@ -1,0 +1,117 @@
+// Tests the Offline (desktop helper) service. Loads the real lib/languages.js, background/serviceHealth.js and background/translationService.js into one sandbox,
+// with a fake Atlas helper behind fetch(). Checks the offline service end to end (except the real engine).
+import fs from "fs";
+import vm from "vm";
+import assert from "assert";
+
+const ROOT = new URL("../../", import.meta.url).pathname;
+const settings = { enabledServices: ["offline"], offlineHelperCode: "c".repeat(64), customServices: [], useAlternativeService: "yes", textTranslatorService: "offline", pageTranslatorService: "offline" };
+const clock = { t: 1_000_000_000_000 };
+const logs = { warn: [], info: [], error: [] };
+const helper = { engine: true, packs: ["enfr", "fren"], code: "c".repeat(64), down: false, requests: [] };
+
+function resp(status, body) { return { ok: status >= 200 && status < 300, status, json: async () => body }; }
+
+async function fakeFetch(url, init = {}) {
+  if (!String(url).startsWith("http://127.0.0.1:47632")) throw new TypeError("not reachable in the test: " + url);
+  if (helper.down) throw new TypeError("connection refused");
+  if (url.endsWith("/api/offline/ping")) return resp(200, { ok: true, name: "Atlas Translation helper", engine: helper.engine, packs: helper.packs });
+  if (url.endsWith("/api/offline/translate")) {
+    const body = JSON.parse(init.body);
+    helper.requests.push(body);
+    if (body.pairing !== helper.code) return resp(403, { ok: false, message: "the pairing code is wrong." });
+    if (!helper.packs.includes(body.pair)) return resp(409, { ok: false, message: "the pack is not installed" });
+    if (body.texts.length > 500) return resp(400, { ok: false, message: "too many" });
+    return resp(200, { ok: true, translations: body.texts.map(t => `[${body.pair}] ${t.toUpperCase()}`) });
+  }
+  return resp(404, { ok: false });
+}
+
+const ctx = {
+  console: { log() {}, info: (...a) => logs.info.push(a.join(" ")), warn: (...a) => logs.warn.push(a.join(" ")), error: () => {} },
+  setTimeout, clearTimeout, AbortController, Date: { now: () => clock.t }, Promise, JSON, Map, Set, Array, Error, TypeError, Object, String, Number,
+  fetch: fakeFetch,
+  XMLHttpRequest: class { open() {} send() { this.onerror && this.onerror(new Error("no network in the test")); } setRequestHeader() {} },
+  window: {}, navigator: {}, location: {},
+  chrome: {
+    i18n: { getUILanguage: () => "en", getMessage: () => "" },
+    storage: { local: { get: async () => ({}), set: async () => {} } },
+    runtime: { onMessage: { addListener() {} }, lastError: null },
+    tabs: { sendMessage() {}, query: async () => [] },
+  },
+  twpConfig: {
+    get: key => settings[key],
+    set: (key, value) => { settings[key] = value; },
+    onReady: fn => fn(),
+  },
+  translationCache: { get: async () => null, set: async () => {}, remove: async () => {} },
+};
+vm.createContext(ctx);
+for (const file of ["lib/languages.js", "background/serviceHealth.js", "background/translationService.js"]) {
+  vm.runInContext(fs.readFileSync(ROOT + file, "utf8"), ctx, { filename: file });
+}
+const svc = vm.runInContext("translationService", ctx);
+
+const translate = (from, to, text) => svc.translateSingleText("offline", from, to, text, true);
+
+// 1. English to French through the helper.
+const enfr = await translate("en", "fr", "hello");
+assert.strictEqual(enfr, "[enfr] HELLO", "en to fr uses the enfr pack");
+assert.deepStrictEqual(helper.requests.at(-1).texts, ["hello"]);
+assert.strictEqual(helper.requests.at(-1).pair, "enfr");
+
+// 2. Several pieces of text keep their shape (page translation sends groups of text nodes).
+const shaped = await svc.translateHTML("offline", "fr", "en", [["bonjour", "monde"], ["merci"]], true);
+assert.deepStrictEqual(shaped, [["[fren] BONJOUR", "[fren] MONDE"], ["[fren] MERCI"]]);
+
+// 3. Pairs without English, and "auto", have no pack: the text is skipped without calling the helper.
+helper.requests.length = 0;
+await assert.rejects(translate("fr", "de", "bonjour"), /offline/);
+await assert.rejects(translate("auto", "fr", "hello"), /offline/);
+assert.strictEqual(helper.requests.length, 0, "no request is sent for a pair with no pack");
+
+// 4. A pack that is not installed is skipped before any text is sent.
+helper.packs = ["enfr"];
+clock.t += 11000; // the helper status is cached for 10 seconds
+await assert.rejects(translate("fr", "en", "bonjour"), /not installed/);
+assert.strictEqual(helper.requests.length, 0, "not-installed pack: nothing sent");
+helper.packs = ["enfr", "fren"];
+clock.t += 11000;
+
+// 5. A wrong pairing code is reported as a failure from the helper.
+settings.offlineHelperCode = "d".repeat(64);
+await assert.rejects(translate("en", "fr", "hello"));
+settings.offlineHelperCode = helper.code;
+
+// 6. No pairing code: skipped, nothing sent.
+settings.offlineHelperCode = "";
+helper.requests.length = 0;
+await assert.rejects(translate("en", "fr", "hello"), /pairing code/);
+assert.strictEqual(helper.requests.length, 0);
+settings.offlineHelperCode = helper.code;
+
+// 7. Helper not running: the request fails (a real failure).
+helper.down = true;
+await assert.rejects(translate("en", "fr", "hello"));
+helper.down = false;
+
+// 8. Back to normal once the helper answers again.
+clock.t += 11000;
+const again = await translate("en", "fr", "again");
+assert.strictEqual(again, "[enfr] AGAIN");
+
+// 9. Offline is never an alternate for an online service (settings: alternatives on, offline enabled).
+settings.enabledServices = ["deepl", "offline"];
+const alt = vm.runInContext("twpLang.getAlternativeService('fr', 'deepl', false)", ctx);
+assert.notStrictEqual(alt, "offline");
+
+// 10. The helper's "offline" is found in fallback: offline skipped, next candidate tried, the log says so.
+settings.enabledServices = ["offline", "google"];
+settings.offlineHelperCode = helper.code;
+helper.packs = ["enfr"];
+clock.t += 11000;
+logs.warn.length = 0;
+await assert.rejects(translate("fr", "en", "bonjour"));
+assert.ok(logs.warn.some(l => l.includes("offline")), "the fallback tried the next service after offline");
+
+console.log("offlineService.test.mjs: all assertions passed");

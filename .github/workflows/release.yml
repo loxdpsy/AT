@@ -201,6 +201,16 @@ jobs:
       ref: ${{ needs.prepare.outputs.sha }}
     secrets: inherit
 
+  # The offline translation engine (tools/atlas-engine), built for Windows, macOS and Linux. The helper installs it
+  # from the release. engine.yml also tests each program with a real language pack. A build failure stops the publish job.
+  engine:
+    name: Offline engine
+    needs: prepare
+    if: ${{ needs.prepare.result == 'success' }}
+    uses: ./.github/workflows/engine.yml
+    with:
+      ref: ${{ needs.prepare.outputs.sha }}
+
   # The atlas-updater helper, built for Windows, macOS and Linux. Every release carries all three programs,
   # so the helper is always the version that matches the release. A build failure stops the publish job.
   helper:
@@ -244,8 +254,8 @@ jobs:
 
   publish:
     name: Publish GitHub release
-    needs: [prepare, chromium, firefox, helper]
-    if: ${{ always() && needs.prepare.result == 'success' && needs.prepare.outputs.publish == 'true' && needs.chromium.result == 'success' && needs.firefox.result != 'cancelled' && needs.helper.result == 'success' }}
+    needs: [prepare, chromium, firefox, helper, engine]
+    if: ${{ always() && needs.prepare.result == 'success' && needs.prepare.outputs.publish == 'true' && needs.chromium.result == 'success' && needs.firefox.result != 'cancelled' && needs.helper.result == 'success' && needs.engine.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out the code
@@ -269,6 +279,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: atlas-updater-*
+          merge-multiple: true
+          path: dist
+
+      - name: Download the offline engine programs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: atlas-engine-*
           merge-multiple: true
           path: dist
 
@@ -319,6 +336,7 @@ jobs:
             echo "- **Microsoft Edge Add-ons:** \`atlas-translation-$VERSION-edge.zip\` (same package as Chromium). It is submitted to Edge automatically when the Edge secrets are set."
             echo "- **Chromium, self-hosting:** \`atlas-translation-$VERSION-chromium.crx\` (Chromium 109 or newer)"
             echo "- **Helper (atlas-updater):** \`atlas-updater-windows.exe\`, \`atlas-updater-macos\`, \`atlas-updater-linux\`. It installs the newest release into your unpacked copy. See tools/atlas-updater/README.md."
+            echo "- **Offline engine:** \`atlas-engine-windows.exe\`, \`atlas-engine-macos\`, \`atlas-engine-linux\`. The helper runs it for offline translation and installs it from here."
             if [ -f "dist/atlas-translation-$VERSION-firefox-signed.xpi" ]; then
               echo "- **Firefox, self-hosted:** \`atlas-translation-$VERSION-firefox-signed.xpi\` is signed. Open it in Firefox to install. Firefox then updates it from \`updates.json\` in this release. Firefox for Android installs from addons.mozilla.org only."
             else

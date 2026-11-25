@@ -202,7 +202,7 @@
 <option value="google">Google</option>
 <option value="bing">Bing</option>
 <option value="yandex">Yandex</option>
-<option value="deepl">DeepL</option><option value="groq">Groq (AI)</option>
+<option value="deepl">DeepL</option><option value="groq">Groq (AI)</option><option value="offline">Offline (desktop helper)</option>
 </select></div>
           </div>
           <div class="row">
@@ -213,7 +213,7 @@
 <option value="google">Google</option>
 <option value="bing">Bing</option>
 <option value="yandex">Yandex</option>
-<option value="deepl">DeepL</option><option value="groq">Groq (AI)</option>
+<option value="deepl">DeepL</option><option value="groq">Groq (AI)</option><option value="offline">Offline (desktop helper)</option>
 </select></div>
           </div>
         </div>
@@ -325,6 +325,11 @@
               <span class="service-name">Groq (AI)</span>
               <span class="service-note" data-i18n="msgGroqNeedsKey">Needs an API key</span>
             </label>
+            <label class="service" for="btnEnableOffline">
+              <input type="checkbox" id="btnEnableOffline" />
+              <span class="service-name">Offline (desktop helper)</span>
+              <span class="service-note" data-i18n="msgOfflineNeedsHelper">Needs the Atlas helper</span>
+            </label>
           </div>
           <div class="row">
             <div class="row-text">
@@ -382,6 +387,27 @@
             <button id="removeGroq" class="btn btn-danger" data-i18n="msgGroqRemove">Remove key</button>
           </div>
           <p class="message" id="groqApiResponse" role="status"></p>
+        </div>
+
+        <div class="card service-card" id="offlineCard">
+          <div class="service-head">
+            <div>
+              <h2 class="card-title" data-i18n="msgOfflineTitle">Offline (desktop helper)</h2>
+              <p class="card-desc" data-i18n="msgOfflineDescription">Translates on this computer, with no text sent to a web service. The Atlas helper runs the offline engine and keeps the language packs. Install the helper and a language pack, then paste the pairing code from the helper window here. If the helper is not running or a pack is missing, the next enabled service translates the text.</p>
+            </div>
+            <span class="status-pill" id="offlineStatus" hidden></span>
+          </div>
+          <label class="field-label" for="offlineCode" data-i18n="msgOfflineCodeLabel">Pairing code (from the helper window)</label>
+          <div class="input-row">
+            <input type="password" id="offlineCode" class="input" placeholder="64 characters from the helper window" autocomplete="off" spellcheck="false" />
+            <button class="btn btn-ghost" id="toggleOfflineCode" type="button">Show</button>
+          </div>
+          <div class="btn-row">
+            <button id="addOffline" class="btn btn-primary" data-i18n="msgOfflineSave">Save and test</button>
+            <button id="removeOffline" class="btn btn-danger" data-i18n="msgOfflineRemove">Remove code</button>
+            <a class="btn btn-ghost" id="offlineGetHelper" href="https://github.com/loxdpsy/AT/releases" target="_blank" rel="noopener" data-i18n="msgOfflineGetHelper">Get the helper</a>
+          </div>
+          <p class="message" id="offlineApiResponse" role="status"></p>
         </div>
 
         <div class="card service-card">
