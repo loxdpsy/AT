@@ -6,8 +6,6 @@ Not released yet. Changes after 0.0.2.1 will be listed here.
 
 ## 0.0.2.2
 
-Not released yet. This version is in progress; the list grows until it is released.
-
 - Desktop helper: its version is the extension's version (0.0.2.2 for this version), and a README section describes it.
 - Local files (file://): when the browser has not allowed the extension to read file pages, the popup says so and how to allow it (#91, #1051).
 - Local files (file://): "Never translate this site" and "Always translate this site" now work on a local file. The rule applies to that file (#91, #1051).
