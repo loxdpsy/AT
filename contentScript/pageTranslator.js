@@ -1018,7 +1018,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
   }
 
   // ---- Page language helpers: auto-translate decisions, language switches on the same page, right-to-left targets ----
-  const rightToLeftLanguages = ["ar", "he", "iw", "fa", "ur", "ps", "sd", "ug", "yi", "dv", "ckb"];
+  const rightToLeftLanguages = ["ar", "he", "iw", "fa", "prs", "ur", "ps", "sd", "ug", "yi", "dv", "ckb"];
   function isRightToLeftLanguage(langCode) {
     return rightToLeftLanguages.indexOf(String(langCode || "").split("-")[0].toLowerCase()) !== -1;
   }
