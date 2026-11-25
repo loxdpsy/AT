@@ -1,8 +1,9 @@
 name: Firefox build
 
 # Builds Atlas Translation for Firefox and Firefox for Android. There are two channels, each with its own add-on ID:
-#   - "unlisted" (default): the GitHub build. It keeps update_url and is never sent to addons.mozilla.org. It is unsigned for
-#     now: Mozilla rejected the GitHub add-on ID as a duplicate, so the unlisted signing step was removed until that is fixed.
+#   - "unlisted" (default): the GitHub build. It keeps update_url. With "submit" on, it is signed by addons.mozilla.org as
+#     an UNLISTED add-on (never listed or published). The signed .xpi replaces the unsigned one in the atlas-translation-firefox
+#     artifact, which the Release workflow attaches to the GitHub release. With "submit" off it stays unsigned.
 #   - "listed": the Firefox store (addons.mozilla.org). It uses FIREFOX_STORE_ID below and drops update_url (AMO refuses it
 #     on listed add-ons). Its ZIP is uploaded as atlas-translation-firefox-store. With "submit" on, the version is sent to
 #     Mozilla for review through the API. Mozilla publishes it after approval.
@@ -24,14 +25,14 @@ on:
         type: string
         default: ""
       channel:
-        description: "unlisted = GitHub build (unsigned for now, never sent to addons.mozilla.org). listed = Firefox store version (public after Mozilla approves it)."
+        description: "unlisted = GitHub build (signed as an unlisted add-on when submit is on, never public). listed = Firefox store version (public after Mozilla approves it)."
         type: choice
         options:
           - unlisted
           - listed
         default: unlisted
       submit:
-        description: "Send the store version (listed) to addons.mozilla.org for review. Needs the AMO secrets. The GitHub build is not signed for now."
+        description: "Send the store version (listed) to addons.mozilla.org for review, and sign the GitHub build as an unlisted add-on. Needs the AMO secrets."
         type: boolean
         default: false
   workflow_call:
@@ -121,6 +122,38 @@ jobs:
           if [ "$CHANNEL" = "listed" ]; then FLAG=""; else FLAG="--self-hosted"; fi
           npx --yes web-ext@8 lint --source-dir build/staging/firefox $FLAG --output text > build/web-ext-lint.txt 2>&1 || true
 
+      - name: Sign the GitHub build (addons.mozilla.org, unlisted)
+        if: ${{ inputs.submit && inputs.channel != 'listed' }}
+        env:
+          AMO_JWT_ISSUER: ${{ secrets.AMO_JWT_ISSUER }}
+          AMO_JWT_SECRET: ${{ secrets.AMO_JWT_SECRET }}
+        run: |
+          # Unlisted signing: Mozilla signs the file but never lists or publishes it.
+          mkdir -p build
+          if [ -z "$AMO_JWT_ISSUER" ] || [ -z "$AMO_JWT_SECRET" ]; then
+            echo "AMO keys are not set. The GitHub build stays unsigned." | tee build/amo-sign.log
+            echo "not signed: the AMO secrets are not set" > build/amo-sign-status.txt
+            exit 0
+          fi
+          echo "failed: the unlisted signing did not finish. See the log below." > build/amo-sign-status.txt
+          set -o pipefail
+          npx --yes web-ext@8 sign \
+            --source-dir build/staging/firefox \
+            --artifacts-dir build/signed-github \
+            --channel unlisted \
+            --api-key "$AMO_JWT_ISSUER" \
+            --api-secret "$AMO_JWT_SECRET" 2>&1 | tee build/amo-sign.log || exit 1
+          SIGNED=$(ls build/signed-github/*.xpi 2>/dev/null | head -n 1)
+          if [ -z "$SIGNED" ]; then
+            echo "No signed file came back from addons.mozilla.org." >&2
+            exit 1
+          fi
+          VERSION=$(python3 -c "import json; print(json.load(open('firefox_manifest.json'))['version'])")
+          cp "$SIGNED" "build/atlas-translation-$VERSION-firefox-signed.xpi"
+          # The unsigned .xpi must not be published next to the signed one.
+          rm -f "build/atlas-translation-$VERSION-firefox.xpi"
+          echo "signed: the GitHub build is signed by addons.mozilla.org as an unlisted add-on (not public)." > build/amo-sign-status.txt
+
       - name: Upload the GitHub build
         if: ${{ inputs.channel != 'listed' }}
         uses: actions/upload-artifact@v4
@@ -171,7 +204,11 @@ jobs:
             --api-key "$AMO_JWT_ISSUER" \
             --api-secret "$AMO_JWT_SECRET" \
             $APPROVAL 2>&1 | tee build/amo-submit.log
-          echo "sent: the store version is with Mozilla for review. It is public after approval." > build/amo-status.txt
+          if [ "$CHANNEL" = "listed" ]; then
+            echo "sent: the store version is with Mozilla for review. It is public after approval." > build/amo-status.txt
+          else
+            echo "sent: the GitHub build is signed." > build/amo-status.txt
+          fi
 
       - name: Upload the signed add-on
         if: ${{ inputs.submit && inputs.channel == 'listed' }}
@@ -191,7 +228,7 @@ jobs:
             echo "- Build result: **${{ job.status }}**"
             echo "- Channel: \`${{ inputs.channel }}\`"
             STATUS=$(cat build/amo-status.txt 2>/dev/null || echo "not requested (submit is off)")
-            if [ "${{ inputs.channel }}" != "listed" ]; then STATUS=$(cat build/amo-sign-status.txt 2>/dev/null || echo "unsigned: the GitHub build is not sent to addons.mozilla.org"); fi
+            if [ "${{ inputs.channel }}" != "listed" ]; then STATUS=$(cat build/amo-sign-status.txt 2>/dev/null || echo "not signed (submit is off)"); fi
             if [ -f build/amo-sign.log ] && grep -q "has been blocked" build/amo-sign.log; then
               STATUS="blocked by addons.mozilla.org. Mozilla blocked this runner's IP address after many submissions. Do not run again until the block is lifted. Repeated runs can extend it."
             fi
