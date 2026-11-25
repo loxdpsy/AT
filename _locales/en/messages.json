@@ -674,5 +674,11 @@
   },
   "msgGroqRemove": {
     "message": "Remove key"
+  },
+  "msgPageSentToGroq": {
+    "message": "Text on this page is sent to Groq to be translated. Groq is an AI service."
+  },
+  "msgPageSentToDeepL": {
+    "message": "Text on this page is sent to DeepL to be translated."
   }
 }

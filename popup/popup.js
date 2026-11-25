@@ -114,6 +114,14 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
         button.classList.add("w3-buttonSelected");
       }
     });
+    // Groq and DeepL send the page text to another company. Say so while the page service is one of them.
+    const sendsText = {
+      groq: ["msgPageSentToGroq", "Text on this page is sent to Groq to be translated. Groq is an AI service."],
+      deepl: ["msgPageSentToDeepL", "Text on this page is sent to DeepL to be translated."]
+    }[currentPageTranslatorService];
+    const notice = $("#serviceNotice");
+    notice.textContent = sendsText ? text(sendsText[0], sendsText[1]) : "";
+    notice.hidden = !sendsText;
   }
   updateInterface();
   $("#btnSwitchInterfaces").addEventListener("click", () => {
