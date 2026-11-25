@@ -829,6 +829,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
       currentTargetLanguage = targetLanguage;
     }
     customDictionary = sortDictionary(twpConfig.get("customDictionary"));
+    applyPageDirection(currentTargetLanguage);
 
     if (location.hostname === "sberbank.com" || location.hostname === "www.sberbank.com") {
       document.body.classList.remove("notranslate");
@@ -851,6 +852,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     translationRoutine();
   };
   pageTranslator.restorePage = function () {
+    restorePageDirection();
     fooCount++;
     piecesToTranslate = [];
     showOriginal.disable();
@@ -979,6 +981,71 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     });
   }
 
+  // ---- Page language helpers: auto-translate decisions, language switches on the same page, right-to-left targets ----
+  const rightToLeftLanguages = ["ar", "he", "iw", "fa", "ur", "ps", "sd", "ug", "yi", "dv", "ckb"];
+  function isRightToLeftLanguage(langCode) {
+    return rightToLeftLanguages.indexOf(String(langCode || "").split("-")[0].toLowerCase()) !== -1;
+  }
+  // True when a page in langCode should be translated on load: its language is in alwaysTranslateLangs, or
+  // translateAllLanguages is on and the language is not in neverTranslateLangs.
+  function languageNeedsAutoTranslate(langCode) {
+    if (!langCode || langCode === "und" || langCode === currentTargetLanguage) return false;
+    if (twpConfig.get("alwaysTranslateLangs").indexOf(langCode) !== -1) return true;
+    return twpConfig.get("translateAllLanguages") === "yes" && twpConfig.get("neverTranslateLangs").indexOf(langCode) === -1;
+  }
+  // Some sites switch language on the same page (for example Simplified and Traditional Chinese) and change <html lang>.
+  let languageWatchStarted = false;
+  let languageChangeTimer = null;
+  function watchPageLanguageChanges() {
+    if (languageWatchStarted || !window.MutationObserver) return;
+    languageWatchStarted = true;
+    const observer = new MutationObserver(() => {
+      clearTimeout(languageChangeTimer);
+      languageChangeTimer = setTimeout(onPageLanguageAttributeChanged, 300);
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["lang"] });
+  }
+  function onPageLanguageAttributeChanged() {
+    const langCode = twpLang.fixTLanguageCode(document.documentElement.getAttribute("lang") || "");
+    if (!langCode || langCode === originalTabLanguage) return;
+    originalTabLanguage = langCode;
+    if (pageLanguageState === "translated") {
+      // Translate the new text, or leave the page as it is when the site now shows the target language.
+      if (langCode !== currentTargetLanguage) {
+        pageTranslator.translatePage();
+      } else {
+        pageTranslator.restorePage();
+      }
+    } else if (!platformInfo.isMobile.any && !chrome.extension.inIncognitoContext && twpConfig.get("neverTranslateSites").indexOf(tabHostName) === -1) {
+      if (languageNeedsAutoTranslate(langCode) || twpConfig.get("alwaysTranslateSites").indexOf(tabHostName) !== -1) {
+        pageTranslator.translatePage();
+      }
+    }
+    observers.forEach(callback => callback(originalTabLanguage));
+  }
+  // While translated, the page is flipped (dir="rtl" or "ltr") when its direction differs from the target language's.
+  // restorePage puts the original dir attribute back.
+  let pageDirectionChanged = false;
+  let pageDirectionBefore = null;
+  function applyPageDirection(langCode) {
+    const root = document.documentElement;
+    const wanted = isRightToLeftLanguage(langCode) ? "rtl" : "ltr";
+    if (getComputedStyle(root).direction === wanted) return;
+    pageDirectionBefore = root.getAttribute("dir");
+    root.setAttribute("dir", wanted);
+    pageDirectionChanged = true;
+  }
+  function restorePageDirection() {
+    if (!pageDirectionChanged) return;
+    const root = document.documentElement;
+    if (pageDirectionBefore === null) {
+      root.removeAttribute("dir");
+    } else {
+      root.setAttribute("dir", pageDirectionBefore);
+    }
+    pageDirectionChanged = false;
+    pageDirectionBefore = null;
+  }
   // Requests the detection of the tab language in the background
   if (window.self === window.top) {
     // is main frame
@@ -1008,7 +1075,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
             ) {
               if (pageLanguageState === "original" && !platformInfo.isMobile.any && !chrome.extension.inIncognitoContext) {
                 if (twpConfig.get("neverTranslateSites").indexOf(tabHostName) === -1) {
-                  if (langCode && langCode !== currentTargetLanguage && twpConfig.get("alwaysTranslateLangs").indexOf(langCode) !== -1) {
+                  if (languageNeedsAutoTranslate(langCode)) {
                     pageTranslator.translatePage();
                   } else if (twpConfig.get("alwaysTranslateSites").indexOf(tabHostName) !== -1) {
                     pageTranslator.translatePage();
@@ -1020,6 +1087,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
         }
         observers.forEach(callback => callback(originalTabLanguage));
         alreadyGotTheLanguage = true;
+        watchPageLanguageChanges();
       });
     };
     setTimeout(function () {
