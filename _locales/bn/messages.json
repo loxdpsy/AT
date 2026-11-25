@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "ওয়েব পৃষ্ঠা ও নির্বাচিত লেখা নিজের জায়গায় অনুবাদ করুন, আপনার পছন্দের অনুবাদ সেবা দিয়ে।"
+  },
+  "aboutVersion": {
+    "message": "সংস্করণ"
+  },
+  "aboutCreditsTitle": {
+    "message": "কৃতজ্ঞতা ও লাইসেন্স"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation হলো TWP - Translate Web Pages-এর পরিবর্তিত সংস্করণ, যা [[author]] তৈরি করেছেন। মূল কাজের জন্য ধন্যবাদ। কোডটি [[license]]-এর অধীনে প্রকাশিত। সোর্সে NOTICE.md ও LICENSE দেখুন।"
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "সোর্স কোড"
+  },
+  "aboutLinkIssue": {
+    "message": "সমস্যা জানান"
+  },
+  "aboutLinkPrivacy": {
+    "message": "গোপনীয়তা নীতি"
+  },
+  "aboutLinkSecurity": {
+    "message": "নিরাপত্তা ও গোপনীয়তা"
+  },
+  "aboutLinkOriginal": {
+    "message": "মূল প্রকল্প"
+  },
+  "aboutBentoTitle": {
+    "message": "Etherealmber-এর আরও প্রকল্প"
+  },
+  "aboutWebKicker": {
+    "message": "ওয়েব অ্যাপ"
+  },
+  "aboutWebDesc": {
+    "message": "Cloudflare Workers-এ চলা বিক্রয়কেন্দ্র ও ERP। এই এক্সটেনশনের Atlas লোগো ও রঙের থিম এই প্রকল্প থেকে নেওয়া।"
+  },
+  "aboutAndroidKicker": {
+    "message": "অ্যান্ড্রয়েড অ্যাপ"
+  },
+  "aboutAndroidDesc": {
+    "message": "Android-এর জন্য Atlas Commerce অ্যাপ, Kotlin ও Jetpack Compose দিয়ে তৈরি।"
+  },
+  "aboutDesktopKicker": {
+    "message": "ডেস্কটপ অ্যাপ"
+  },
+  "aboutDesktopDesc": {
+    "message": "ডেস্কটপের জন্য Atlas Commerce অ্যাপ, Rust ও egui দিয়ে লেখা। MIT লাইসেন্সপ্রাপ্ত।"
+  },
+  "aboutThanks": {
+    "message": "Atlas Translation ব্যবহার করার জন্য ধন্যবাদ, এবং যারা এটি অনুবাদে সাহায্য করছেন তাদের সবাইকে।"
   }
 }

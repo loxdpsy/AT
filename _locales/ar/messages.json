@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "ترجم صفحات الويب والنص المحدد في مكانه، باستخدام خدمة الترجمة التي تختارها."
+  },
+  "aboutVersion": {
+    "message": "الإصدار"
+  },
+  "aboutCreditsTitle": {
+    "message": "الشكر والترخيص"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation نسخة معدّلة من TWP - Translate Web Pages، أنشأها [[author]]. شكراً على العمل الأصلي. يصدر الكود بموجب [[license]]. انظر NOTICE.md وLICENSE في المصدر."
+  },
+  "aboutLicenseName": {
+    "message": "رخصة Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "الكود المصدري"
+  },
+  "aboutLinkIssue": {
+    "message": "الإبلاغ عن مشكلة"
+  },
+  "aboutLinkPrivacy": {
+    "message": "سياسة الخصوصية"
+  },
+  "aboutLinkSecurity": {
+    "message": "الأمان والخصوصية"
+  },
+  "aboutLinkOriginal": {
+    "message": "المشروع الأصلي"
+  },
+  "aboutBentoTitle": {
+    "message": "المزيد من Etherealmber"
+  },
+  "aboutWebKicker": {
+    "message": "تطبيق ويب"
+  },
+  "aboutWebDesc": {
+    "message": "نقطة بيع وتخطيط موارد مؤسسية تعمل على Cloudflare Workers. شعار Atlas وسمة الألوان في هذه الإضافة مأخوذة من هذا المشروع."
+  },
+  "aboutAndroidKicker": {
+    "message": "تطبيق أندرويد"
+  },
+  "aboutAndroidDesc": {
+    "message": "تطبيق Atlas Commerce لنظام أندرويد، مبني باستخدام Kotlin وJetpack Compose."
+  },
+  "aboutDesktopKicker": {
+    "message": "تطبيق سطح المكتب"
+  },
+  "aboutDesktopDesc": {
+    "message": "تطبيق Atlas Commerce لسطح المكتب، مكتوب بلغة Rust باستخدام egui. مرخص بموجب MIT."
+  },
+  "aboutThanks": {
+    "message": "شكراً لاستخدامك Atlas Translation، ولكل من يساعد في ترجمته."
   }
 }

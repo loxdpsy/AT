@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "Překládejte webové stránky a vybraný text přímo na místě pomocí služby, kterou si zvolíte."
+  },
+  "aboutVersion": {
+    "message": "Verze"
+  },
+  "aboutCreditsTitle": {
+    "message": "Poděkování a licence"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation je upravená verze projektu TWP - Translate Web Pages, jehož autorem je [[author]]. Děkujeme za původní práci. Kód je vydán pod licencí [[license]]. Viz NOTICE.md a LICENSE ve zdrojovém kódu."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "Zdrojový kód"
+  },
+  "aboutLinkIssue": {
+    "message": "Nahlásit problém"
+  },
+  "aboutLinkPrivacy": {
+    "message": "Zásady ochrany osobních údajů"
+  },
+  "aboutLinkSecurity": {
+    "message": "Zabezpečení a soukromí"
+  },
+  "aboutLinkOriginal": {
+    "message": "Původní projekt"
+  },
+  "aboutBentoTitle": {
+    "message": "Více od Etherealmber"
+  },
+  "aboutWebKicker": {
+    "message": "Webová aplikace"
+  },
+  "aboutWebDesc": {
+    "message": "Prodejní místo a ERP, které běží na Cloudflare Workers. Logo Atlas a barevné téma tohoto rozšíření pochází z tohoto projektu."
+  },
+  "aboutAndroidKicker": {
+    "message": "Aplikace pro Android"
+  },
+  "aboutAndroidDesc": {
+    "message": "Aplikace Atlas Commerce pro Android, vytvořená v Kotlinu a Jetpack Compose."
+  },
+  "aboutDesktopKicker": {
+    "message": "Aplikace pro počítač"
+  },
+  "aboutDesktopDesc": {
+    "message": "Aplikace Atlas Commerce pro počítač, napsaná v Rustu s egui. Licence MIT."
+  },
+  "aboutThanks": {
+    "message": "Děkujeme, že používáte Atlas Translation, a všem, kdo pomáhají s jeho překladem."
   }
 }

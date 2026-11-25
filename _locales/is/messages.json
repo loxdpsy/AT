@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "Þýddu vefsíður og valinn texta á staðnum, með þeirri þýðingarþjónustu sem þú velur."
+  },
+  "aboutVersion": {
+    "message": "Útgáfa"
+  },
+  "aboutCreditsTitle": {
+    "message": "Þakkir og leyfi"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation er breytt útgáfa af TWP - Translate Web Pages, sem [[author]] bjó til. Þakkir fyrir upprunalega verkið. Kóðinn er gefinn út undir [[license]]. Sjá NOTICE.md og LICENSE í frumkóðanum."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "Frumkóði"
+  },
+  "aboutLinkIssue": {
+    "message": "Tilkynna vandamál"
+  },
+  "aboutLinkPrivacy": {
+    "message": "Persónuverndarstefna"
+  },
+  "aboutLinkSecurity": {
+    "message": "Öryggi og friðhelgi"
+  },
+  "aboutLinkOriginal": {
+    "message": "Upprunalegt verkefni"
+  },
+  "aboutBentoTitle": {
+    "message": "Meira frá Etherealmber"
+  },
+  "aboutWebKicker": {
+    "message": "Vefforrit"
+  },
+  "aboutWebDesc": {
+    "message": "Sölu- og ERP-kerfi sem keyrir á Cloudflare Workers. Atlas-merkið og litaþemað í þessari viðbót koma frá þessu verkefni."
+  },
+  "aboutAndroidKicker": {
+    "message": "Android-forrit"
+  },
+  "aboutAndroidDesc": {
+    "message": "Atlas Commerce forritið fyrir Android, smíðað með Kotlin og Jetpack Compose."
+  },
+  "aboutDesktopKicker": {
+    "message": "Skjáborðsforrit"
+  },
+  "aboutDesktopDesc": {
+    "message": "Atlas Commerce forritið fyrir skjáborð, skrifað í Rust með egui. MIT-leyfi."
+  },
+  "aboutThanks": {
+    "message": "Takk fyrir að nota Atlas Translation og öllum sem hjálpa til við að þýða það."
   }
 }

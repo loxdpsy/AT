@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "Web-betlerdi hám tańlanǵan tekstti ornında awdarıń, óz tańlaǵan awdarma xizmeti menen."
+  },
+  "aboutVersion": {
+    "message": "Versiya"
+  },
+  "aboutCreditsTitle": {
+    "message": "Minnetdarshılıq hám licenziya"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation — [[author]] tárepinen jaratılǵan TWP - Translate Web Pages dástúriniń ózgertilgen nusqası. Dáslepki jumıs ushın rahmet. Kod [[license]] astında járiyalanǵan. Derek kodtıń ishinde NOTICE.md hám LICENSE qarań."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "Derek kod"
+  },
+  "aboutLinkIssue": {
+    "message": "Máseleni xabarlaw"
+  },
+  "aboutLinkPrivacy": {
+    "message": "Shaxsıy máǵlıwmat siyasatı"
+  },
+  "aboutLinkSecurity": {
+    "message": "Qáwipsizlik hám shaxsıylıq"
+  },
+  "aboutLinkOriginal": {
+    "message": "Dáslepki joba"
+  },
+  "aboutBentoTitle": {
+    "message": "Etherealmber’den basqa jobalar"
+  },
+  "aboutWebKicker": {
+    "message": "Web qosımsha"
+  },
+  "aboutWebDesc": {
+    "message": "Cloudflare Workers’te isleytuǵın satıw hám ERP sistema. Bul keńeytpeniń Atlas logotipi hám tús temasi usı jobadan alınǵan."
+  },
+  "aboutAndroidKicker": {
+    "message": "Android qosımsha"
+  },
+  "aboutAndroidDesc": {
+    "message": "Android ushın Atlas Commerce qosımshası, Kotlin hám Jetpack Compose menen jasalǵan."
+  },
+  "aboutDesktopKicker": {
+    "message": "Desktop qosımsha"
+  },
+  "aboutDesktopDesc": {
+    "message": "Desktop ushın Atlas Commerce qosımshası, Rust hám egui menen jazılǵan. MIT licenziyası."
+  },
+  "aboutThanks": {
+    "message": "Atlas Translation’dı qollanǵanıńız ushın rahmet hám onı awdarıwǵa járdem beretuǵın barlıq adamlarǵa rahmet."
   }
 }

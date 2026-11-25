@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "Oversett nettsider og valgt tekst på stedet, med oversettelsestjenesten du velger."
+  },
+  "aboutVersion": {
+    "message": "Versjon"
+  },
+  "aboutCreditsTitle": {
+    "message": "Kreditering og lisens"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation er en endret versjon av TWP - Translate Web Pages, laget av [[author]]. Takk for det opprinnelige arbeidet. Koden er utgitt under [[license]]. Se NOTICE.md og LICENSE i kildekoden."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "Kildekode"
+  },
+  "aboutLinkIssue": {
+    "message": "Rapporter et problem"
+  },
+  "aboutLinkPrivacy": {
+    "message": "Personvernerklæring"
+  },
+  "aboutLinkSecurity": {
+    "message": "Sikkerhet og personvern"
+  },
+  "aboutLinkOriginal": {
+    "message": "Opprinnelig prosjekt"
+  },
+  "aboutBentoTitle": {
+    "message": "Mer fra Etherealmber"
+  },
+  "aboutWebKicker": {
+    "message": "Nettapp"
+  },
+  "aboutWebDesc": {
+    "message": "Kasse- og ERP-system som kjører på Cloudflare Workers. Atlas-logoen og fargetemaet i denne utvidelsen kommer fra dette prosjektet."
+  },
+  "aboutAndroidKicker": {
+    "message": "Android-app"
+  },
+  "aboutAndroidDesc": {
+    "message": "Atlas Commerce-appen for Android, laget med Kotlin og Jetpack Compose."
+  },
+  "aboutDesktopKicker": {
+    "message": "Skrivebordsapp"
+  },
+  "aboutDesktopDesc": {
+    "message": "Atlas Commerce-appen for skrivebord, skrevet i Rust med egui. MIT-lisens."
+  },
+  "aboutThanks": {
+    "message": "Takk for at du bruker Atlas Translation, og til alle som hjelper til med å oversette det."
   }
 }

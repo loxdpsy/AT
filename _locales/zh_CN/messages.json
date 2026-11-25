@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "在页面上直接翻译网页和选中的文字，使用您选择的翻译服务。"
+  },
+  "aboutVersion": {
+    "message": "版本"
+  },
+  "aboutCreditsTitle": {
+    "message": "致谢与许可"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation 是 TWP - Translate Web Pages 的修改版，原作者为 [[author]]。感谢原始工作。本代码依据 [[license]] 发布。请参阅源代码中的 NOTICE.md 和 LICENSE。"
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "源代码"
+  },
+  "aboutLinkIssue": {
+    "message": "报告问题"
+  },
+  "aboutLinkPrivacy": {
+    "message": "隐私政策"
+  },
+  "aboutLinkSecurity": {
+    "message": "安全与隐私"
+  },
+  "aboutLinkOriginal": {
+    "message": "原始项目"
+  },
+  "aboutBentoTitle": {
+    "message": "Etherealmber 的更多项目"
+  },
+  "aboutWebKicker": {
+    "message": "网页应用"
+  },
+  "aboutWebDesc": {
+    "message": "运行在 Cloudflare Workers 上的销售与 ERP 系统。本扩展的 Atlas 标志和配色主题来自该项目。"
+  },
+  "aboutAndroidKicker": {
+    "message": "Android 应用"
+  },
+  "aboutAndroidDesc": {
+    "message": "为 Android 打造的 Atlas Commerce 应用，使用 Kotlin 和 Jetpack Compose 构建。"
+  },
+  "aboutDesktopKicker": {
+    "message": "桌面应用"
+  },
+  "aboutDesktopDesc": {
+    "message": "为桌面打造的 Atlas Commerce 应用，使用 Rust 和 egui 编写。MIT 许可证。"
+  },
+  "aboutThanks": {
+    "message": "感谢您使用 Atlas Translation，也感谢所有帮助翻译它的人。"
   }
 }

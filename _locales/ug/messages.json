@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "ئۆزىڭىز تاللىغان تەرجىمە مۇلازىمىتى ئارقىلىق تور بەتلەرنى ۋە تاللانغان تېكىستنى شۇ يەردىلا تەرجىمە قىلىڭ."
+  },
+  "aboutVersion": {
+    "message": "نەشرى"
+  },
+  "aboutCreditsTitle": {
+    "message": "تۆھپىكارلار ۋە لىتسېنزىيە"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation — [[author]] يارىتقان TWP - Translate Web Pages نىڭ تەھرىرلەنگەن نەشرى. ئەسلى ئەمگىكى ئۈچۈن رەھمەت. كود [[license]] ئاستىدا تارقىتىلىدۇ. مەنبەدىكى NOTICE.md ۋە LICENSE نى كۆرۈڭ."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "مەنبە كودى"
+  },
+  "aboutLinkIssue": {
+    "message": "مەسىلە ھەققىدە خەۋەر بېرىش"
+  },
+  "aboutLinkPrivacy": {
+    "message": "مەخپىيەتلىك سىياسىتى"
+  },
+  "aboutLinkSecurity": {
+    "message": "بىخەتەرلىك ۋە مەخپىيەتلىك"
+  },
+  "aboutLinkOriginal": {
+    "message": "ئەسلى لايىھە"
+  },
+  "aboutBentoTitle": {
+    "message": "Etherealmber نىڭ باشقا لايىھەلىرى"
+  },
+  "aboutWebKicker": {
+    "message": "تور ئەپ"
+  },
+  "aboutWebDesc": {
+    "message": "Cloudflare Workers دا ئىشلەيدىغان سېتىش ۋە ERP سىستېمىسى. بۇ كېڭەيتمىنىڭ Atlas لوگوتىپى ۋە رەڭ تېمىسى مۇشۇ لايىھەدىن ئېلىنغان."
+  },
+  "aboutAndroidKicker": {
+    "message": "Android ئەپ"
+  },
+  "aboutAndroidDesc": {
+    "message": "Kotlin ۋە Jetpack Compose بىلەن ياسالغان Android ئۈچۈن Atlas Commerce ئەپى."
+  },
+  "aboutDesktopKicker": {
+    "message": "ئۈستەل كومپيۇتېر ئەپ"
+  },
+  "aboutDesktopDesc": {
+    "message": "Rust ۋە egui بىلەن يېزىلغان ئۈستەل كومپيۇتېر ئۈچۈن Atlas Commerce ئەپى. MIT لىتسېنزىيىسى."
+  },
+  "aboutThanks": {
+    "message": "Atlas Translation نى ئىشلەتكىنىڭىز ئۈچۈن رەھمەت، ئۇنى تەرجىمە قىلىشقا ياردەم بەرگەن ھەممەيلەنگە رەھمەت."
   }
 }

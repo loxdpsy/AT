@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "Tulkojiet tīmekļa lapas un atlasīto tekstu vietā, ar tulkošanas pakalpojumu, kuru izvēlaties."
+  },
+  "aboutVersion": {
+    "message": "Versija"
+  },
+  "aboutCreditsTitle": {
+    "message": "Pateicības un licence"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation ir modificēta TWP - Translate Web Pages versija, ko izveidoja [[author]]. Pateicamies par oriģinālo darbu. Kods tiek izplatīts saskaņā ar [[license]]. Skatiet NOTICE.md un LICENSE pirmkodā."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "Pirmkods"
+  },
+  "aboutLinkIssue": {
+    "message": "Ziņot par problēmu"
+  },
+  "aboutLinkPrivacy": {
+    "message": "Privātuma politika"
+  },
+  "aboutLinkSecurity": {
+    "message": "Drošība un privātums"
+  },
+  "aboutLinkOriginal": {
+    "message": "Oriģinālais projekts"
+  },
+  "aboutBentoTitle": {
+    "message": "Vairāk no Etherealmber"
+  },
+  "aboutWebKicker": {
+    "message": "Tīmekļa lietotne"
+  },
+  "aboutWebDesc": {
+    "message": "Pārdošanas un ERP sistēma, kas darbojas uz Cloudflare Workers. Šā paplašinājuma Atlas logotips un krāsu tēma nāk no šā projekta."
+  },
+  "aboutAndroidKicker": {
+    "message": "Android lietotne"
+  },
+  "aboutAndroidDesc": {
+    "message": "Atlas Commerce lietotne Android ierīcēm, izveidota ar Kotlin un Jetpack Compose."
+  },
+  "aboutDesktopKicker": {
+    "message": "Darbvirsmas lietotne"
+  },
+  "aboutDesktopDesc": {
+    "message": "Atlas Commerce lietotne datoriem, rakstīta Rust valodā ar egui. MIT licence."
+  },
+  "aboutThanks": {
+    "message": "Paldies, ka lietojat Atlas Translation, un visiem, kas palīdz to tulkot."
   }
 }

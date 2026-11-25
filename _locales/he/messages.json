@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "תרגמו דפי אינטרנט וטקסט מסומן במקום, עם שירות התרגום שאתם בוחרים."
+  },
+  "aboutVersion": {
+    "message": "גרסה"
+  },
+  "aboutCreditsTitle": {
+    "message": "קרדיטים ורישיון"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation היא גרסה מותאמת של TWP - Translate Web Pages, שנוצרה על ידי [[author]]. תודה על העבודה המקורית. הקוד מופץ תחת [[license]]. ראו NOTICE.md ו-LICENSE בקוד המקור."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "קוד מקור"
+  },
+  "aboutLinkIssue": {
+    "message": "דיווח על בעיה"
+  },
+  "aboutLinkPrivacy": {
+    "message": "מדיניות פרטיות"
+  },
+  "aboutLinkSecurity": {
+    "message": "אבטחה ופרטיות"
+  },
+  "aboutLinkOriginal": {
+    "message": "הפרויקט המקורי"
+  },
+  "aboutBentoTitle": {
+    "message": "עוד מ-Etherealmber"
+  },
+  "aboutWebKicker": {
+    "message": "אפליקציית אינטרנט"
+  },
+  "aboutWebDesc": {
+    "message": "מערכת קופה וניהול משאבים (ERP) שפועלת על Cloudflare Workers. לוגו Atlas ונושא הצבעים של התוסף הזה מגיעים מהפרויקט הזה."
+  },
+  "aboutAndroidKicker": {
+    "message": "אפליקציית אנדרואיד"
+  },
+  "aboutAndroidDesc": {
+    "message": "אפליקציית Atlas Commerce לאנדרואיד, שנבנתה עם Kotlin ו-Jetpack Compose."
+  },
+  "aboutDesktopKicker": {
+    "message": "אפליקציית שולחן עבודה"
+  },
+  "aboutDesktopDesc": {
+    "message": "אפליקציית Atlas Commerce לשולחן העבודה, שנכתבה ב-Rust עם egui. ברישיון MIT."
+  },
+  "aboutThanks": {
+    "message": "תודה שאתם משתמשים ב-Atlas Translation, ולכל מי שעוזר לתרגם אותה."
   }
 }

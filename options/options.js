@@ -1,12 +1,38 @@
 "use strict";
 
 var $ = document.querySelector.bind(document);
+
+// The About credits sentence holds [[author]] and [[license]]. They become links here, so translations can
+// move them anywhere without putting HTML in the messages.
+function renderAboutCredits() {
+  const target = document.getElementById("aboutCredits");
+  if (!target) return;
+  const links = {
+    author: { text: "FilipePS", href: "https://github.com/FilipePS" },
+    license: { text: twpI18n.getMessage("aboutLicenseName"), href: "https://www.mozilla.org/MPL/2.0/" }
+  };
+  target.textContent = "";
+  for (const part of twpI18n.getMessage("aboutCredits").split(/(\[\[\w+\]\])/)) {
+    const match = /^\[\[(\w+)\]\]$/.exec(part);
+    if (match && links[match[1]]) {
+      const link = document.createElement("a");
+      link.href = links[match[1]].href;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = links[match[1]].text;
+      target.append(link);
+    } else if (part) {
+      target.append(part);
+    }
+  }
+}
 twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("temporaryUiLanguage"))).then(() => {
   twpI18n.translateDocument();
   // About section: name and version come from the installed manifest, so they match the build.
   const manifest = chrome.runtime.getManifest();
   $("#appName").textContent = manifest.name;
   $("#appVersion").textContent = manifest.version;
+  renderAboutCredits();
   document.querySelector("[data-i18n='msgDefaultLanguage']").textContent = twpI18n.getMessage("msgDefaultLanguage") + " - Default language";
   const temporaryUiLanguage = sessionStorage.getItem("temporaryUiLanguage");
   sessionStorage.removeItem("temporaryUiLanguage");

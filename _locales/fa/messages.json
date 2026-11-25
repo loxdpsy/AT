@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "صفحه‌های وب و متن انتخاب‌شده را همان‌جا با سرویس ترجمه‌ای که انتخاب می‌کنید ترجمه کنید."
+  },
+  "aboutVersion": {
+    "message": "نسخه"
+  },
+  "aboutCreditsTitle": {
+    "message": "قدردانی و مجوز"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation نسخه‌ای اصلاح‌شده از TWP - Translate Web Pages است که توسط [[author]] ساخته شده است. از کار اصلی سپاسگزاریم. کد تحت [[license]] منتشر می‌شود. به NOTICE.md و LICENSE در کد منبع مراجعه کنید."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "کد منبع"
+  },
+  "aboutLinkIssue": {
+    "message": "گزارش مشکل"
+  },
+  "aboutLinkPrivacy": {
+    "message": "سیاست حریم خصوصی"
+  },
+  "aboutLinkSecurity": {
+    "message": "امنیت و حریم خصوصی"
+  },
+  "aboutLinkOriginal": {
+    "message": "پروژه اصلی"
+  },
+  "aboutBentoTitle": {
+    "message": "بیشتر از Etherealmber"
+  },
+  "aboutWebKicker": {
+    "message": "برنامه وب"
+  },
+  "aboutWebDesc": {
+    "message": "سیستم فروشگاهی و ERP که روی Cloudflare Workers اجرا می‌شود. لوگوی Atlas و تم رنگی این افزونه از این پروژه گرفته شده‌اند."
+  },
+  "aboutAndroidKicker": {
+    "message": "برنامه اندروید"
+  },
+  "aboutAndroidDesc": {
+    "message": "برنامه Atlas Commerce برای اندروید، ساخته‌شده با Kotlin و Jetpack Compose."
+  },
+  "aboutDesktopKicker": {
+    "message": "برنامه دسکتاپ"
+  },
+  "aboutDesktopDesc": {
+    "message": "برنامه Atlas Commerce برای دسکتاپ، نوشته‌شده با Rust و egui. دارای مجوز MIT."
+  },
+  "aboutThanks": {
+    "message": "از اینکه از Atlas Translation استفاده می‌کنید و به همه کسانی که در ترجمه آن کمک می‌کنند سپاسگزاریم."
   }
 }

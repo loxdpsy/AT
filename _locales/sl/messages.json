@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "Spletne strani in izbrano besedilo prevajajte kar na mestu, s storitvijo prevajanja, ki jo izberete."
+  },
+  "aboutVersion": {
+    "message": "Različica"
+  },
+  "aboutCreditsTitle": {
+    "message": "Zahvale in licenca"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation je spremenjena različica projekta TWP - Translate Web Pages, ki ga je ustvaril/-a [[author]]. Hvala za izvirno delo. Koda je objavljena pod licenco [[license]]. Glejte NOTICE.md in LICENSE v izvorni kodi."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "Izvorna koda"
+  },
+  "aboutLinkIssue": {
+    "message": "Prijavi težavo"
+  },
+  "aboutLinkPrivacy": {
+    "message": "Politika zasebnosti"
+  },
+  "aboutLinkSecurity": {
+    "message": "Varnost in zasebnost"
+  },
+  "aboutLinkOriginal": {
+    "message": "Izvirni projekt"
+  },
+  "aboutBentoTitle": {
+    "message": "Več od Etherealmber"
+  },
+  "aboutWebKicker": {
+    "message": "Spletna aplikacija"
+  },
+  "aboutWebDesc": {
+    "message": "Prodajni in ERP sistem, ki deluje na Cloudflare Workers. Logotip Atlas in barvna tema te razširitve prihajata iz tega projekta."
+  },
+  "aboutAndroidKicker": {
+    "message": "Aplikacija za Android"
+  },
+  "aboutAndroidDesc": {
+    "message": "Aplikacija Atlas Commerce za Android, izdelana s Kotlinom in Jetpack Compose."
+  },
+  "aboutDesktopKicker": {
+    "message": "Namizna aplikacija"
+  },
+  "aboutDesktopDesc": {
+    "message": "Namizna aplikacija Atlas Commerce, napisana v Rustu z egui. Licenca MIT."
+  },
+  "aboutThanks": {
+    "message": "Hvala, ker uporabljate Atlas Translation, in vsem, ki pomagajo pri njegovem prevajanju."
   }
 }

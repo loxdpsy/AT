@@ -47,3 +47,12 @@
 #about .bento-heading {
   padding: 16px 4px 10px;
 }
+
+/* The thanks line sits at the bottom of the credits card, lined up with the buttons above it. */
+#about .about-thanks {
+  margin: 0;
+  padding: 4px 16px 14px;
+  color: var(--sub);
+  font-size: 13px;
+  line-height: 1.6;
+}

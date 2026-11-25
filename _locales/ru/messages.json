@@ -512,5 +512,59 @@
   },
   "lblMoreFromEtherealmber": {
     "message": "More from Etherealmber"
+  },
+  "aboutTagline": {
+    "message": "Переводите веб-страницы и выделенный текст прямо на месте, с помощью выбранного вами сервиса перевода."
+  },
+  "aboutVersion": {
+    "message": "Версия"
+  },
+  "aboutCreditsTitle": {
+    "message": "Благодарности и лицензия"
+  },
+  "aboutCredits": {
+    "message": "Atlas Translation — изменённая версия TWP - Translate Web Pages, созданной автором [[author]]. Спасибо за исходную работу. Код распространяется по лицензии [[license]]. См. NOTICE.md и LICENSE в исходном коде."
+  },
+  "aboutLicenseName": {
+    "message": "Mozilla Public License 2.0"
+  },
+  "aboutLinkSource": {
+    "message": "Исходный код"
+  },
+  "aboutLinkIssue": {
+    "message": "Сообщить о проблеме"
+  },
+  "aboutLinkPrivacy": {
+    "message": "Политика конфиденциальности"
+  },
+  "aboutLinkSecurity": {
+    "message": "Безопасность и конфиденциальность"
+  },
+  "aboutLinkOriginal": {
+    "message": "Исходный проект"
+  },
+  "aboutBentoTitle": {
+    "message": "Другие проекты Etherealmber"
+  },
+  "aboutWebKicker": {
+    "message": "Веб-приложение"
+  },
+  "aboutWebDesc": {
+    "message": "Система продаж и ERP, работающая на Cloudflare Workers. Логотип Atlas и цветовая тема этого расширения взяты из этого проекта."
+  },
+  "aboutAndroidKicker": {
+    "message": "Приложение для Android"
+  },
+  "aboutAndroidDesc": {
+    "message": "Приложение Atlas Commerce для Android, созданное на Kotlin и Jetpack Compose."
+  },
+  "aboutDesktopKicker": {
+    "message": "Приложение для компьютера"
+  },
+  "aboutDesktopDesc": {
+    "message": "Приложение Atlas Commerce для компьютера, написанное на Rust с egui. Лицензия MIT."
+  },
+  "aboutThanks": {
+    "message": "Спасибо, что пользуетесь Atlas Translation, и всем, кто помогает с его переводом."
   }
 }
