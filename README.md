@@ -37,6 +37,7 @@ Other extensions with a similar name are not Atlas Translation. Store links will
   - Yandex Translate
   - DeepL (official API, your own key)
   - LibreTranslate (your own server and key)
+  - When a service fails, the next enabled service that supports the language translates the text. A service that fails three times in a row is skipped for five minutes (see *Notes and limits*).
 - **Text-to-speech** for translated text (Chromium 109+ and Firefox).
 - **Update check** script that uses the GitHub API and respects the rate limit (see *Checking for updates*).
 - **Per-site and per-language rules**: never translate a site or language, always translate, auto-translate links.
@@ -276,6 +277,7 @@ The icon sources are `icons/icon.svg` and `icons/icon-translated.svg`. The PNG s
 
 - Translation services are external. Google, Bing, Yandex, DeepL, and LibreTranslate have their own terms and limits. DeepL and LibreTranslate need your own key or server.
 - Yandex reads a short-lived session id from a public page. If Yandex changes that page, the service stops until the code is updated.
+- Fallback between services is per browser and resets when the browser restarts the extension. The popup still shows the service you chose, even when another one translated the page. Only the enabled services are used as fallbacks.
 - Text-to-speech needs an audio-capable context. Chromium uses an offscreen document (Chromium 109+). Firefox plays directly.
 
 ## License

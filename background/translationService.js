@@ -535,6 +535,8 @@ const translationService = function () {
       /** @type {Promise<void>[]} */
       const promises = [];
       let captchaError = null;
+      // A request that fails does not throw, so the caller can only tell from this count that the service failed.
+      let failedRequests = 0;
       for (const request of requests) {
         promises.push(this.makeRequest(sourceLanguage, targetLanguage, request).then(response => {
           const results = this.cbParseResponse(response);
@@ -551,6 +553,7 @@ const translationService = function () {
           }
         }).catch(e => {
           console.error(e);
+          failedRequests++;
           if (e instanceof ServiceCaptchaError) {
             captchaError = e;
             this.sendCookies = true; // the captcha is solved in the browser, so its cookie must be sent next time
@@ -571,6 +574,9 @@ const translationService = function () {
       }
       await Promise.all(promises);
       if (captchaError) throw captchaError;
+      if (requests.length > 0 && failedRequests === requests.length) {
+        throw new Error(`${this.serviceName}: every request failed`);
+      }
       return currentTranslationsInProgress.map(transInfo => this.cbTransformResponse(transInfo.translatedText, dontSortResults));
     }
 
@@ -1149,20 +1155,66 @@ const translationService = function () {
       return null;
     }
   };
-  translationService.translateHTML = async (serviceName, sourceLanguage, targetLanguage, sourceArray2d, dontSaveInPersistentCache = false, dontSortResults = false) => {
-    serviceName = twpLang.getAlternativeService(targetLanguage, serviceName, true);
-    const service = getSafeServiceByName(serviceName);
-    return await service.translate(sourceLanguage, targetLanguage, sourceArray2d, dontSaveInPersistentCache, dontSortResults);
+  /**
+   * The services to try for one request, in order: the service the user chose (or its language alternative), then the
+   * other enabled services that support the language. A service that does not support the language is never tried.
+   * @param {string} serviceName
+   * @param {string} targetLanguage
+   * @param {boolean} forPageTranslation
+   * @returns {string[]}
+   */
+  function serviceCandidates(serviceName, targetLanguage, forPageTranslation) {
+    const enabled = () => twpConfig.get("enabledServices") || [];
+    const customServices = () => twpConfig.get("customServices") || [];
+    const names = [];
+    const first = twpLang.getAlternativeService(targetLanguage, serviceName, forPageTranslation);
+    if (first && (enabled().includes(first) || customServices().find(cs => cs.name === first))) names.push(first);
+    for (const name of enabled()) {
+      if (names.includes(name)) continue;
+      // Only a service that supports the language itself (not one of its alternatives) is a fallback.
+      if (twpLang.getAlternativeService(targetLanguage, name, forPageTranslation) !== name) continue;
+      names.push(name);
+    }
+    return names;
+  }
+  const serviceHealth = createServiceHealth();
+  /**
+   * Translates with the first service in serviceCandidates that works. Failures are recorded (see serviceHealth.js).
+   * @param {string} serviceName
+   * @param {string} targetLanguage
+   * @param {boolean} forPageTranslation
+   * @param {(service: Service) => Promise<*>} translateWith
+   * @param {((error: unknown) => void)|null} onCaptcha called for each captcha challenge, even when another service then works
+   */
+  function translateWithFallback(serviceName, targetLanguage, forPageTranslation, translateWith, onCaptcha) {
+    const candidates = serviceCandidates(serviceName, targetLanguage, forPageTranslation);
+    return runWithServiceFallback(
+      candidates,
+      serviceHealth,
+      name => translateWith(getSafeServiceByName(name)),
+      (error, name) => {
+        console.warn(`Translation with ${name} failed. Trying the next service.`);
+        if (error instanceof ServiceCaptchaError && onCaptcha) onCaptcha(error);
+      }
+    ).then(({ result, service }) => {
+      if (service !== candidates[0]) console.info(`Translated with ${service} because ${candidates[0]} is not working.`);
+      return result;
+    });
+  }
+  translationService.translateHTML = async (serviceName, sourceLanguage, targetLanguage, sourceArray2d, dontSaveInPersistentCache = false, dontSortResults = false, onCaptcha = null) => {
+    return await translateWithFallback(serviceName, targetLanguage, true,
+      service => service.translate(sourceLanguage, targetLanguage, sourceArray2d, dontSaveInPersistentCache, dontSortResults),
+      onCaptcha);
   };
   translationService.translateText = async (serviceName, sourceLanguage, targetLanguage, sourceArray, dontSaveInPersistentCache = false) => {
-    serviceName = twpLang.getAlternativeService(targetLanguage, serviceName, false);
-    const service = getSafeServiceByName(serviceName);
-    return (await service.translate(sourceLanguage, targetLanguage, sourceArray.map(text => [text]), dontSaveInPersistentCache)).map(result => result[0]);
+    return await translateWithFallback(serviceName, targetLanguage, false,
+      async service => (await service.translate(sourceLanguage, targetLanguage, sourceArray.map(text => [text]), dontSaveInPersistentCache)).map(result => result[0]),
+      null);
   };
   translationService.translateSingleText = async (serviceName, sourceLanguage, targetLanguage, originalText, dontSaveInPersistentCache = false) => {
-    serviceName = twpLang.getAlternativeService(targetLanguage, serviceName, false);
-    const service = getSafeServiceByName(serviceName);
-    return (await service.translate(sourceLanguage, targetLanguage, [[originalText]], dontSaveInPersistentCache))[0][0];
+    return await translateWithFallback(serviceName, targetLanguage, false,
+      async service => (await service.translate(sourceLanguage, targetLanguage, [[originalText]], dontSaveInPersistentCache))[0][0],
+      null);
   };
   /**
    * Adds the tokens of one Groq answer to the running total the popup shows. The total is approximate:
@@ -1217,10 +1269,9 @@ const translationService = function () {
       dontSaveInPersistentCache = sender.tab ? sender.tab.incognito : false;
     }
     if (request.action === "translateHTML") {
-      translationService.translateHTML(request.translationService, request.sourceLanguage, request.targetLanguage, request.sourceArray2d, dontSaveInPersistentCache, request.dontSortResults).then(results => sendResponse(results)).catch(e => {
+      translationService.translateHTML(request.translationService, request.sourceLanguage, request.targetLanguage, request.sourceArray2d, dontSaveInPersistentCache, request.dontSortResults, error => notifyCaptchaRequired(error, sender)).then(results => sendResponse(results)).catch(e => {
         sendResponse();
         console.error(e);
-        notifyCaptchaRequired(e, sender);
       });
       return true;
     } else if (request.action === "translateText") {

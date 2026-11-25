@@ -15,6 +15,7 @@ Not released yet. Changes after 0.0.2.1 will be listed here.
 - Reset to defaults has the same fix.
 - Updates: the Reload extension button reloads Atlas Translation from its folder after the new zip is extracted over it. Chromium cannot install a newer unpacked copy by itself.
 - Options: an open settings page says once that it must be refreshed after the extension is reloaded, instead of showing many errors.
+- Translation: when a service fails (Google, Bing, Yandex, DeepL, Groq or LibreTranslate), the text is translated by the next enabled service that supports the language. A service that fails three times in a row is skipped for five minutes, then tried again. Google and Bing use endpoints that are not official APIs, so this keeps pages translating when one of them breaks. Before, a failed request left the text untranslated.
 - Czech: the "extension has been updated" message showed the extension name where the version belongs. It now shows the version.
 - Translators: `npm run locales:check` lists the messages each language is missing, and any placeholder that differs from English. The unit tests fail if a language has a placeholder problem.
 - The 36 messages added for the update check, the CAPTCHA notice, Groq and the toolbar icon style are not translated yet in any of the 40 languages. Those languages show English for them until they are translated.
