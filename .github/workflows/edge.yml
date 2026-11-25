@@ -51,6 +51,7 @@ jobs:
           path: dist
 
       - name: Upload the package and submit it
+        id: submit
         if: steps.check.outputs.ready == 'true'
         run: |
           set -euo pipefail
@@ -84,6 +85,10 @@ jobs:
                 Succeeded) return 0 ;;
                 Failed)
                   echo "$body"
+                  # Edge accepts one submission at a time. Return 2 so the caller can report it without failing the run.
+                  if printf '%s' "$body" | jq -e '.errorCode == "InProgressSubmission"' >/dev/null 2>&1; then
+                    return 2
+                  fi
                   echo "::error::Edge $label failed. See the response above."
                   return 1 ;;
               esac
@@ -128,9 +133,23 @@ jobs:
             exit 1
           fi
           loc=$(tr -d '\r' < "$headers" | grep -i '^location:' | sed 's/^[Ll]ocation: *//' || true)
+          rc=0
           if [ -n "$loc" ]; then
             echo "Submission operation: $loc"
+            set +e
             wait_for_operation "$(resolve "$loc" "submissions/operations")" "submission"
+            rc=$?
+            set -e
+          fi
+          if [ "$rc" = "2" ]; then
+            # The package is in the draft. Edge will not take a second submission until the earlier one finishes.
+            echo "::warning::Edge is still reviewing an earlier submission, so $VERSION was not submitted. The package is in the draft. Run this job again (or submit in Partner Center) after that review finishes."
+            echo "waiting" > edge-state.txt
+            echo "state=waiting" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$rc" != "0" ]; then
+            exit 1
           fi
           echo "Submitted $VERSION to Edge Add-ons for certification."
 
@@ -142,6 +161,8 @@ jobs:
             echo
             if [ "${{ steps.check.outputs.ready }}" != "true" ]; then
               echo "Skipped. Set the EDGE_PRODUCT_ID, EDGE_CLIENT_ID and EDGE_API_KEY secrets to submit automatically."
+            elif [ "${{ steps.submit.outputs.state }}" = "waiting" ]; then
+              echo "The package is in the Edge draft, but **not submitted**. Edge is still reviewing an earlier version, and it accepts one submission at a time. Run this job again after that review finishes, or submit the draft in Partner Center."
             elif [ "${{ job.status }}" = "success" ]; then
               echo "The package was uploaded and submitted for certification. Edge usually certifies within a few business days."
             else

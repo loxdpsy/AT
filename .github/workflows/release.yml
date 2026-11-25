@@ -96,7 +96,8 @@ jobs:
             node scripts/sync-version.mjs "$VERSION"
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add manifest.json firefox_manifest.json
+            # Every file that sync-version.mjs changes. Staging only the manifests left package.json and the README badge behind.
+            git add manifest.json firefox_manifest.json package.json package-lock.json README.md
             if git diff --cached --quiet; then
               echo "manifest.json already has version $VERSION."
             else

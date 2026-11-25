@@ -17,7 +17,7 @@ import { fileURLToPath } from "node:url";
 export const VERSION_RE = /^\d+(\.\d+){0,3}$/;
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const JSON_FILES = ["manifest.json", "firefox_manifest.json", "package.json", "package-lock.json"];
-const README_BADGE = /(img\.shields\.io\/badge\/version-)[^-\s)]+(-)/;
+export const README_BADGE = /(img\.shields\.io\/badge\/version-)[^-\s)]+(-)/;
 
 // Returns [{ file, where, version }] for every place a version is written.
 export async function readVersions() {

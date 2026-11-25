@@ -1,0 +1,48 @@
+name: README sync
+
+# Every day, and on demand, set the version badge at the top of README.md to the latest published release.
+# The release workflow sets the badge when it makes a version. This job catches releases made by hand.
+# It commits only when the badge is out of date. The result is in the run summary.
+# The release date, issues, pull requests, and license badges are live shields.io badges and are not synced.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: readme-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Set the README version badge to the latest release
+        id: sync
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/sync-readme.mjs
+
+      - name: Commit the badge change
+        if: steps.sync.outputs.result == 'changed'
+        env:
+          VERSION: ${{ steps.sync.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "README: version badge to $VERSION"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+          echo "Pushed the README badge for $VERSION to ${GITHUB_REF_NAME}." >> "$GITHUB_STEP_SUMMARY"

@@ -156,6 +156,8 @@ jobs:
           fi
           # A listed version is sent for review and the job does not wait for the approval (that can take days).
           if [ "$CHANNEL" = "listed" ]; then APPROVAL="--approval-timeout 0"; else APPROVAL=""; fi
+          # Overwritten below if the upload succeeds, so a failed run never reports success.
+          echo "failed: the upload did not finish. See the log below." > build/amo-status.txt
           set -o pipefail
           npx --yes web-ext@8 sign \
             --source-dir build/staging/firefox \
@@ -188,7 +190,11 @@ jobs:
             echo ""
             echo "- Build result: **${{ job.status }}**"
             echo "- Channel: \`${{ inputs.channel }}\`"
-            echo "- addons.mozilla.org: **$(cat build/amo-status.txt 2>/dev/null || echo "not requested (submit is off)")**"
+            STATUS=$(cat build/amo-status.txt 2>/dev/null || echo "not requested (submit is off)")
+            if [ -f build/amo-submit.log ] && grep -q "has been blocked" build/amo-submit.log; then
+              STATUS="blocked by addons.mozilla.org. Mozilla blocked this runner's IP address after many submissions. Do not run again until the block is lifted. Repeated runs can extend it."
+            fi
+            echo "- addons.mozilla.org: **$STATUS**"
             echo "- Commit: \`${GITHUB_SHA:0:7}\`"
             echo ""
             echo "| File | Size | SHA-256 (first 16) |"
