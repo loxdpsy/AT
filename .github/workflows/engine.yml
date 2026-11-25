@@ -73,14 +73,14 @@ jobs:
         with:
           node-version: 22
 
-      # Windows only: PCRE2 for ssplit comes from vcpkg (the static build with the dynamic C runtime, the same as the
-      # rest of the MSVC build). CMAKE_PREFIX_PATH points CMake at it. See tools/atlas-engine/CMakeLists.txt.
+      # Windows only: PCRE2 for ssplit comes from vcpkg, built as a static library with the static C runtime (/MT), the
+      # same runtime marian-dev and bergamot use. CMAKE_PREFIX_PATH points CMake at it. See tools/atlas-engine/CMakeLists.txt.
       - name: Install PCRE2 (Windows)
         if: runner.os == 'Windows'
         run: |
           root=$(cygpath -u "$VCPKG_INSTALLATION_ROOT")
-          "$root/vcpkg.exe" install pcre2:x64-windows-static-md
-          echo "CMAKE_PREFIX_PATH=$(cygpath -m "$root/installed/x64-windows-static-md")" >> "$GITHUB_ENV"
+          "$root/vcpkg.exe" install pcre2:x64-windows-static
+          echo "CMAKE_PREFIX_PATH=$(cygpath -m "$root/installed/x64-windows-static")" >> "$GITHUB_ENV"
 
       - name: Configure
         id: configure

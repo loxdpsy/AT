@@ -42,6 +42,10 @@ if(WIN32)
   # The vcpkg PCRE2 is a static library. pcre2.h declares its functions as DLL imports unless PCRE2_STATIC is defined,
   # which gives unresolved __imp_ symbols at link time.
   add_compile_definitions(PCRE2_STATIC)
+  # marian-dev and bergamot compile with /MT (the static C runtime) and link Release without MSVCRT. Every target here
+  # must use the same runtime, or the link fails (run 45588723062: no C runtime symbols at all, and pcre2 built with /MD).
+  # The vcpkg PCRE2 above is the x64-windows-static triplet for the same reason.
+  set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 else()
   set(SSPLIT_USE_INTERNAL_PCRE2 ON CACHE BOOL "" FORCE)
 endif()
