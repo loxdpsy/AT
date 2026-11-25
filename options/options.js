@@ -700,7 +700,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     twpConfig.set("useAlternativeService", e.target.value);
   };
   $("#useAlternativeService").value = twpConfig.get("useAlternativeService");
-  const pageTranslationServices = ["google", "bing", "yandex", "deepl"];
+  const pageTranslationServices = ["google", "bing", "yandex", "deepl", "groq"];
   const updateServiceSelector = enabledServices => {
     document.querySelectorAll("#pageTranslatorService option").forEach(option => option.setAttribute("hidden", ""));
     document.querySelectorAll("#textTranslatorService option").forEach(option => option.setAttribute("hidden", ""));
@@ -728,6 +728,9 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
   }, {
     selector: "#btnEnableDeepL",
     svName: "deepl"
+  }, {
+    selector: "#btnEnableGroq",
+    svName: "groq"
   }];
   servicesInfo.forEach(svInfo => {
     $(svInfo.selector).oninput = e => {
@@ -907,6 +910,100 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     $("#libreURL").value = libre.url;
     $("#libreKEY").value = libre.apiKey;
   }
+
+  // Groq (AI). Each user adds their own key. The key is checked with GET /models, which uses no tokens.
+  const groqKeyInput = $("#groqKEY");
+  const groqMessage = $("#groqApiResponse");
+  const groqCheckbox = $("#btnEnableGroq");
+  const groqModelInput = $("#groqModel");
+  const defaultGroqModel = "llama-3.3-70b-versatile";
+  function setGroqMessage(text, kind = "") {
+    groqMessage.textContent = text;
+    groqMessage.className = "message" + (kind ? " " + kind : "");
+  }
+  async function requestGroqModels(apiKey) {
+    const response = await fetch("https://api.groq.com/openai/v1/models", {
+      headers: {
+        Authorization: "Bearer " + apiKey.trim()
+      }
+    });
+    const body = await response.json().catch(() => null);
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        throw new Error(`Groq rejected this key (${response.status}). Check that it is copied correctly.`);
+      }
+      if (response.status === 429) {
+        throw new Error("Too many requests to Groq. Try again in a moment.");
+      }
+      throw new Error("Groq error: " + (body && body.error && body.error.message || "HTTP " + response.status));
+    }
+    return (body && Array.isArray(body.data) ? body.data : []).map(model => model.id);
+  }
+  $("#toggleGroqKey").onclick = () => {
+    const showing = groqKeyInput.type === "text";
+    groqKeyInput.type = showing ? "password" : "text";
+    $("#toggleGroqKey").textContent = showing ? "Show" : "Hide";
+  };
+  $("#addGroq").onclick = async () => {
+    const apiKey = groqKeyInput.value.trim();
+    const model = groqModelInput.value.trim() || defaultGroqModel;
+    if (!apiKey) {
+      setGroqMessage("Paste your Groq API key first.", "error");
+      return;
+    }
+    setGroqMessage("Checking the key…");
+    try {
+      const modelIds = await requestGroqModels(apiKey);
+      twpConfig.set("groqApiKey", apiKey);
+      twpConfig.set("groqModel", model);
+      const enabledServices = twpConfig.get("enabledServices");
+      if (!enabledServices.includes("groq")) {
+        twpConfig.set("enabledServices", [...enabledServices, "groq"]);
+      }
+      groqCheckbox.disabled = false;
+      groqCheckbox.checked = true;
+      updateServiceSelector(twpConfig.get("enabledServices"));
+      if (modelIds.includes(model)) {
+        setGroqMessage("Key saved. Groq is ready to use.", "ok");
+      } else {
+        setGroqMessage(`Key saved. The model "${model}" is not in Groq's list, so translation may fail. Choose another model name.`, "error");
+      }
+    } catch (e) {
+      setGroqMessage(e.message || String(e), "error");
+    }
+  };
+  $("#removeGroq").onclick = () => {
+    twpConfig.set("groqApiKey", "");
+    groqKeyInput.value = "";
+    setGroqMessage("Key removed. Groq is disabled.");
+    groqCheckbox.checked = false;
+    groqCheckbox.disabled = true;
+    let enabledServices = twpConfig.get("enabledServices").filter(sv => sv !== "groq");
+    if (enabledServices.length === 0) {
+      enabledServices = ["google"];
+    }
+    twpConfig.set("enabledServices", enabledServices);
+    if (twpConfig.get("textTranslatorService") === "groq") {
+      twpConfig.set("textTranslatorService", enabledServices[0]);
+    }
+    if (twpConfig.get("pageTranslatorService") === "groq") {
+      twpConfig.set("pageTranslatorService", enabledServices[0]);
+    }
+    updateServiceSelector(enabledServices);
+    $("#pageTranslatorService").value = twpConfig.get("pageTranslatorService");
+    $("#textTranslatorService").value = twpConfig.get("textTranslatorService");
+  };
+  const storedGroqKey = twpConfig.get("groqApiKey") || "";
+  groqModelInput.value = twpConfig.get("groqModel") || defaultGroqModel;
+  groqKeyInput.value = storedGroqKey;
+  groqCheckbox.disabled = !storedGroqKey;
+  groqCheckbox.checked = storedGroqKey !== "" && twpConfig.get("enabledServices").includes("groq");
+
+  // Firefox toolbar icon colour (background/background.js)
+  $("#toolbarIconStyle").onchange = e => {
+    twpConfig.set("toolbarIconStyle", e.target.value);
+  };
+  $("#toolbarIconStyle").value = twpConfig.get("toolbarIconStyle");
 
   // DeepL (official API)
   const deeplKeyInput = $("#deeplKEY");

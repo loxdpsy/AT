@@ -633,4 +633,46 @@
   ,"translationCaptchaClose": {
     "message": "Close"
   }
+  ,"popupSectionSite": {
+    "message": "This site"
+  }
+  ,"popupSectionLanguage": {
+    "message": "This language"
+  }
+  ,"popupSectionDisplay": {
+    "message": "Display"
+  },
+  "lblToolbarIconStyle": {
+    "message": "Firefox toolbar icon colour"
+  },
+  "msgIconAuto": {
+    "message": "Follow the theme"
+  },
+  "msgIconBlack": {
+    "message": "Black"
+  },
+  "msgIconWhite": {
+    "message": "White"
+  },
+  "msgIconBlue": {
+    "message": "Blue"
+  },
+  "msgGroqNeedsKey": {
+    "message": "Needs an API key"
+  },
+  "msgGroqDescription": {
+    "message": "An AI model that translates whole sections in context. Add your own key from console.groq.com. The text you translate is sent to Groq with that key."
+  },
+  "msgGroqKeyLabel": {
+    "message": "Groq API key"
+  },
+  "msgGroqModelLabel": {
+    "message": "Model"
+  },
+  "msgGroqSave": {
+    "message": "Save and test"
+  },
+  "msgGroqRemove": {
+    "message": "Remove key"
+  }
 }

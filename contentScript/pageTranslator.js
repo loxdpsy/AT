@@ -747,6 +747,14 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
             }
             return false;
           }
+          // A piece whose top and bottom both lie outside the screen can still cover it (one tall block).
+          // Such a piece was skipped until the user scrolled past it, which left parts of the page untranslated.
+          function pieceOverlapsScreen(ptt) {
+            if (!ptt.topElement) return false;
+            const top = ptt.topElement.getBoundingClientRect();
+            const bottom = (ptt.bottomElement || ptt.topElement).getBoundingClientRect();
+            return top.top < innerHeight && bottom.bottom > 0;
+          }
           function bottomIsInScreen(element) {
             if (!element) {
               // debugger;
@@ -762,7 +770,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
           const piecesToTranslateNow = [];
           piecesToTranslate.forEach(ptt => {
             if (!ptt.isTranslated) {
-              if (bottomIsInScreen(ptt.topElement) || topIsInScreen(ptt.bottomElement)) {
+              if (bottomIsInScreen(ptt.topElement) || topIsInScreen(ptt.bottomElement) || pieceOverlapsScreen(ptt)) {
                 ptt.isTranslated = true;
                 piecesToTranslateNow.push(ptt);
               }
@@ -818,6 +826,30 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     pageLanguageStateObservers.push(callback);
   };
   var translationRoutine_handler = null;
+  // MV3 keep-alive. While a page is translated, this open port keeps the extension's service worker running, so the
+  // in-memory translation cache is not lost to an idle restart halfway down a page. Released when the page is restored.
+  let backgroundPort = null;
+  function keepBackgroundAlive() {
+    if (backgroundPort || !chrome.runtime.connect) return;
+    try {
+      backgroundPort = chrome.runtime.connect({ name: "twpKeepAlive" });
+      backgroundPort.onDisconnect.addListener(() => {
+        void chrome.runtime.lastError;
+        backgroundPort = null;
+      });
+    } catch (e) {
+      backgroundPort = null;
+    }
+  }
+  function releaseBackground() {
+    if (!backgroundPort) return;
+    try {
+      backgroundPort.disconnect();
+    } catch (e) {
+      // the port is already closed
+    }
+    backgroundPort = null;
+  }
   pageTranslator.translatePage = function (targetLanguage) {
     fooCount++;
     pageTranslator.restorePage();
@@ -849,6 +881,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     currentPageLanguage = currentTargetLanguage;
     translatePageTitle();
     enableMutatinObserver();
+    keepBackgroundAlive();
     translationRoutine();
   };
   pageTranslator.restorePage = function () {
@@ -922,6 +955,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
       }
     } else if (request.action === "restorePage") {
       pageTranslator.restorePage();
+      releaseBackground();
     } else if (request.action === "getOriginalTabLanguage") {
       pageTranslator.onGetOriginalTabLanguage(function () {
         sendResponse(originalTabLanguage);
@@ -1157,8 +1191,24 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
         observers.forEach(callback => callback(originalTabLanguage));
         alreadyGotTheLanguage = true;
         watchPageLanguageChanges();
+        watchUrlChanges();
       });
     };
+    // Single-page sites change the address without a new load (history.pushState). Check the address every second,
+    // and when it changes on a page that is still in its original language, run the same language decision again.
+    let urlWatchStarted = false;
+    function watchUrlChanges() {
+      if (urlWatchStarted) return;
+      urlWatchStarted = true;
+      let lastHref = location.href;
+      setInterval(() => {
+        if (location.href === lastHref) return;
+        lastHref = location.href;
+        if (pageLanguageState === "original" && !translationCaptchaDialog) {
+          onTabVisible();
+        }
+      }, 1000);
+    }
     setTimeout(function () {
       if (document.visibilityState == "visible") {
         onTabVisible();

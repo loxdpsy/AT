@@ -403,8 +403,8 @@ const translationService = function () {
       const requests = [];
       /** @type {TranslationInfo[]} */
       const currentTranslationsInProgress = [];
-      let currentRequest = [];
-      let currentSize = 0;
+      /** @type {TranslationInfo[]} texts that are new to this service and still need a cache lookup */
+      const lookups = [];
       for (const sourceArray of sourceArray2d) {
         const requestString = this.fixString(this.cbTransformRequest(sourceArray));
         const requestHash = [sourceLanguage, targetLanguage, requestString].join(", ");
@@ -433,26 +433,39 @@ const translationService = function () {
             waitTranlate: new Promise(resolve => promise_resolve = resolve)
           };
           currentTranslationsInProgress.push(progressInfo);
+          // Registered before any await, so a concurrent call waits for this text instead of requesting it again.
           this.translationsInProgress.set(requestHash, progressInfo);
-
-          //cast
-          const cacheEntry = await translationCache.get(this.serviceName, sourceLanguage, targetLanguage, requestString);
-          if (cacheEntry) {
-            progressInfo.translatedText = cacheEntry.translatedText;
-            progressInfo.detectedLanguage = cacheEntry.detectedLanguage;
-            progressInfo.status = "complete";
-            //this.translationsInProgress.delete([sourceLanguage, targetLanguage, requestString])
-          } else {
-            currentRequest.push(progressInfo);
-            currentSize += progressInfo.originalText.length;
-            if (currentSize > 800) {
-              requests.push(currentRequest);
-              currentSize = 0;
-              currentRequest = [];
-            }
-          }
+          lookups.push(progressInfo);
         }
       }
+
+      // The cache lookups run together. They used to run one after another, so a screen of text waited on every read in turn.
+      // A failed read counts as a miss, so one bad entry does not block the rest.
+      const cacheEntries = await Promise.all(lookups.map(progressInfo =>
+        translationCache.get(this.serviceName, sourceLanguage, targetLanguage, progressInfo.originalText).catch(e => {
+          console.error(e);
+          return null;
+        })));
+
+      let currentRequest = [];
+      let currentSize = 0;
+      lookups.forEach((progressInfo, i) => {
+        const cacheEntry = cacheEntries[i];
+        if (cacheEntry) {
+          progressInfo.translatedText = cacheEntry.translatedText;
+          progressInfo.detectedLanguage = cacheEntry.detectedLanguage;
+          progressInfo.status = "complete";
+          //this.translationsInProgress.delete([sourceLanguage, targetLanguage, requestString])
+        } else {
+          currentRequest.push(progressInfo);
+          currentSize += progressInfo.originalText.length;
+          if (currentSize > 800) {
+            requests.push(currentRequest);
+            currentSize = 0;
+            currentRequest = [];
+          }
+        }
+      });
       if (currentRequest.length > 0) {
         requests.push(currentRequest);
         currentRequest = [];
@@ -957,6 +970,108 @@ const translationService = function () {
   };
 
   /**
+   * Groq (AI, OpenAI-compatible chat API). Each user adds their own key, so the text goes to Groq with that key only.
+   * Texts use the same <x id="n"> segments as DeepL, so a result can be split back into the pieces it came from.
+   */
+  const groqLanguageName = code => {
+    try {
+      return new Intl.DisplayNames(["en"], { type: "language" }).of(code) || code;
+    } catch (e) {
+      return code;
+    }
+  };
+  /**
+   * @param {string} apiKey
+   * @param {string} model
+   * @returns {Service}
+   */
+  const createGroqService = (apiKey, model) => {
+    return new class extends Service {
+      constructor() {
+        // One request = all text pieces of one element, as a JSON array (so the pieces keep their order and count).
+        super("groq", "https://api.groq.com/openai/v1/chat/completions", "POST", function cbTransformRequest(sourceArray) {
+          return JSON.stringify(sourceArray);
+        }, function cbParseResponse(response) {
+          return response.translations.map( /** @return {Service_Single_Result_Response} */pieces => ({
+            text: JSON.stringify(pieces),
+            detectedLanguage: "und"
+          }));
+        }, function cbTransformResponse(result, dontSortResults) {
+          if (typeof result !== "string") throw new Error("Groq: no translation for this text");
+          return JSON.parse(result);
+        }, null, function cbGetRequestBody(sourceLanguage, targetLanguage, requests) {
+          const source = sourceLanguage && sourceLanguage !== "auto" && sourceLanguage !== "und" ? ` The source language is ${groqLanguageName(sourceLanguage)}.` : "";
+          const instruction = `You translate website text into ${groqLanguageName(targetLanguage)}.${source} ` +
+            "The user message is a JSON array. Each item is an array of text strings taken from one part of a web page. " +
+            "Translate every string. Keep HTML-like tags, numbers, URLs and line breaks as they are, and do not add notes. " +
+            "Reply with a JSON object {\"translations\": [...]}. It must have one item per input item, in the same order, " +
+            "and each item must be an array of translated strings with the same length and order as its input array.";
+          return JSON.stringify({
+            model,
+            temperature: 0,
+            response_format: { type: "json_object" },
+            messages: [{ role: "system", content: instruction }, { role: "user", content: JSON.stringify(requests.map(info => JSON.parse(info.originalText))) }]
+          });
+        }, function cbGetExtraHeaders() {
+          return [{
+            name: "Content-Type",
+            value: "application/json"
+          }, {
+            name: "Authorization",
+            value: "Bearer " + apiKey.trim()
+          }];
+        });
+      }
+
+      /**
+       * Sends one batch. The answer must have one array per request, with the same number of pieces as its input.
+       * @param {string} sourceLanguage
+       * @param {string} targetLanguage
+       * @param {Array<TranslationInfo>} requests
+       */
+      async makeRequest(sourceLanguage, targetLanguage, requests) {
+        const response = await super.makeRequest(sourceLanguage, targetLanguage, requests);
+        const content = response && response.choices && response.choices[0] && response.choices[0].message && response.choices[0].message.content;
+        let parsed = null;
+        try {
+          parsed = JSON.parse(content);
+        } catch (e) {
+          parsed = null;
+        }
+        const inputs = requests.map(info => JSON.parse(info.originalText));
+        const valid = parsed && Array.isArray(parsed.translations) && parsed.translations.length === inputs.length && parsed.translations.every((pieces, i) => Array.isArray(pieces) && pieces.length === inputs[i].length);
+        if (!valid) {
+          const message = response && response.error && response.error.message;
+          throw new Error("Groq error: " + (message || "the answer did not match the request"));
+        }
+        return {
+          translations: parsed.translations.map(pieces => pieces.map(text => String(text)))
+        };
+      }
+    }();
+  };
+
+  /** @type {Service|null} */
+  let groqService = null;
+  /** @type {string} */
+  let groqServiceKey = "";
+  /**
+   * Returns the Groq service for the key and model saved in the settings. A new service is made when either changes.
+   * @returns {Service|null}
+   */
+  const getGroqService = () => {
+    const apiKey = (twpConfig.get("groqApiKey") || "").trim();
+    if (!apiKey) return null;
+    const model = (twpConfig.get("groqModel") || "llama-3.3-70b-versatile").trim();
+    const key = apiKey + "\n" + model;
+    if (!groqService || groqServiceKey !== key) {
+      groqService = createGroqService(apiKey, model);
+      groqServiceKey = key;
+    }
+    return groqService;
+  };
+
+  /**
    * Creates the libreTranslate translation service from URL and apiKey
    * @param {string} url
    * @param {string} apiKey
@@ -1027,6 +1142,7 @@ const translationService = function () {
   const getSafeServiceByName = serviceName => {
     if (twpConfig.get("enabledServices").includes(serviceName) || twpConfig.get("customServices").find(cs => cs.name === serviceName)) {
       if (serviceName === "deepl") return getDeeplService();
+      if (serviceName === "groq") return getGroqService();
       return serviceList.get(serviceName);
     } else {
       return null;
@@ -1087,6 +1203,7 @@ const translationService = function () {
         }
       });
       if (deeplService) deeplService.removeTranslationsWithError();
+      if (groqService) groqService.removeTranslationsWithError();
     } else if (request.action === "createLibreService") {
       serviceList.set("libre", createLibreService(request.libre.url, request.libre.apiKey));
     } else if (request.action === "removeLibreService") {

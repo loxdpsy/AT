@@ -10,102 +10,96 @@
 </head>
 
 <body style="width: 380px;">
-    <div class="w3-bar" style="width: 280px;" data-popupPanelSection="0">
-        <button class="w3-bar-item w3-button w3-ripple w3-hover-light-blue w3-buttonSelected"
-            style="border-radius: 5px 0px 0px 0px; position: relative; padding-bottom: 14px;" title="Show original"
-            data-i18n-title="btnRestore" value="original"><span data-i18n="btnMobileOriginal">Original</span><span
-                style="font-size: 9px; line-height: 1; position: absolute; bottom: 3px; left: 0; right: 0; text-align: center; pointer-events: none;"
-                class="w3-text-pale-blue" id="lblOriginalLanguage"></span></button>
-        <button class="w3-bar-item w3-button w3-ripple w3-hover-light-blue" style="border-radius: 0px 5px 0px 0px;"
-            title="Translate" data-i18n-title="btnTranslate" value="en">English</button>
-    </div>
-    <div class="w3-bar" style="width: 280px;" data-popupPanelSection="2">
-        <button class="w3-bar-item w3-button w3-ripple w3-hover-light-blue" style="border-radius: 0px 0px 0px 5px;"
-            title="Translate" data-i18n-title="btnTranslate" value="es">Spanish</button>
-        <button class="w3-bar-item w3-button w3-ripple w3-hover-light-blue" style="border-radius: 0px 0px 5px 0px;"
-            title="Translate" data-i18n-title="btnTranslate" value="de">German</button>
-    </div>
+    <header class="popupHeader">
+        <div class="popupBrand">
+            <span id="popupTitle">Atlas Translation</span>
+        </div>
+        <div class="popupActions">
+            <button type="button" id="divIconTranslate" class="iconButton" title="Switch between translation services"
+                data-i18n-title="swapTranslationService" aria-label="Switch between translation services">
+                <img id="iconTranslate" src="/icons/google-translate-32.png" alt="">
+                <img id="iconSwap" src="/icons/swap-32.png" alt="">
+            </button>
+            <button type="button" id="btnSwitchInterfaces" class="iconButton" title="Switch between simple and complex interface"
+                data-i18n-title="swapPopup" aria-label="Switch between simple and complex interface">
+                <i class="gg-swap" aria-hidden="true"></i>
+            </button>
+            <button type="button" id="btnMenu" class="iconButton menuButton" title="Options" data-i18n-title="btnOptions"
+                aria-label="Options" aria-haspopup="menu" aria-expanded="false" aria-controls="menuPanel">
+                <span class="menuDot" aria-hidden="true"></span>
+            </button>
+            <button type="button" id="btnSettings" class="iconButton" title="Settings" data-i18n-title="lblSettings"
+                aria-label="Settings">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <path fill="currentColor" d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.49.49 0 0 0 .12.61l2.03 1.58c-.05.3-.07.62-.07.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z" />
+                </svg>
+            </button>
+        </div>
+    </header>
 
     <div id="menuPanel" class="menuPanel" role="menu" aria-label="Options" hidden></div>
+
     <div id="updateBanner" class="updateBanner" role="status" hidden>
         <div class="updateBannerText"><span id="updateText"></span><br /><span id="updateHelp" class="updateHelp"></span></div>
         <button type="button" id="btnUpdateDownload"></button>
     </div>
-    <div class="w3-container w3-margin-top" style="font-weight: 500">
-        <div data-popupPanelSection="0">
-            <div style="margin-right: 60px; margin-bottom: 5px;">
-                <button data-i18n="msgImproveTranslation" id="btnImproveTranslation">Improve translation</button>
-            </div>
+
+    <!-- Language choice: the page's original language and three target languages. -->
+    <div class="w3-bar langBar" id="langBar" role="group" aria-label="Language">
+        <button class="w3-bar-item w3-button w3-ripple w3-hover-light-blue w3-buttonSelected" title="Show original"
+            data-i18n-title="btnRestore" value="original"><span data-i18n="btnMobileOriginal">Original</span><span
+                class="langSub" id="lblOriginalLanguage"></span></button>
+        <button class="w3-bar-item w3-button w3-ripple w3-hover-light-blue" title="Translate" data-i18n-title="btnTranslate"
+            value="en">English</button>
+        <button class="w3-bar-item w3-button w3-ripple w3-hover-light-blue" title="Translate" data-i18n-title="btnTranslate"
+            value="es">Spanish</button>
+        <button class="w3-bar-item w3-button w3-ripple w3-hover-light-blue" title="Translate" data-i18n-title="btnTranslate"
+            value="de">German</button>
+    </div>
+
+    <div class="popupBody">
+        <button type="button" data-i18n="msgImproveTranslation" id="btnImproveTranslation" class="improveButton">Improve translation</button>
+
+        <section class="popupSection" aria-labelledby="headSite">
+            <h2 id="headSite" class="popupHeading" data-i18n="popupSectionSite">This site</h2>
+            <label class="popupRow" for="cbAlwaysTranslateThisSite">
+                <input type="checkbox" class="w3-check" id="cbAlwaysTranslateThisSite">
+                <span data-i18n="btnAlwaysTranslate">Always translate this site</span>
+            </label>
+            <label class="popupRow" for="cbShowTranslatedWhenHoveringThisSite">
+                <input type="checkbox" class="w3-check" id="cbShowTranslatedWhenHoveringThisSite">
+                <span data-i18n="lblShowTranslatedWhenHoveringThisSite">Show translation when hovering over this site</span>
+            </label>
+        </section>
+
+        <!-- Shown only when the page's language is known (the JS hides this whole section otherwise). -->
+        <section class="popupSection" id="sectionLanguage" aria-labelledby="headLanguage">
+            <h2 id="headLanguage" class="popupHeading" data-i18n="popupSectionLanguage">This language</h2>
             <div id="divAlwaysTranslateThisLang">
-                <input type="checkbox" class="w3-check" id="cbAlwaysTranslateThisLang" disabled>
-                <label id="lblAlwaysTranslateThisLang" for="cbAlwaysTranslateThisLang">Always translate from</label>
+                <label class="popupRow" for="cbAlwaysTranslateThisLang">
+                    <input type="checkbox" class="w3-check" id="cbAlwaysTranslateThisLang" disabled>
+                    <span id="lblAlwaysTranslateThisLang">Always translate from</span>
+                </label>
             </div>
-        </div>
-        <div data-popupPanelSection="1">
-            <input type="checkbox" class="w3-check" id="cbAlwaysTranslateThisSite">
-            <label for="cbAlwaysTranslateThisSite" data-i18n="btnAlwaysTranslate">Always translate this site</label>
-        </div>
-        <div data-popupPanelSection="3">
-            <hr>
-        </div>
-        <div data-popupPanelSection="3">
-            <input type="checkbox" class="w3-check" id="cbShowTranslateSelectedButton">
-            <label for="cbShowTranslateSelectedButton" data-i18n="lblShowTranslateSelectedButton">Show the button to
-                translate the selected text</label>
-        </div>
-        <div data-popupPanelSection="4">
-            <input type="checkbox" class="w3-check" id="cbShowOriginalWhenHovering">
-            <label for="cbShowOriginalWhenHovering" data-i18n="lblShowOriginalTextWhenHovering">Show original text when
-                hovering</label>
-        </div>
-        <div data-popupPanelSection="5">
-            <hr>
-        </div>
-        <div data-popupPanelSection="5">
-            <input type="checkbox" class="w3-check" id="cbShowTranslatedWhenHoveringThisSite">
-            <label for="cbShowTranslatedWhenHoveringThisSite" data-i18n="lblShowTranslatedWhenHoveringThisSite">Show
-                translation when hovering over this site</label>
-        </div>
-        <div data-popupPanelSection="6">
             <div id="divShowTranslatedWhenHoveringThisLang">
-                <input type="checkbox" class="w3-check" id="cbShowTranslatedWhenHoveringThisLang" disabled>
-                <label id="lblShowTranslatedWhenHoveringThisLang" for="cbShowTranslatedWhenHoveringThisLang">Show translation when
-                    hovering over websites
-                    in</label>
+                <label class="popupRow" for="cbShowTranslatedWhenHoveringThisLang">
+                    <input type="checkbox" class="w3-check" id="cbShowTranslatedWhenHoveringThisLang" disabled>
+                    <span id="lblShowTranslatedWhenHoveringThisLang">Show translation when hovering over websites in</span>
+                </label>
             </div>
-        </div>
-    </div>
-    </div>
+        </section>
 
-    <div id="moreOrLess" style="height: 32px;">
-        <div id="more" class="w3-display-bottomleft w3-hover-light-grey"
-            style="padding: 8px 60px 8px 20px; font-weight: 500;">
-            <span data-i18n="more">More</span>&nbsp;&nbsp;&nbsp;<i class="arrow down"></i>
-        </div>
-        <div id="less" class="w3-display-bottomright w3-hover-light-grey"
-            style="padding: 8px 20px 8px 60px; font-weight: 500;">
-            <i class="arrow up"></i>&nbsp;&nbsp;&nbsp;<span data-i18n="less">Less</span>
-        </div>
-    </div>
-
-    <div class="w3-display-topright margin10">
-        <div class="w3-hover-light-grey" id="btnSwitchInterfaces" title="Switch between simple and complex interface"
-            data-i18n-title="swapPopup">
-            <i class="gg-swap"></i>
-        </div>
-    </div>
-
-    <button type="button" id="btnMenu" class="menuButton" title="Options" data-i18n-title="btnOptions"
-        aria-label="Options" aria-haspopup="menu" aria-expanded="false" aria-controls="menuPanel">
-        <span class="menuDot" aria-hidden="true"></span>
-    </button>
-
-    <div class="w3-display-topright" style="margin-right: 15px; margin-top: 45px; position: absolute; cursor: pointer;">
-        <div id="divIconTranslate" style="position: relative;" title="Switch between translation services"
-            data-i18n-title="swapTranslationService">
-            <img id='iconTranslate' src="/icons/google-translate-32.png" style="position: relative;">
-            <img id='iconSwap' src="/icons/swap-32.png" style="position: absolute; top: 0; left: 0;">
-        </div>
+        <section class="popupSection" aria-labelledby="headDisplay">
+            <h2 id="headDisplay" class="popupHeading" data-i18n="popupSectionDisplay">Display</h2>
+            <label class="popupRow" for="cbShowOriginalWhenHovering">
+                <input type="checkbox" class="w3-check" id="cbShowOriginalWhenHovering">
+                <span data-i18n="lblShowOriginalTextWhenHovering">Show original text when hovering</span>
+            </label>
+            <label class="popupRow" for="cbShowTranslateSelectedButton">
+                <input type="checkbox" class="w3-check" id="cbShowTranslateSelectedButton">
+                <span data-i18n="lblShowTranslateSelectedButton">Show the button to translate the selected text</span>
+            </label>
+        </section>
     </div>
 
     <script src="/lib/polyfill.js"></script>

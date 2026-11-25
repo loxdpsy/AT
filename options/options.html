@@ -202,7 +202,7 @@
 <option value="google">Google</option>
 <option value="bing">Bing</option>
 <option value="yandex">Yandex</option>
-<option value="deepl">DeepL</option>
+<option value="deepl">DeepL</option><option value="groq">Groq (AI)</option>
 </select></div>
           </div>
           <div class="row">
@@ -213,7 +213,7 @@
 <option value="google">Google</option>
 <option value="bing">Bing</option>
 <option value="yandex">Yandex</option>
-<option value="deepl">DeepL</option>
+<option value="deepl">DeepL</option><option value="groq">Groq (AI)</option>
 </select></div>
           </div>
         </div>
@@ -320,6 +320,11 @@
               <span class="service-name">DeepL</span>
               <span class="service-note" data-i18n="msgDeepLNeedsKey">Needs an API key</span>
             </label>
+            <label class="service" for="btnEnableGroq">
+              <input type="checkbox" id="btnEnableGroq" />
+              <span class="service-name">Groq (AI)</span>
+              <span class="service-note" data-i18n="msgGroqNeedsKey">Needs an API key</span>
+            </label>
           </div>
           <div class="row">
             <div class="row-text">
@@ -354,6 +359,29 @@
             <p class="usage-text" id="deeplUsageText"></p>
           </div>
           <p class="message" id="deeplApiResponse" role="status"></p>
+        </div>
+
+        <div class="card service-card" id="groqCard">
+          <div class="service-head">
+            <div>
+              <h2 class="card-title">Groq (AI)</h2>
+              <p class="card-desc" data-i18n="msgGroqDescription">An AI model that translates whole sections in context. Add your own key from console.groq.com. The text you translate is sent to Groq with that key.</p>
+            </div>
+          </div>
+          <label class="field-label" for="groqKEY" data-i18n="msgGroqKeyLabel">Groq API key</label>
+          <div class="input-row">
+            <input type="password" id="groqKEY" class="input" placeholder="gsk_..." autocomplete="off" spellcheck="false" />
+            <button class="btn btn-ghost" id="toggleGroqKey" type="button">Show</button>
+          </div>
+          <label class="field-label" for="groqModel" data-i18n="msgGroqModelLabel">Model</label>
+          <div class="input-row">
+            <input type="text" id="groqModel" class="input" placeholder="llama-3.3-70b-versatile" autocomplete="off" spellcheck="false" />
+          </div>
+          <div class="btn-row">
+            <button id="addGroq" class="btn btn-primary" data-i18n="msgGroqSave">Save and test</button>
+            <button id="removeGroq" class="btn btn-danger" data-i18n="msgGroqRemove">Remove key</button>
+          </div>
+          <p class="message" id="groqApiResponse" role="status"></p>
         </div>
 
         <div class="card service-card">
@@ -392,6 +420,15 @@
 <option value="auto" data-i18n="lblThemeSystem">System</option>
 <option value="yes" data-i18n="lblThemeDark">Dark</option>
 <option value="no" data-i18n="lblThemeLight">Light</option>
+</select></div>
+          </div>
+          <div class="row desktopOnly">
+            <div class="row-text"><div class="row-title" data-i18n="lblToolbarIconStyle">Firefox toolbar icon colour</div></div>
+            <div class="row-control"><select id="toolbarIconStyle" class="select">
+<option value="auto" data-i18n="msgIconAuto">Follow the theme</option>
+<option value="black" data-i18n="msgIconBlack">Black</option>
+<option value="white" data-i18n="msgIconWhite">White</option>
+<option value="blue" data-i18n="msgIconBlue">Blue</option>
 </select></div>
           </div>
           <div class="row desktopOnly">

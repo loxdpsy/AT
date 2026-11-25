@@ -5,51 +5,12 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
   const darkPref = twpConfig.get("darkMode");
   twpTheme.set(["auto", "yes", "no"].includes(darkPref) ? darkPref : "auto");
   twpI18n.translateDocument();
+  $("#popupTitle").textContent = chrome.runtime.getManifest().name;
+  $("#btnSettings").addEventListener("click", () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL("/options/options.html") }, closePopupAfter);
+  });
   $("#btnImproveTranslation").onclick = () => {
     window.location = "improve-translation.html";
-  };
-  let popupPanelSection = twpConfig.get("popupPanelSection");
-  function updatePopupSection() {
-    document.querySelectorAll("[data-popupPanelSection]").forEach(node => {
-      const nodePopupPanelSection = parseInt(node.getAttribute("data-popupPanelSection"));
-      if (isNaN(nodePopupPanelSection)) return;
-      if (nodePopupPanelSection > popupPanelSection) {
-        node.style.display = "none";
-      } else {
-        node.style.display = "block";
-      }
-    });
-    document.querySelectorAll("[data-popupPanelSection2]").forEach(node => {
-      const nodePopupPanelSection2 = parseInt(node.getAttribute("data-popupPanelSection2"));
-      if (isNaN(nodePopupPanelSection2)) return;
-      if (nodePopupPanelSection2 <= popupPanelSection) {
-        node.style.display = "none";
-      } else {
-        node.style.display = "block";
-      }
-    });
-    $("#more").style.display = "block";
-    $("#less").style.display = "block";
-    if (popupPanelSection >= 6) {
-      $("#more").style.display = "none";
-    } else if (popupPanelSection <= 0) {
-      $("#less").style.display = "none";
-    }
-  }
-  updatePopupSection();
-  $("#more").onclick = e => {
-    if (popupPanelSection < 6) {
-      popupPanelSection++;
-      updatePopupSection();
-    }
-    twpConfig.set("popupPanelSection", popupPanelSection);
-  };
-  $("#less").onclick = e => {
-    if (popupPanelSection > 0) {
-      popupPanelSection--;
-      updatePopupSection();
-    }
-    twpConfig.set("popupPanelSection", popupPanelSection);
   };
   let originalTabLanguage = "und";
   let currentPageLanguage = "und";
@@ -154,9 +115,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
       }
     });
     // The rows that name the page's language only show when that language is known.
-    const languageRowsDisplay = originalTabLanguage === "und" ? "none" : "";
-    $("#divAlwaysTranslateThisLang").style.display = languageRowsDisplay;
-    $("#divShowTranslatedWhenHoveringThisLang").style.display = languageRowsDisplay;
+    $("#sectionLanguage").style.display = originalTabLanguage === "und" ? "none" : "";
     if (originalTabLanguage !== "und") {
       $("#cbAlwaysTranslateThisLang").checked = twpConfig.get("alwaysTranslateLangs").indexOf(originalTabLanguage) !== -1;
       $("#lblAlwaysTranslateThisLang").textContent = twpI18n.getMessage("lblAlwaysTranslate", twpLang.codeToLanguage(originalTabLanguage));
@@ -374,9 +333,6 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     ]);
 
     const appGroup = menuGroup([
-      menuItem(text("btnMoreOptions", "More options"), () => {
-        chrome.tabs.create({ url: chrome.runtime.getURL("/options/options.html") }, closePopupAfter);
-      }),
       menuItem(`${text("lblAbout", "About")} ${chrome.runtime.getManifest().name}`, () => {
         chrome.tabs.create({ url: chrome.runtime.getURL("/options/options.html#about") }, closePopupAfter);
       })
