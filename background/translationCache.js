@@ -147,6 +147,8 @@ const translationCache = function () {
       this.targetLanguage = targetLanguage;
       /** @type {Map<string, CacheEntry>} */
       this.cache = new Map();
+      /** @type {Map<string, Promise<CacheEntry>>} reads that are already on their way to IndexedDB */
+      this.inFlight = new Map();
       /** @type {Promise<boolean>} */
       this.promiseStartingCache = null;
     }
@@ -184,15 +186,36 @@ const translationCache = function () {
      */
     async query(originalText) {
       const hash = await Utils.stringToSHA1String(originalText);
-      let translation = this.cache.get(hash);
-      if (translation) return translation;
-      translation = await _classPrivateMethodGet(this, _queryInDB, _queryInDB2).call(this, hash);
-      if (translation) {
-        // bounded in-memory cache (the IndexedDB copy is the source of truth), so RAM stays flat
-        if (this.cache.size >= Cache.MAX_MEMORY_ENTRIES) this.cache.delete(this.cache.keys().next().value);
-        this.cache.set(hash, translation);
+      const cached = this.cache.get(hash);
+      if (cached) {
+        // a hit moves the entry to the newest end, so the entries that are used most stay in memory
+        this.cache.delete(hash);
+        this.cache.set(hash, cached);
+        return cached;
       }
-      return translation;
+      // Several pages can ask for the same text at once. They share one IndexedDB read.
+      if (this.inFlight.has(hash)) return await this.inFlight.get(hash);
+      const read = (async () => {
+        try {
+          const translation = await _classPrivateMethodGet(this, _queryInDB, _queryInDB2).call(this, hash);
+          if (translation) this.remember(hash, translation);
+          return translation;
+        } finally {
+          this.inFlight.delete(hash);
+        }
+      })();
+      this.inFlight.set(hash, read);
+      return await read;
+    }
+    /**
+     * Keeps an entry in memory. The IndexedDB copy stays the source of truth. The map is bounded, so the oldest entry goes first.
+     * @param {string} hash
+     * @param {CacheEntry} entry
+     */
+    remember(hash, entry) {
+      if (this.cache.has(hash)) this.cache.delete(hash);
+      else if (this.cache.size >= Cache.MAX_MEMORY_ENTRIES) this.cache.delete(this.cache.keys().next().value);
+      this.cache.set(hash, entry);
     }
     /**
      * Add to translation cache
@@ -203,12 +226,11 @@ const translationCache = function () {
      */
     async add(originalText, translatedText, detectedLanguage = "und") {
       const hash = await Utils.stringToSHA1String(originalText);
-      return await _classPrivateMethodGet(this, _addInDb, _addInDb2).call(this, {
-        originalText,
-        translatedText,
-        detectedLanguage,
-        key: hash
-      });
+      const entry = { originalText, translatedText, detectedLanguage, key: hash };
+      const saved = await _classPrivateMethodGet(this, _addInDb, _addInDb2).call(this, entry);
+      // the next lookup of the same text is answered from memory, not from IndexedDB
+      if (saved) this.remember(hash, entry);
+      return saved;
     }
 
     /**

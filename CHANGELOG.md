@@ -4,6 +4,11 @@
 
 Not released yet. Changes after 0.0.2.0 will be listed here.
 
+- Popup: the blue Atlas translate icon sits beside the service badge.
+- Popup: the DeepL and Groq marks are smaller so they fit the badge.
+- Options: the Services checkboxes no longer touch the edge of the card, and each has a gap from its name.
+- Translation cache: lookups answer from memory after a translation is added, concurrent lookups for the same text share one database read, and the memory copy keeps only the newest entries.
+
 ## 0.0.2.0
 
 **Important information**
