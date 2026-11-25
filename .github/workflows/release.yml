@@ -6,12 +6,17 @@ name: Release
 #   - version:  the version to build, for example 9.8.2.0 (no "v")
 #   - action:   "build-and-test"    builds both packages and shows checksums in the summary. Nothing is published.
 #               "build-and-release" also commits the version bump, creates the tag v<version>, and publishes a GitHub release.
+#   - prerelease: mark the GitHub release as a prerelease. It is on until the launch. The helper (atlas-updater) installs
+#     prereleases while INCLUDE_PRERELEASES is true in tools/atlas-updater/src/main.rs. Set both to a full release at launch.
 #   - submit_amo: with build-and-release, send the Firefox store version to
 #     addons.mozilla.org for review. The store step waits for AMO_LISTING_READY to be "true" (a repository variable or a secret of that name).
 #
 # Pushing a tag such as v9.8.2.0 (with manifest.json already at that version) publishes it, the same as build-and-release.
+# Tag pushes are prereleases too, until the launch (see PRERELEASE in the "Work out what to do" step).
 # The release notes come from the matching "## <version>" section in CHANGELOG.md.
 # If the version is already published (its tag and GitHub release both exist), the run reports it and publishes nothing again. It does not fail.
+# To publish a version again, delete its GitHub release. If the tag stays, the run publishes the release on the same tag and commit.
+# To start over completely, delete the release and the tag, then run again. The version commit is made only when it is missing.
 
 on:
   push:
@@ -30,6 +35,10 @@ on:
           - build-and-test
           - build-and-release
         default: build-and-test
+      prerelease:
+        description: "Mark the GitHub release as a prerelease (build-and-release only). Turn it off at the launch."
+        type: boolean
+        default: true
       submit_amo:
         description: "Firefox store: send the store version to addons.mozilla.org for review (build-and-release only). The GitHub build is never sent to Mozilla."
         type: boolean
@@ -52,6 +61,7 @@ jobs:
       publish: ${{ steps.plan.outputs.publish }}
       submit: ${{ steps.plan.outputs.submit }}
       already: ${{ steps.plan.outputs.already }}
+      prerelease: ${{ steps.plan.outputs.prerelease }}
     steps:
       - name: Check out the code
         uses: actions/checkout@v4
@@ -68,22 +78,27 @@ jobs:
           INPUT_VERSION: ${{ github.event.inputs.version }}
           INPUT_ACTION: ${{ github.event.inputs.action }}
           INPUT_SUBMIT: ${{ github.event.inputs.submit_amo }}
+          INPUT_PRERELEASE: ${{ github.event.inputs.prerelease }}
         run: |
           set -euo pipefail
           if [ "$EVENT" = "push" ]; then
             VERSION="${REF_NAME#v}"
             PUBLISH=true
             SUBMIT=true
+            # Prereleases until the launch. Set this to false then, and set INCLUDE_PRERELEASES to false in the helper.
+            PRERELEASE=true
           else
             VERSION="$(echo "$INPUT_VERSION" | tr -d '[:space:]' | sed 's/^v//')"
             PUBLISH=$([ "$INPUT_ACTION" = "build-and-release" ] && echo true || echo false)
             SUBMIT=$([ "$PUBLISH" = "true" ] && [ "$INPUT_SUBMIT" = "true" ] && echo true || echo false)
+            PRERELEASE=$([ "$INPUT_PRERELEASE" = "false" ] && echo false || echo true)
           fi
           if ! echo "$VERSION" | grep -Eq '^[0-9]+(\.[0-9]+){0,3}$'; then
             echo "::error::Version '$VERSION' is not valid. Use 1 to 4 numbers separated by dots, for example 9.8.2.0."
             exit 1
           fi
           ALREADY=false
+          RESUME=false
           if [ "$PUBLISH" = "true" ] && git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
             if gh release view "v$VERSION" >/dev/null 2>&1; then
               # Already published: the tag and the GitHub release both exist. This counts as done.
@@ -93,8 +108,10 @@ jobs:
               PUBLISH=false
               SUBMIT=false
             else
-              echo "::error::The tag v$VERSION exists but has no GitHub release. Choose a new version, or finish that release by hand."
-              exit 1
+              # The tag exists but its GitHub release was deleted, for example to publish the version again. The tag and its
+              # commit stay as they are: nothing is committed or tagged again, and the release is made on the existing tag.
+              echo "The release v$VERSION was deleted but its tag exists. Publishing it again on the tag."
+              RESUME=true
             fi
           fi
 
@@ -106,6 +123,8 @@ jobs:
               exit 1
             fi
             SHA="$GITHUB_SHA"
+          elif [ "$RESUME" = "true" ]; then
+            SHA="$(git rev-parse "v$VERSION^{commit}")"
           elif [ "$PUBLISH" = "true" ]; then
             node scripts/sync-version.mjs "$VERSION"
             # Stop before anything is committed, tagged, or pushed. A missing CHANGELOG.md section, or a failing check or unit test, must not leave a version commit and tag on main.
@@ -135,6 +154,7 @@ jobs:
             echo "publish=$PUBLISH"
             echo "submit=$SUBMIT"
             echo "already=$ALREADY"
+            echo "prerelease=$PRERELEASE"
           } >> "$GITHUB_OUTPUT"
 
       - name: Write job summary
@@ -144,12 +164,14 @@ jobs:
           PUBLISH: ${{ steps.plan.outputs.publish }}
           SUBMIT: ${{ steps.plan.outputs.submit }}
           ALREADY: ${{ steps.plan.outputs.already }}
+          PRERELEASE: ${{ steps.plan.outputs.prerelease }}
         run: |
           {
             echo "## Release plan: Atlas Translation ${VERSION:-?}"
             echo ""
             echo "- Result: **${{ job.status }}**"
             echo "- Mode: $([ "$PUBLISH" = "true" ] && echo "**publish** (tag v$VERSION and a GitHub release)" || echo "**build and test only** (nothing published)")"
+            if [ "$PUBLISH" = "true" ]; then echo "- Release type: $([ "$PRERELEASE" = "true" ] && echo "**prerelease**" || echo "**release**")"; fi
             echo "- Submit to addons.mozilla.org: ${SUBMIT:-false}"
             if [ "$ALREADY" = "true" ]; then
               echo "- Already published: release v$VERSION already exists, so nothing was published again. This run is treated as done."
@@ -321,6 +343,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.prepare.outputs.version }}
           SUBMIT: ${{ needs.prepare.outputs.submit }}
+          PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
         run: |
           TAG="v$VERSION"
           awk -v v="$VERSION" 'BEGIN { p = 0 } /^## / { if (p) exit; if ($2 == v) p = 1; next } p' CHANGELOG.md > notes.md
@@ -330,6 +353,10 @@ jobs:
           fi
           {
             echo ""
+            if [ "$PRERELEASE" = "true" ]; then
+              echo "> **Prerelease.** Not the public launch yet. The helper (atlas-updater) installs it while it includes prereleases."
+              echo ""
+            fi
             echo "## Downloads"
             echo ""
             echo "- **Chrome Web Store:** \`atlas-translation-$VERSION-chromium.zip\`"
@@ -350,9 +377,9 @@ jobs:
           } >> notes.md
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" dist/* --clobber
-            gh release edit "$TAG" --title "Atlas Translation $VERSION" --notes-file notes.md
+            gh release edit "$TAG" --title "Atlas Translation $VERSION" --notes-file notes.md --prerelease="$PRERELEASE"
           else
-            gh release create "$TAG" dist/* --title "Atlas Translation $VERSION" --notes-file notes.md
+            gh release create "$TAG" dist/* --title "Atlas Translation $VERSION" --notes-file notes.md --prerelease="$PRERELEASE"
           fi
 
       - name: Write job summary

@@ -4,15 +4,14 @@
 
 Not released yet. Changes after 0.0.2.1 will be listed here.
 
+## 0.0.2.1
+
 - Offline translation (desktop helper): a new service, "Offline (desktop helper)", translates on this computer with no text sent to a web service. The Atlas helper (atlas-updater) runs an offline engine built from Mozilla's Bergamot (the engine Firefox uses) and serves it to the extension on 127.0.0.1. Set it up in Options, under Translation services: open the helper, install a language pack in its window, then paste the pairing code from the helper window and choose Save and test.
 - Offline translation: the helper's Offline section lists the language packs (each pack is a language pair with English, from the translation models that Firefox downloads, 21 to 55 MB), installs and removes them, and installs the engine from the newest release. Each pack file is checked against its SHA-256 before it is kept, and nothing is left behind when a check fails. The packs and the engine are stored in the user's data folder, so updating the extension does not remove them.
 - Offline translation: when the helper is not running, or the language pack for the pair is not installed, the next enabled service translates the text. Those cases do not count as failures, so the service is not put on cooldown for them.
 - Offline translation: once it is set up, Offline appears in the page and text translation choices in Options, in the text-selection bubble, in the translated-page bubble and in the text translation popup. It stays hidden until then.
 - Restore from file: a blank pairing code in a backup keeps the code saved on this device, and Offline is turned off when no code is saved, the same as Groq and DeepL.
 - Release workflow: the offline engine is built for Windows, macOS and Linux and attached to each release as atlas-engine-windows.exe, atlas-engine-macos and atlas-engine-linux. A failed engine build stops the publish job, the same as the helper.
-
-## 0.0.2.1
-
 - Restore from file works on Chrome, Edge and Firefox. On Chrome and Edge, 0.0.2.0 stopped with "browser.commands.update is not a function" after the file was chosen. Restore and Reset to defaults no longer call that function on Chromium.
 - Chromium and Edge: the signed build carries its public key in the manifest, so the unpacked zip has the same extension ID as the CRX. Settings are stored per extension ID, so a copy loaded from the 0.0.2.0 zip keeps its own settings. Use Restore from file to move them.
 - Restore from file: a blank Groq or DeepL key in a backup keeps the key saved on this device.

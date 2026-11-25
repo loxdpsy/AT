@@ -16,7 +16,6 @@ use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
 
-use crate::json;
 use crate::sha256;
 use crate::store;
 
@@ -80,8 +79,7 @@ pub fn engine_asset_name() -> Option<&'static str> {
 /// the file, and installs it in the helper's data folder. Returns the release version.
 pub fn install_from_latest_release() -> Result<String, String> {
     let asset = engine_asset_name().ok_or("there is no offline engine for this computer")?;
-    let body = super::curl_text(super::LATEST_RELEASE_API)?;
-    let release = json::parse(&body).map_err(|e| format!("GitHub sent an unexpected answer: {}", e))?;
+    let release = super::newest_release_json()?;
     let tag = release.get("tag_name").and_then(|v| v.as_str()).ok_or("the latest release has no tag_name")?;
     let version = tag.trim_start_matches(|c: char| c == 'v' || c == 'V').to_string();
     let assets = release.get("assets").and_then(|v| v.as_array()).ok_or("the latest release has no assets")?;

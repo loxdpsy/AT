@@ -26,7 +26,12 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+// The release the helper installs from. While Atlas Translation publishes prereleases, that is the newest one in the list
+// that is not a draft (GitHub lists releases newest first). /releases/latest skips prereleases, so it is used only when
+// INCLUDE_PRERELEASES is false. Set it to false at launch, when the releases are no longer prereleases.
+const RELEASES_API: &str = "https://api.github.com/repos/loxdpsy/AT/releases?per_page=10";
 const LATEST_RELEASE_API: &str = "https://api.github.com/repos/loxdpsy/AT/releases/latest";
+const INCLUDE_PRERELEASES: bool = true;
 const EXTENSION_NAME: &str = "Atlas Translation";
 
 struct Release {
@@ -104,9 +109,24 @@ fn read_installed_version(folder: &Path) -> Result<String, String> {
         .ok_or_else(|| "manifest.json has no version".to_string())
 }
 
+/// The release that the helper installs from, as GitHub's JSON. See INCLUDE_PRERELEASES.
+fn newest_release_json() -> Result<json::Value, String> {
+    if !INCLUDE_PRERELEASES {
+        let body = curl_text(LATEST_RELEASE_API)?;
+        return json::parse(&body).map_err(|e| format!("GitHub sent an unexpected answer: {}", e));
+    }
+    let body = curl_text(RELEASES_API)?;
+    let list = json::parse(&body).map_err(|e| format!("GitHub sent an unexpected answer: {}", e))?;
+    let releases = list.as_array().ok_or("GitHub sent an unexpected answer: no release list")?;
+    releases
+        .iter()
+        .find(|r| !matches!(r.get("draft"), Some(json::Value::Bool(true))))
+        .cloned()
+        .ok_or_else(|| "no release has been published yet".to_string())
+}
+
 fn fetch_latest_release() -> Result<Release, String> {
-    let body = curl_text(LATEST_RELEASE_API)?;
-    let release = json::parse(&body).map_err(|e| format!("GitHub sent an unexpected answer: {}", e))?;
+    let release = newest_release_json()?;
 
     let tag = release
         .get("tag_name")
