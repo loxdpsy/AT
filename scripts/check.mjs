@@ -97,6 +97,16 @@ const versionIssues = await versionProblems();
 if (versionIssues.length) fail("version fields differ: " + versionIssues.join("; "));
 else ok("manifests, package files and README badge agree");
 
+console.log("Changelog");
+{
+  // The release notes are the "## <version>" section of CHANGELOG.md. A release without it publishes with no notes.
+  const manifestVersion = JSON.parse(await readFile(path.join(root, "manifest.json"), "utf8")).version;
+  const changelog = await readFile(path.join(root, "CHANGELOG.md"), "utf8");
+  const hasSection = changelog.split(/\r?\n/).some(line => line.trim() === "## " + manifestVersion);
+  if (hasSection) ok(`CHANGELOG.md has a section for ${manifestVersion}`);
+  else fail(`CHANGELOG.md has no "## ${manifestVersion}" section. Add it before releasing, so the release has notes.`);
+}
+
 if (failures > 0) {
   console.error(`\n${failures} check(s) failed.`);
   process.exit(1);
