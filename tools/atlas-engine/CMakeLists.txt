@@ -47,6 +47,11 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   add_compile_options(-Wno-maybe-uninitialized)
 endif()
 
+# marian-dev also builds with -Werror, so every warning that a newer compiler adds becomes a build error. Turn off the
+# warnings that the bundled code trips, one by one. Each is limited to the compiler that reports it.
+# GCC 13 (Ubuntu 24.04): spdlog writes template-id constructors (Foo<T>::Foo<...>), which C++20 warns about.
+add_compile_options("$<$<COMPILE_LANG_AND_ID:CXX,GNU>:-Wno-template-id-cdtor>")
+
 # Compiler fixes for the bundled dependencies. None of these change the bergamot code; each one is needed by a CI runner.
 
 # faiss (inside marian-dev) uses uint8_t without including <cstdint>. Newer GCC (Ubuntu 24.04) does not include it
@@ -59,6 +64,9 @@ if(APPLE)
   add_compile_options("$<$<COMPILE_LANGUAGE:C>:-include;stdio.h>")
   # sentencepiece (inside marian-dev) converts -1 to an enum. Apple clang in Xcode 16.4 treats that as an error.
   add_compile_options("$<$<COMPILE_LANG_AND_ID:CXX,AppleClang,Clang>:-Wno-enum-constexpr-conversion>")
+  # marian-dev (Xcode 16.4 Apple clang, -Werror): an unused-but-set variable in factored_vocab.cpp and shortlist.cpp,
+  # and variable-length arrays in ExceptionWithCallStack.cpp, which C++ does not allow.
+  add_compile_options("$<$<COMPILE_LANG_AND_ID:CXX,AppleClang,Clang>:-Wno-unused-but-set-variable;-Wno-vla-cxx-extension>")
 endif()
 
 if(MSVC)

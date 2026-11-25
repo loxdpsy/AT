@@ -4,7 +4,12 @@
 // longer has it, so those files do not compile. This gives it the same shape: a hash functor and a less-than functor.
 // protobuf-lite uses it for its own hash containers, which store their keys with std::hash-like hashing; for C strings
 // the hash follows the contents (as MSVC's did), so equal strings hash the same.
+//
+// The whole header is inside __cplusplus. Include it from a C file and it does nothing, because the C standard
+// library headers it includes cannot be used from C with the current MSVC.
 #pragma once
+
+#ifdef __cplusplus
 
 #include <cstddef>
 #include <functional>
@@ -37,3 +42,5 @@ class hash_compare {
 };
 
 }  // namespace std
+
+#endif  // __cplusplus
