@@ -6,7 +6,7 @@ import assert from "assert";
 const ROOT = new URL("../../", import.meta.url).pathname;
 
 const src = fs.readFileSync(ROOT + "background/translationService.js", "utf8");
-const cfgStore = { groqApiKey: "gsk_test_123", groqModel: "llama-3.3-70b-versatile", enabledServices: ["google", "groq"], customServices: [], useAlternativeService: "no", textTranslatorService: "google", pageTranslatorService: "groq", popupBlueWhenSiteIsTranslated: "no", toolbarIconStyle: "auto" };
+const cfgStore = { groqApiKey: "gsk_test_123", groqModel: "openai/gpt-oss-20b", enabledServices: ["google", "groq"], customServices: [], useAlternativeService: "no", textTranslatorService: "google", pageTranslatorService: "groq", popupBlueWhenSiteIsTranslated: "no", toolbarIconStyle: "auto" };
 const sent = [];
 let nextReply = null;
 
@@ -73,7 +73,7 @@ const failCases = [
   assert.equal(r.url, "https://api.groq.com/openai/v1/chat/completions");
   assert.equal(r.method, "POST");
   assert.equal(r.headers.Authorization, "Bearer gsk_test_123");
-  assert.equal(r.body.model, "llama-3.3-70b-versatile");
+  assert.equal(r.body.model, "openai/gpt-oss-20b");
   assert.equal(r.body.temperature, 0);
   assert.equal(r.body.response_format.type, "json_object");
   assert.ok(r.body.messages[0].content.includes("French"), "target language missing");

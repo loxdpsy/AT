@@ -1063,7 +1063,7 @@ const translationService = function () {
   const getGroqService = () => {
     const apiKey = (twpConfig.get("groqApiKey") || "").trim();
     if (!apiKey) return null;
-    const model = (twpConfig.get("groqModel") || "llama-3.3-70b-versatile").trim();
+    const model = (twpConfig.get("groqModel") || "openai/gpt-oss-20b").trim();
     const key = apiKey + "\n" + model;
     if (!groqService || groqServiceKey !== key) {
       groqService = createGroqService(apiKey, model);
