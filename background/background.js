@@ -21,6 +21,10 @@ chrome.webRequest.onHeadersReceived.addListener(function (details) {
   urls: ["*://*/*"],
   types: ["main_frame"]
 }, ["responseHeaders"]);
+// Ports from page translation (keepBackgroundAlive in contentScript/pageTranslator.js). An open port keeps the MV3 service worker running.
+chrome.runtime.onConnect.addListener(port => {
+  port.onDisconnect.addListener(() => void chrome.runtime.lastError);
+});
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "getMainFramePageLanguageState") {
     chrome.tabs.sendMessage(sender.tab.id, {
@@ -423,7 +427,17 @@ twpConfig.onReady(() => {
                 </svg>
                 `;
         let svg64;
-        if (pageLanguageState === "translated" && twpConfig.get("popupBlueWhenSiteIsTranslated") === "yes") {
+        // A fixed colour from the settings (Firefox only) overrides the theme colour. "auto" keeps the theme behaviour.
+        const fixedIconColor = {
+          black: "#000000",
+          white: "#ffffff",
+          blue: "#0061e0"
+        }[twpConfig.get("toolbarIconStyle")];
+        if (fixedIconColor) {
+          svg64 = svgXml.replace(/\$\(fill\-opacity\)\;/g, pageLanguageState === "translated" ? "1.0" : "0.5");
+          const halo = fixedIconColor === "#ffffff" ? "#000000" : "#ffffff";
+          svg64 = btoa(haloIcon(svg64, fixedIconColor, halo));
+        } else if (pageLanguageState === "translated" && twpConfig.get("popupBlueWhenSiteIsTranslated") === "yes") {
           svg64 = svgXml.replace(/\$\(fill\-opacity\)\;/g, "1.0");
           if (themeColorAttention) {
             svg64 = btoa(svg64.replace(/\$\(fill\)\;/g, themeColorAttention));

@@ -201,21 +201,15 @@ jobs:
           name: atlas-translation-firefox
           path: dist
 
-      - name: Download the signed Firefox add-on (only after an AMO submission)
-        uses: actions/download-artifact@v4
-        continue-on-error: true
-        with:
-          name: atlas-translation-firefox-signed
-          path: signed
-
       - name: Write the Firefox update manifest
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.prepare.outputs.version }}
           REPOSITORY: ${{ github.repository }}
         run: |
-          SIGNED=$(ls signed/*.xpi 2>/dev/null | head -n 1 || true)
-          if [ -z "$SIGNED" ]; then
+          # The GitHub build is signed by firefox.yml (unlisted) when submit_amo is on. The signed file is in dist/.
+          SIGNED="dist/atlas-translation-$VERSION-firefox-signed.xpi"
+          if [ ! -f "$SIGNED" ]; then
             # The update URL always points at the latest release, so keep a valid updates.json there.
             # Copy the previous release's file. It still describes the last signed version, so nothing new is offered.
             if gh release download --repo "$REPOSITORY" --pattern updates.json --dir dist --clobber 2>/dev/null; then
@@ -225,8 +219,7 @@ jobs:
             fi
             exit 0
           fi
-          cp "$SIGNED" "dist/atlas-translation-$VERSION-firefox-signed.xpi"
-          node scripts/make-updates-json.mjs --version "$VERSION" --xpi "dist/atlas-translation-$VERSION-firefox-signed.xpi" --repo "$REPOSITORY" --out dist/updates.json
+          node scripts/make-updates-json.mjs --version "$VERSION" --xpi "$SIGNED" --repo "$REPOSITORY" --out dist/updates.json
 
       - name: Name the Edge package
         env:

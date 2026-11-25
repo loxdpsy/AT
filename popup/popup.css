@@ -70,11 +70,6 @@ button span {
 
 input,
 label,
-#more,
-#less {
-  cursor: pointer;
-}
-
 hr {
   margin-top: 10px;
   margin-bottom: 4px;
@@ -353,21 +348,6 @@ body {
   font-weight: 500;
 }
 
-[data-popupPanelSection] {
-  border-radius: 8px;
-  padding: 2px 6px;
-  margin: 0 -6px;
-}
-
-[data-popupPanelSection]:hover {
-  background-color: var(--hover);
-}
-
-[data-popupPanelSection] label {
-  padding: 4px 0 4px 6px;
-  display: inline-block;
-}
-
 input[type="checkbox"] {
   width: 16px;
   height: 16px;
@@ -386,17 +366,6 @@ hr {
   width: 100%;
 }
 
-#more,
-#less {
-  color: var(--sub);
-  border-radius: 8px;
-}
-
-#more:hover,
-#less:hover {
-  color: var(--text);
-}
-
 #divIconTranslate:hover {
   opacity: 0.85;
 }
@@ -404,9 +373,6 @@ hr {
 /* ---- Options menu ---- */
 /* The list opens under the ⋮ button, right-aligned inside the popup. The layer covers the popup, so a click outside closes it. */
 .menuButton {
-  position: absolute;
-  top: 10px;
-  right: 40px;
   display: grid;
   place-items: center;
   width: 32px;
@@ -540,4 +506,131 @@ hr {
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+}
+
+/* ---- Popup layout: every control is on one page (no More/Less paging). ---- */
+.popupHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 8px;
+}
+.popupBrand {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.popupActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+.iconButton {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+.iconButton:hover,
+.iconButton[aria-expanded="true"] {
+  background-color: var(--hover);
+}
+.iconButton:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+#divIconTranslate {
+  position: relative;
+  width: 32px;
+  height: 32px;
+}
+#divIconTranslate img {
+  display: block;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  margin: 5px;
+}
+#divIconTranslate #iconSwap {
+  display: none;
+  position: absolute;
+  top: 5px;
+  left: 5px;
+}
+#btnSettings {
+  color: var(--muted);
+}
+#btnSettings:hover {
+  color: var(--text);
+}
+/* Language choice: one row of four. The sub-label (the page's language) sits under the name. */
+#langBar > button {
+  width: 25% !important;
+  min-height: 42px;
+  padding: 6px 2px !important;
+  line-height: 1.2;
+}
+#langBar > button > span {
+  display: block;
+}
+.langSub {
+  min-height: 11px;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.popupBody {
+  margin-top: 10px;
+}
+.improveButton {
+  margin: 0 0 8px;
+}
+.popupSection {
+  margin: 0 0 8px;
+  padding: 8px 10px 6px;
+  border-radius: 12px;
+  background: var(--hover);
+}
+.popupHeading {
+  margin: 0 0 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.popupRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 0;
+  cursor: pointer;
+  line-height: 1.35;
+}
+/* w3.css moves .w3-check down by 6px (position: relative; top: 6px). Rows centre their own boxes. */
+.popupRow .w3-check,
+.popupRow input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  position: static;
+  top: auto;
+  vertical-align: middle;
+}
+.popupRow:has(input:disabled) {
+  opacity: 0.5;
+  cursor: default;
 }
