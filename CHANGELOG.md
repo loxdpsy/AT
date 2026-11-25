@@ -2,17 +2,33 @@
 
 ## Unreleased
 
-Not released yet. Changes after 0.0.1.9 will be listed here.
+Not released yet. Changes after 0.0.2.0 will be listed here.
+
+## 0.0.2.0
+
+**Important information**
+
+- Atlas Translation is a fork of TWP - Translate Web Pages by FilipePS. It is not the official TWP extension.
+- Groq and DeepL: the popup shows a notice while the page text is sent to that service.
+
+### Differences compared to version 0.0.1.9
+
+- Added: DeepL quota and Groq usage in the popup, and the official Atlas logo, which turns blue while a page is translated.
+- Changed: one popup with the options list always shown. The simple interface is removed.
+
+### Full Release Notes
 
 * **Added:**
-  * The popup header shows the Atlas logo and a badge with the logo of the service that translates the page: Google, Yandex, Bing, DeepL or Groq.
-  * DeepL: the popup shows the characters used and the plan limit.
-  * Groq: the popup shows the approximate tokens used, counted from the answers Groq returns while the extension runs.
+  * The popup header shows the official Atlas logo, and a badge with the logo of the service that translates the page: Google, Yandex, Bing, DeepL or Groq. The logo turns blue while the page is translated, the same as the toolbar icon.
+  * **DeepL:** the popup shows the characters used and your plan's limit.
+  * **Groq:** the popup shows the approximate tokens used, counted from the answers Groq returns while the extension runs.
 * **Changes:**
-  * The ⋮ menu and the two switch buttons are gone. The site and language rules, the page actions and About are always shown in the popup. The gear is at the top right and at the bottom right of the list.
-  * There is one popup. The simple interface and its *Select popup interface style* setting are removed.
-  * The service badge shows the service; it is not a switch. Choose the service in *Settings → Services*.
-  * The popup header shows the official Atlas logo. It turns blue while the page is translated, the same as the toolbar icon.
+  * The site and language rules, the page actions, More options and About are always shown in the popup. The gear is at the top right and at the bottom right of the list. The simple interface and its *Select popup interface style* setting are removed.
+  * The service badge is a label, not a switch. Choose the service in *Settings → Services*.
+
+**Full comparison:** [v0.0.1.9...v0.0.2.0](https://github.com/loxdpsy/AT/compare/v0.0.1.9...v0.0.2.0)
+
+**Thanks** to @loxdpsy (maintainer) and arena-agent (AI coding agent, co-author on this work).
 
 ## 0.0.1.9
 
