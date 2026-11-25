@@ -60,7 +60,7 @@ The helper can translate text on this computer, so the extension does not send i
 uses it as the service named **Offline (desktop helper)**.
 
 1. Open the helper window and install the offline engine (**Install the offline engine**).
-2. Install one or more language packs. Each pack is 21 to 55 MB (most are 35 to 38 MB). A pack is downloaded from the catalogue in the
+2. Install one or more language packs. Each pack is about 37 MB. A pack is downloaded from the catalogue in the
    program, checked against its SHA-256, and only then kept. A file that fails the check is removed, and nothing is
    left behind.
 3. In the extension's options, under Translation services, turn on Offline (desktop helper), paste the pairing code

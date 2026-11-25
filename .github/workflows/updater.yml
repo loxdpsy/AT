@@ -64,10 +64,18 @@ jobs:
 
       - name: Installs the latest release into a test folder (uses GitHub, checksum and unzip)
         id: install
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           log="${{ runner.temp }}/install-output.txt"
           : > "$log"
           exec > >(tee -a "$log") 2>&1
+          # Nothing to install until a release is published. Skip the test then, and say so in the log.
+          published=$(gh api "repos/${{ github.repository }}/releases?per_page=10" --jq '[.[] | select(.draft | not)] | length')
+          if [ "$published" = "0" ]; then
+            echo "No published release yet, so there is nothing to install. The install test is skipped."
+            exit 0
+          fi
           folder="${{ runner.temp }}/atlas-install-test"
           rm -rf "$folder"
           mkdir -p "$folder"
