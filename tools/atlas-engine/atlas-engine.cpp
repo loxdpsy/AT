@@ -124,16 +124,16 @@ static std::string yamlQuote(const std::string &s) {
   return out + "\"";
 }
 
-// Marian's configuration for the pack. These are the settings Firefox's translation worker passes for these models
-// (toolkit/components/translations/content/translations-engine.worker.js): one vocabulary file for both languages,
-// no quality model, and the same beam, precision and alignment options.
+// Marian's configuration for the pack. The options are the ones Firefox's translation worker passes for these models
+// (toolkit/components/translations/content/translations-engine.worker.js): no quality model, and the same beam,
+// precision and alignment settings. The vocabulary is listed twice (source and target), as this Bergamot version expects.
 static std::string modelConfig(const fs::path &dir) {
   const std::string model = findModelFile(dir, "model.", ".intgemm.alphas.bin");
   const std::string vocab = findModelFile(dir, "vocab.", ".spm");
   const std::string lex = findModelFile(dir, "lex.50.50.", ".s2t.bin");
   std::string yaml;
   yaml += "models:\n  - " + yamlQuote(model) + "\n";
-  yaml += "vocabs:\n  - " + yamlQuote(vocab) + "\n";
+  yaml += "vocabs:\n  - " + yamlQuote(vocab) + "\n  - " + yamlQuote(vocab) + "\n";
   yaml += "shortlist:\n  - " + yamlQuote(lex) + "\n  - false\n";
   yaml += "beam-size: 1\nnormalize: 1.0\nword-penalty: 0\nmax-length-break: 128\nmax-length-factor: 2.0\n";
   yaml += "mini-batch-words: 1024\nworkspace: 128\ncpu-threads: 0\nskip-cost: true\nquiet: true\n";
