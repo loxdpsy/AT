@@ -41,6 +41,12 @@ set(SSPLIT_USE_INTERNAL_PCRE2 ON CACHE BOOL "" FORCE)
 # the environment, which the PCRE2 sub-build needs (see engine.yml).
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
+# intgemm (inside marian-dev) builds with -Werror. GCC 12 reports a false "maybe-uninitialized" warning inside its own
+# AVX-512 headers, which then stops the build. Turn that one warning off for GCC; other warnings stay errors.
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  add_compile_options(-Wno-maybe-uninitialized)
+endif()
+
 add_subdirectory(bergamot)
 
 add_executable(atlas-engine atlas-engine.cpp)
