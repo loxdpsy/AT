@@ -9,6 +9,7 @@
 // generated for this build and the extension ID changes.
 import { cp, mkdir, readFile, rm, writeFile, copyFile } from "node:fs/promises";
 import { createWriteStream } from "node:fs";
+import { createHash, createPublicKey } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -94,18 +95,30 @@ function zipDirectory(dir, zipPath) {
   });
 }
 
+// The "key" field makes an unpacked copy (the zip) get the same extension ID as the signed CRX. Chrome and Edge
+// only accept a native messaging connection from a known ID, so the ID must not depend on the folder name.
+// Only the public half goes into the manifest. The private key stays in the signing file.
+function publicKeyManifestValue(privateKeyPem) {
+  const spki = createPublicKey(privateKeyPem).export({ type: "spki", format: "der" });
+  const id = createHash("sha256").update(spki).digest().subarray(0, 16);
+  const extensionId = [...id].map(b => String.fromCharCode(97 + (b >> 4), 97 + (b & 15))).join("");
+  return { key: spki.toString("base64"), extensionId };
+}
+
 async function buildChromium() {
   log("Chromium: staging files");
   const dir = await stage("chromium", "manifest.json", ["service_worker.js"]);
-  const zipPath = path.join(buildDir, `${name}-${version}-chromium.zip`);
-  await zipDirectory(dir, zipPath);
-  log(`Chromium: wrote ${path.relative(root, zipPath)}`);
-
   const crxPath = path.join(buildDir, `${name}-${version}-chromium.crx`);
   const keyPath = path.join(buildDir, `${name}-signing-key.pem`);
   if (process.env.CRX_PRIVATE_KEY) {
-    await writeFile(keyPath, process.env.CRX_PRIVATE_KEY.replace(/\\n/g, "\n"), { mode: 0o600 });
-    log("Chromium: using CRX_PRIVATE_KEY (stable extension ID)");
+    const pem = process.env.CRX_PRIVATE_KEY.replace(/\\n/g, "\n");
+    await writeFile(keyPath, pem, { mode: 0o600 });
+    const { key, extensionId } = publicKeyManifestValue(pem);
+    const manifestPath = path.join(dir, "manifest.json");
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    manifest.key = key;
+    await writeFile(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
+    log(`Chromium: using CRX_PRIVATE_KEY, extension ID ${extensionId} (the same in the zip and the CRX)`);
   } else if (process.env.GITHUB_ACTIONS === "true") {
     // A random key on every CI run would give each release a different extension ID.
     throw new Error("CRX_PRIVATE_KEY secret is missing. Add it in Settings > Secrets and variables > Actions (see README, 'Release secrets').");
@@ -113,6 +126,9 @@ async function buildChromium() {
     await rm(keyPath, { force: true });
     log("Chromium: CRX_PRIVATE_KEY not set, a new key is generated (the extension ID will change)");
   }
+  const zipPath = path.join(buildDir, `${name}-${version}-chromium.zip`);
+  await zipDirectory(dir, zipPath);
+  log(`Chromium: wrote ${path.relative(root, zipPath)}`);
   await crx3([path.join(dir, "manifest.json")], { keyPath, crxPath });
   log(`Chromium: wrote ${path.relative(root, crxPath)}`);
 }
