@@ -31,11 +31,13 @@ const PAGE: &str = include_str!("web/ui.html");
 const SCRIPT: &str = include_str!("web/app.js");
 const STYLE: &str = include_str!("web/app.css");
 const ICON: &[u8] = include_bytes!("../../../icons/icon-128.png");
+/// Archivo, the face of the Mister Download Manager website. SIL Open Font License, see web/fonts/OFL.txt.
+const FONT: &[u8] = include_bytes!("web/fonts/archivo-latin.woff2");
 
 /// The most a request body may be. The window sends a few hundred bytes.
 const MAX_BODY: usize = 16 * 1024;
 
-const SECURITY_HEADERS: &str = "Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'\r\nX-Content-Type-Options: nosniff\r\nReferrer-Policy: no-referrer\r\nCache-Control: no-store\r\n";
+const SECURITY_HEADERS: &str = "Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; font-src 'self'; img-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'\r\nX-Content-Type-Options: nosniff\r\nReferrer-Policy: no-referrer\r\nCache-Control: no-store\r\n";
 
 /// Starts the window. When `open_window` is true, the address is opened in the default browser. The offline translation
 /// service starts with it, on its fixed port (see api.rs).
@@ -159,6 +161,7 @@ fn handle(stream: &mut TcpStream, port: u16, ctx: &Ctx) {
         ("GET", "/app.js") => respond(stream, "200 OK", "text/javascript; charset=utf-8", SCRIPT.as_bytes()),
         ("GET", "/app.css") => respond(stream, "200 OK", "text/css; charset=utf-8", STYLE.as_bytes()),
         ("GET", "/icon.png") => respond(stream, "200 OK", "image/png", ICON),
+        ("GET", "/fonts/archivo-latin.woff2") => respond(stream, "200 OK", "font/woff2", FONT),
         ("POST", "/api/status")
         | ("POST", "/api/install")
         | ("POST", "/api/browser")
