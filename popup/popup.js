@@ -64,6 +64,8 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     const [logoSrc, serviceName, isWordmark] = serviceLogos[currentPageTranslatorService] || serviceLogos.google;
     // The Atlas logo turns blue (the accent colour) while the page is translated, the same as the toolbar icon.
     $(".popupLogo").classList.toggle("translated", currentPageLanguageState === "translated");
+    // The Atlas translate icon: the blue card with the white A, or the blue A on the grey card while translated.
+    $("#atlasTranslateIcon").setAttribute("src", currentPageLanguageState === "translated" ? "/icons/icon-translated.svg" : "/icons/icon.svg");
     const logo = $("#iconTranslate");
     logo.setAttribute("src", logoSrc);
     logo.alt = serviceName;
