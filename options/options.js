@@ -543,7 +543,9 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
       defaultShortcuts[name] = "";
     }
   }
-  function addHotkey(hotkeyname, description) {
+  // currentShortcut is the shortcut the browser has now (chrome.commands.getAll). Chromium cannot be changed from here,
+  // so its field shows the real shortcut, not the one saved in the settings.
+  function addHotkey(hotkeyname, description, currentShortcut) {
     if (hotkeyname === "_execute_browser_action" && !description) {
       description = "Enable the extension";
     }
@@ -567,7 +569,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     const error = li.querySelector(`[name="error"]`);
     const removeKey = li.querySelector(`[name="removeKey"]`);
     const resetKey = li.querySelector(`[name="resetKey"]`);
-    input.value = twpConfig.get("hotkeys")[hotkeyname];
+    input.value = typeof browser === "undefined" ? currentShortcut || "" : twpConfig.get("hotkeys")[hotkeyname];
     if (input.value) {
       resetKey.style.display = "none";
     } else {
@@ -683,7 +685,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
   if (typeof chrome.commands !== "undefined") {
     chrome.commands.getAll(results => {
       for (const result of results) {
-        addHotkey(result.name, result.description);
+        addHotkey(result.name, result.description, result.shortcut);
       }
     });
   }

@@ -290,6 +290,9 @@
   "lblSwitchTranslatedAndOriginal": {
     "message": "Switch between the translated and the original page"
   },
+  "lblToggleHoverTranslationForTab": {
+    "message": "Toggle hover translation for this tab"
+  },
   "lblRestorePageToOriginal": {
     "message": "Restore page to original"
   },

@@ -13,6 +13,12 @@
       },
       "description": "__MSG_lblSwitchTranslatedAndOriginal__"
     },
+    "hotkey-toggle-hover-translation": {
+      "suggested_key": {
+        "default": "Shift+Alt+H"
+      },
+      "description": "__MSG_lblToggleHoverTranslationForTab__"
+    },
     "hotkey-translate-selected-text": {
       "suggested_key": {
         "default": "Alt+S"

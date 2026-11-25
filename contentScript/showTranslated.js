@@ -22,6 +22,12 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
   let showTranslatedTextWhenHoveringThisSite = twpConfig.get("sitesToTranslateWhenHovering").indexOf(tabHostName) !== -1;
   let showTranslatedTextWhenHoveringThisLang = false;
   let translateTextOverMouseWhenPressTwice = twpConfig.get("translateTextOverMouseWhenPressTwice") === "yes";
+  // Set by the "Toggle hover translation for this tab" shortcut. null means the saved site and language rules decide.
+  // It lasts until the page is reloaded.
+  let hoverOverride = null;
+  function hoverIsOn() {
+    return hoverOverride !== null ? hoverOverride : showTranslatedTextWhenHoveringThisSite || showTranslatedTextWhenHoveringThisLang;
+  }
   let fooCount = 0;
   twpConfig.onChanged(function (name, newValue) {
     switch (name) {
@@ -85,10 +91,13 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     if (e.target === divElement) return;
     if (e.target === currentNodeOverMouse) return;
     currentNodeOverMouse = e.target;
-    if (!(!showTranslatedTextWhenHoveringThisSite && !showTranslatedTextWhenHoveringThisLang)) {
+    if (hoverIsOn()) {
       destroy();
       if (e.buttons === 0) {
-        timeoutHandler = setTimeout(translateThisNode, 1250, e.target);
+        // The rules are checked again when the timer ends, in case hover was turned off meanwhile.
+        timeoutHandler = setTimeout(() => {
+          if (hoverIsOn()) translateThisNode(e.target);
+        }, 1250);
       }
     }
   }
@@ -588,7 +597,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     }
   }
   function updateEventListener() {
-    if (platformInfo.isMobile.any || pageLanguageState == "translated" || !(showTranslatedTextWhenHoveringThisSite || showTranslatedTextWhenHoveringThisLang || translateTextOverMouseWhenPressTwice)) {
+    if (platformInfo.isMobile.any || pageLanguageState == "translated" || !(hoverIsOn() || translateTextOverMouseWhenPressTwice)) {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mousedown", onMouseDown);
@@ -606,6 +615,15 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     }
   }
   updateEventListener();
+  // The shortcut for this tab. It reverses the hover state that is in effect now, and drops any hover translation
+  // that is queued or showing, so a late answer cannot appear after the switch.
+  chrome.runtime.onMessage.addListener(request => {
+    if (request.action !== "toggle-hover-translation") return;
+    hoverOverride = !hoverIsOn();
+    currentNodeOverMouse = null;
+    destroy();
+    updateEventListener();
+  });
   pageTranslator.onGetOriginalTabLanguage(function (tabLanguage) {
     originalTabLanguage = tabLanguage;
     showTranslatedTextWhenHoveringThisLang = twpConfig.get("langsToTranslateWhenHovering").indexOf(originalTabLanguage) !== -1;

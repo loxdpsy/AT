@@ -10,6 +10,9 @@ Not released yet. This version is in progress; the list grows until it is releas
 
 - Desktop helper: its version is the extension's version (0.0.2.2 for this version), and a README section describes it.
 - Local files (file://): when the browser has not allowed the extension to read file pages, the popup says so and how to allow it (#91, #1051).
+- Local files (file://): "Never translate this site" and "Always translate this site" now work on a local file. The rule applies to that file (#91, #1051).
+- New shortcut, Shift+Alt+H (changeable in the browser's shortcut settings): turns hover translation on or off for the current tab, until the page is reloaded (#1047).
+- Options, Keyboard shortcuts: on Chrome and Edge the field shows the shortcut the browser really has, not a saved one (#842). The double-Ctrl options are unchanged.
 - Offline translation is faster: long texts are split at their line breaks, and the parts are translated in parallel on
   two engine processes per language pair.
 - The helper tries a download again when the network cuts it short.

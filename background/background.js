@@ -547,6 +547,15 @@ if (typeof chrome.commands !== "undefined") {
           action: "toggle-translation"
         }, checkedLastError);
       });
+    } else if (command === "hotkey-toggle-hover-translation") {
+      chrome.tabs.query({
+        currentWindow: true,
+        active: true
+      }, tabs => {
+        if (tabs[0]) chrome.tabs.sendMessage(tabs[0].id, {
+          action: "toggle-hover-translation"
+        }, checkedLastError);
+      });
     } else if (command === "hotkey-translate-selected-text") {
       chrome.tabs.query({
         currentWindow: true,
