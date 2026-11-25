@@ -13,6 +13,7 @@ Not released yet. This version is in progress; the list grows until it is releas
 - Local files (file://): "Never translate this site" and "Always translate this site" now work on a local file. The rule applies to that file (#91, #1051).
 - New shortcut, Shift+Alt+H (changeable in the browser's shortcut settings): turns hover translation on or off for the current tab, until the page is reloaded (#1047).
 - LibreTranslate (#278): can translate whole pages once a server is saved (Options, Page Translation Service). The API key is optional, for servers that need none. Each text is sent as its own request.
+- Right-to-left languages (Arabic, Hebrew, Persian, Urdu and others): the popup and options pages are laid out right to left when the interface language is one of them (#638).
 - Options, Keyboard shortcuts: on Chrome and Edge the field shows the shortcut the browser really has, not a saved one (#842). The double-Ctrl options are unchanged.
 - Offline translation is faster: long texts are split at their line breaks, and the parts are translated in parallel on
   two engine processes per language pair.
