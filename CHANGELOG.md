@@ -4,6 +4,8 @@
 
 Not released yet. Changes after 0.0.2.0 will be listed here.
 
+- Groq: the default model is now openai/gpt-oss-20b. Groq shut down llama-3.3-70b-versatile on 16 August 2026 for free and developer tiers. Settings that name a retired Groq model are switched to its replacement when they load or are restored, so older backups keep working.
+- Restore from file accepts backups from older versions. Unknown keys are ignored, and the Groq model is migrated as above.
 - New logo: the Atlas Translation icon (the blue and grey translate cards) replaces the old icon set in the toolbar, the extension icons, the options page, the store logo, and the README. The old swap icon and the old icon generator script are removed.
 - Popup: the Atlas translate icon (the SVG, with the Atlas mark in place of the A) sits beside the service badge, and it switches to the translated version while the page is translated.
 - Release workflow: a version that is already published (tag and GitHub release both exist) is reported as done and is not published again. It no longer fails.
