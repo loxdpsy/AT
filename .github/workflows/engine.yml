@@ -97,7 +97,8 @@ jobs:
 
       - name: Translate English to French with the real language pack
         id: smoke
-        run: node scripts/engine-smoke.mjs "${{ steps.find.outputs.path }}"
+        # The output is kept for the job summary. The step still fails when the test fails (bash runs with pipefail).
+        run: node scripts/engine-smoke.mjs "${{ steps.find.outputs.path }}" 2>&1 | tee "$RUNNER_TEMP/engine-smoke.log"
 
       - name: Name the program for the release
         id: name
@@ -143,6 +144,20 @@ jobs:
               if [ -f "$log" ]; then
                 grep -E ': error|error [A-Z]+[0-9]+|LNK[0-9]+|\*\*\* |failed' "$log" | head -n 80 || true
               fi
+              echo '```'
+              echo ""
+            } >> "$summary"
+          fi
+
+          smokelog="$RUNNER_TEMP/engine-smoke.log"
+          if [ "${{ steps.smoke.outcome }}" = "failure" ] && [ -f "$smokelog" ]; then
+            {
+              echo "### Translation test output"
+              echo ""
+              echo "The last 60 lines of the test output (the download, the engine start and the translations)."
+              echo ""
+              echo '```'
+              tail -n 60 "$smokelog"
               echo '```'
               echo ""
             } >> "$summary"
