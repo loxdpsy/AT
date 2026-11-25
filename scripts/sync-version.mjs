@@ -59,11 +59,16 @@ async function changelogHasVersion(version) {
 }
 
 // Used by npm run check. Returns a list of problems (empty when everything agrees).
+// The badge is not compared with the others. It shows the latest published release (scripts/sync-readme.mjs, run
+// daily), so it lags a version that is merged but not yet released. It must still be a valid version.
 export async function versionProblems() {
   const found = await readVersions();
-  const values = new Set(found.map(f => f.version));
-  if (values.size === 1 && !values.has(undefined)) return [];
-  return found.map(f => `${f.file} (${f.where}): ${f.version ?? "missing"}`);
+  const written = found.filter(f => f.file !== "README.md");
+  const values = new Set(written.map(f => f.version));
+  const problems = values.size === 1 && !values.has(undefined) ? [] : written.map(f => `${f.file} (${f.where}): ${f.version ?? "missing"}`);
+  const badge = found.find(f => f.file === "README.md");
+  if (!badge.version || !VERSION_RE.test(badge.version)) problems.push(`${badge.file} (${badge.where}): ${badge.version ?? "missing"}`);
+  return problems;
 }
 
 async function main() {

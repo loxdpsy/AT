@@ -2,7 +2,7 @@
 
 <p align="center"><img src="icons/icon-128.png" width="96" alt="Atlas Translation logo"></p>
 
-![Version](https://img.shields.io/badge/version-0.0.2.1-1a73e8) ![Release date](https://img.shields.io/github/release-date/loxdpsy/AT?label=release%20date) [![Issues](https://img.shields.io/github/issues/loxdpsy/AT)](https://github.com/loxdpsy/AT/issues) [![Pull requests](https://img.shields.io/github/issues-pr/loxdpsy/AT)](https://github.com/loxdpsy/AT/pulls) [![License: MPL-2.0](https://img.shields.io/github/license/loxdpsy/AT)](LICENSE)
+![Version](https://img.shields.io/badge/version-0.0.2.0-1a73e8) ![Release date](https://img.shields.io/github/release-date/loxdpsy/AT?label=release%20date) [![Issues](https://img.shields.io/github/issues/loxdpsy/AT)](https://github.com/loxdpsy/AT/issues) [![Pull requests](https://img.shields.io/github/issues-pr/loxdpsy/AT)](https://github.com/loxdpsy/AT/pulls) [![License: MPL-2.0](https://img.shields.io/github/license/loxdpsy/AT)](LICENSE)
 
 **Translate web pages in real time, in your browser.**
 
@@ -113,8 +113,10 @@ Repository secrets used by the workflows (all optional):
 
 ### Keeping the version in sync
 
-The version lives in five places: `manifest.json`, `firefox_manifest.json`, `package.json`, `package-lock.json`, and the
-version badge at the top of this README. Set all of them at once:
+The version lives in four files: `manifest.json`, `firefox_manifest.json`, `package.json`, and `package-lock.json`.
+The version badge at the top of this README shows the latest published release. The release workflow sets it, and the
+daily README sync sets it when a release is made by hand. So it can show the previous version until a new release is
+published. Set the files at once:
 
 ```bash
 npm run version:sync -- 9.8.2.0   # writes every file; warns if CHANGELOG.md has no "## 9.8.2.0" section
