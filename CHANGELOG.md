@@ -10,13 +10,16 @@ Not released yet. These changes are in the branch and will appear in the next ve
   * **Groq (AI)** translator. Add your own Groq API key in *Settings → Services*, then choose Groq for pages or selected text. The key is stored in the extension and is sent only to Groq.
   * Firefox toolbar icon colour in *Settings → Style*: follow the theme, black, white, or blue. Firefox only.
   * The GitHub Firefox build is signed by addons.mozilla.org as an **unlisted** add-on when a release runs with *submit_amo* on. It is never listed publicly.
+  * The popup shows a notice while the page service is **Groq** or **DeepL**, because the page text is sent to that service.
 * **Changes:**
   * The toolbar popup shows every option on one page. The More and Less paging is removed. The gear icon opens Settings.
+  * The ⋮ options menu has an icon for each row. It holds the site and language rules, the page actions, More options, and About. Display options stay in Settings.
 * **Fixed:**
   * Chinese pages: large blocks that cover the screen are translated (issue #922).
   * Auto-translate runs again after a site or page language change (issue #934).
   * The DeepL button appears in the show-translated panel when DeepL is enabled.
   * Page translation starts faster: cache reads run together instead of one by one.
+  * Right-to-left pages also flip for Dari (prs) and Sindhi (sd).
 
 **Thanks** to @loxdpsy (maintainer) and arena-agent (AI coding agent, co-author on this work). The full comparison is added when this work is released.
 
@@ -63,6 +66,10 @@ Not released yet. These changes are in the branch and will appear in the next ve
 
 ## 0.0.1.3
 
+**Important information**
+
+- Atlas Translation is a fork of TWP - Translate Web Pages by FilipePS. It is not the official TWP extension.
+
 ### Differences compared to version 0.0.1.2
 
 - Fixed: Edge waits when an earlier submission is still in review, instead of failing.
@@ -70,7 +77,7 @@ Not released yet. These changes are in the branch and will appear in the next ve
 
 ### Full Release Notes
 
-* **Changed:**
+* **Changes:**
   * The README version badge syncs daily with the latest release.
   * The release job stages every file that the version sync changes.
 * **Fixed:**
@@ -82,6 +89,10 @@ Not released yet. These changes are in the branch and will appear in the next ve
 **Thanks** to @loxdpsy (maintainer) and arena-agent (AI coding agent, co-author on this release's commits).
 
 ## 0.0.1.2
+
+**Important information**
+
+- Atlas Translation is a fork of TWP - Translate Web Pages by FilipePS. It is not the official TWP extension.
 
 ### Differences compared to version 0.0.1.1
 
@@ -96,7 +107,7 @@ Not released yet. These changes are in the branch and will appear in the next ve
   * About is a section of the settings page, with the sidebar. It is translated into every locale, with a thanks line and credit links.
   * Popup options menu: a themed list instead of a native select. About opens directly.
   * Edge: the package is named on releases.
-* **Changed:**
+* **Changes:**
   * README: Firefox is installed from the GitHub release only.
   * AMO metadata uses only tags that AMO accepts.
 * **Fixed:**

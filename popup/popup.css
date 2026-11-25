@@ -609,3 +609,14 @@ hr {
   padding: 6px 10px 2px;
   border-top: 1px solid var(--line);
 }
+
+/* Shown while the page service sends the text to another company (Groq, DeepL). */
+.serviceNotice {
+  margin: 6px 16px 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.serviceNotice[hidden] {
+  display: none;
+}
