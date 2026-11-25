@@ -1,0 +1,9 @@
+#!/bin/sh
+# Runs before every commit: the repository check and the unit tests.
+# Skip once with: git commit --no-verify (CI still runs the same checks).
+set -e
+cd "$(git rev-parse --show-toplevel)"
+echo "pre-commit: npm run check"
+npm run check --silent
+echo "pre-commit: npm test"
+npm test --silent

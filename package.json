@@ -8,6 +8,7 @@
   "scripts": {
     "check": "node scripts/check.mjs",
     "test": "node tests/run.mjs",
+    "prepare": "node scripts/install-hooks.mjs",
     "build": "node scripts/build.mjs all",
     "build:chromium": "node scripts/build.mjs chromium",
     "build:firefox": "node scripts/build.mjs firefox",

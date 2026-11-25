@@ -1,0 +1,42 @@
+name: Checks
+
+# Runs on every pull request and on every push to main. The same checks run before each commit and push
+# on a developer machine (see .githooks). Merge a pull request only after this workflow passes.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Check, test, and build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check the repository
+        run: npm run check
+
+      - name: Run the unit tests
+        run: npm test
+
+      - name: Build Chromium
+        run: npm run build:chromium
+
+      - name: Build Firefox
+        run: npm run build:firefox
