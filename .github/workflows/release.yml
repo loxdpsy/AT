@@ -213,38 +213,33 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            binary: atlas-updater
             asset: atlas-updater-linux
           - os: macos-latest
-            binary: atlas-updater
             asset: atlas-updater-macos
           - os: windows-latest
-            binary: atlas-updater.exe
             asset: atlas-updater-windows.exe
     defaults:
       run:
         shell: bash
-        working-directory: tools/atlas-updater
     steps:
       - name: Check out the code
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.prepare.outputs.sha }}
 
-      - name: Unit tests
-        run: cargo test --release
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
-      - name: Build
-        run: cargo build --release
-
-      - name: Name the program for the release
-        run: cp "target/release/${{ matrix.binary }}" "$RUNNER_TEMP/${{ matrix.asset }}"
+      - name: Build the helper (runs the Rust tests first)
+        run: node scripts/build-helper.mjs --out "$RUNNER_TEMP/helper"
 
       - name: Keep the program for the publish job
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset }}
-          path: ${{ runner.temp }}/${{ matrix.asset }}
+          path: ${{ runner.temp }}/helper/${{ matrix.asset }}
           if-no-files-found: error
 
   publish:

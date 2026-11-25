@@ -92,6 +92,56 @@ for (const file of localeFiles) {
 }
 ok(`${localeFiles.length} locale files parsed`);
 
+console.log("Rust helper (tools/atlas-updater)");
+{
+  const crate = path.join(root, "tools", "atlas-updater");
+  const src = path.join(crate, "src");
+  const rsFiles = [];
+  const collectRs = async dir => {
+    for (const entry of await readdir(dir, { withFileTypes: true })) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) await collectRs(full);
+      else if (entry.name.endsWith(".rs")) rsFiles.push(full);
+    }
+  };
+  await collectRs(src);
+  let rustProblems = 0;
+  const rustFail = message => {
+    rustProblems++;
+    fail(message);
+  };
+  for (const file of rsFiles) {
+    const text = await readFile(file, "utf8");
+    const rel = path.relative(root, file);
+    // include_str!("x") and include_bytes!("x") must point at a file that exists, relative to the source file.
+    for (const match of text.matchAll(/include_(?:str|bytes)!\("([^"]+)"\)/g)) {
+      const target = path.resolve(path.dirname(file), match[1]);
+      if (!(await stat(target).then(() => true, () => false))) rustFail(`${rel} includes a missing file: ${match[1]}`);
+    }
+    // "mod name;" must have a matching file: name.rs or name/mod.rs, next to the file (or in its folder for main.rs).
+    const isRoot = path.basename(file) === "main.rs" || path.basename(file) === "lib.rs" || path.basename(file) === "mod.rs";
+    const moduleDir = isRoot ? path.dirname(file) : path.join(path.dirname(file), path.basename(file, ".rs"));
+    for (const match of text.matchAll(/^\s*(?:pub\s+)?mod\s+([a-z_][a-z0-9_]*)\s*;/gm)) {
+      const candidates = [path.join(path.dirname(file), match[1] + ".rs"), path.join(moduleDir, match[1] + ".rs"), path.join(moduleDir, match[1], "mod.rs")];
+      let found = false;
+      for (const candidate of candidates) if (await stat(candidate).then(() => true, () => false)) found = true;
+      if (!found) rustFail(`${rel} declares mod ${match[1]} but there is no ${match[1]}.rs`);
+    }
+  }
+  if (!rustProblems) ok(`${rsFiles.length} Rust source files: module and include paths resolve`);
+
+  // Compile check (no dependencies, so no network). Needs cargo. In CI cargo must be there; locally it may be skipped.
+  const probe = spawnSync("cargo", ["--version"], { encoding: "utf8" });
+  if (probe.error || probe.status !== 0) {
+    if (process.env.CI) fail("cargo is not installed, so the Rust helper cannot be checked");
+    else console.log("  skip  cargo is not installed; the Rust compile check was skipped (CI runs it)");
+  } else {
+    const result = spawnSync("cargo", ["check", "--all-targets", "--quiet"], { cwd: crate, encoding: "utf8" });
+    if (result.status !== 0) fail("cargo check failed: " + (result.stderr || result.stdout).trim().split("\n").slice(0, 6).join(" | "));
+    else ok(`cargo check passed (${probe.stdout.trim()})`);
+  }
+}
+
 console.log("Versions");
 const versionIssues = await versionProblems();
 if (versionIssues.length) fail("version fields differ: " + versionIssues.join("; "));
