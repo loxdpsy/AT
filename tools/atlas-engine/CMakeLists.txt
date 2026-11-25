@@ -64,9 +64,8 @@ if(APPLE)
   add_compile_options("$<$<COMPILE_LANGUAGE:C>:-include;stdio.h>")
   # sentencepiece (inside marian-dev) converts -1 to an enum. Apple clang in Xcode 16.4 treats that as an error.
   add_compile_options("$<$<COMPILE_LANG_AND_ID:CXX,AppleClang,Clang>:-Wno-enum-constexpr-conversion>")
-  # marian-dev (Xcode 16.4 Apple clang, -Werror): an unused-but-set variable in factored_vocab.cpp and shortlist.cpp,
-  # and variable-length arrays in ExceptionWithCallStack.cpp, which C++ does not allow.
-  add_compile_options("$<$<COMPILE_LANG_AND_ID:CXX,AppleClang,Clang>:-Wno-unused-but-set-variable;-Wno-vla-cxx-extension>")
+  # Apple clang's -Wunused-but-set-variable and -Wvla-cxx-extension warnings are errors in marian-dev (see the
+  # tree loop after add_subdirectory(bergamot)).
 endif()
 
 if(MSVC)
@@ -75,6 +74,29 @@ if(MSVC)
 endif()
 
 add_subdirectory(bergamot)
+
+# marian-dev gives each of its own targets -Wall and -Wextra, and those come after the directory options added above.
+# So a -Wno- option set at directory level does not reach them: -Wall turns the warning back on. Apple clang reports
+# two warnings in marian-dev's code, and -Werror makes them errors (factored_vocab.cpp and shortlist.cpp have
+# unused-but-set variables; ExceptionWithCallStack.cpp has variable-length arrays, which C++ does not allow).
+# Those options are added to every target in the bergamot tree, after its own options.
+function(atlas_add_options_to_tree dir)
+  get_property(targets DIRECTORY "${dir}" PROPERTY BUILDSYSTEM_TARGETS)
+  foreach(target IN LISTS targets)
+    get_target_property(kind ${target} TYPE)
+    if(kind MATCHES "^(EXECUTABLE|STATIC_LIBRARY|SHARED_LIBRARY|MODULE_LIBRARY|OBJECT_LIBRARY)$")
+      target_compile_options(${target} PRIVATE ${ARGN})
+    endif()
+  endforeach()
+  get_property(subdirs DIRECTORY "${dir}" PROPERTY SUBDIRECTORIES)
+  foreach(sub IN LISTS subdirs)
+    atlas_add_options_to_tree("${sub}" ${ARGN})
+  endforeach()
+endfunction()
+
+if(APPLE)
+  atlas_add_options_to_tree("${CMAKE_CURRENT_BINARY_DIR}/bergamot" -Wno-unused-but-set-variable -Wno-vla-cxx-extension)
+endif()
 
 add_executable(atlas-engine atlas-engine.cpp)
 target_link_libraries(atlas-engine PRIVATE bergamot-translator marian)

@@ -21,9 +21,15 @@ const pack = catalogue.packs.find(p => p.pair === "enfr");
 if (!pack) throw new Error("the catalogue has no English to French pack");
 
 const dir = await mkdtemp(path.join(os.tmpdir(), "atlas-engine-smoke-"));
+// Every file is tried, so the log shows which ones the download host refuses, not only the first.
+const refused = [];
 for (const file of pack.files) {
   const response = await fetch(file.url, { redirect: "follow" });
-  if (!response.ok) throw new Error(`download failed (${response.status}): ${file.url}`);
+  if (!response.ok) {
+    refused.push(`${file.name}: HTTP ${response.status} from ${response.url}`);
+    console.log(`  FAIL  ${file.name}: HTTP ${response.status}`);
+    continue;
+  }
   const bytes = Buffer.from(await response.arrayBuffer());
   if (bytes.length !== file.size) throw new Error(`${file.name}: size ${bytes.length}, catalogue says ${file.size}`);
   const sha = createHash("sha256").update(bytes).digest("hex");
@@ -31,6 +37,7 @@ for (const file of pack.files) {
   await writeFile(path.join(dir, file.name), bytes);
   console.log(`  ok    ${file.name} (${bytes.length} bytes, SHA-256 checked)`);
 }
+if (refused.length) throw new Error(`download failed for ${refused.length} file(s):\n  ${refused.join("\n  ")}`);
 
 const child = spawn(engine, [dir], { stdio: ["pipe", "pipe", "inherit"] });
 const lines = readline.createInterface({ input: child.stdout })[Symbol.asyncIterator]();
