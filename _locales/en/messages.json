@@ -740,5 +740,9 @@
   },
   "msgOfflineRemoved": {
     "message": "Code removed. Offline (desktop helper) is off."
+  },
+  "fileAccessNotice": {
+    "message": "This is a local file. Allow this extension to read file pages in your browser's extension settings, then reload the page.",
+    "description": "Shown in the popup for a local file (file://) when the browser does not let the extension read it."
   }
 }

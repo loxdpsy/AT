@@ -5,6 +5,18 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
   const darkPref = twpConfig.get("darkMode");
   twpTheme.set(["auto", "yes", "no"].includes(darkPref) ? darkPref : "auto");
   twpI18n.translateDocument();
+  // A local file (file://) is translated only when the browser lets this extension read file pages. Show the notice when it does not.
+  chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+    const url = (tabs && tabs[0] && tabs[0].url) || "";
+    const api = chrome.extension && chrome.extension.isAllowedFileSchemeAccess;
+    if (!url.startsWith("file:") || typeof api !== "function") return;
+    const show = allowed => {
+      if (allowed === false) $("#fileAccessNotice").hidden = false;
+    };
+    // Chrome calls back; Firefox returns a promise. Accept both.
+    const result = api.call(chrome.extension, show);
+    if (result && typeof result.then === "function") result.then(show, () => {});
+  });
   $("#popupTitle").textContent = chrome.runtime.getManifest().name;
   $("#btnSettings").addEventListener("click", () => {
     chrome.tabs.create({ url: chrome.runtime.getURL("/options/options.html") }, closePopupAfter);
