@@ -4,6 +4,7 @@
 
 Not released yet. Changes after 0.0.2.0 will be listed here.
 
+- New logo: the Atlas Translation icon (the blue and grey translate cards) replaces the old icon set in the toolbar, the extension icons, the options page, the store logo, and the README. The old swap icon and the old icon generator script are removed.
 - Popup: the Atlas translate icon (the SVG, with the Atlas mark in place of the A) sits beside the service badge, and it switches to the translated version while the page is translated.
 - Release workflow: a version that is already published (tag and GitHub release both exist) is reported as done and is not published again. It no longer fails.
 - Popup: the DeepL and Groq marks are smaller so they fit the badge.
