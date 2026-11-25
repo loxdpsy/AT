@@ -13,7 +13,8 @@ use std::thread;
 use std::time::Duration;
 
 use eframe::egui::{self, Color32, RichText, ViewportCommand};
-use eframe::icon_data::{self, IconData};
+use eframe::egui::IconData;
+use eframe::icon_data;
 
 use crate::api;
 use crate::autostart;

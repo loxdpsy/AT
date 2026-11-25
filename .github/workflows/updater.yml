@@ -43,11 +43,30 @@ jobs:
       - name: Set up Rust (the helper window needs Rust 1.92 or later)
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install the GTK and WebKitGTK development files (Linux, for the helper window)
-        if: runner.os == 'Linux'
+      - name: Compile errors as annotations (so a failed build shows what broke)
+        shell: bash
+        working-directory: tools/atlas-updater
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev
+          cargo test --release --no-run --message-format=json > "$RUNNER_TEMP/cargo-messages.json" 2>/dev/null || true
+          python3 - "$RUNNER_TEMP/cargo-messages.json" <<'PY'
+          import json, sys
+          for line in open(sys.argv[1], encoding="utf-8", errors="replace"):
+              try:
+                  m = json.loads(line)
+              except ValueError:
+                  continue
+              if m.get("reason") != "compiler-message":
+                  continue
+              msg = m["message"]
+              if msg["level"] != "error":
+                  continue
+              spans = [x for x in msg.get("spans", []) if x.get("is_primary")] or msg.get("spans", [])
+              where = ""
+              if spans:
+                  where = "file=%s,line=%s" % (spans[0]["file_name"], spans[0]["line_start"])
+              text = (msg.get("rendered") or msg["message"]).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+              print("::error %s::%s" % (where, text))
+          PY
 
       - name: Unit tests
         id: tests
