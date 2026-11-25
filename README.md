@@ -1,6 +1,6 @@
 # Atlas Translation
 
-![Version](https://img.shields.io/badge/version-0.0.1.5-1a73e8) ![Release date](https://img.shields.io/github/release-date/loxdpsy/AT?label=release%20date) [![Issues](https://img.shields.io/github/issues/loxdpsy/AT)](https://github.com/loxdpsy/AT/issues) [![Pull requests](https://img.shields.io/github/issues-pr/loxdpsy/AT)](https://github.com/loxdpsy/AT/pulls) [![License: MPL-2.0](https://img.shields.io/github/license/loxdpsy/AT)](LICENSE)
+![Version](https://img.shields.io/badge/version-0.0.1.4-1a73e8) ![Release date](https://img.shields.io/github/release-date/loxdpsy/AT?label=release%20date) [![Issues](https://img.shields.io/github/issues/loxdpsy/AT)](https://github.com/loxdpsy/AT/issues) [![Pull requests](https://img.shields.io/github/issues-pr/loxdpsy/AT)](https://github.com/loxdpsy/AT/pulls) [![License: MPL-2.0](https://img.shields.io/github/license/loxdpsy/AT)](LICENSE)
 
 **Translate web pages in real time, in your browser.**
 
