@@ -1,4 +1,4 @@
-// The helper's own files: the offline engine, the language packs, and the pairing code.
+// The helper's own files: the offline engine, the language packs, and the bindings of browser extensions.
 //
 // They live in the user's data folder, not in the extension folder, so updating the extension never removes them.
 
@@ -74,23 +74,6 @@ fn os_random(count: usize) -> Option<Vec<u8>> {
     let mut buffer = vec![0u8; count];
     file.read_exact(&mut buffer).ok()?;
     Some(buffer)
-}
-
-/// The pairing code. The browser extension sends it with each translation request, so only the extension that was
-/// paired with this helper can use the offline engine. It is created once and then kept.
-pub fn pairing_code() -> Result<String, String> {
-    let folder = data_dir();
-    let path = folder.join("pairing-code.txt");
-    if let Ok(text) = fs::read_to_string(&path) {
-        let code = text.trim().to_string();
-        if code.len() == 64 && code.chars().all(|c| c.is_ascii_hexdigit()) {
-            return Ok(code);
-        }
-    }
-    let code = new_token();
-    fs::create_dir_all(&folder).map_err(|e| format!("cannot create {}: {}", folder.display(), e))?;
-    fs::write(&path, &code).map_err(|e| format!("cannot save the pairing code in {}: {}", path.display(), e))?;
-    Ok(code)
 }
 
 #[cfg(test)]

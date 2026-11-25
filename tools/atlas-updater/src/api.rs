@@ -2,17 +2,20 @@
 //
 // The helper listens on 127.0.0.1:47632 only, a fixed port the extension knows. It answers:
 //   GET  /api/offline/ping                  what is installed (no secret)
-//   POST /api/offline/translate              {"pairing": "<code>", "pair": "enfr", "texts": ["..."]}
+//   POST /api/offline/translate              Authorization: Bearer <token>, {"pair": "enfr", "texts": ["..."]}
 //
 // Only extension pages may call it: the Origin must be chrome-extension:// or moz-extension://, and the Host must be
-// this computer. Translation also needs the pairing code, which the helper window shows. A web page cannot read the
+// this computer. Translation needs a token from a binding the user allowed in the helper window (see bind.rs). A web page cannot read the
 // answers either, because no Access-Control-Allow-Origin header is sent for any other origin.
 
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
+use std::sync::mpsc::{self, Sender};
 use std::sync::Arc;
 use std::thread;
+use std::time::Duration;
 
+use crate::bind::{self, BindRequest, Bindings, Shared};
 use crate::engine::{self, Engine};
 use crate::json;
 use crate::packs;
@@ -38,7 +41,7 @@ impl Request {
 }
 
 /// Starts the service in the background. Fails when the port is in use.
-pub fn serve(engine: Arc<Engine>, pairing: String) -> Result<(), String> {
+pub fn serve(engine: Arc<Engine>, bindings: Shared, requests: Sender<BindRequest>) -> Result<(), String> {
     let listener = TcpListener::bind(("127.0.0.1", PORT)).map_err(|e| {
         format!(
             "the offline translation port {} is in use ({}). Close the other program that uses it, then start the helper again.",
@@ -49,8 +52,9 @@ pub fn serve(engine: Arc<Engine>, pairing: String) -> Result<(), String> {
         for stream in listener.incoming() {
             if let Ok(mut stream) = stream {
                 let engine = Arc::clone(&engine);
-                let pairing = pairing.clone();
-                thread::spawn(move || handle(&mut stream, &engine, &pairing));
+                let bindings = Arc::clone(&bindings);
+                let requests = requests.clone();
+                thread::spawn(move || handle(&mut stream, &engine, &bindings, &requests));
             }
         }
     });
@@ -135,7 +139,7 @@ fn is_extension_origin(origin: &str) -> bool {
     origin.starts_with("chrome-extension://") || origin.starts_with("moz-extension://")
 }
 
-fn handle(stream: &mut TcpStream, engine: &Engine, pairing: &str) {
+fn handle(stream: &mut TcpStream, engine: &Engine, bindings: &Shared, requests: &Sender<BindRequest>) {
     let request = match read_request(stream) {
         Ok(r) => r,
         Err(message) => return send(stream, 400, None, &error_body(&message)),
@@ -159,8 +163,16 @@ fn handle(stream: &mut TcpStream, engine: &Engine, pairing: &str) {
             let body = ping_body();
             send(stream, 200, allow, &body)
         }
+        ("POST", "/api/offline/bind") => {
+            let (status, body) = bind_request(&request.body, origin.as_deref(), requests);
+            send(stream, status, allow, &body)
+        }
         ("POST", "/api/offline/translate") => {
-            let (status, body) = translate_request(&request.body, engine, pairing);
+            let token = request.header("authorization").and_then(|h| h.strip_prefix("Bearer "));
+            let (status, body) = {
+                let guard = bindings.lock().unwrap_or_else(|p| p.into_inner());
+                translate_request(&request.body, engine, token, &guard)
+            };
             send(stream, status, allow, &body)
         }
         _ => send(stream, 404, allow, &error_body("not found")),
@@ -185,15 +197,37 @@ fn ping_body() -> String {
     )
 }
 
+/// Asks the user, through the helper window, to bind an extension. The answer is the new token, or a refusal.
+fn bind_request(body: &str, origin: Option<&str>, requests: &Sender<BindRequest>) -> (u16, String) {
+    // Only an extension page can ask. A request with no Origin header is refused, so a script cannot bind itself.
+    let origin = match origin {
+        Some(o) => o.to_string(),
+        None => return (403, error_body("only the Atlas Translation extension may bind")),
+    };
+    let name = match json::parse(body) {
+        Ok(value) => value.get("name").and_then(|v| v.as_str()).unwrap_or("").trim().to_string(),
+        Err(_) => return (400, error_body("the request is not valid JSON")),
+    };
+    let name: String = if name.is_empty() { "Browser extension".to_string() } else { name.chars().take(80).collect() };
+    let (reply, answer) = mpsc::channel();
+    if requests.send(BindRequest { name, origin, reply }).is_err() {
+        return (503, error_body("the helper window is closed. Start the helper again."));
+    }
+    match answer.recv_timeout(BIND_WAIT) {
+        Ok(Some(token)) => (200, format!("{{\"ok\":true,\"token\":{}}}", json::quote(&token))),
+        Ok(None) => (403, error_body("the user did not allow the binding in the helper window")),
+        Err(_) => (408, error_body("the helper window did not answer")),
+    }
+}
+
 /// Returns the HTTP status and the JSON body for a translate request.
-fn translate_request(body: &str, engine: &Engine, pairing: &str) -> (u16, String) {
+fn translate_request(body: &str, engine: &Engine, token: Option<&str>, bindings: &Bindings) -> (u16, String) {
     let value = match json::parse(body) {
         Ok(v) => v,
         Err(_) => return (400, error_body("the request is not valid JSON")),
     };
-    let code = value.get("pairing").and_then(|v| v.as_str()).unwrap_or("");
-    if code != pairing {
-        return (403, error_body("the pairing code is wrong. Copy it again from the helper window."));
+    if !token.map_or(false, |t| bindings.verify(t)) {
+        return (403, error_body("this browser is not bound to the helper. Bind it again from the extension."));
     }
     let pair = value.get("pair").and_then(|v| v.as_str()).unwrap_or("").to_string();
     let texts: Vec<String> = match value.get("texts").and_then(|v| v.as_array()) {
@@ -243,6 +277,12 @@ fn translate_request(body: &str, engine: &Engine, pairing: &str) -> (u16, String
 mod tests {
     use super::*;
 
+    fn bound() -> (Bindings, String) {
+        let mut bindings = Bindings::in_memory();
+        let token = bindings.add("Test browser").unwrap();
+        (bindings, token)
+    }
+
     #[test]
     fn only_extension_origins_are_allowed() {
         assert!(is_extension_origin("chrome-extension://abcdefghijklmnop"));
@@ -252,25 +292,31 @@ mod tests {
     }
 
     #[test]
-    fn a_wrong_pairing_code_is_refused_before_anything_else() {
+    fn a_missing_or_unbound_token_is_refused_before_anything_else() {
         let engine = Engine::new();
-        let (status, body) = translate_request(r#"{"pairing":"wrong","pair":"enfr","texts":["hi"]}"#, &engine, "right");
+        let (bindings, _) = bound();
+        let (status, body) = translate_request(r#"{"pair":"enfr","texts":["hi"]}"#, &engine, None, &bindings);
         assert_eq!(status, 403);
-        assert!(body.contains("pairing code"));
+        assert!(body.contains("not bound"));
+        let (status, _) = translate_request(r#"{"pair":"enfr","texts":["hi"]}"#, &engine, Some("wrong"), &bindings);
+        assert_eq!(status, 403);
     }
 
     #[test]
     fn a_request_must_be_well_formed() {
         let engine = Engine::new();
-        assert_eq!(translate_request("not json", &engine, "x").0, 400);
-        assert_eq!(translate_request(r#"{"pairing":"x","pair":"enfr"}"#, &engine, "x").0, 400);
-        assert_eq!(translate_request(r#"{"pairing":"x","pair":"enfr","texts":[1]}"#, &engine, "x").0, 400);
+        let (bindings, token) = bound();
+        let t = Some(token.as_str());
+        assert_eq!(translate_request("not json", &engine, t, &bindings).0, 400);
+        assert_eq!(translate_request(r#"{"pair":"enfr"}"#, &engine, t, &bindings).0, 400);
+        assert_eq!(translate_request(r#"{"pair":"enfr","texts":[1]}"#, &engine, t, &bindings).0, 400);
     }
 
     #[test]
     fn a_pair_that_is_not_in_the_catalogue_is_refused() {
         let engine = Engine::new();
-        let (status, _) = translate_request(r#"{"pairing":"x","pair":"../etc","texts":["hi"]}"#, &engine, "x");
+        let (bindings, token) = bound();
+        let (status, _) = translate_request(r#"{"pair":"../etc","texts":["hi"]}"#, &engine, Some(token.as_str()), &bindings);
         assert_eq!(status, 400);
     }
 

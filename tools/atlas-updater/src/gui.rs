@@ -1,0 +1,711 @@
+// The helper's window, drawn with egui (a native window, no browser page).
+//
+// Three tabs: the extension (install or update, browser guides, start at login), offline translation (the engine
+// and the language packs), and connections (the browsers the user allowed, see bind.rs). Work that can take a
+// while (checking releases, downloading, installing) runs on a background thread and reports back through a channel,
+// so the window never freezes. Closing the window hides it; the tray icon brings it back, and Quit stops the helper.
+
+use std::path::{Path, PathBuf};
+use std::process::Command;
+use std::sync::mpsc::{self, Receiver, Sender};
+use std::sync::Arc;
+use std::thread;
+use std::time::Duration;
+
+use eframe::egui::{self, Color32, RichText, ViewportCommand};
+use eframe::icon_data::{self, IconData};
+
+use crate::api;
+use crate::autostart;
+use crate::bind::{self, BindRequest, Shared};
+use crate::browsers::{self, BROWSERS};
+use crate::engine::{self, Engine};
+use crate::packs::{self, Catalogue, Pack};
+use crate::store;
+use crate::tray::{self, Tray, TrayAction};
+
+/// The Atlas logo (icons/atlas-logo.png). The window shows it at the top, and the window and tray icons are made from it.
+const LOGO: &[u8] = include_bytes!("../../../icons/atlas-logo.png");
+const BLUE: Color32 = Color32::from_rgb(0x1f, 0x63, 0xd6);
+const RED: Color32 = Color32::from_rgb(0xb4, 0x23, 0x18);
+const GREEN: Color32 = Color32::from_rgb(0x1b, 0x7f, 0x3b);
+const GREY: Color32 = Color32::from_rgb(0x5f, 0x63, 0x68);
+
+#[derive(Clone, Copy, PartialEq)]
+enum Tab {
+    Extension,
+    Offline,
+    Connections,
+}
+
+/// What the extension folder and the release server say. `installed` is Ok(None) for an empty or new folder.
+struct Status {
+    latest: Result<String, String>,
+    installed: Result<Option<String>, String>,
+}
+
+/// Results from background threads.
+enum Event {
+    Status(Status),
+    Catalogue(Result<Catalogue, String>),
+    Done { ok: bool, text: String, reload: bool },
+}
+
+/// What the user asked for in this frame. They run after the drawing, so the drawing never borrows the helper twice.
+enum Action {
+    Refresh,
+    Install,
+    OpenFolder,
+    UseDefaultFolder,
+    OpenLink(String),
+    Autostart(bool),
+    InstallEngine,
+    InstallPack(usize),
+    RemovePack(usize),
+    RemoveBinding(usize),
+    Quit,
+}
+
+pub struct Helper {
+    tab: Tab,
+    folder: String,
+    status: Option<Status>,
+    catalogue: Option<Result<Catalogue, String>>,
+    catalogue_asked: bool,
+    busy: Option<String>,
+    message: Option<(bool, String)>,
+    autostart: bool,
+    tray: Option<Tray>,
+    tray_error: Option<String>,
+    api_error: Option<String>,
+    bindings: Shared,
+    bind_requests: Receiver<BindRequest>,
+    pending_bind: Option<BindRequest>,
+    events_tx: Sender<Event>,
+    events: Receiver<Event>,
+    logo: egui::TextureHandle,
+    quitting: bool,
+    /// Kept so the offline service's engine stays alive for the whole run (it is shared with the API thread).
+    _engine: Arc<Engine>,
+}
+
+/// Starts the helper's window, its tray icon, and the offline translation service. When `show_window` is false the
+/// helper starts in the tray only.
+pub fn run(show_window: bool) -> Result<(), String> {
+    let logo = icon_data::from_png_bytes(LOGO).map_err(|e| format!("cannot read the logo: {}", e))?;
+    let window_icon = square(&logo, 256);
+    let tray_rgba = square(&logo, 64).rgba;
+
+    let engine = Arc::new(Engine::new());
+    let bindings = bind::shared();
+    let (bind_tx, bind_rx) = mpsc::channel::<BindRequest>();
+    let api_error = api::serve(Arc::clone(&engine), Arc::clone(&bindings), bind_tx).err();
+
+    let options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default()
+            .with_title("Atlas Translation Helper")
+            .with_app_id("atlas-translation-helper")
+            .with_inner_size([780.0, 580.0])
+            .with_min_inner_size([620.0, 460.0])
+            .with_icon(Arc::new(window_icon))
+            .with_visible(show_window),
+        ..Default::default()
+    };
+
+    eframe::run_native(
+        "Atlas Translation Helper",
+        options,
+        Box::new(move |cc| {
+            cc.egui_ctx.set_visuals(visuals());
+            let texture = cc.egui_ctx.load_texture(
+                "atlas-logo",
+                egui::ColorImage::from_rgba_unmultiplied([logo.width as usize, logo.height as usize], &logo.rgba),
+                egui::TextureOptions::LINEAR,
+            );
+            let (tray, tray_error) = match tray::create(tray_rgba, 64) {
+                Ok(t) => (Some(t), None),
+                Err(e) => (None, Some(e)),
+            };
+            let (events_tx, events) = mpsc::channel();
+            let mut helper = Helper {
+                tab: Tab::Extension,
+                folder: default_folder(),
+                status: None,
+                catalogue: None,
+                catalogue_asked: false,
+                busy: None,
+                message: None,
+                autostart: autostart::is_enabled(),
+                tray,
+                tray_error,
+                api_error,
+                bindings,
+                bind_requests: bind_rx,
+                pending_bind: None,
+                events_tx,
+                events,
+                logo: texture,
+                quitting: false,
+                _engine: engine,
+            };
+            helper.refresh();
+            Ok(Box::new(helper) as Box<dyn eframe::App>)
+        }),
+    )
+    .map_err(|e| format!("the helper window could not start: {}", e))
+}
+
+impl eframe::App for Helper {
+    fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Tray clicks and menu choices.
+        let mut tray_actions = Vec::new();
+        if let Some(tray) = &self.tray {
+            tray_actions = tray::poll(tray);
+        }
+        for action in tray_actions {
+            match action {
+                TrayAction::Show => show(ctx),
+                TrayAction::Quit => self.quit(ctx),
+            }
+        }
+
+        // A close button press hides the window while the tray is there. Without a tray, closing quits.
+        if ctx.input(|i| i.viewport().close_requested()) && !self.quitting && self.tray.is_some() {
+            ctx.send_viewport_cmd(ViewportCommand::CancelClose);
+            ctx.send_viewport_cmd(ViewportCommand::Visible(false));
+        }
+
+        // A bind request from an extension: bring the window forward and ask the user.
+        while let Ok(request) = self.bind_requests.try_recv() {
+            if self.pending_bind.is_some() {
+                // One question at a time: refuse the newer request so the extension does not wait for nothing.
+                let _ = request.reply.send(None);
+                continue;
+            }
+            self.pending_bind = Some(request);
+            show(ctx);
+        }
+
+        // Background results.
+        while let Ok(event) = self.events.try_recv() {
+            match event {
+                Event::Status(status) => self.status = Some(status),
+                Event::Catalogue(result) => self.catalogue = Some(result),
+                Event::Done { ok, text, reload } => {
+                    self.busy = None;
+                    self.message = Some((ok, text));
+                    if reload {
+                        self.refresh();
+                    }
+                }
+            }
+        }
+
+        // Keep looking at the tray and the channels even while the window is hidden.
+        ctx.request_repaint_after(Duration::from_millis(200));
+    }
+
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        let mut actions: Vec<Action> = Vec::new();
+
+        egui::Panel::top("header").show_inside(ui, |ui| {
+            ui.add_space(8.0);
+            ui.horizontal(|ui| {
+                ui.add(egui::Image::new(&self.logo).max_size(egui::vec2(220.0, 64.0)));
+                ui.add_space(12.0);
+                ui.vertical(|ui| {
+                    ui.label(RichText::new("Atlas Translation Helper").size(18.0).strong());
+                    ui.label(RichText::new(format!("Version {}", crate::app_version())).color(GREY));
+                });
+            });
+            ui.add_space(8.0);
+        });
+
+        egui::Panel::left("tabs").resizable(false).default_size(176.0).show_inside(ui, |ui| {
+            ui.add_space(8.0);
+            ui.selectable_value(&mut self.tab, Tab::Extension, "Extension");
+            ui.selectable_value(&mut self.tab, Tab::Offline, "Offline translation");
+            ui.selectable_value(&mut self.tab, Tab::Connections, "Connections");
+            ui.add_space(24.0);
+            if ui.button("Quit helper").clicked() {
+                actions.push(Action::Quit);
+            }
+        });
+
+        egui::Panel::bottom("footer").show_inside(ui, |ui| {
+            ui.add_space(4.0);
+            ui.horizontal(|ui| {
+                if let Some(label) = &self.busy {
+                    ui.spinner();
+                    ui.label(label.as_str());
+                } else if let Some((ok, text)) = &self.message {
+                    let color = if *ok { GREEN } else { RED };
+                    ui.label(RichText::new(text.as_str()).color(color));
+                } else {
+                    ui.label(RichText::new("Ready.").color(GREY));
+                }
+            });
+            ui.add_space(4.0);
+        });
+
+        let idle = self.busy.is_none();
+        egui::CentralPanel::default().show_inside(ui, |ui| {
+            egui::ScrollArea::vertical().show(ui, |ui| match self.tab {
+                Tab::Extension => self.extension_tab(ui, idle, &mut actions),
+                Tab::Offline => self.offline_tab(ui, idle, &mut actions),
+                Tab::Connections => self.connections_tab(ui, &mut actions),
+            });
+        });
+
+        self.bind_dialog(ui.ctx());
+
+        for action in actions {
+            self.perform(action, ui.ctx());
+        }
+    }
+}
+
+impl Helper {
+    fn extension_tab(&mut self, ui: &mut egui::Ui, idle: bool, actions: &mut Vec<Action>) {
+        ui.heading("Atlas Translation extension");
+        ui.label("Install or update the extension here. Firefox users get updates from the Add-ons store, so they only need the link below.");
+        ui.add_space(8.0);
+
+        ui.label("Folder with the unpacked copy of the extension (Chromium browsers):");
+        ui.horizontal(|ui| {
+            ui.add(egui::TextEdit::singleline(&mut self.folder).desired_width(360.0));
+            if ui.button("Default").clicked() {
+                actions.push(Action::UseDefaultFolder);
+            }
+        });
+        ui.add_space(8.0);
+
+        match &self.status {
+            None => {
+                ui.label(RichText::new("Checking the latest release...").color(GREY));
+            }
+            Some(status) => {
+                match &status.latest {
+                    Ok(v) => ui.label(format!("Latest release: {}", v)),
+                    Err(e) => ui.label(RichText::new(format!("Latest release: unknown ({})", e)).color(RED)),
+                };
+                match &status.installed {
+                    Ok(None) => ui.label("Installed in this folder: nothing yet"),
+                    Ok(Some(v)) => ui.label(format!("Installed in this folder: {}", v)),
+                    Err(e) => ui.label(RichText::new(format!("This folder: {}", e)).color(RED)),
+                };
+                if let (Ok(latest), Ok(installed)) = (&status.latest, &status.installed) {
+                    let text = match installed {
+                        None => "Ready to install.".to_string(),
+                        Some(v) if crate::is_newer(latest, v) => format!("An update is available: {}.", latest),
+                        Some(_) => "You have the latest version.".to_string(),
+                    };
+                    ui.label(RichText::new(text).color(BLUE));
+                }
+            }
+        }
+        ui.add_space(8.0);
+
+        ui.horizontal(|ui| {
+            if ui.add_enabled(idle, egui::Button::new("Check again")).clicked() {
+                actions.push(Action::Refresh);
+            }
+            if ui.add_enabled(idle && !self.folder.trim().is_empty(), egui::Button::new("Install or update")).clicked() {
+                actions.push(Action::Install);
+            }
+            if ui.button("Open folder").clicked() {
+                actions.push(Action::OpenFolder);
+            }
+        });
+
+        ui.add_space(16.0);
+        let mut on = self.autostart;
+        if ui.checkbox(&mut on, "Start the helper when I sign in").changed() {
+            actions.push(Action::Autostart(on));
+        }
+
+        ui.add_space(16.0);
+        ui.heading("Browsers");
+        for browser in BROWSERS {
+            let guide = browsers::guide(browser, &self.folder);
+            ui.collapsing(browser.name, |ui| {
+                for (i, step) in guide.steps.iter().enumerate() {
+                    ui.label(format!("{}. {}", i + 1, step));
+                }
+                if guide.needs_folder {
+                    ui.label(RichText::new("Choose the folder above first.").color(GREY));
+                }
+                if let Some(link) = &guide.link {
+                    if ui.button(format!("Open the page for {}", guide.name)).clicked() {
+                        actions.push(Action::OpenLink(link.clone()));
+                    }
+                }
+            });
+        }
+
+        if let Some(error) = &self.tray_error {
+            ui.add_space(16.0);
+            ui.label(RichText::new(format!("No tray icon: {}. Keep this window open, or start the helper again.", error)).color(RED));
+        }
+    }
+
+    fn offline_tab(&mut self, ui: &mut egui::Ui, idle: bool, actions: &mut Vec<Action>) {
+        ui.heading("Offline translation");
+        ui.label("Translation that runs on this computer. Each language pair is a pack that you install here.");
+        if let Some(error) = &self.api_error {
+            ui.label(RichText::new(format!("The offline service is not running: {}", error)).color(RED));
+        } else {
+            ui.label(RichText::new("The offline service runs on this computer (127.0.0.1:47632).").color(GREEN));
+        }
+        ui.add_space(8.0);
+
+        let engine_path = engine::find_binary();
+        match &engine_path {
+            Some(path) => ui.label(format!("Engine: installed ({})", path.display())),
+            None => ui.label(RichText::new("Engine: not installed").color(RED)),
+        };
+        if engine_path.is_none() && ui.add_enabled(idle, egui::Button::new("Install the engine")).clicked() {
+            actions.push(Action::InstallEngine);
+        }
+        ui.add_space(8.0);
+
+        ui.label(format!("Data folder: {}", store::data_dir().display()));
+        ui.add_space(8.0);
+
+        ui.heading("Language packs");
+        if !self.catalogue_asked {
+            self.catalogue_asked = true;
+            self.load_catalogue();
+        }
+        let mut retry = false;
+        match &self.catalogue {
+            None => {
+                ui.label(RichText::new("Loading the list of packs...").color(GREY));
+            }
+            Some(Err(e)) => {
+                ui.label(RichText::new(format!("The packs could not be listed: {}", e)).color(RED));
+                if ui.add_enabled(idle, egui::Button::new("Try again")).clicked() {
+                    retry = true;
+                }
+            }
+            Some(Ok(catalogue)) => {
+                ui.label(format!("Each pack is about 37 MB. {} packs are available.", catalogue.packs.len()));
+                let root = store::packs_dir();
+                for (index, pack) in catalogue.packs.iter().enumerate() {
+                    let installed = packs::is_installed_in(&root, pack);
+                    ui.horizontal(|ui| {
+                        ui.label(format!("{} to {}", pack.from, pack.to));
+                        ui.label(RichText::new(size_text(pack)).color(GREY));
+                        if installed {
+                            ui.label(RichText::new("installed").color(GREEN));
+                            if ui.add_enabled(idle, egui::Button::new("Remove")).clicked() {
+                                actions.push(Action::RemovePack(index));
+                            }
+                        } else if ui.add_enabled(idle, egui::Button::new("Install")).clicked() {
+                            actions.push(Action::InstallPack(index));
+                        }
+                    });
+                }
+            }
+        }
+        if retry {
+            self.catalogue_asked = false;
+            self.catalogue = None;
+        }
+    }
+
+    fn connections_tab(&mut self, ui: &mut egui::Ui, actions: &mut Vec<Action>) {
+        ui.heading("Connections");
+        ui.label("Browsers that the helper allowed to use the offline service. Remove one to stop it.");
+        ui.add_space(8.0);
+        let items = match self.bindings.lock() {
+            Ok(b) => b.items.clone(),
+            Err(p) => p.into_inner().items.clone(),
+        };
+        if items.is_empty() {
+            ui.label(RichText::new("No browser is connected yet. Open the Atlas Translation settings in the browser and choose Bind.").color(GREY));
+        }
+        for (index, binding) in items.iter().enumerate() {
+            ui.horizontal(|ui| {
+                ui.label(RichText::new(&binding.name).strong());
+                if ui.button("Remove").clicked() {
+                    actions.push(Action::RemoveBinding(index));
+                }
+            });
+        }
+    }
+
+    /// The question shown when an extension asks to bind. Allow gives it a token; Deny (or closing) refuses it.
+    fn bind_dialog(&mut self, ctx: &egui::Context) {
+        let (name, origin) = match &self.pending_bind {
+            Some(request) => (request.name.clone(), request.origin.clone()),
+            None => return,
+        };
+        let mut answer: Option<bool> = None;
+        egui::Window::new("Bind a browser")
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+            .show(ctx, |ui| {
+                ui.label(RichText::new(format!("\"{}\" wants to use the offline translation.", name)).size(16.0).strong());
+                ui.label("Allow it only if you use Atlas Translation in that browser. You can remove it later under Connections.");
+                ui.add_space(6.0);
+                ui.label(RichText::new(format!("Requested from: {}", origin)).color(GREY).small());
+                ui.add_space(10.0);
+                ui.horizontal(|ui| {
+                    if ui.button("Allow").clicked() {
+                        answer = Some(true);
+                    }
+                    if ui.button("Deny").clicked() {
+                        answer = Some(false);
+                    }
+                });
+            });
+        if let Some(allow) = answer {
+            if let Some(request) = self.pending_bind.take() {
+                let token = if allow {
+                    match self.bindings.lock() {
+                        Ok(mut b) => b.add(&request.name).ok(),
+                        Err(p) => p.into_inner().add(&request.name).ok(),
+                    }
+                } else {
+                    None
+                };
+                let granted = token.is_some();
+                let _ = request.reply.send(token);
+                self.message = Some(if granted {
+                    (true, format!("{} is now bound to the offline service.", request.name))
+                } else {
+                    (false, format!("{} was not bound.", request.name))
+                });
+            }
+        }
+    }
+
+    fn perform(&mut self, action: Action, ctx: &egui::Context) {
+        match action {
+            Action::Refresh => self.refresh(),
+            Action::UseDefaultFolder => self.folder = default_folder(),
+            Action::OpenFolder => {
+                let folder = self.folder.trim().to_string();
+                match self.status.as_ref().map(|s| &s.installed) {
+                    Some(Ok(Some(_))) => {
+                        if !open_target(&folder) {
+                            self.message = Some((false, "The folder could not be opened.".into()));
+                        }
+                    }
+                    _ => self.message = Some((false, "Install the extension in this folder first.".into())),
+                }
+            }
+            Action::OpenLink(url) => {
+                if !open_target(&url) {
+                    self.message = Some((false, "The page could not be opened in a browser.".into()));
+                }
+            }
+            Action::Install => {
+                let folder = self.folder.trim().to_string();
+                self.start("Installing the extension...", move || match install_into_folder(&folder) {
+                    Ok(text) => Event::Done { ok: true, text, reload: true },
+                    Err(text) => Event::Done { ok: false, text, reload: false },
+                });
+            }
+            Action::Autostart(on) => {
+                self.autostart = on;
+                let event = match autostart::set_enabled(on) {
+                    Ok(()) => Event::Done {
+                        ok: true,
+                        text: if on { "The helper starts when you sign in.".into() } else { "The helper no longer starts at sign-in.".into() },
+                        reload: false,
+                    },
+                    Err(e) => Event::Done { ok: false, text: e, reload: false },
+                };
+                let _ = self.events_tx.send(event);
+            }
+            Action::InstallEngine => {
+                self.start("Installing the offline engine...", move || match engine::install_from_latest_release() {
+                    Ok(v) => Event::Done { ok: true, text: format!("Installed the offline engine {}.", v), reload: false },
+                    Err(e) => Event::Done { ok: false, text: e, reload: false },
+                });
+            }
+            Action::InstallPack(index) => {
+                let picked = match &self.catalogue {
+                    Some(Ok(c)) => c.packs.get(index).cloned().map(|p| (p, c.commit.clone())),
+                    _ => None,
+                };
+                if let Some((pack, commit)) = picked {
+                    let label = format!("Installing the {} to {} pack...", pack.from, pack.to);
+                    self.start(&label, move || pack_result(packs::install_into(&store::packs_dir(), &pack, &commit), &pack, "installed"));
+                }
+            }
+            Action::RemovePack(index) => {
+                let picked = match &self.catalogue {
+                    Some(Ok(c)) => c.packs.get(index).cloned().map(|p| (p, c.clone())),
+                    _ => None,
+                };
+                if let Some((pack, catalogue)) = picked {
+                    let label = format!("Removing the {} to {} pack...", pack.from, pack.to);
+                    self.start(&label, move || {
+                        let result = packs::remove_from(&store::packs_dir(), &catalogue, &pack.pair);
+                        pack_result(result, &pack, "removed")
+                    });
+                }
+            }
+            Action::RemoveBinding(index) => {
+                let result = match self.bindings.lock() {
+                    Ok(mut b) => b.remove(index),
+                    Err(p) => p.into_inner().remove(index),
+                };
+                self.message = Some(match result {
+                    Ok(()) => (true, "The browser was removed.".into()),
+                    Err(e) => (false, e),
+                });
+            }
+            Action::Quit => self.quit(ctx),
+        }
+    }
+
+    /// Starts a background job. The window shows `label` until the job reports back.
+    fn start<F>(&mut self, label: &str, job: F)
+    where
+        F: FnOnce() -> Event + Send + 'static,
+    {
+        self.busy = Some(label.to_string());
+        self.message = None;
+        let tx = self.events_tx.clone();
+        thread::spawn(move || {
+            let _ = tx.send(job());
+        });
+    }
+
+    /// Asks for the status of the extension folder and the latest release.
+    fn refresh(&mut self) {
+        let folder = self.folder.trim().to_string();
+        let tx = self.events_tx.clone();
+        thread::spawn(move || {
+            let _ = tx.send(Event::Status(load_status(&folder)));
+        });
+    }
+
+    fn load_catalogue(&mut self) {
+        let tx = self.events_tx.clone();
+        thread::spawn(move || {
+            let _ = tx.send(Event::Catalogue(packs::catalogue()));
+        });
+    }
+
+    fn quit(&mut self, ctx: &egui::Context) {
+        self.quitting = true;
+        ctx.send_viewport_cmd(ViewportCommand::Close);
+    }
+}
+
+/// Shows the window and brings it to the front (from the tray or for a bind request).
+fn show(ctx: &egui::Context) {
+    ctx.send_viewport_cmd(ViewportCommand::Visible(true));
+    ctx.send_viewport_cmd(ViewportCommand::Minimized(false));
+    ctx.send_viewport_cmd(ViewportCommand::Focus);
+}
+
+/// Reads the folder's version and the latest release. Runs on a background thread.
+fn load_status(folder: &str) -> Status {
+    let latest = crate::fetch_latest_release().map(|r| r.version);
+    let installed = if folder.is_empty() || is_fresh_folder(Path::new(folder)) {
+        Ok(None)
+    } else {
+        crate::read_installed_version(Path::new(folder)).map(Some)
+    };
+    Status { latest, installed }
+}
+
+/// Installs or updates the extension in `folder`. Refuses a folder that is not an Atlas Translation copy.
+fn install_into_folder(folder: &str) -> Result<String, String> {
+    if folder.is_empty() {
+        return Err("Choose a folder first.".into());
+    }
+    let path = PathBuf::from(folder);
+    let fresh = is_fresh_folder(&path);
+    let installed = if fresh { None } else { Some(crate::read_installed_version(&path)?) };
+    let release = crate::fetch_latest_release()?;
+    if let Some(v) = &installed {
+        if !crate::is_newer(&release.version, v) {
+            return Ok(format!("You already have the latest version ({}).", v));
+        }
+    }
+    if fresh {
+        std::fs::create_dir_all(&path).map_err(|e| format!("cannot create the folder: {}", e))?;
+    }
+    crate::install(&path, &release)?;
+    Ok(format!("Installed version {} in {}. Reload Atlas Translation in your browser.", release.version, folder))
+}
+
+fn pack_result(result: Result<(), String>, pack: &Pack, verb: &str) -> Event {
+    match result {
+        Ok(()) => Event::Done { ok: true, text: format!("The {} to {} pack was {}.", pack.from, pack.to, verb), reload: false },
+        Err(e) => Event::Done { ok: false, text: e, reload: false },
+    }
+}
+
+fn size_text(pack: &Pack) -> String {
+    format!("{:.0} MB", pack.bytes as f64 / 1_000_000.0)
+}
+
+/// True when the folder is missing or empty, so a fresh copy can be unpacked into it.
+fn is_fresh_folder(path: &Path) -> bool {
+    match std::fs::read_dir(path) {
+        Ok(mut entries) => entries.next().is_none(),
+        Err(_) => !path.exists(),
+    }
+}
+
+/// Documents/Atlas Translation in the user's home folder. The window suggests it, and the user can change it.
+fn default_folder() -> String {
+    let home = std::env::var_os("USERPROFILE")
+        .or_else(|| std::env::var_os("HOME"))
+        .map(PathBuf::from)
+        .unwrap_or_else(|| PathBuf::from("."));
+    home.join("Documents").join("Atlas Translation").display().to_string()
+}
+
+/// Opens a folder or a web page with the system's default program.
+fn open_target(target: &str) -> bool {
+    let program = if cfg!(target_os = "windows") {
+        "explorer"
+    } else if cfg!(target_os = "macos") {
+        "open"
+    } else {
+        "xdg-open"
+    };
+    let mut command = Command::new(program);
+    command.arg(target).stdin(std::process::Stdio::null());
+    autostart::quiet(command).spawn().is_ok()
+}
+
+/// The Atlas colours on top of the light theme.
+fn visuals() -> egui::Visuals {
+    let mut visuals = egui::Visuals::light();
+    visuals.hyperlink_color = BLUE;
+    visuals.selection.bg_fill = BLUE;
+    visuals
+}
+
+/// Makes a square icon from `icon` (the logo is wide): the logo is centred on a transparent square of `size` pixels.
+fn square(icon: &IconData, size: u32) -> IconData {
+    let (w, h) = (icon.width as f32, icon.height as f32);
+    let s = size as f32;
+    let scale = (s / w).min(s / h);
+    let (ox, oy) = ((s - w * scale) / 2.0, (s - h * scale) / 2.0);
+    let mut rgba = vec![0u8; (size * size * 4) as usize];
+    for y in 0..size {
+        for x in 0..size {
+            let sx = ((x as f32 + 0.5 - ox) / scale).floor() as i64;
+            let sy = ((y as f32 + 0.5 - oy) / scale).floor() as i64;
+            if sx < 0 || sy < 0 || sx >= icon.width as i64 || sy >= icon.height as i64 {
+                continue;
+            }
+            let src = ((sy as u32 * icon.width + sx as u32) * 4) as usize;
+            let dst = ((y * size + x) * 4) as usize;
+            rgba[dst..dst + 4].copy_from_slice(&icon.rgba[src..src + 4]);
+        }
+    }
+    IconData { rgba, width: size, height: size }
+}

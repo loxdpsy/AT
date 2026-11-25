@@ -15,14 +15,15 @@
 
 mod api;
 mod autostart;
+mod bind;
 mod browsers;
 mod engine;
+mod gui;
 mod json;
 mod packs;
 mod sha256;
-mod shell;
 mod store;
-mod web;
+mod tray;
 
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -64,10 +65,10 @@ fn run() -> Result<(), String> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     if args.is_empty() {
         // Started by a double click: the helper window and its tray icon open.
-        return web::serve(true);
+        return gui::run(true);
     }
     if args.iter().any(|a| a.as_str() == "--serve") {
-        return web::serve(false);
+        return gui::run(false);
     }
     let check_only = args.iter().any(|a| a.as_str() == "--check");
     let folder_args: Vec<&String> = args.iter().filter(|a| a.as_str() != "--check").collect();
