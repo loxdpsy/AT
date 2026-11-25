@@ -12,6 +12,7 @@ Not released yet. This version is in progress; the list grows until it is releas
 - Local files (file://): when the browser has not allowed the extension to read file pages, the popup says so and how to allow it (#91, #1051).
 - Offline translation is faster: long texts are split at their line breaks, and the parts are translated in parallel on
   two engine processes per language pair.
+- The helper tries a download again when the network cuts it short.
 - The helper can start when you log in, in the background (Settings: "Start at login"). Windows, macOS and Linux.
 - Planned: a tray icon with the helper's own settings window (no browser, no terminal), and right-to-left layout in the helper.
 

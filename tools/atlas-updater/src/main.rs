@@ -225,18 +225,25 @@ fn install_from(folder: &Path, release: &Release, work: &Path) -> Result<(), Str
 }
 
 /// Downloads with curl, which ships with Windows 10 and later, macOS and most Linux systems.
+/// curl's own --retry does not retry a connection that closes early (EOF), so the helper tries again itself.
 fn download(url: &str, dest: &Path) -> Result<(), String> {
-    let status = Command::new("curl")
-        .args(["-fsSL", "--retry", "3", "--retry-delay", "5", "--max-time", "300", "-o"])
-        .arg(dest)
-        .arg(url)
-        .status()
-        .map_err(|e| format!("cannot run curl ({}). Install curl, then try again.", e))?;
-    if status.success() {
-        Ok(())
-    } else {
-        Err(format!("the download failed ({}). Check your internet connection.", url))
+    const ATTEMPTS: u32 = 3;
+    for attempt in 1..=ATTEMPTS {
+        let status = Command::new("curl")
+            .args(["-fsSL", "--retry", "2", "--retry-delay", "5", "--max-time", "300", "-o"])
+            .arg(dest)
+            .arg(url)
+            .status()
+            .map_err(|e| format!("cannot run curl ({}). Install curl, then try again.", e))?;
+        if status.success() {
+            return Ok(());
+        }
+        if attempt < ATTEMPTS {
+            println!("The download did not finish. Trying again ({} of {}) ...", attempt + 1, ATTEMPTS);
+            std::thread::sleep(std::time::Duration::from_secs(5));
+        }
     }
+    Err(format!("the download failed ({}). Check your internet connection.", url))
 }
 
 fn curl_text(url: &str) -> Result<String, String> {
