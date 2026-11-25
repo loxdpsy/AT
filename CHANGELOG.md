@@ -15,6 +15,9 @@ Not released yet. Changes after 0.0.2.1 will be listed here.
 - Reset to defaults has the same fix.
 - Updates: the Reload extension button reloads Atlas Translation from its folder after the new zip is extracted over it. Chromium cannot install a newer unpacked copy by itself.
 - Options: an open settings page says once that it must be refreshed after the extension is reloaded, instead of showing many errors.
+- Czech: the "extension has been updated" message showed the extension name where the version belongs. It now shows the version.
+- Translators: `npm run locales:check` lists the messages each language is missing, and any placeholder that differs from English. The unit tests fail if a language has a placeholder problem.
+- The 36 messages added for the update check, the CAPTCHA notice, Groq and the toolbar icon style are not translated yet in any of the 40 languages. Those languages show English for them until they are translated.
 - Popup: the translate icon is the brand in the header. The Atlas wordmark and the duplicate icon are removed.
 - Popup: tap the service badge to switch the service that translates the page to the next enabled one. It is the same switch as the hotkey.
 - Popup: one Settings button, the gear in the header. The gear at the bottom of the menu and the More options item are removed.

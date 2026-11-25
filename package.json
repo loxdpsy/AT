@@ -16,7 +16,8 @@
     "version:sync": "node scripts/sync-version.mjs",
     "version:check": "node scripts/sync-version.mjs",
     "readme:sync": "node scripts/sync-readme.mjs",
-    "readme:check": "node scripts/sync-readme.mjs --check"
+    "readme:check": "node scripts/sync-readme.mjs --check",
+    "locales:check": "node scripts/check-locales.mjs --details"
   },
   "devDependencies": {
     "archiver": "^7.0.1",
