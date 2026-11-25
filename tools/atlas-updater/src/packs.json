@@ -1,0 +1,2191 @@
+{
+  "source": "https://github.com/mozilla/firefox-translations-models",
+  "commit": "e7957fc407441a5e3e35bbcbf9d60d9b35764618",
+  "architecture": "tiny",
+  "packs": [
+    {
+      "pair": "azen",
+      "from": "az",
+      "to": "en",
+      "bytes": 15426172,
+      "files": [
+        {
+          "name": "lex.50.50.azen.s2t.bin.gz",
+          "sha256": "fcec2d0efcfc107b308f2ccae5db745a33e26bc74041da9d608ce48dc166633a",
+          "size": 2267101,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/azen/lex.50.50.azen.s2t.bin.gz"
+        },
+        {
+          "name": "model.azen.intgemm.alphas.bin.gz",
+          "sha256": "c0fc1137ed90669723eb2037492aaf372d2f63f1da69530ee8c89dd0af786913",
+          "size": 12740106,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/azen/model.azen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.azen.spm.gz",
+          "sha256": "c4b9a5e131bffde4d5934ea73b64eb46b3312726c97afeee8d3493d199e7db8c",
+          "size": 418965,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/azen/vocab.azen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "been",
+      "from": "be",
+      "to": "en",
+      "bytes": 15046337,
+      "files": [
+        {
+          "name": "lex.50.50.been.s2t.bin.gz",
+          "sha256": "a74400771a5baee29c45fb8c787a160853d742493719d6af3a1dc6e301103942",
+          "size": 2197076,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/been/lex.50.50.been.s2t.bin.gz"
+        },
+        {
+          "name": "model.been.intgemm.alphas.bin.gz",
+          "sha256": "0bfe94c1f26255adb0efbf93b2306239ee1b9166dfc9377cafb19c38adfa0233",
+          "size": 12413897,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/been/model.been.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.been.spm.gz",
+          "sha256": "7fba301b12de119f573036c140f5818362657c054bd2e06badc253b7c1ecb549",
+          "size": 435364,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/been/vocab.been.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "bgen",
+      "from": "bg",
+      "to": "en",
+      "bytes": 16875772,
+      "files": [
+        {
+          "name": "lex.50.50.bgen.s2t.bin.gz",
+          "sha256": "624ade58201b0967aedaaa2370aca1271429052b78a36240ed7a3a1634271991",
+          "size": 3272580,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/bgen/lex.50.50.bgen.s2t.bin.gz"
+        },
+        {
+          "name": "model.bgen.intgemm.alphas.bin.gz",
+          "sha256": "f96db7c5a0872c0e10029d685e5ab99a3b74d4df988883434051fb8eb91ff97a",
+          "size": 13167979,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/bgen/model.bgen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.bgen.spm.gz",
+          "sha256": "57f6db15d760372681e0d21ec5e2acfdafee9c0ffe54e250461d8047f4522398",
+          "size": 435213,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/bgen/vocab.bgen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "bnen",
+      "from": "bn",
+      "to": "en",
+      "bytes": 15367712,
+      "files": [
+        {
+          "name": "lex.50.50.bnen.s2t.bin.gz",
+          "sha256": "8c4bf16a8a83f6c21a25f39eb1b1f935cb60e21a5afaa83b1e0fcd40e0180a82",
+          "size": 2264284,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/bnen/lex.50.50.bnen.s2t.bin.gz"
+        },
+        {
+          "name": "model.bnen.intgemm.alphas.bin.gz",
+          "sha256": "1a2e5bfd8d75c8cddd6a802f9e2a2a82b626ec88fbcb5575e242a306bc1ebe9b",
+          "size": 12665857,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/bnen/model.bnen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.bnen.spm.gz",
+          "sha256": "11660de65a60243f944dc7a099beaeab8f061d8526aed15c476416a6dd906793",
+          "size": 437571,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/bnen/vocab.bnen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "bsen",
+      "from": "bs",
+      "to": "en",
+      "bytes": 15239065,
+      "files": [
+        {
+          "name": "lex.50.50.bsen.s2t.bin.gz",
+          "sha256": "2c1fd0f331ee05fcabfe1c4b7b2dd3d365c4d7419d5f83f0a1501e96f512d151",
+          "size": 1426937,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/bsen/lex.50.50.bsen.s2t.bin.gz"
+        },
+        {
+          "name": "model.bsen.intgemm.alphas.bin.gz",
+          "sha256": "cdb0547120258fa07fad3d633e63fd17c961c050f50afa230a17b2d8fbe489f1",
+          "size": 13415215,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/bsen/model.bsen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.bsen.spm.gz",
+          "sha256": "9e712da2cd6f6cfedc3e7507711d10a651ff64743621b0635dd4eccffebd03f8",
+          "size": 396913,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/bsen/vocab.bsen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "caen",
+      "from": "ca",
+      "to": "en",
+      "bytes": 15974352,
+      "files": [
+        {
+          "name": "lex.50.50.caen.s2t.bin.gz",
+          "sha256": "e8f1b9054453a0bced8600d67150b4a468c6607b7ba69600a64d29112b998823",
+          "size": 2735538,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/caen/lex.50.50.caen.s2t.bin.gz"
+        },
+        {
+          "name": "model.caen.intgemm.alphas.bin.gz",
+          "sha256": "d7a76467335bc45389b695465996eecca6a5613ce8a9f3e4db865b2afad1672b",
+          "size": 12825781,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/caen/model.caen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.caen.spm.gz",
+          "sha256": "a34751849d5cce1430bafb374105252e2b2f6ace8d7e7e70d1a8c5279644702e",
+          "size": 413033,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/caen/vocab.caen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "csen",
+      "from": "cs",
+      "to": "en",
+      "bytes": 15129283,
+      "files": [
+        {
+          "name": "lex.50.50.csen.s2t.bin.gz",
+          "sha256": "aa3a8048e00283e02f7173f775ea92e5d0281d58dd4b014146fc7c7609b3772f",
+          "size": 2134106,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/csen/lex.50.50.csen.s2t.bin.gz"
+        },
+        {
+          "name": "model.csen.intgemm.alphas.bin.gz",
+          "sha256": "e45843ca6cac24a7dbb46f18c811a912c0b585882f6566d75a4204f086a7c9df",
+          "size": 12593076,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/csen/model.csen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.csen.spm.gz",
+          "sha256": "eac003e770924e8d77d071b65092de29a19a8d04acf157c0b282a2a3b2a91f2e",
+          "size": 402101,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/csen/vocab.csen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "daen",
+      "from": "da",
+      "to": "en",
+      "bytes": 15096083,
+      "files": [
+        {
+          "name": "lex.50.50.daen.s2t.bin.gz",
+          "sha256": "ab1656c067409541b3bdffd2878f3201ba51de70a42520da870de687ed37c0b8",
+          "size": 2170970,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/daen/lex.50.50.daen.s2t.bin.gz"
+        },
+        {
+          "name": "model.daen.intgemm.alphas.bin.gz",
+          "sha256": "483abf1ae01a79f3231f22b5c0aa44b8696fa0d5527801c7588a07ae2700836e",
+          "size": 12525769,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/daen/model.daen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.daen.spm.gz",
+          "sha256": "b0055ebdf5291b666c33f15ef41abba6820c09703fff7f6b1fc2726fa10ede73",
+          "size": 399344,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/daen/vocab.daen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "deen",
+      "from": "de",
+      "to": "en",
+      "bytes": 16063962,
+      "files": [
+        {
+          "name": "lex.50.50.deen.s2t.bin.gz",
+          "sha256": "a6225f83acca69994aace7f4b295b31e98c579bb0ce92e41486dec9881c90647",
+          "size": 2657472,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/deen/lex.50.50.deen.s2t.bin.gz"
+        },
+        {
+          "name": "model.deen.intgemm.alphas.bin.gz",
+          "sha256": "0c2798a6a42885877b00f3379416e40e7c748975b9e4b8a7765bab9cb6d2b6f6",
+          "size": 12995752,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/deen/model.deen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.deen.spm.gz",
+          "sha256": "ad7d4180eb98cae576875518721254e9fa9887cf1702e385c63f76445a5024fa",
+          "size": 410738,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/deen/vocab.deen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "elen",
+      "from": "el",
+      "to": "en",
+      "bytes": 14966961,
+      "files": [
+        {
+          "name": "lex.50.50.elen.s2t.bin.gz",
+          "sha256": "eef43a7471758df2a43f505e5670f3509093ab6a0742a3110d873047cc0913af",
+          "size": 1851246,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/elen/lex.50.50.elen.s2t.bin.gz"
+        },
+        {
+          "name": "model.elen.intgemm.alphas.bin.gz",
+          "sha256": "3a1d8af5cdf9ab4ace92dc988f496eb5d4e5c905834aa254b688c95a0fd5863f",
+          "size": 12696541,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/elen/model.elen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.elen.spm.gz",
+          "sha256": "076f2f01f855b08870083c569bd264d22e5bee3c35d30a1d16f7c42ae0bfc50f",
+          "size": 419174,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/elen/vocab.elen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enaz",
+      "from": "en",
+      "to": "az",
+      "bytes": 15363608,
+      "files": [
+        {
+          "name": "lex.50.50.enaz.s2t.bin.gz",
+          "sha256": "bda45d9414370c67fb4a4abed10081d7d8274fbbc2cd904fcdc3843ff47cc225",
+          "size": 1711544,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enaz/lex.50.50.enaz.s2t.bin.gz"
+        },
+        {
+          "name": "model.enaz.intgemm.alphas.bin.gz",
+          "sha256": "53332b07a693493d713e891306735d8eb8c8caacd649443cf5c3442b53c9972b",
+          "size": 13233108,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enaz/model.enaz.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enaz.spm.gz",
+          "sha256": "c614d42d85269a4c53efdb9f8389227d8b18e099955b6e88d2515bb740cf0a35",
+          "size": 418956,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enaz/vocab.enaz.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enbg",
+      "from": "en",
+      "to": "bg",
+      "bytes": 16696526,
+      "files": [
+        {
+          "name": "lex.50.50.enbg.s2t.bin.gz",
+          "sha256": "eedb954456793b24ff66855d7cf15206d0a34ef3669e01008f2596311e89bd6d",
+          "size": 2950444,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enbg/lex.50.50.enbg.s2t.bin.gz"
+        },
+        {
+          "name": "model.enbg.intgemm.alphas.bin.gz",
+          "sha256": "19ed0873addfae3eb229f91d31b03f01c8981ce219c60a0fdbcfd3c6e02c0a15",
+          "size": 13311038,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enbg/model.enbg.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enbg.spm.gz",
+          "sha256": "12c7d9c03366b9e00c73105be2ff59441a47f4bf42b9caabcb6c6cf1807407df",
+          "size": 435044,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enbg/vocab.enbg.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enbn",
+      "from": "en",
+      "to": "bn",
+      "bytes": 14866591,
+      "files": [
+        {
+          "name": "lex.50.50.enbn.s2t.bin.gz",
+          "sha256": "912cd83ad6b07d9df92b073f1bcbd49303c2b2ddba0b4d29d85b66b6f0b67f95",
+          "size": 1607697,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enbn/lex.50.50.enbn.s2t.bin.gz"
+        },
+        {
+          "name": "model.enbn.intgemm.alphas.bin.gz",
+          "sha256": "df17fb759afe3172d4ea0ded8abbe5b74d945a8acb0cac99e8fd55f92f926d8b",
+          "size": 12821521,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enbn/model.enbn.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enbn.spm.gz",
+          "sha256": "96e8b61918f5307f368937ff59f4cfea0bb7eb816e34f81bea6ac09399ee4b30",
+          "size": 437373,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enbn/vocab.enbn.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enca",
+      "from": "en",
+      "to": "ca",
+      "bytes": 15183057,
+      "files": [
+        {
+          "name": "lex.50.50.enca.s2t.bin.gz",
+          "sha256": "53f721eb8bcdcb01b9a41052ca87d6dcd826bac6ecab7030666664d3869bf1a6",
+          "size": 1830377,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enca/lex.50.50.enca.s2t.bin.gz"
+        },
+        {
+          "name": "model.enca.intgemm.alphas.bin.gz",
+          "sha256": "75f760535049c8b210d66b9a6bc180bdf184d34fc7737884ebf34e27898ea28b",
+          "size": 12959818,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enca/model.enca.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enca.spm.gz",
+          "sha256": "98ff68fa5ce0ae189e8cbbf32d1390d59aafd35d7f90553d2cc42ff89baea35e",
+          "size": 392862,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enca/vocab.enca.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "encs",
+      "from": "en",
+      "to": "cs",
+      "bytes": 14641278,
+      "files": [
+        {
+          "name": "lex.50.50.encs.s2t.bin.gz",
+          "sha256": "f67532f25fe6b1866cb6eca52820e1c79153b6428e2fbdd7437c92b3ebee3dc3",
+          "size": 1782691,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/encs/lex.50.50.encs.s2t.bin.gz"
+        },
+        {
+          "name": "model.encs.intgemm.alphas.bin.gz",
+          "sha256": "9e798c7df93e6e3fcc2c09e551c220a5dfe2acc95a3604b5b132da6a531d884d",
+          "size": 12457029,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/encs/model.encs.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.encs.spm.gz",
+          "sha256": "f57b546e3429fba8c39e32cb68d52267b1a4263df747009ff1e8fb91e9479499",
+          "size": 401558,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/encs/vocab.encs.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enda",
+      "from": "en",
+      "to": "da",
+      "bytes": 14705475,
+      "files": [
+        {
+          "name": "lex.50.50.enda.s2t.bin.gz",
+          "sha256": "c3d79a2ba450f92ec7cb4f38a39d7b3e157417f6fb60d060fa6f3f2c05d31de9",
+          "size": 1582768,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enda/lex.50.50.enda.s2t.bin.gz"
+        },
+        {
+          "name": "model.enda.intgemm.alphas.bin.gz",
+          "sha256": "5afaea5545cfc759ad1d2c320d17606e95efcfb0c6e4d9019903ee4c00b8091f",
+          "size": 12723889,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enda/model.enda.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enda.spm.gz",
+          "sha256": "2d9ff33c0adfc4a137ba0cc51f64e7886ae92dbd53fd718cce30fb6ec9aa33c2",
+          "size": 398818,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enda/vocab.enda.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "ende",
+      "from": "en",
+      "to": "de",
+      "bytes": 15292412,
+      "files": [
+        {
+          "name": "lex.50.50.ende.s2t.bin.gz",
+          "sha256": "d6606aecd47624e86721ed4762ba47be07aeb0b2dc004fccd121f2eb1f98bddc",
+          "size": 2113181,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ende/lex.50.50.ende.s2t.bin.gz"
+        },
+        {
+          "name": "model.ende.intgemm.alphas.bin.gz",
+          "sha256": "da21fcd90a6caa40a0b246d233c8e5f5ad7aa9a1aa98eece09682820d35bb2a6",
+          "size": 12768493,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ende/model.ende.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.ende.spm.gz",
+          "sha256": "817cd1881b6157ab084048b5d2541b5327b6b1d93652c9805e46c91391b9404f",
+          "size": 410738,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ende/vocab.ende.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enel",
+      "from": "en",
+      "to": "el",
+      "bytes": 14579945,
+      "files": [
+        {
+          "name": "lex.50.50.enel.s2t.bin.gz",
+          "sha256": "e03309c345e05bf23956a9e3d637d65cea1e75f323dbcb958c51cfb58397306a",
+          "size": 1352643,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enel/lex.50.50.enel.s2t.bin.gz"
+        },
+        {
+          "name": "model.enel.intgemm.alphas.bin.gz",
+          "sha256": "cfe3af93ed24be241638ff246b716855bfcb7273b7a57c4fb6ac73bbe660479a",
+          "size": 12808027,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enel/model.enel.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enel.spm.gz",
+          "sha256": "bfbab13d4ff67e08e98e9203ab0d7efd02fa143614b3244da1902baf47793b26",
+          "size": 419275,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enel/vocab.enel.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enes",
+      "from": "en",
+      "to": "es",
+      "bytes": 14738119,
+      "files": [
+        {
+          "name": "lex.50.50.enes.s2t.bin.gz",
+          "sha256": "ada43ef1592f2f8f2ab26125358a814f7704f28ab77829a859846d21630f28fb",
+          "size": 1720700,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enes/lex.50.50.enes.s2t.bin.gz"
+        },
+        {
+          "name": "model.enes.intgemm.alphas.bin.gz",
+          "sha256": "2f2cdfb25d855c7c4dd874c2d5d97154339ca9e93c5336c2ec0236415ffcb1ae",
+          "size": 12602853,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enes/model.enes.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enes.spm.gz",
+          "sha256": "97fd4de57bc3dd9daf15216f84df1d1f1f32e57adfac0c89332a2dbf466a857f",
+          "size": 414566,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enes/vocab.enes.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enet",
+      "from": "en",
+      "to": "et",
+      "bytes": 14296756,
+      "files": [
+        {
+          "name": "lex.50.50.enet.s2t.bin.gz",
+          "sha256": "d7594412b661d2895f415dea04acdce16dcd092922497a6dfc5e543c87946fb9",
+          "size": 1336443,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enet/lex.50.50.enet.s2t.bin.gz"
+        },
+        {
+          "name": "model.enet.intgemm.alphas.bin.gz",
+          "sha256": "822765f340a7bf7a9fe36c0ba55841e8e792e48e82d6b4f682f161f0bf6b02c8",
+          "size": 12543318,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enet/model.enet.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enet.spm.gz",
+          "sha256": "019fa3bcb2732ff4cb87b47200a2907d5753cc8e1c79d3291fc7137630bac3db",
+          "size": 416995,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enet/vocab.enet.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enfa",
+      "from": "en",
+      "to": "fa",
+      "bytes": 15203098,
+      "files": [
+        {
+          "name": "lex.50.50.enfa.s2t.bin.gz",
+          "sha256": "a5fc8b6d661f493767954c138c40b336e10aa8d2a1957ecb330face9e2fd36d2",
+          "size": 1728367,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enfa/lex.50.50.enfa.s2t.bin.gz"
+        },
+        {
+          "name": "model.enfa.intgemm.alphas.bin.gz",
+          "sha256": "9200d122bb62c7935f9c31a2d84c5503d22c0905d4f9e965743099b7c3748c8b",
+          "size": 13058508,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enfa/model.enfa.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enfa.spm.gz",
+          "sha256": "9a9961f08f3c015e8b0963d6537d931e0d3829736b9ab9766fcfaabf4f32cab4",
+          "size": 416223,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enfa/vocab.enfa.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enfi",
+      "from": "en",
+      "to": "fi",
+      "bytes": 14357492,
+      "files": [
+        {
+          "name": "lex.50.50.enfi.s2t.bin.gz",
+          "sha256": "bd9352a7f65ab4f9118bcb0030bbb05649be8ed4e27c979e7cf5a9960d61c1be",
+          "size": 1676644,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enfi/lex.50.50.enfi.s2t.bin.gz"
+        },
+        {
+          "name": "model.enfi.intgemm.alphas.bin.gz",
+          "sha256": "0de670dc827b6da57d444ba91ae9852f3f349b81a999fe813707c905e3d69b56",
+          "size": 12281951,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enfi/model.enfi.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enfi.spm.gz",
+          "sha256": "6d15652423389f7889f388c48de7f4ce435df5bc878967871e580c63be314fe1",
+          "size": 398897,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enfi/vocab.enfi.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enfr",
+      "from": "en",
+      "to": "fr",
+      "bytes": 16890630,
+      "files": [
+        {
+          "name": "lex.50.50.enfr.s2t.bin.gz",
+          "sha256": "ed5eaebf198b787b718b81948ddb184780a559e6eefdb7416fdf405ef3e50576",
+          "size": 4177155,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enfr/lex.50.50.enfr.s2t.bin.gz"
+        },
+        {
+          "name": "model.enfr.intgemm.alphas.bin.gz",
+          "sha256": "f39efbb6ab154967e2762f7c4baa0ff2f2fa08f32bfe5f6d29b787726476e828",
+          "size": 12293754,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enfr/model.enfr.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enfr.spm.gz",
+          "sha256": "254b039b3a79bb6c1a28dc61b1c7b5b192adda3d05650ccd5de99b6076495a65",
+          "size": 419721,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enfr/vocab.enfr.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "engu",
+      "from": "en",
+      "to": "gu",
+      "bytes": 14621890,
+      "files": [
+        {
+          "name": "lex.50.50.engu.s2t.bin.gz",
+          "sha256": "2ab0f92654a4314fc64ad52cfec32aaa1d187e969d209990fcac41c96a5073ae",
+          "size": 1529098,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/engu/lex.50.50.engu.s2t.bin.gz"
+        },
+        {
+          "name": "model.engu.intgemm.alphas.bin.gz",
+          "sha256": "66003a2deb5b2bdf65748c344dbbb94d73b8f225aea3a66caab17b41c5e0ad2e",
+          "size": 12657911,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/engu/model.engu.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.engu.spm.gz",
+          "sha256": "9f79169080b255c5683d9ad6cc263724b09b215cc1010cd7b9a2f5de2dcd5748",
+          "size": 434881,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/engu/vocab.engu.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enhe",
+      "from": "en",
+      "to": "he",
+      "bytes": 14958840,
+      "files": [
+        {
+          "name": "lex.50.50.enhe.s2t.bin.gz",
+          "sha256": "8dda768bc3a852547dd141e2945cdd9667eb2ffa3837bdb4a917f3f95481897c",
+          "size": 1567190,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enhe/lex.50.50.enhe.s2t.bin.gz"
+        },
+        {
+          "name": "model.enhe.intgemm.alphas.bin.gz",
+          "sha256": "61a2281fbef3dc440c9e9a8a3c064e34addf4a63fe584b1e523b7ee809b1870e",
+          "size": 12979964,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enhe/model.enhe.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enhe.spm.gz",
+          "sha256": "4eee1f6ed468177c2397976cfaddaa58a61966944a732579957cc27b480b7ab6",
+          "size": 411686,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enhe/vocab.enhe.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enhi",
+      "from": "en",
+      "to": "hi",
+      "bytes": 14856351,
+      "files": [
+        {
+          "name": "lex.50.50.enhi.s2t.bin.gz",
+          "sha256": "ce5f1dd9d4fb343cb6e0da91e4603e50b673b91ea22b50b959a0dc199d4e9dd9",
+          "size": 1690062,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enhi/lex.50.50.enhi.s2t.bin.gz"
+        },
+        {
+          "name": "model.enhi.intgemm.alphas.bin.gz",
+          "sha256": "751032330fe04b9dd4e1245c4dcf8f58dd6836daa7ed3f3b93be52eb1fca9ba4",
+          "size": 12736263,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enhi/model.enhi.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enhi.spm.gz",
+          "sha256": "bb3bf8252b14fa57100beb371824cf51a7281e833a3becec135721fe679ce076",
+          "size": 430026,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enhi/vocab.enhi.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enhr",
+      "from": "en",
+      "to": "hr",
+      "bytes": 14636363,
+      "files": [
+        {
+          "name": "lex.50.50.enhr.s2t.bin.gz",
+          "sha256": "41838505cd67e7cb3ce2d1dd7eae995b74c50af3e26a688154f95914122ccfbb",
+          "size": 1450314,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enhr/lex.50.50.enhr.s2t.bin.gz"
+        },
+        {
+          "name": "model.enhr.intgemm.alphas.bin.gz",
+          "sha256": "2a2df3ec36a53804751e182dd6fac77c022e3b660bb068157d2cf30d835ee6e1",
+          "size": 12790833,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enhr/model.enhr.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enhr.spm.gz",
+          "sha256": "f3f17acc0672043521abef28d542fe88d3bd6ee1145d7b3f0341cff92344efed",
+          "size": 395216,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enhr/vocab.enhr.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enhu",
+      "from": "en",
+      "to": "hu",
+      "bytes": 14459580,
+      "files": [
+        {
+          "name": "lex.50.50.enhu.s2t.bin.gz",
+          "sha256": "2e772530488279637728c08534d132dd3ff5ca4c68bc49d199e340b435da92ee",
+          "size": 1531320,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enhu/lex.50.50.enhu.s2t.bin.gz"
+        },
+        {
+          "name": "model.enhu.intgemm.alphas.bin.gz",
+          "sha256": "0b4fa8fd34dc2f34fa0c147dfb0a498467b6c8920b55a720d2787a6e2e425e6b",
+          "size": 12522540,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enhu/model.enhu.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enhu.spm.gz",
+          "sha256": "5359b6d33dc95020092700347b4ebe859ece3a13803367e405dcc464b09146de",
+          "size": 405720,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enhu/vocab.enhu.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enid",
+      "from": "en",
+      "to": "id",
+      "bytes": 14617628,
+      "files": [
+        {
+          "name": "lex.50.50.enid.s2t.bin.gz",
+          "sha256": "41853979c81022487542eceed4994078bd144c63fff84a421616f3cc8f3162c1",
+          "size": 1734565,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enid/lex.50.50.enid.s2t.bin.gz"
+        },
+        {
+          "name": "model.enid.intgemm.alphas.bin.gz",
+          "sha256": "08bf854041ee20e955c013f17d86ae562b29388304151071e176b579e78fb0be",
+          "size": 12503257,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enid/model.enid.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enid.spm.gz",
+          "sha256": "49af04de6f0e3c21afcb274e7a6931c8f9efae38932e2671b692bf1b6f6d279b",
+          "size": 379806,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enid/vocab.enid.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enit",
+      "from": "en",
+      "to": "it",
+      "bytes": 16117941,
+      "files": [
+        {
+          "name": "lex.50.50.enit.s2t.bin.gz",
+          "sha256": "85e836ec99e93b6ade5f26bb38e260b4677ba22fb86d2e912b383527b6dcfe56",
+          "size": 2441969,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enit/lex.50.50.enit.s2t.bin.gz"
+        },
+        {
+          "name": "model.enit.intgemm.alphas.bin.gz",
+          "sha256": "da2be6a5f495ccfa945e2dfede4b14fa96cc85d2725fe2f0833db55ace8ac476",
+          "size": 13267138,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enit/model.enit.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enit.spm.gz",
+          "sha256": "b1e1753f9be03fa25f4540f3dd23efc1134a934984f899df2cbdb41d9ce64e89",
+          "size": 408834,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enit/vocab.enit.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enkn",
+      "from": "en",
+      "to": "kn",
+      "bytes": 14875419,
+      "files": [
+        {
+          "name": "lex.50.50.enkn.s2t.bin.gz",
+          "sha256": "3227fa0bba2fbec768b2648fec014bea5cb5384d85c0199afb36abe5281db658",
+          "size": 1416160,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enkn/lex.50.50.enkn.s2t.bin.gz"
+        },
+        {
+          "name": "model.enkn.intgemm.alphas.bin.gz",
+          "sha256": "e7f684fea84a6a69522e77388fd09f015b513511ed36192f0493d0faf52380ad",
+          "size": 13009213,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enkn/model.enkn.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enkn.spm.gz",
+          "sha256": "2a501f3862d4e27269c457f82084a714a03f44b7e05ce92daef5dff0389f8860",
+          "size": 450046,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enkn/vocab.enkn.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enlt",
+      "from": "en",
+      "to": "lt",
+      "bytes": 14805328,
+      "files": [
+        {
+          "name": "lex.50.50.enlt.s2t.bin.gz",
+          "sha256": "60631b93e158440c391b0cbbbb99303e8ff5608cc5f21ae6f2c8c7d4425a3356",
+          "size": 1615976,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enlt/lex.50.50.enlt.s2t.bin.gz"
+        },
+        {
+          "name": "model.enlt.intgemm.alphas.bin.gz",
+          "sha256": "045cbf513679c0c5599e894d019cf210e49f87d2c3b3899565a819ef71f53ce1",
+          "size": 12785996,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enlt/model.enlt.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enlt.spm.gz",
+          "sha256": "399071739c82e44d8722b558fd6ee6f06183f1f4f165582683230ea5037ce875",
+          "size": 403356,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enlt/vocab.enlt.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enlv",
+      "from": "en",
+      "to": "lv",
+      "bytes": 14257137,
+      "files": [
+        {
+          "name": "lex.50.50.enlv.s2t.bin.gz",
+          "sha256": "27e4133b7768c44ee1210927395c5660b752e4f09769919a8202f304794d2355",
+          "size": 1572967,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enlv/lex.50.50.enlv.s2t.bin.gz"
+        },
+        {
+          "name": "model.enlv.intgemm.alphas.bin.gz",
+          "sha256": "0b302c682bddd5398722ad346db38a300cc87f43d84b472f9555f14a7f041e4a",
+          "size": 12276630,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enlv/model.enlv.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enlv.spm.gz",
+          "sha256": "bbdb992744748e8ec96d45abf38ebeea3f10f60dffd368c1ab62566e6ed1f6a4",
+          "size": 407540,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enlv/vocab.enlv.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enml",
+      "from": "en",
+      "to": "ml",
+      "bytes": 14300153,
+      "files": [
+        {
+          "name": "lex.50.50.enml.s2t.bin.gz",
+          "sha256": "f8b294d0a490b8dfd60d300cc6688eef6fcb5f519f9b17ac05c137bb20bfc804",
+          "size": 1275347,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enml/lex.50.50.enml.s2t.bin.gz"
+        },
+        {
+          "name": "model.enml.intgemm.alphas.bin.gz",
+          "sha256": "276ea5a40a974ac039ff83e0594986a8110820602eedff616838e8914e2e6d91",
+          "size": 12570038,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enml/model.enml.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enml.spm.gz",
+          "sha256": "388cfec515765b48792a0be3fb383f9dc6aefbd646c1e09ec3440fc8ce18a6df",
+          "size": 454768,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enml/vocab.enml.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enms",
+      "from": "en",
+      "to": "ms",
+      "bytes": 15487819,
+      "files": [
+        {
+          "name": "lex.50.50.enms.s2t.bin.gz",
+          "sha256": "af50b88c0072cc3762774f2d5021911cbf40e577cf2903e80824397e5abdffb1",
+          "size": 2044118,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enms/lex.50.50.enms.s2t.bin.gz"
+        },
+        {
+          "name": "model.enms.intgemm.alphas.bin.gz",
+          "sha256": "d067740465b320693c79d9ebe32b9de911a3340d0a0b2ff408a3e9126980af49",
+          "size": 13039668,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enms/model.enms.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enms.spm.gz",
+          "sha256": "26c4054e6712e3ad44a4a28ebb4e91dcd0f9b41848997bbfaf90ba5aee3fc99c",
+          "size": 404033,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enms/vocab.enms.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "ennl",
+      "from": "en",
+      "to": "nl",
+      "bytes": 15947527,
+      "files": [
+        {
+          "name": "lex.50.50.ennl.s2t.bin.gz",
+          "sha256": "f6798a31ddc076cf66909920297916c674d7b1e2866e3cbc79066b94d687f54f",
+          "size": 2454349,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ennl/lex.50.50.ennl.s2t.bin.gz"
+        },
+        {
+          "name": "model.ennl.intgemm.alphas.bin.gz",
+          "sha256": "59afabea0afef874c640964cfba0bfac3f1219894df01fa0603eb2acd81b4637",
+          "size": 13081379,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ennl/model.ennl.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.ennl.spm.gz",
+          "sha256": "eef8a7d0a3275cce8f04496b7f7cb6686c52b6ded490edf5bc9a682b1d6e9a6d",
+          "size": 411799,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ennl/vocab.ennl.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enpl",
+      "from": "en",
+      "to": "pl",
+      "bytes": 15158113,
+      "files": [
+        {
+          "name": "lex.50.50.enpl.s2t.bin.gz",
+          "sha256": "bf7fe54df8aab3ac9d5052cd491f3c4af3b96dd6860aa57f79f42468b9b60083",
+          "size": 1945174,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enpl/lex.50.50.enpl.s2t.bin.gz"
+        },
+        {
+          "name": "model.enpl.intgemm.alphas.bin.gz",
+          "sha256": "c78f3ab8b6f0d0de72d3a2e6f5a7b725834159b2418f3595cecf31e0c9ee10f3",
+          "size": 12797631,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enpl/model.enpl.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enpl.spm.gz",
+          "sha256": "bcf8b5c07f923741b35a218712f0618466b849dccfc0d94696e4fbccbdc24c55",
+          "size": 415308,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enpl/vocab.enpl.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enpt",
+      "from": "en",
+      "to": "pt",
+      "bytes": 15864588,
+      "files": [
+        {
+          "name": "lex.50.50.enpt.s2t.bin.gz",
+          "sha256": "e772b2d9f6b328b95a4dd20382b2d0f10c8566af697ce34c68b080eb0b767ae0",
+          "size": 2354273,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enpt/lex.50.50.enpt.s2t.bin.gz"
+        },
+        {
+          "name": "model.enpt.intgemm.alphas.bin.gz",
+          "sha256": "7d32a94b48c6609e076117af40de560e000885f6729056215418f61a31251889",
+          "size": 13099731,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enpt/model.enpt.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enpt.spm.gz",
+          "sha256": "2fa8f20786781f422876374326b4844cad915b3570c7bc390d154129743a6659",
+          "size": 410584,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enpt/vocab.enpt.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enro",
+      "from": "en",
+      "to": "ro",
+      "bytes": 14450698,
+      "files": [
+        {
+          "name": "lex.50.50.enro.s2t.bin.gz",
+          "sha256": "a64099f219a6e4eee89085283ace66e8f0171d43b168ba155dffc2fa4dcdc9b1",
+          "size": 1846074,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enro/lex.50.50.enro.s2t.bin.gz"
+        },
+        {
+          "name": "model.enro.intgemm.alphas.bin.gz",
+          "sha256": "3596ee3bc1461c96f28edf200f4235fdfd4e0cb8434fa86ad04762d4a10d7a66",
+          "size": 12207487,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enro/model.enro.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enro.spm.gz",
+          "sha256": "61a75f040f035844ec5d54edf5f80831cd8ad58bfa539a7e707a7f6a5bd25c63",
+          "size": 397137,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enro/vocab.enro.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enru",
+      "from": "en",
+      "to": "ru",
+      "bytes": 14158532,
+      "files": [
+        {
+          "name": "lex.50.50.enru.s2t.bin.gz",
+          "sha256": "8bf4e709e015e8fce1f2d79f64889e719a085e2fb02bff8347977fd71de43b9e",
+          "size": 1348215,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enru/lex.50.50.enru.s2t.bin.gz"
+        },
+        {
+          "name": "model.enru.intgemm.alphas.bin.gz",
+          "sha256": "445d69eee843bf8fa633b3b72bc708e9565009025da6a8b86352666ffc7bf553",
+          "size": 12391312,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enru/model.enru.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enru.spm.gz",
+          "sha256": "5230936c4a69514c263778cb3eb1bd429fcd182ea9300aae48415212c41abeb8",
+          "size": 419005,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enru/vocab.enru.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "ensk",
+      "from": "en",
+      "to": "sk",
+      "bytes": 14611161,
+      "files": [
+        {
+          "name": "lex.50.50.ensk.s2t.bin.gz",
+          "sha256": "a5fe3664c297b5efc79f5b4c49986aa64e5b02e90e09723cbd2fde2dd82ae828",
+          "size": 1471538,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ensk/lex.50.50.ensk.s2t.bin.gz"
+        },
+        {
+          "name": "model.ensk.intgemm.alphas.bin.gz",
+          "sha256": "2ec5b8a4feb17c3dc8c82235b9fad056f595f558403199d7a5b3da4ec3fa839c",
+          "size": 12733971,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ensk/model.ensk.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.ensk.spm.gz",
+          "sha256": "fefbf8cfd36ecc95e892509f9db45d1c670c796da211da21285371c7d5ee36c4",
+          "size": 405652,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ensk/vocab.ensk.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "ensl",
+      "from": "en",
+      "to": "sl",
+      "bytes": 14577937,
+      "files": [
+        {
+          "name": "lex.50.50.ensl.s2t.bin.gz",
+          "sha256": "4a1396b146d5ed97d17ed2b907ca6151c5cea3478630bfad1c336b9421db99c9",
+          "size": 1472594,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ensl/lex.50.50.ensl.s2t.bin.gz"
+        },
+        {
+          "name": "model.ensl.intgemm.alphas.bin.gz",
+          "sha256": "832a5a23f8aa7b2afccc842699a027d8e0b0f4c0e572fd7d32987284059fc1cc",
+          "size": 12706580,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ensl/model.ensl.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.ensl.spm.gz",
+          "sha256": "d1a0be1b12650e6c970e90b89b1662c9faa6df6ba3b5cb8d4d210e352c1cb0a5",
+          "size": 398763,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ensl/vocab.ensl.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "ensq",
+      "from": "en",
+      "to": "sq",
+      "bytes": 15376815,
+      "files": [
+        {
+          "name": "lex.50.50.ensq.s2t.bin.gz",
+          "sha256": "5574cfe5535581928b3bd7a84a064ae99e454662a28c8b25552de2aed2c8b685",
+          "size": 1599959,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ensq/lex.50.50.ensq.s2t.bin.gz"
+        },
+        {
+          "name": "model.ensq.intgemm.alphas.bin.gz",
+          "sha256": "d4e05ecf916e215e0d94e411217100ddfe61a1ea8057d47b5aa6e0296fa32f19",
+          "size": 13366206,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ensq/model.ensq.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.ensq.spm.gz",
+          "sha256": "ad4bf4db75d99c491f6ab972deec4e9af3777b1721666c55f71bb01c7d92025d",
+          "size": 410650,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ensq/vocab.ensq.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "ensv",
+      "from": "en",
+      "to": "sv",
+      "bytes": 15094740,
+      "files": [
+        {
+          "name": "lex.50.50.ensv.s2t.bin.gz",
+          "sha256": "0480c83e15f1d2dcee68873eee5fb66c2912884ab2757ff201e6b6ab9be38ed7",
+          "size": 1921270,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ensv/lex.50.50.ensv.s2t.bin.gz"
+        },
+        {
+          "name": "model.ensv.intgemm.alphas.bin.gz",
+          "sha256": "f2fee438e0770428c06a4fa1e938175bf7c37f3a288313c317853b646437eb81",
+          "size": 12775086,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ensv/model.ensv.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.ensv.spm.gz",
+          "sha256": "534e7f952f6bb97903301332836bab5d76cbc965592a9f1af77ace05e84e2edf",
+          "size": 398384,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ensv/vocab.ensv.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enta",
+      "from": "en",
+      "to": "ta",
+      "bytes": 14546100,
+      "files": [
+        {
+          "name": "lex.50.50.enta.s2t.bin.gz",
+          "sha256": "d5855d0a1101f7f80678ab1dbd4e004720af197077d1b7b2ce31c0aa5646ade8",
+          "size": 1453949,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enta/lex.50.50.enta.s2t.bin.gz"
+        },
+        {
+          "name": "model.enta.intgemm.alphas.bin.gz",
+          "sha256": "8ba25571eaace1df38345d556b0ae433722b03688bb8cf8fe7681b19e0a64814",
+          "size": 12645399,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enta/model.enta.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enta.spm.gz",
+          "sha256": "4ff6e3e8ca495484d4617d786ead775b934bc0f8128d1f919d043020a87a8a4d",
+          "size": 446752,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enta/vocab.enta.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "ente",
+      "from": "en",
+      "to": "te",
+      "bytes": 14473805,
+      "files": [
+        {
+          "name": "lex.50.50.ente.s2t.bin.gz",
+          "sha256": "63eea185036a52cd43b70537ac3526a93dd8d04c7904daeffcf4a00d60f2ed6e",
+          "size": 1434105,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ente/lex.50.50.ente.s2t.bin.gz"
+        },
+        {
+          "name": "model.ente.intgemm.alphas.bin.gz",
+          "sha256": "975698af4c7810bdac720590fa6c1fc9dee57c6b68c7bca535314e8bb5d96754",
+          "size": 12590862,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ente/model.ente.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.ente.spm.gz",
+          "sha256": "1048434654e9a22eb960ad738650ecd2b989a5699bb7621f2a275698642c480d",
+          "size": 448838,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ente/vocab.ente.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "entr",
+      "from": "en",
+      "to": "tr",
+      "bytes": 15101045,
+      "files": [
+        {
+          "name": "lex.50.50.entr.s2t.bin.gz",
+          "sha256": "cf74d4edec0b51affd30a43e6bd2c2274bf4ce7fd54c24fd293db2c5c4bf043d",
+          "size": 1546258,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/entr/lex.50.50.entr.s2t.bin.gz"
+        },
+        {
+          "name": "model.entr.intgemm.alphas.bin.gz",
+          "sha256": "52d10136b1a4804879989aa9ee146e83ced75aa0ce2d371b4e582473ed6b9020",
+          "size": 13159314,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/entr/model.entr.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.entr.spm.gz",
+          "sha256": "01e55973e65a34c5efbdce3968857d4e53998b4bef131c5125a19f8e44d8f87c",
+          "size": 395473,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/entr/vocab.entr.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "enuk",
+      "from": "en",
+      "to": "uk",
+      "bytes": 14444181,
+      "files": [
+        {
+          "name": "lex.50.50.enuk.s2t.bin.gz",
+          "sha256": "2b76818e5a6d946632887132789610a7b2291c44e7103e114346cfba45d4a845",
+          "size": 1350156,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enuk/lex.50.50.enuk.s2t.bin.gz"
+        },
+        {
+          "name": "model.enuk.intgemm.alphas.bin.gz",
+          "sha256": "22c8fc749d9cd774db3d44fd5794df10437d23cfb629698c87d2b84818917d04",
+          "size": 12679068,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enuk/model.enuk.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.enuk.spm.gz",
+          "sha256": "1d4eae8b7316674e5a06303f9d19553789a8952210c99b0aba48ba292a273e0b",
+          "size": 414957,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/enuk/vocab.enuk.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "esen",
+      "from": "es",
+      "to": "en",
+      "bytes": 15609064,
+      "files": [
+        {
+          "name": "lex.50.50.esen.s2t.bin.gz",
+          "sha256": "aa6c3a148854089e9f2b51d8a49fef896fad658dc1b4d8760a0b293254c03fde",
+          "size": 1978538,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/esen/lex.50.50.esen.s2t.bin.gz"
+        },
+        {
+          "name": "model.esen.intgemm.alphas.bin.gz",
+          "sha256": "03ef9234003b450b0b94f84d683bd2e215bc0a72db2bdac6ebe503356dfe73c6",
+          "size": 13215960,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/esen/model.esen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.esen.spm.gz",
+          "sha256": "0148a29b7145e61871846bfda323a9cf70d1e559f14e161d5410423febdeda74",
+          "size": 414566,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/esen/vocab.esen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "eten",
+      "from": "et",
+      "to": "en",
+      "bytes": 14560274,
+      "files": [
+        {
+          "name": "lex.50.50.eten.s2t.bin.gz",
+          "sha256": "042eacd5423466c846df5acdd6471ce36805345907b6a4c61c75734c69ea0863",
+          "size": 1920655,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/eten/lex.50.50.eten.s2t.bin.gz"
+        },
+        {
+          "name": "model.eten.intgemm.alphas.bin.gz",
+          "sha256": "0af06d9a125d88ce7d2523bcaf166ba8d9789e1cc5eaa6b7cac0518c1f6d2d2b",
+          "size": 12222624,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/eten/model.eten.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.eten.spm.gz",
+          "sha256": "591f38488dca1518281b918f3e2ef489fae39f1e59400a27bbe66e35718b5182",
+          "size": 416995,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/eten/vocab.eten.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "faen",
+      "from": "fa",
+      "to": "en",
+      "bytes": 15426804,
+      "files": [
+        {
+          "name": "lex.50.50.faen.s2t.bin.gz",
+          "sha256": "3ff28e45fbe6ef1742d65f525fda0c0be2255cb04cffdcfb0f9e1c21635dde90",
+          "size": 1939291,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/faen/lex.50.50.faen.s2t.bin.gz"
+        },
+        {
+          "name": "model.faen.intgemm.alphas.bin.gz",
+          "sha256": "b72e5c310d36cc5f92f143f44bd3d5ce645c1ba71668ec016f4a947e39880a2b",
+          "size": 13071390,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/faen/model.faen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.faen.spm.gz",
+          "sha256": "23252b82bf5299f6e26925b0e40f0f3bf35d51c954e5d4402cc4072c62db6c24",
+          "size": 416123,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/faen/vocab.faen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "fien",
+      "from": "fi",
+      "to": "en",
+      "bytes": 16360069,
+      "files": [
+        {
+          "name": "lex.50.50.fien.s2t.bin.gz",
+          "sha256": "d59cdb552065280f6778ecec40bfe317183d411bdf54fb0c7c61d6503391c0fb",
+          "size": 2702886,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/fien/lex.50.50.fien.s2t.bin.gz"
+        },
+        {
+          "name": "model.fien.intgemm.alphas.bin.gz",
+          "sha256": "c76b72e05993a8a5765784093b36407a41cb40ffac3d4ff08bae9907ca75ae7a",
+          "size": 13240505,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/fien/model.fien.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.fien.spm.gz",
+          "sha256": "6099d88edabb47f84560c50b99fb349cf713a652cd86ebeeb71d94e92bd9fce9",
+          "size": 416678,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/fien/vocab.fien.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "fren",
+      "from": "fr",
+      "to": "en",
+      "bytes": 17823126,
+      "files": [
+        {
+          "name": "lex.50.50.fren.s2t.bin.gz",
+          "sha256": "17b933f2b42516ed0d325dd862ee7c50acc74ffc5d2a66059b357b931f788df7",
+          "size": 4761904,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/fren/lex.50.50.fren.s2t.bin.gz"
+        },
+        {
+          "name": "model.fren.intgemm.alphas.bin.gz",
+          "sha256": "4f5618b93d08bd82bdafc096b5cdfe459e24b263f0a5a23dcf641a070ebb60b5",
+          "size": 12641501,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/fren/model.fren.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.fren.spm.gz",
+          "sha256": "e90e0e635234445df4defafdea8aff23f8a0d68c73744462c021b5dbff36e55f",
+          "size": 419721,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/fren/vocab.fren.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "guen",
+      "from": "gu",
+      "to": "en",
+      "bytes": 15381564,
+      "files": [
+        {
+          "name": "lex.50.50.guen.s2t.bin.gz",
+          "sha256": "30b6417f113a993a73fb9f6b58db94df23e2a2192fe0f70b3a422019ccf33d31",
+          "size": 2028621,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/guen/lex.50.50.guen.s2t.bin.gz"
+        },
+        {
+          "name": "model.guen.intgemm.alphas.bin.gz",
+          "sha256": "f78d8f7120b7e3092f83639f4b2600459ea016dabaed037f20e651d015ca070a",
+          "size": 12917932,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/guen/model.guen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.guen.spm.gz",
+          "sha256": "3113b3e5e6d507555858fda228517d407ebabc39d5d7e6e1522f9aa8f083a598",
+          "size": 435011,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/guen/vocab.guen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "heen",
+      "from": "he",
+      "to": "en",
+      "bytes": 15644623,
+      "files": [
+        {
+          "name": "lex.50.50.heen.s2t.bin.gz",
+          "sha256": "49691f4355a870ad49137100d1559b2e3505b7c4419d47e5261b6e772264c2fc",
+          "size": 2232949,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/heen/lex.50.50.heen.s2t.bin.gz"
+        },
+        {
+          "name": "model.heen.intgemm.alphas.bin.gz",
+          "sha256": "42b8846343a6bda677c20846622bdb9087a84ab37b0b50d90f3e6135b622505f",
+          "size": 12999905,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/heen/model.heen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.heen.spm.gz",
+          "sha256": "780458822f46ab6471bd531223fa87ebd408140f16f3d6d6e3136c0b410bd316",
+          "size": 411769,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/heen/vocab.heen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "hien",
+      "from": "hi",
+      "to": "en",
+      "bytes": 15501784,
+      "files": [
+        {
+          "name": "lex.50.50.hien.s2t.bin.gz",
+          "sha256": "9647fd7a38db4bafa549f73bf34cabd5a415cd34f3acd7212fced93f163dbd49",
+          "size": 2319675,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/hien/lex.50.50.hien.s2t.bin.gz"
+        },
+        {
+          "name": "model.hien.intgemm.alphas.bin.gz",
+          "sha256": "d30d257188bec64fceeb37483a6be8c54f1246583ad4e4f99dda174b630afeb3",
+          "size": 12752013,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/hien/model.hien.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.hien.spm.gz",
+          "sha256": "7554161ff543abf09200b4feec83328259b0acb0e58003d834ad43bac47f6124",
+          "size": 430096,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/hien/vocab.hien.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "hren",
+      "from": "hr",
+      "to": "en",
+      "bytes": 15333032,
+      "files": [
+        {
+          "name": "lex.50.50.hren.s2t.bin.gz",
+          "sha256": "2537de8fd6f27e31eda0b25d2fd426d1c69e04097ab9020f58b644af635c28a7",
+          "size": 1888089,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/hren/lex.50.50.hren.s2t.bin.gz"
+        },
+        {
+          "name": "model.hren.intgemm.alphas.bin.gz",
+          "sha256": "b0c1857d701bca4c42d8daa8debf4fa93bbc1ab0fc5618330c351cb46c3636d5",
+          "size": 13050395,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/hren/model.hren.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.hren.spm.gz",
+          "sha256": "a8bd79201f937ac6a9d186d851a377b436781e5ac8b7b380de548a2683164e38",
+          "size": 394548,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/hren/vocab.hren.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "huen",
+      "from": "hu",
+      "to": "en",
+      "bytes": 16379723,
+      "files": [
+        {
+          "name": "lex.50.50.huen.s2t.bin.gz",
+          "sha256": "0e062d80c132f8cee111b85adbef9841f502f73be09b1b6596f31385dfcd0add",
+          "size": 2778202,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/huen/lex.50.50.huen.s2t.bin.gz"
+        },
+        {
+          "name": "model.huen.intgemm.alphas.bin.gz",
+          "sha256": "f66a371ab2ba3316b438ae6430a6616469c5ecea307024a07af1205dfd5d716d",
+          "size": 13181613,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/huen/model.huen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.huen.spm.gz",
+          "sha256": "97fca39ca82670f3dbb0d5e28a5476cd36a3556bbcced590e6e5de7687013dce",
+          "size": 419908,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/huen/vocab.huen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "iden",
+      "from": "id",
+      "to": "en",
+      "bytes": 15208738,
+      "files": [
+        {
+          "name": "lex.50.50.iden.s2t.bin.gz",
+          "sha256": "029091e65df311e17c7e5a199505372dc3892937046b918ac18695aede08e344",
+          "size": 1818222,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/iden/lex.50.50.iden.s2t.bin.gz"
+        },
+        {
+          "name": "model.iden.intgemm.alphas.bin.gz",
+          "sha256": "625c237e7d1cdc12b0d9e2e666c0d3b674e13d50461268467aaa0b78c2cc5d93",
+          "size": 13010657,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/iden/model.iden.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.iden.spm.gz",
+          "sha256": "74daf618f0c78d508fda867f30983e9e5679a4e21c4cd42f5dcd5e501448f48e",
+          "size": 379859,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/iden/vocab.iden.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "isen",
+      "from": "is",
+      "to": "en",
+      "bytes": 15908836,
+      "files": [
+        {
+          "name": "lex.50.50.isen.s2t.bin.gz",
+          "sha256": "0870eca2fee1d6c4a382eb8f23c36c944d91dc93b1b1900dc30f4c4d0abd7712",
+          "size": 1502107,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/isen/lex.50.50.isen.s2t.bin.gz"
+        },
+        {
+          "name": "model.isen.intgemm.alphas.bin.gz",
+          "sha256": "3132a1628f32e2ae7a0fa6adf907eae2d5dbd56206425252971242cfc4f6166c",
+          "size": 13989880,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/isen/model.isen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.isen.spm.gz",
+          "sha256": "dab6ca0f0d862e33f787a8bf37b91008f793171c13ea4174e69894ff2989e3eb",
+          "size": 416849,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/isen/vocab.isen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "iten",
+      "from": "it",
+      "to": "en",
+      "bytes": 16372819,
+      "files": [
+        {
+          "name": "lex.50.50.iten.s2t.bin.gz",
+          "sha256": "f9c0e038bd876da57866a2938594568d64f4d0e80e9bc6236bc05b226f883c2a",
+          "size": 2743096,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/iten/lex.50.50.iten.s2t.bin.gz"
+        },
+        {
+          "name": "model.iten.intgemm.alphas.bin.gz",
+          "sha256": "0640cceb304426175ae142fa2293397020ea1111cf559571aa87b2327fb37a02",
+          "size": 13220889,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/iten/model.iten.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.iten.spm.gz",
+          "sha256": "742acd87cb9e7a6e06f934ae2edb71247f265d7563dde51f2e12245376f0b4cc",
+          "size": 408834,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/iten/vocab.iten.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "knen",
+      "from": "kn",
+      "to": "en",
+      "bytes": 15656541,
+      "files": [
+        {
+          "name": "lex.50.50.knen.s2t.bin.gz",
+          "sha256": "307468def521e5d4ede3b8699e10b5328958a57642293df22f5bc357688b474b",
+          "size": 2128860,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/knen/lex.50.50.knen.s2t.bin.gz"
+        },
+        {
+          "name": "model.knen.intgemm.alphas.bin.gz",
+          "sha256": "1c5aaf6fd69400dd13e519f321aad0577bd0bcdbee0e87097582dc037dc51f05",
+          "size": 13077357,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/knen/model.knen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.knen.spm.gz",
+          "sha256": "739e6f45a056331f869328a2999d20952a33c5204516a5b3dc36d34020603e36",
+          "size": 450324,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/knen/vocab.knen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "lten",
+      "from": "lt",
+      "to": "en",
+      "bytes": 15284093,
+      "files": [
+        {
+          "name": "lex.50.50.lten.s2t.bin.gz",
+          "sha256": "1851b00216bd8f6bac64223757fd547bb79e0b99b3a032078dab12f5f27a195e",
+          "size": 2308876,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/lten/lex.50.50.lten.s2t.bin.gz"
+        },
+        {
+          "name": "model.lten.intgemm.alphas.bin.gz",
+          "sha256": "88fa4bb09798d0f52d67f4f45a8540fdd4727bc1481cedc153dec4dc70ab892b",
+          "size": 12571257,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/lten/model.lten.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.lten.spm.gz",
+          "sha256": "3be489b994ec61caa9ab9a0bd5cd6d5253daacf45f0cf7dcbc2bb56a8c25391c",
+          "size": 403960,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/lten/vocab.lten.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "lven",
+      "from": "lv",
+      "to": "en",
+      "bytes": 15228176,
+      "files": [
+        {
+          "name": "lex.50.50.lven.s2t.bin.gz",
+          "sha256": "720f6d513f64275daf17b7a9bf78835a442819fbf2d24ba199a3a1088349cfc0",
+          "size": 2131786,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/lven/lex.50.50.lven.s2t.bin.gz"
+        },
+        {
+          "name": "model.lven.intgemm.alphas.bin.gz",
+          "sha256": "81d5f3b41f22c1759ce1398769e7732d8eb59b6056d6c46ad915e6ace05c6e01",
+          "size": 12689153,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/lven/model.lven.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.lven.spm.gz",
+          "sha256": "8d4e565e5f39f6e0d5033c4b2fdfc5c1e85a5857f28859765f98ced0366a4a8d",
+          "size": 407237,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/lven/vocab.lven.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "mlen",
+      "from": "ml",
+      "to": "en",
+      "bytes": 15543598,
+      "files": [
+        {
+          "name": "lex.50.50.mlen.s2t.bin.gz",
+          "sha256": "27e7301494d48bed602e409d891a6501557d03c534610eb2c5eba0a9507a829b",
+          "size": 2296381,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/mlen/lex.50.50.mlen.s2t.bin.gz"
+        },
+        {
+          "name": "model.mlen.intgemm.alphas.bin.gz",
+          "sha256": "bb63f0267cb901f23c4fc664f1d50a2b4890900980486bedc9080cc5d19914a7",
+          "size": 12792306,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/mlen/model.mlen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.mlen.spm.gz",
+          "sha256": "f5f0084c423c71fdca2a4c54a862b65de35f748f1b189c0a950fc57bf03a37e7",
+          "size": 454911,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/mlen/vocab.mlen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "msen",
+      "from": "ms",
+      "to": "en",
+      "bytes": 15083678,
+      "files": [
+        {
+          "name": "lex.50.50.msen.s2t.bin.gz",
+          "sha256": "456ad116209370d6ba4b5f90c4143ee008d02610dea582922b1b2d6cff0b0200",
+          "size": 2141259,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/msen/lex.50.50.msen.s2t.bin.gz"
+        },
+        {
+          "name": "model.msen.intgemm.alphas.bin.gz",
+          "sha256": "de212e0d42428858ee96027329ab1d55a6e77754ecaaa17ab58ad03e71c16fb1",
+          "size": 12538542,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/msen/model.msen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.msen.spm.gz",
+          "sha256": "1755f6619ae37dc8d694ebbec7b095b014ce6dc27ed8aac37bd7c749192e6997",
+          "size": 403877,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/msen/vocab.msen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "mten",
+      "from": "mt",
+      "to": "en",
+      "bytes": 15549655,
+      "files": [
+        {
+          "name": "lex.50.50.mten.s2t.bin.gz",
+          "sha256": "18622b7fddac2fae4f3ad95ff8bcf31453c285a9496c2a9cc01943fb147514b5",
+          "size": 1559458,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/mten/lex.50.50.mten.s2t.bin.gz"
+        },
+        {
+          "name": "model.mten.intgemm.alphas.bin.gz",
+          "sha256": "886938832b19b412dac92dba926391e7aa0c33a5eabbf576be0effac6baeab7c",
+          "size": 13575808,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/mten/model.mten.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.mten.spm.gz",
+          "sha256": "87c489681e2a9e8d402568bf9024e7bc2a7945de4018471b6a78cce27f591678",
+          "size": 414389,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/mten/vocab.mten.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "nben",
+      "from": "nb",
+      "to": "en",
+      "bytes": 11274929,
+      "files": [
+        {
+          "name": "lex.50.50.nben.s2t.bin.gz",
+          "sha256": "a5082e96461e13d22e51535df14cd668f4697bdefc609206a18c66ac9862165e",
+          "size": 721631,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/nben/lex.50.50.nben.s2t.bin.gz"
+        },
+        {
+          "name": "model.nben.intgemm.alphas.bin.gz",
+          "sha256": "ccc1633225bc7e8c26f1998b8a436eec55f5262cb1fbf778637d7741390c04dd",
+          "size": 10284054,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/nben/model.nben.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.nben.spm.gz",
+          "sha256": "6e6c78acd1369cc3a9d49abffa33f8ef8b62f24188df00a13f8a32954a449e8c",
+          "size": 269244,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/nben/vocab.nben.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "nlen",
+      "from": "nl",
+      "to": "en",
+      "bytes": 16273873,
+      "files": [
+        {
+          "name": "lex.50.50.nlen.s2t.bin.gz",
+          "sha256": "b4ad562e6ec4b97e25140166ce712822920ebc3445bf3b7fc634f2ada8b404ce",
+          "size": 2744604,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/nlen/lex.50.50.nlen.s2t.bin.gz"
+        },
+        {
+          "name": "model.nlen.intgemm.alphas.bin.gz",
+          "sha256": "cc8d4e06246e57fa69714ec40dbee3fdda400a117a864076f55bd49937faf23d",
+          "size": 13117435,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/nlen/model.nlen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.nlen.spm.gz",
+          "sha256": "149400e943a1ff65967c0f250f513ae75e253d8a9cc7664754367f53d875911b",
+          "size": 411834,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/nlen/vocab.nlen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "nnen",
+      "from": "nn",
+      "to": "en",
+      "bytes": 11466454,
+      "files": [
+        {
+          "name": "lex.50.50.nnen.s2t.bin.gz",
+          "sha256": "da94ec4e1b149c79cfa02f52b3041461a4d5334fbe69ab6adcaa6b56c04f8679",
+          "size": 731899,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/nnen/lex.50.50.nnen.s2t.bin.gz"
+        },
+        {
+          "name": "model.nnen.intgemm.alphas.bin.gz",
+          "sha256": "54ede4b47a2505768667938d2f41f480a30bd99ef5bf7fbcf5298bb8172065a2",
+          "size": 10465158,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/nnen/model.nnen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.nnen.spm.gz",
+          "sha256": "d7f93e11e24510aae532480e46b7f88839f401207dc6b22e3814c5d719997c47",
+          "size": 269397,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/nnen/vocab.nnen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "plen",
+      "from": "pl",
+      "to": "en",
+      "bytes": 16466677,
+      "files": [
+        {
+          "name": "lex.50.50.plen.s2t.bin.gz",
+          "sha256": "9715c1d0d02c6e5cb43c4270a2e19858e87c9140d53aff786f994559d7e1d2e1",
+          "size": 2629586,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/plen/lex.50.50.plen.s2t.bin.gz"
+        },
+        {
+          "name": "model.plen.intgemm.alphas.bin.gz",
+          "sha256": "8658d84c0670653cf6523011b047eac38f9d0a7164828aed772272a233ae9a70",
+          "size": 13421783,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/plen/model.plen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.plen.spm.gz",
+          "sha256": "71fff1ca0660c28544f5fc856ca8b86f44bd40e7d4de03560f3ae448a12f8ae5",
+          "size": 415308,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/plen/vocab.plen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "pten",
+      "from": "pt",
+      "to": "en",
+      "bytes": 16253844,
+      "files": [
+        {
+          "name": "lex.50.50.pten.s2t.bin.gz",
+          "sha256": "591c5f0e825bd45b7878320d817c19e07052c8f07447fbed86e0adcd590992f9",
+          "size": 2639080,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/pten/lex.50.50.pten.s2t.bin.gz"
+        },
+        {
+          "name": "model.pten.intgemm.alphas.bin.gz",
+          "sha256": "9a2154a22b49d74fa62ce09a5dbcf0e5bc2653a83c882334b2e7392e8eb6a402",
+          "size": 13204180,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/pten/model.pten.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.pten.spm.gz",
+          "sha256": "41d51de148610731a8508273636f22430e783a955a2c4d0210ef482ae22764a4",
+          "size": 410584,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/pten/vocab.pten.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "roen",
+      "from": "ro",
+      "to": "en",
+      "bytes": 15278473,
+      "files": [
+        {
+          "name": "lex.50.50.roen.s2t.bin.gz",
+          "sha256": "3b3fdee9bb65fe9053c4a1a5ae2bdfe6a4c251a329bd49b45ea9af8864baf7ea",
+          "size": 2159556,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/roen/lex.50.50.roen.s2t.bin.gz"
+        },
+        {
+          "name": "model.roen.intgemm.alphas.bin.gz",
+          "sha256": "217b5a3bf0aed1a2c9c47259159a4ec09fa673bf10049d23fe15902147e66785",
+          "size": 12722200,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/roen/model.roen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.roen.spm.gz",
+          "sha256": "0f7ce73533f0c8549d8498c67e2db7502654a462ed81de687ba666dc4cf64706",
+          "size": 396717,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/roen/vocab.roen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "ruen",
+      "from": "ru",
+      "to": "en",
+      "bytes": 14995467,
+      "files": [
+        {
+          "name": "lex.50.50.ruen.s2t.bin.gz",
+          "sha256": "6524f5c898f1fef52992bd2565a6d4acfafb6a4e8dcd6aef237bd888239418a0",
+          "size": 1962008,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ruen/lex.50.50.ruen.s2t.bin.gz"
+        },
+        {
+          "name": "model.ruen.intgemm.alphas.bin.gz",
+          "sha256": "4a8a7b9b07c9e06a167ec5bf2542528817321516db4edf614fda45011fa8e5d1",
+          "size": 12613599,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ruen/model.ruen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.ruen.spm.gz",
+          "sha256": "cd70b828e99e4d0c79d48cd56d8579d656c87c1db20bf88883da3085dcbfef75",
+          "size": 419860,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/ruen/vocab.ruen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "sken",
+      "from": "sk",
+      "to": "en",
+      "bytes": 15574825,
+      "files": [
+        {
+          "name": "lex.50.50.sken.s2t.bin.gz",
+          "sha256": "08fceba612fbf6f833ab188e1f7125c091656cdca2c886c84fca29e3960ddb16",
+          "size": 2348184,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/sken/lex.50.50.sken.s2t.bin.gz"
+        },
+        {
+          "name": "model.sken.intgemm.alphas.bin.gz",
+          "sha256": "5825c97bfc80435071da744ef05444119cac81f6bf80eeecd80098c741a04a4b",
+          "size": 12821519,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/sken/model.sken.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.sken.spm.gz",
+          "sha256": "3954450491e4470532267c6af9ae05fc9dfc1a739c7fbea0dc0ea83cc3e1eba4",
+          "size": 405122,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/sken/vocab.sken.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "slen",
+      "from": "sl",
+      "to": "en",
+      "bytes": 15536059,
+      "files": [
+        {
+          "name": "lex.50.50.slen.s2t.bin.gz",
+          "sha256": "d04539070fe124d37c81dfe070cfe385b0fa31109b1ddc022a13266c7a5347e4",
+          "size": 2243434,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/slen/lex.50.50.slen.s2t.bin.gz"
+        },
+        {
+          "name": "model.slen.intgemm.alphas.bin.gz",
+          "sha256": "3ba948590644576d716330e8a3cd9ddfd0bdf30de0b8cd554f79354d460da431",
+          "size": 12894090,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/slen/model.slen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.slen.spm.gz",
+          "sha256": "5e83f5a768da5c2c9354517c5a14b1a05497af4a76a6a8354baa6fca7dc6568b",
+          "size": 398535,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/slen/vocab.slen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "sqen",
+      "from": "sq",
+      "to": "en",
+      "bytes": 15170001,
+      "files": [
+        {
+          "name": "lex.50.50.sqen.s2t.bin.gz",
+          "sha256": "db1ffea7c7373f4e54074d08e4748f5d539c1e978cb26c3fc8dcdebeb1b5a4bd",
+          "size": 2165940,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/sqen/lex.50.50.sqen.s2t.bin.gz"
+        },
+        {
+          "name": "model.sqen.intgemm.alphas.bin.gz",
+          "sha256": "5cf0ca779d09e2c8af5a4b11c496db6cfcc86b059e762d8925a5d6cc33e2826a",
+          "size": 12593638,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/sqen/model.sqen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.sqen.spm.gz",
+          "sha256": "b1d9e45bac3271e919939ca18688ccbf52d0e5d2bf901e4c55a2f17ecf9b00bd",
+          "size": 410423,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/sqen/vocab.sqen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "sren",
+      "from": "sr",
+      "to": "en",
+      "bytes": 15251032,
+      "files": [
+        {
+          "name": "lex.50.50.sren.s2t.bin.gz",
+          "sha256": "5bb28dd580aafc4eb6e74f05affbc15406d82a820fccaf41dfe4b0b47136480c",
+          "size": 2117763,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/sren/lex.50.50.sren.s2t.bin.gz"
+        },
+        {
+          "name": "model.sren.intgemm.alphas.bin.gz",
+          "sha256": "ba4534d2f4ad45bacbdb5f626636471f9861b1c0eaa58b5bff4a4932e2ca8c93",
+          "size": 12729754,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/sren/model.sren.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.sren.spm.gz",
+          "sha256": "5c6355d1a70c2074a36a5c48424d04d2362b8ce54f34ff5ac33c30405d0e2489",
+          "size": 403515,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/sren/vocab.sren.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "sven",
+      "from": "sv",
+      "to": "en",
+      "bytes": 15410099,
+      "files": [
+        {
+          "name": "lex.50.50.sven.s2t.bin.gz",
+          "sha256": "aedabe4633446cf85b3e2ecc4139b88efed4c5a39b41d2f0d0bb99494c6b950c",
+          "size": 2165215,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/sven/lex.50.50.sven.s2t.bin.gz"
+        },
+        {
+          "name": "model.sven.intgemm.alphas.bin.gz",
+          "sha256": "5a5351596bc22c517908628924ac63bec5f81e7225c62bf6e42bb7c66cb41987",
+          "size": 12847259,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/sven/model.sven.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.sven.spm.gz",
+          "sha256": "75c1784afa8d4b94d2f6ce064fb2facc2044c3cedfc0fbe25acd85f32b06589e",
+          "size": 397625,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/sven/vocab.sven.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "taen",
+      "from": "ta",
+      "to": "en",
+      "bytes": 15411607,
+      "files": [
+        {
+          "name": "lex.50.50.taen.s2t.bin.gz",
+          "sha256": "805180ab02e010b8ae953747293b9467b8ee40c071d25717662f7abe28412397",
+          "size": 2453155,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/taen/lex.50.50.taen.s2t.bin.gz"
+        },
+        {
+          "name": "model.taen.intgemm.alphas.bin.gz",
+          "sha256": "4d9cd0191dba40c8f747b851b25e96a8f2210d284c50d0e96d31be2b7f85fc15",
+          "size": 12511533,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/taen/model.taen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.taen.spm.gz",
+          "sha256": "a8e724968deaf704ad5716021ef8faf6da8457154f0dfa344c2ac4440a2d1ccf",
+          "size": 446919,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/taen/vocab.taen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "teen",
+      "from": "te",
+      "to": "en",
+      "bytes": 15860062,
+      "files": [
+        {
+          "name": "lex.50.50.teen.s2t.bin.gz",
+          "sha256": "4b2e7a95965f9a666a99cf1e913fb752452e5626b51f0dc46392cdd57491c210",
+          "size": 2209444,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/teen/lex.50.50.teen.s2t.bin.gz"
+        },
+        {
+          "name": "model.teen.intgemm.alphas.bin.gz",
+          "sha256": "78bbbf7d48277a0c8d05f04828a2c1c0b863f24cd743032c9ecd0a663d62f53c",
+          "size": 13202063,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/teen/model.teen.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.teen.spm.gz",
+          "sha256": "ec8090b2c966058b1e1efc7dc951dd7c0ccfb66b1efc0dcfb1f4063b7a89e9d0",
+          "size": 448555,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/teen/vocab.teen.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "tren",
+      "from": "tr",
+      "to": "en",
+      "bytes": 15242651,
+      "files": [
+        {
+          "name": "lex.50.50.tren.s2t.bin.gz",
+          "sha256": "e06304247fc4dfd55fcab21bfc9656a28f81fcf8efb2ccb0a5796b296bfeac1b",
+          "size": 2470683,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/tren/lex.50.50.tren.s2t.bin.gz"
+        },
+        {
+          "name": "model.tren.intgemm.alphas.bin.gz",
+          "sha256": "0939c2d12325a2f80a92d3c3ddaf718510837d03ee59303aa963b179368ec68a",
+          "size": 12362908,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/tren/model.tren.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.tren.spm.gz",
+          "sha256": "dfa22c3d15a6bdfb7765edc9e42c77daff8597a9ebe088fe886094ff0baeaef1",
+          "size": 409060,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/tren/vocab.tren.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "uken",
+      "from": "uk",
+      "to": "en",
+      "bytes": 14883286,
+      "files": [
+        {
+          "name": "lex.50.50.uken.s2t.bin.gz",
+          "sha256": "86af22d2c43268f87fc5b5ba32485d25defceba5ed38195b27e6c25c44c07ab9",
+          "size": 1790588,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/uken/lex.50.50.uken.s2t.bin.gz"
+        },
+        {
+          "name": "model.uken.intgemm.alphas.bin.gz",
+          "sha256": "7cbdd1d664b22e757320ba47f79c7f658d3a581383e1f73868fce83b3fcad3d1",
+          "size": 12677432,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/uken/model.uken.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.uken.spm.gz",
+          "sha256": "7dbbba94effd24a118ade251686c0cea991217c29123362b36f56ea5f2de6362",
+          "size": 415266,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/uken/vocab.uken.spm.gz"
+        }
+      ]
+    },
+    {
+      "pair": "vien",
+      "from": "vi",
+      "to": "en",
+      "bytes": 15177910,
+      "files": [
+        {
+          "name": "lex.50.50.vien.s2t.bin.gz",
+          "sha256": "46a1a63af1fc0828e34ee23a2b2bc3daecf8ea30681a1b21dcb2461c61d1076f",
+          "size": 1887658,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/vien/lex.50.50.vien.s2t.bin.gz"
+        },
+        {
+          "name": "model.vien.intgemm.alphas.bin.gz",
+          "sha256": "30239a051e58cbc0f8e256b46b9234a2a59b714bb09c091897f92786942e9861",
+          "size": 12914609,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/vien/model.vien.intgemm.alphas.bin.gz"
+        },
+        {
+          "name": "vocab.vien.spm.gz",
+          "sha256": "cb532c07aeeb22e22f1319b0cff91659e7e8a8bbfd67b18f1eb513d277368474",
+          "size": 375643,
+          "url": "https://media.githubusercontent.com/media/mozilla/firefox-translations-models/e7957fc407441a5e3e35bbcbf9d60d9b35764618/models/tiny/vien/vocab.vien.spm.gz"
+        }
+      ]
+    }
+  ]
+}
