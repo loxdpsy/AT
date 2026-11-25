@@ -2,9 +2,9 @@
 
 ## Unreleased
 
-Not released yet. Changes after 0.0.1.5 will be listed here.
+Not released yet. Changes after 0.0.1.9 will be listed here.
 
-## 0.0.1.5
+## 0.0.1.9
 
 **Important information**
 
@@ -34,7 +34,7 @@ Not released yet. Changes after 0.0.1.5 will be listed here.
   * Page translation starts faster: cache reads run together instead of one by one.
   * Right-to-left pages also flip for Dari (prs) and Sindhi (sd).
 
-**Full comparison:** [v0.0.1.4...v0.0.1.5](https://github.com/loxdpsy/AT/compare/v0.0.1.4...v0.0.1.5)
+**Full comparison:** [v0.0.1.4...v0.0.1.9](https://github.com/loxdpsy/AT/compare/v0.0.1.4...v0.0.1.9)
 
 **Thanks** to @loxdpsy (maintainer) and arena-agent (AI coding agent, co-author on this work).
 
