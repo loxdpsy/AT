@@ -4,6 +4,15 @@
 
 Not released yet. Changes after 0.0.1.9 will be listed here.
 
+* **Added:**
+  * The popup header shows the Atlas logo and a badge with the logo of the service that translates the page: Google, Yandex, Bing, DeepL or Groq.
+  * DeepL: the popup shows the characters used and the plan limit.
+  * Groq: the popup shows the approximate tokens used, counted from the answers Groq returns while the extension runs.
+* **Changes:**
+  * The ⋮ menu and the two switch buttons are gone. The site and language rules, the page actions and About are always shown in the popup. The gear is at the top right and at the bottom right of the list.
+  * There is one popup. The simple interface and its *Select popup interface style* setting are removed.
+  * The service badge shows the service; it is not a switch. Choose the service in *Settings → Services*.
+
 ## 0.0.1.9
 
 **Important information**

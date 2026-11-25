@@ -170,17 +170,11 @@ function resetPageAction(tabId, forceShow = false) {
       tabId
     });
   } else {
-    if (twpConfig.get("useOldPopup") === "yes") {
-      chrome.pageAction.setPopup({
-        popup: "popup/old-popup.html",
-        tabId
-      });
-    } else {
-      chrome.pageAction.setPopup({
-        popup: "popup/popup.html",
-        tabId
-      });
-    }
+    // One popup for every user. The old simple popup is gone.
+    chrome.pageAction.setPopup({
+      popup: "popup/popup.html",
+      tabId
+    });
   }
 }
 function resetBrowserAction(forceShow = false) {
@@ -189,15 +183,10 @@ function resetBrowserAction(forceShow = false) {
       popup: null
     });
   } else {
-    if (twpConfig.get("useOldPopup") === "yes") {
-      chrome.action.setPopup({
-        popup: "popup/old-popup.html"
-      });
-    } else {
-      chrome.action.setPopup({
-        popup: "popup/popup.html"
-      });
-    }
+    // One popup for every user. The old simple popup is gone.
+    chrome.action.setPopup({
+      popup: "popup/popup.html"
+    });
   }
 }
 // MV3: there is a single toolbar action, so every menu item uses the "action" context.

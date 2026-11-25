@@ -12,6 +12,8 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
   $("#btnImproveTranslation").onclick = () => {
     window.location = "improve-translation.html";
   };
+  const menuPanel = $("#menuPanel");
+  let menuPage = { url: "", host: "" };
   let originalTabLanguage = "und";
   let currentPageLanguage = "und";
   let currentPageLanguageState = "original";
@@ -48,10 +50,52 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     button.value = targetLanguages[i - 1];
     button.textContent = twpLang.codeToLanguage(targetLanguages[i - 1]);
   }
+  // Logo shown in the header for each service. Google, Yandex and Bing use the icons; DeepL and Groq use their marks.
+  const serviceLogos = {
+    google: ["/icons/google-translate-32.png", "Google Translate", false],
+    yandex: ["/icons/yandex-translate-32.png", "Yandex Translate", false],
+    bing: ["/icons/bing-translate-32.png", "Bing Translator", false],
+    deepl: ["/icons/deepl-mark-128.png", "DeepL", false],
+    groq: ["/icons/groq-wordmark.png", "Groq", true]
+  };
+  let usageService = null;
+
+  function updateInterface() {
+    const [logoSrc, serviceName, isWordmark] = serviceLogos[currentPageTranslatorService] || serviceLogos.google;
+    const logo = $("#iconTranslate");
+    logo.setAttribute("src", logoSrc);
+    logo.alt = serviceName;
+    logo.classList.toggle("wordmark", isWordmark);
+    $("#serviceBadge").title = `Translating with ${serviceName}`;
+    $("#serviceBadge").setAttribute("aria-label", `Translating with ${serviceName}`);
+
+    twpButtons.forEach(button => {
+      button.classList.remove("w3-buttonSelected");
+      if (currentPageLanguageState !== "translated" && button.value === "original" || currentPageLanguageState === "translated" && button.value === currentPageLanguage) {
+        button.classList.add("w3-buttonSelected");
+      }
+    });
+    // Groq and DeepL send the page text to another company. Say so while the page service is one of them.
+    const sendsText = {
+      groq: ["msgPageSentToGroq", "Text on this page is sent to Groq to be translated. Groq is an AI service."],
+      deepl: ["msgPageSentToDeepL", "Text on this page is sent to DeepL to be translated."]
+    }[currentPageTranslatorService];
+    const notice = $("#serviceNotice");
+    notice.textContent = sendsText ? text(sendsText[0], sendsText[1]) : "";
+    notice.hidden = !sendsText;
+    updateUsage();
+    renderMenu();
+  }
+  updateInterface();
+
+  // The menu needs the current site before it can list its rules. It is drawn again once the page is known.
   chrome.tabs.query({
     active: true,
     currentWindow: true
   }, tabs => {
+    const url = (tabs[0] && tabs[0].url) || "";
+    menuPage = { url, host: hostnameOf(url) };
+    renderMenu();
     chrome.tabs.sendMessage(tabs[0].id, {
       action: "getOriginalTabLanguage"
     }, {
@@ -99,110 +143,48 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
       }
     });
   });
-  function updateInterface() {
-    if (currentPageTranslatorService == "yandex") {
-      $("#iconTranslate").setAttribute("src", "/icons/yandex-translate-32.png");
-    } else if (currentPageTranslatorService == "bing") {
-      $("#iconTranslate").setAttribute("src", "/icons/bing-translate-32.png");
-    } else {
-      // google
-      $("#iconTranslate").setAttribute("src", "/icons/google-translate-32.png");
-    }
-    twpButtons.forEach(button => {
-      button.classList.remove("w3-buttonSelected");
-      if (currentPageLanguageState !== "translated" && button.value === "original" || currentPageLanguageState === "translated" && button.value === currentPageLanguage) {
-        button.classList.add("w3-buttonSelected");
+
+
+  // ---- Usage line: DeepL shows its character quota, Groq shows the approximate tokens used. Other services show nothing. ----
+  function updateUsage() {
+    if (usageService === currentPageTranslatorService) return;
+    usageService = currentPageTranslatorService;
+    const line = $("#serviceUsage");
+    line.hidden = true;
+    if (usageService !== "deepl" && usageService !== "groq") return;
+    const service = usageService;
+    chrome.runtime.sendMessage({ action: "getServiceUsage", service }, result => {
+      checkedLastError();
+      if (service !== usageService) return; // the service changed while the answer was on its way
+      let message = "";
+      if (service === "deepl") {
+        if (!result || result.error === "no-key") {
+          message = "DeepL quota: add your DeepL API key in Settings to see it.";
+        } else if (result.error) {
+          message = "DeepL quota: not available right now.";
+        } else {
+          message = `DeepL quota: ${formatNumber(result.used)} of ${formatNumber(result.limit)} characters used.`;
+        }
+      } else if (result && !result.error) {
+        message = `About ${formatNumber(result.tokens)} tokens used with Groq (approximate, counted from Groq replies).`;
+      } else {
+        message = "About 0 tokens used with Groq (approximate).";
       }
-    });
-    // Groq and DeepL send the page text to another company. Say so while the page service is one of them.
-    const sendsText = {
-      groq: ["msgPageSentToGroq", "Text on this page is sent to Groq to be translated. Groq is an AI service."],
-      deepl: ["msgPageSentToDeepL", "Text on this page is sent to DeepL to be translated."]
-    }[currentPageTranslatorService];
-    const notice = $("#serviceNotice");
-    notice.textContent = sendsText ? text(sendsText[0], sendsText[1]) : "";
-    notice.hidden = !sendsText;
-  }
-  updateInterface();
-  $("#btnSwitchInterfaces").addEventListener("click", () => {
-    twpConfig.set("useOldPopup", "yes");
-    window.location = "old-popup.html";
-  });
-  $("#divIconTranslate").addEventListener("click", () => {
-    currentPageTranslatorService = twpConfig.swapPageTranslationService();
-    chrome.tabs.query({
-      active: true,
-      currentWindow: true
-    }, tabs => {
-      chrome.tabs.sendMessage(tabs[0].id, {
-        action: "swapTranslationService",
-        newServiceName: currentPageTranslatorService
-      }, checkedLastError);
-    });
-    updateInterface();
-  });
-
-  // ---- Menu (⋮). Opens inline under the header and pushes the page content down, so it never covers anything. ----
-  // It holds the site and language rules, the page actions, and the app links. Display settings live in Settings.
-  const menuButton = $("#btnMenu");
-  const menuPanel = $("#menuPanel");
-  let menuOpen = false;
-  let menuPage = { url: "", host: "" };
-
-  menuButton.addEventListener("click", () => (menuOpen ? closeMenu(true) : openMenu()));
-  document.addEventListener("keydown", event => {
-    if (!menuOpen) return;
-    if (event.key === "Escape") {
-      event.preventDefault();
-      closeMenu(true);
-    } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-      const items = enabledMenuItems();
-      if (!items.length) return;
-      event.preventDefault();
-      const index = items.indexOf(document.activeElement);
-      const down = event.key === "ArrowDown";
-      const next = index < 0 ? (down ? 0 : items.length - 1) : (index + (down ? 1 : -1) + items.length) % items.length;
-      items[next].focus();
-    }
-  });
-  document.addEventListener("click", event => {
-    // composedPath() is taken when the click starts. A rule click redraws the menu, which detaches its target, so contains() would be wrong here.
-    const path = event.composedPath();
-    if (menuOpen && !path.includes(menuPanel) && !path.includes(menuButton)) {
-      closeMenu(false);
-    }
-  });
-
-  function enabledMenuItems() {
-    return [...menuPanel.querySelectorAll("button:not(:disabled)")];
-  }
-  function openMenu() {
-    chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-      const url = (tabs[0] && tabs[0].url) || "";
-      menuPage = { url, host: hostnameOf(url) };
-      renderMenu();
-      menuPanel.hidden = false;
-      menuButton.setAttribute("aria-expanded", "true");
-      menuOpen = true;
-      const first = enabledMenuItems()[0];
-      if (first) first.focus();
+      line.textContent = message;
+      line.hidden = false;
     });
   }
-  function closeMenu(returnFocus) {
-    menuOpen = false;
-    menuPanel.hidden = true;
-    menuButton.setAttribute("aria-expanded", "false");
-    if (returnFocus) menuButton.focus();
+  function formatNumber(value) {
+    return Number.isFinite(value) ? Math.round(value).toLocaleString() : "?";
+  }
+
+  // ---- Options list. Always visible under the header. It holds the site and language rules, the page actions, and the app links. Display settings live in Settings. ----
+  // Redraws after a rule changes.
+  function refreshMenu() {
+    renderMenu();
   }
   function renderMenu() {
     menuPanel.replaceChildren(...menuGroups(), menuFooter());
-  }
-  // Redraws after a rule changes and keeps keyboard focus on the same row.
-  function refreshMenu() {
-    const index = [...menuPanel.querySelectorAll("button")].indexOf(document.activeElement);
-    renderMenu();
-    const items = enabledMenuItems();
-    if (index >= 0 && items.length) items[Math.min(index, items.length - 1)].focus();
   }
 
   function menuGroups() {
@@ -299,11 +281,12 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     item.addEventListener("click", run);
     return item;
   }
+  // The gear at the bottom right of the options list. It opens Settings, like the gear in the header.
   function menuFooter() {
     const label = text("lblSettings", "Settings");
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "iconButton";
+    button.className = "iconButton menuFooterButton";
     button.title = label;
     button.setAttribute("aria-label", label);
     button.append($("#btnSettings svg").cloneNode(true));
