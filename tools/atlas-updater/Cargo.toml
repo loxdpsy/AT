@@ -1,0 +1,13 @@
+[package]
+name = "atlas-updater"
+version = "0.1.0"
+edition = "2021"
+description = "Installs the newest Atlas Translation release into an unpacked (zip) copy of the extension."
+license = "MPL-2.0"
+publish = false
+
+# No dependencies on purpose: it builds from the Rust standard library alone.
+[dependencies]
+
+[profile.release]
+strip = true

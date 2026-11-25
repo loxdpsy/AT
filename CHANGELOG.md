@@ -4,6 +4,10 @@
 
 Not released yet. Changes after 0.0.2.1 will be listed here.
 
+- Restore from file: a blank Groq or DeepL key in a backup keeps the key saved on this device.
+- Restore from file: Groq or DeepL is turned off when no key is saved, and the translators move to Google. A backup from 0.0.1.9 restores as it is, without its key.
+- Updates: a helper program, atlas-updater (tools/atlas-updater), installs the newest release into an unpacked copy of the extension. It is written in Rust and runs on Windows, macOS and Linux. Its builds are artifacts of the Updater workflow.
+
 - Restore from file no longer fails on Chromium when the browser has no shortcut update call. The shortcut keys are set in chrome://extensions/shortcuts there.
 - Reset to defaults has the same fix.
 - Updates: the Reload extension button reloads Atlas Translation from its folder after the new zip is extracted over it. Chromium cannot install a newer unpacked copy by itself.
