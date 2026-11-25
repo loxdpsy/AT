@@ -372,104 +372,6 @@ hr {
 
 /* ---- Options menu ---- */
 /* The list opens under the ⋮ button, right-aligned inside the popup. The layer covers the popup, so a click outside closes it. */
-.menuButton {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--text);
-  cursor: pointer;
-}
-
-.menuButton:hover,
-.menuButton[aria-expanded="true"] {
-  background-color: var(--hover);
-}
-
-.menuButton:focus-visible,
-.menuItem:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: -2px;
-}
-
-.menuDot {
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: currentColor;
-  box-shadow: 0 -6px 0 currentColor, 0 6px 0 currentColor;
-}
-
-/* Inline: it sits in the page flow under the header, so the content below moves down instead of being covered. */
-.menuPanel {
-  box-sizing: border-box;
-  margin: 0 0 10px;
-  padding: 4px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--bg);
-  color: var(--text);
-}
-
-.menuPanel[hidden] {
-  display: none;
-}
-
-.menuGroup + .menuGroup {
-  margin-top: 4px;
-  padding-top: 4px;
-  border-top: 1px solid var(--line);
-}
-
-.menuItem {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 32px;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 6px 8px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.3;
-  text-align: left;
-  cursor: pointer;
-}
-
-.menuItem:hover:not(:disabled) {
-  background-color: var(--hover);
-}
-
-.menuItem:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.menuMark {
-  display: inline-flex;
-  flex: 0 0 16px;
-  width: 16px;
-  height: 16px;
-  color: var(--accent);
-}
-
-.menuLabel {
-  flex: 1;
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-/* ---- Update notice (background/updateCheck.js) ---- */
 .updateBanner {
   display: flex;
   align-items: center;
@@ -633,4 +535,77 @@ hr {
 .popupRow:has(input:disabled) {
   opacity: 0.5;
   cursor: default;
+}
+
+/* Options menu (⋮): inline under the header. Rows have an icon; rules show a tick when on. */
+.menuPanel {
+  background: var(--bg);
+  border-bottom: 1px solid var(--line);
+  padding: 6px 0 4px;
+}
+.menuPanel[hidden] {
+  display: none;
+}
+.menuGroup + .menuGroup {
+  border-top: 1px solid var(--line);
+  margin-top: 6px;
+  padding-top: 6px;
+}
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 36px;
+  padding: 6px 16px;
+  border: 0;
+  background: none;
+  color: var(--text);
+  font: inherit;
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+.menuItem:hover:not(:disabled),
+.menuItem:focus-visible {
+  background: var(--hover);
+  outline: none;
+}
+.menuItem:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.menuIcon {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.menuItem[aria-checked="true"] .menuIcon {
+  stroke: var(--accent);
+}
+.menuLabel {
+  flex: 1;
+  min-width: 0;
+}
+.menuTick {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.menuFooter {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 6px;
+  padding: 6px 10px 2px;
+  border-top: 1px solid var(--line);
 }

@@ -24,9 +24,13 @@
                 data-i18n-title="swapPopup" aria-label="Switch between simple and complex interface">
                 <i class="gg-swap" aria-hidden="true"></i>
             </button>
-            <button type="button" id="btnMenu" class="iconButton menuButton" title="Options" data-i18n-title="btnOptions"
-                aria-label="Options" aria-haspopup="menu" aria-expanded="false" aria-controls="menuPanel">
-                <span class="menuDot" aria-hidden="true"></span>
+            <button type="button" id="btnMenu" class="iconButton" title="More options" data-i18n-title="btnMoreOptions"
+                aria-label="More options" aria-haspopup="true" aria-expanded="false" aria-controls="menuPanel">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <circle cx="12" cy="5" r="1.8" fill="currentColor" />
+                    <circle cx="12" cy="12" r="1.8" fill="currentColor" />
+                    <circle cx="12" cy="19" r="1.8" fill="currentColor" />
+                </svg>
             </button>
             <button type="button" id="btnSettings" class="iconButton" title="Settings" data-i18n-title="lblSettings"
                 aria-label="Settings">
@@ -37,7 +41,7 @@
         </div>
     </header>
 
-    <div id="menuPanel" class="menuPanel" role="menu" aria-label="Options" hidden></div>
+    <div id="menuPanel" class="menuPanel" hidden></div>
 
     <div id="updateBanner" class="updateBanner" role="status" hidden>
         <div class="updateBannerText"><span id="updateText"></span><br /><span id="updateHelp" class="updateHelp"></span></div>
@@ -59,49 +63,7 @@
 
     <div class="popupBody">
         <button type="button" data-i18n="msgImproveTranslation" id="btnImproveTranslation" class="improveButton">Improve translation</button>
-
-        <section class="popupSection" aria-labelledby="headSite">
-            <h2 id="headSite" class="popupHeading" data-i18n="popupSectionSite">This site</h2>
-            <label class="popupRow" for="cbAlwaysTranslateThisSite">
-                <input type="checkbox" class="w3-check" id="cbAlwaysTranslateThisSite">
-                <span data-i18n="btnAlwaysTranslate">Always translate this site</span>
-            </label>
-            <label class="popupRow" for="cbShowTranslatedWhenHoveringThisSite">
-                <input type="checkbox" class="w3-check" id="cbShowTranslatedWhenHoveringThisSite">
-                <span data-i18n="lblShowTranslatedWhenHoveringThisSite">Show translation when hovering over this site</span>
-            </label>
-        </section>
-
-        <!-- Shown only when the page's language is known (the JS hides this whole section otherwise). -->
-        <section class="popupSection" id="sectionLanguage" aria-labelledby="headLanguage">
-            <h2 id="headLanguage" class="popupHeading" data-i18n="popupSectionLanguage">This language</h2>
-            <div id="divAlwaysTranslateThisLang">
-                <label class="popupRow" for="cbAlwaysTranslateThisLang">
-                    <input type="checkbox" class="w3-check" id="cbAlwaysTranslateThisLang" disabled>
-                    <span id="lblAlwaysTranslateThisLang">Always translate from</span>
-                </label>
-            </div>
-            <div id="divShowTranslatedWhenHoveringThisLang">
-                <label class="popupRow" for="cbShowTranslatedWhenHoveringThisLang">
-                    <input type="checkbox" class="w3-check" id="cbShowTranslatedWhenHoveringThisLang" disabled>
-                    <span id="lblShowTranslatedWhenHoveringThisLang">Show translation when hovering over websites in</span>
-                </label>
-            </div>
-        </section>
-
-        <section class="popupSection" aria-labelledby="headDisplay">
-            <h2 id="headDisplay" class="popupHeading" data-i18n="popupSectionDisplay">Display</h2>
-            <label class="popupRow" for="cbShowOriginalWhenHovering">
-                <input type="checkbox" class="w3-check" id="cbShowOriginalWhenHovering">
-                <span data-i18n="lblShowOriginalTextWhenHovering">Show original text when hovering</span>
-            </label>
-            <label class="popupRow" for="cbShowTranslateSelectedButton">
-                <input type="checkbox" class="w3-check" id="cbShowTranslateSelectedButton">
-                <span data-i18n="lblShowTranslateSelectedButton">Show the button to translate the selected text</span>
-            </label>
-        </section>
     </div>
-
     <script src="/lib/polyfill.js"></script>
     <script src="/lib/checkedLastError.js"></script>
     <script src="/lib/stuff.js"></script>

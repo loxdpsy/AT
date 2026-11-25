@@ -114,17 +114,6 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
         button.classList.add("w3-buttonSelected");
       }
     });
-    // The rows that name the page's language only show when that language is known.
-    $("#sectionLanguage").style.display = originalTabLanguage === "und" ? "none" : "";
-    if (originalTabLanguage !== "und") {
-      $("#cbAlwaysTranslateThisLang").checked = twpConfig.get("alwaysTranslateLangs").indexOf(originalTabLanguage) !== -1;
-      $("#lblAlwaysTranslateThisLang").textContent = twpI18n.getMessage("lblAlwaysTranslate", twpLang.codeToLanguage(originalTabLanguage));
-      $("#cbAlwaysTranslateThisLang").removeAttribute("disabled");
-      const translatedWhenHoveringThisLangText = twpI18n.getMessage("lblShowTranslatedWhenHoveringThisLang", twpLang.codeToLanguage(originalTabLanguage));
-      $("#cbShowTranslatedWhenHoveringThisLang").checked = twpConfig.get("langsToTranslateWhenHovering").indexOf(originalTabLanguage) !== -1;
-      $("#lblShowTranslatedWhenHoveringThisLang").textContent = translatedWhenHoveringThisLangText;
-      $("#cbShowTranslatedWhenHoveringThisLang").removeAttribute("disabled");
-    }
   }
   updateInterface();
   $("#btnSwitchInterfaces").addEventListener("click", () => {
@@ -144,90 +133,186 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     });
     updateInterface();
   });
-  chrome.tabs.query({
-    active: true,
-    currentWindow: true
-  }, tabs => {
-    $("#cbAlwaysTranslateThisLang").addEventListener("change", e => {
-      const hostname = new URL(tabs[0].url).hostname;
-      if (e.target.checked) {
-        twpConfig.addLangToAlwaysTranslate(originalTabLanguage, hostname);
-      } else {
-        twpConfig.removeLangFromAlwaysTranslate(originalTabLanguage);
-      }
-    });
-    $("#cbAlwaysTranslateThisSite").addEventListener("change", e => {
-      const hostname = new URL(tabs[0].url).hostname;
-      if (e.target.checked) {
-        twpConfig.addSiteToAlwaysTranslate(hostname);
-      } else {
-        twpConfig.removeSiteFromAlwaysTranslate(hostname);
-      }
-    });
-    $("#cbShowTranslateSelectedButton").addEventListener("change", e => {
-      if (e.target.checked) {
-        twpConfig.set("showTranslateSelectedButton", "yes");
-      } else {
-        twpConfig.set("showTranslateSelectedButton", "no");
-      }
-    });
-    $("#cbShowOriginalWhenHovering").addEventListener("change", e => {
-      if (e.target.checked) {
-        twpConfig.set("showOriginalTextWhenHovering", "yes");
-      } else {
-        twpConfig.set("showOriginalTextWhenHovering", "no");
-      }
-    });
-    $("#cbShowTranslatedWhenHoveringThisSite").addEventListener("change", e => {
-      const hostname = new URL(tabs[0].url).hostname;
-      if (e.target.checked) {
-        twpConfig.addSiteToTranslateWhenHovering(hostname);
-      } else {
-        twpConfig.removeSiteFromTranslateWhenHovering(hostname);
-      }
-    });
-    $("#cbShowTranslatedWhenHoveringThisLang").addEventListener("change", e => {
-      if (e.target.checked) {
-        twpConfig.addLangToTranslateWhenHovering(originalTabLanguage);
-      } else {
-        twpConfig.removeLangFromTranslateWhenHovering(originalTabLanguage);
-      }
-    });
-    $("#cbShowTranslateSelectedButton").checked = twpConfig.get("showTranslateSelectedButton") == "yes" ? true : false;
-    $("#cbShowOriginalWhenHovering").checked = twpConfig.get("showOriginalTextWhenHovering") == "yes" ? true : false;
-    const hostname = new URL(tabs[0].url).hostname;
-    $("#cbAlwaysTranslateThisSite").checked = twpConfig.get("alwaysTranslateSites").indexOf(hostname) !== -1;
-    $("#cbShowTranslatedWhenHoveringThisSite").checked = twpConfig.get("sitesToTranslateWhenHovering").indexOf(hostname) !== -1;
-  });
-  // ---- Options menu ----
-  // Opens inline, under the header, and pushes the page content down, so it never covers anything.
-  // It holds the actions for this site and page. Display settings (selected-text button, hover translation) live in Settings.
+
+  // ---- Menu (⋮). Opens inline under the header and pushes the page content down, so it never covers anything. ----
+  // It holds the site and language rules, the page actions, and the app links. Display settings live in Settings.
   const menuButton = $("#btnMenu");
   const menuPanel = $("#menuPanel");
-  let menuPage = { hostname: "", url: "" };
+  let menuOpen = false;
+  let menuPage = { url: "", host: "" };
 
-  // The check mark is built with DOM calls, not innerHTML (AMO's validator flags innerHTML).
-  function checkIcon() {
-    const ns = "http://www.w3.org/2000/svg";
-    const svg = document.createElementNS(ns, "svg");
-    svg.setAttribute("viewBox", "0 0 16 16");
-    svg.setAttribute("width", "16");
-    svg.setAttribute("height", "16");
-    svg.setAttribute("aria-hidden", "true");
-    const path = document.createElementNS(ns, "path");
-    path.setAttribute("d", "M3.5 8.5l3 3 6-6.5");
-    path.setAttribute("fill", "none");
-    path.setAttribute("stroke", "currentColor");
-    path.setAttribute("stroke-width", "2");
-    path.setAttribute("stroke-linecap", "round");
-    path.setAttribute("stroke-linejoin", "round");
-    svg.append(path);
-    return svg;
+  menuButton.addEventListener("click", () => (menuOpen ? closeMenu(true) : openMenu()));
+  document.addEventListener("keydown", event => {
+    if (!menuOpen) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeMenu(true);
+    } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      const items = enabledMenuItems();
+      if (!items.length) return;
+      event.preventDefault();
+      const index = items.indexOf(document.activeElement);
+      const down = event.key === "ArrowDown";
+      const next = index < 0 ? (down ? 0 : items.length - 1) : (index + (down ? 1 : -1) + items.length) % items.length;
+      items[next].focus();
+    }
+  });
+  document.addEventListener("click", event => {
+    // composedPath() is taken when the click starts. A rule click redraws the menu, which detaches its target, so contains() would be wrong here.
+    const path = event.composedPath();
+    if (menuOpen && !path.includes(menuPanel) && !path.includes(menuButton)) {
+      closeMenu(false);
+    }
+  });
+
+  function enabledMenuItems() {
+    return [...menuPanel.querySelectorAll("button:not(:disabled)")];
   }
+  function openMenu() {
+    chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+      const url = (tabs[0] && tabs[0].url) || "";
+      menuPage = { url, host: hostnameOf(url) };
+      renderMenu();
+      menuPanel.hidden = false;
+      menuButton.setAttribute("aria-expanded", "true");
+      menuOpen = true;
+      const first = enabledMenuItems()[0];
+      if (first) first.focus();
+    });
+  }
+  function closeMenu(returnFocus) {
+    menuOpen = false;
+    menuPanel.hidden = true;
+    menuButton.setAttribute("aria-expanded", "false");
+    if (returnFocus) menuButton.focus();
+  }
+  function renderMenu() {
+    menuPanel.replaceChildren(...menuGroups(), menuFooter());
+  }
+  // Redraws after a rule changes and keeps keyboard focus on the same row.
+  function refreshMenu() {
+    const index = [...menuPanel.querySelectorAll("button")].indexOf(document.activeElement);
+    renderMenu();
+    const items = enabledMenuItems();
+    if (index >= 0 && items.length) items[Math.min(index, items.length - 1)].focus();
+  }
+
+  function menuGroups() {
+    const { host, url } = menuPage;
+    const lang = originalTabLanguage;
+    const hasLang = lang !== "und";
+    const langName = hasLang ? twpLang.codeToLanguage(lang) : "";
+
+    const siteGroup = menuGroup([
+      menuItem(text("btnNeverTranslate", "Never translate this site"), "block", () => {
+        if (isOn("neverTranslateSites", host)) {
+          twpConfig.removeSiteFromNeverTranslate(host);
+        } else {
+          twpConfig.addSiteToNeverTranslate(host);
+        }
+        refreshMenu();
+      }, isOn("neverTranslateSites", host), host !== ""),
+      menuItem(text("btnAlwaysTranslate", "Always translate this site"), "check", () => {
+        if (isOn("alwaysTranslateSites", host)) {
+          twpConfig.removeSiteFromAlwaysTranslate(host);
+        } else {
+          twpConfig.addSiteToAlwaysTranslate(host);
+        }
+        refreshMenu();
+      }, isOn("alwaysTranslateSites", host), host !== "")
+    ]);
+
+    const langGroup = hasLang ? menuGroup([
+      menuItem(text("lblAlwaysTranslate", `Always translate from ${langName}`, langName), "check", () => {
+        if (isOn("alwaysTranslateLangs", lang)) {
+          twpConfig.removeLangFromAlwaysTranslate(lang);
+        } else {
+          twpConfig.addLangToAlwaysTranslate(lang, host);
+        }
+        refreshMenu();
+      }, isOn("alwaysTranslateLangs", lang)),
+      menuItem(text("btnNeverTranslateThisLanguage", "Never translate this language"), "block", () => {
+        if (isOn("neverTranslateLangs", lang)) {
+          twpConfig.removeLangFromNeverTranslate(lang);
+        } else {
+          twpConfig.addLangToNeverTranslate(lang, host);
+        }
+        refreshMenu();
+      }, isOn("neverTranslateLangs", lang))
+    ]) : null;
+
+    const externalLabel = currentPageTranslatorService === "yandex" ?
+      text("msgOpenOnYandexTranslator", "Open in Yandex Translate") :
+      text("btnOpenOnGoogleTranslate", "Open in Google Translate");
+    const pageGroup = menuGroup([
+      menuItem(text("msgChooseAnotherLanguage", "Choose another language"), "globe", () => {
+        window.location = chrome.runtime.getURL("/popup/popup-change-language.html");
+      }),
+      menuItem(externalLabel, "external", () => tabsCreate(externalTranslateUrl(url), closePopupAfter)),
+      menuItem(text("msgTranslatePDF", "Translate PDF"), "pdf", () => tabsCreate("https://pdf.translatewebpages.org/", closePopupAfter))
+    ]);
+
+    const appGroup = menuGroup([
+      menuItem(text("btnMoreOptions", "More options"), "sliders", () => {
+        chrome.tabs.create({ url: chrome.runtime.getURL("/options/options.html") }, closePopupAfter);
+      }),
+      menuItem(`${text("lblAbout", "About")} ${chrome.runtime.getManifest().name}`, "info", () => {
+        chrome.tabs.create({ url: chrome.runtime.getURL("/options/options.html#about") }, closePopupAfter);
+      })
+    ]);
+
+    return [siteGroup, langGroup, pageGroup, appGroup].filter(Boolean);
+  }
+
+  function menuGroup(items) {
+    const group = document.createElement("div");
+    group.className = "menuGroup";
+    group.setAttribute("role", "group");
+    group.append(...items);
+    return group;
+  }
+  // checked: null for a plain action, true or false for a rule that is on or off.
+  function menuItem(label, icon, run, checked = null, enabled = true) {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "menuItem";
+    item.setAttribute("role", checked === null ? "menuitem" : "menuitemcheckbox");
+    if (checked !== null) {
+      item.setAttribute("aria-checked", String(checked));
+    }
+    item.disabled = !enabled;
+    const labelNode = document.createElement("span");
+    labelNode.className = "menuLabel";
+    labelNode.textContent = label;
+    item.append(svgIcon(ICONS[icon], "menuIcon"), labelNode);
+    if (checked) {
+      item.append(svgIcon(ICONS.tick, "menuTick"));
+    }
+    item.addEventListener("click", run);
+    return item;
+  }
+  function menuFooter() {
+    const label = text("lblSettings", "Settings");
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "iconButton";
+    button.title = label;
+    button.setAttribute("aria-label", label);
+    button.append($("#btnSettings svg").cloneNode(true));
+    button.addEventListener("click", () => {
+      chrome.tabs.create({ url: chrome.runtime.getURL("/options/options.html") }, closePopupAfter);
+    });
+    const footer = document.createElement("div");
+    footer.className = "menuFooter";
+    footer.append(button);
+    return footer;
+  }
+
+  // ---- Helpers for this site and page ----
   function text(key, fallback, substitution) {
     return twpI18n.getMessage(key, substitution) || fallback;
   }
-  // Only web pages have a site to remember. chrome:// and file:// pages return "" (new URL("chrome://x").hostname is "x").
+  // Only web pages have a site to remember. chrome:// and file:// pages return "".
   function hostnameOf(url) {
     try {
       const parsed = new URL(url);
@@ -237,14 +322,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     }
   }
   function isOn(listName, value) {
-    return twpConfig.get(listName).indexOf(value) !== -1;
-  }
-  function toggleIn(listName, value, add, remove) {
-    if (isOn(listName, value)) {
-      remove();
-    } else {
-      add();
-    }
+    return value !== "" && twpConfig.get(listName).indexOf(value) !== -1;
   }
   function externalTranslateUrl(pageUrl) {
     const target = twpConfig.get("targetLanguage");
@@ -252,165 +330,10 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
       `https://translate.yandex.com/translate?view=compact&url=${encodeURIComponent(pageUrl)}&lang=${target.split("-")[0]}` :
       `https://translate.google.com/translate?tl=${target}&u=${encodeURIComponent(pageUrl)}`;
   }
-  // Keeps the checkboxes in the popup body in step with the menu.
-  function syncPopupState(hostname) {
-    $("#cbAlwaysTranslateThisSite").checked = isOn("alwaysTranslateSites", hostname);
-    $("#cbShowTranslatedWhenHoveringThisSite").checked = isOn("sitesToTranslateWhenHovering", hostname);
-    if (originalTabLanguage !== "und") {
-      $("#cbAlwaysTranslateThisLang").checked = isOn("alwaysTranslateLangs", originalTabLanguage);
-      $("#cbShowTranslatedWhenHoveringThisLang").checked = isOn("langsToTranslateWhenHovering", originalTabLanguage);
-    }
-  }
-  function closePopupAfter(error) {
+  function closePopupAfter() {
     void chrome.runtime.lastError;
     window.close();
   }
-
-  function menuItem(label, run, checked = null, enabled = true) {
-    const item = document.createElement("button");
-    item.type = "button";
-    item.className = "menuItem";
-    item.setAttribute("role", checked === null ? "menuitem" : "menuitemcheckbox");
-    if (checked !== null) {
-      item.setAttribute("aria-checked", String(checked));
-    }
-    item.disabled = !enabled;
-    const mark = document.createElement("span");
-    mark.className = "menuMark";
-    if (checked) {
-      mark.append(checkIcon());
-    }
-    const labelNode = document.createElement("span");
-    labelNode.className = "menuLabel";
-    labelNode.textContent = label;
-    item.append(mark, labelNode);
-    item.addEventListener("click", run);
-    return item;
-  }
-  // A site or language rule: changes it, then redraws the list and the checkboxes in the popup body.
-  function ruleItem(label, checked, change, enabled = true) {
-    return menuItem(label, () => {
-      change();
-      syncPopupState(menuPage.hostname);
-      redrawMenu();
-    }, checked, enabled);
-  }
-  function menuGroup(items) {
-    const group = document.createElement("div");
-    group.className = "menuGroup";
-    group.setAttribute("role", "group");
-    group.append(...items);
-    return group;
-  }
-
-  function menuGroups() {
-    const { hostname, url } = menuPage;
-    const lang = originalTabLanguage;
-    const hasLang = lang !== "und";
-    const langName = hasLang ? twpLang.codeToLanguage(lang) : "";
-    const hasSite = hostname !== "";
-
-    const ruleGroup = menuGroup([
-      ruleItem(text("btnNeverTranslate", "Never translate this site"), isOn("neverTranslateSites", hostname),
-        () => toggleIn("neverTranslateSites", hostname, () => twpConfig.addSiteToNeverTranslate(hostname), () => twpConfig.removeSiteFromNeverTranslate(hostname)), hasSite),
-      ruleItem(text("btnAlwaysTranslate", "Always translate this site"), isOn("alwaysTranslateSites", hostname),
-        () => toggleIn("alwaysTranslateSites", hostname, () => twpConfig.addSiteToAlwaysTranslate(hostname), () => twpConfig.removeSiteFromAlwaysTranslate(hostname)), hasSite),
-      ...(hasLang ? [
-        ruleItem(text("btnNeverTranslateThisLanguage", "Never translate this language", langName), isOn("neverTranslateLangs", lang),
-          () => toggleIn("neverTranslateLangs", lang, () => twpConfig.addLangToNeverTranslate(lang, hostname), () => twpConfig.removeLangFromNeverTranslate(lang)))
-      ] : [])
-    ]);
-
-    const externalLabel = currentPageTranslatorService === "yandex" ?
-      text("msgOpenOnYandexTranslator", "Open in Yandex Translate") :
-      text("btnOpenOnGoogleTranslate", "Open in Google Translate");
-    const pageGroup = menuGroup([
-      menuItem(text("msgChooseAnotherLanguage", "Choose another language"), () => {
-        location = chrome.runtime.getURL("/popup/popup-change-language.html");
-      }),
-      menuItem(externalLabel, () => tabsCreate(externalTranslateUrl(url), closePopupAfter)),
-      menuItem(text("msgTranslatePDF", "Translate PDF"), () => tabsCreate("https://pdf.translatewebpages.org/", closePopupAfter))
-    ]);
-
-    const appGroup = menuGroup([
-      menuItem(`${text("lblAbout", "About")} ${chrome.runtime.getManifest().name}`, () => {
-        chrome.tabs.create({ url: chrome.runtime.getURL("/options/options.html#about") }, closePopupAfter);
-      })
-    ]);
-
-    return [ruleGroup, pageGroup, appGroup];
-  }
-
-  // Redraws the list in place. Keeps keyboard focus on the same position.
-  function redrawMenu() {
-    const items = [...menuPanel.querySelectorAll(".menuItem")];
-    const index = items.indexOf(document.activeElement);
-    menuPanel.replaceChildren(...menuGroups());
-    const next = [...menuPanel.querySelectorAll(".menuItem:not(:disabled)")];
-    if (index >= 0 && next.length) {
-      next[Math.min(index, next.length - 1)].focus();
-    }
-  }
-  function openMenu() {
-    chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
-      const url = (tabs[0] && tabs[0].url) || "";
-      menuPage = { hostname: hostnameOf(url), url };
-      menuPanel.replaceChildren(...menuGroups());
-      menuPanel.hidden = false;
-      menuButton.setAttribute("aria-expanded", "true");
-      const first = menuPanel.querySelector(".menuItem:not(:disabled)");
-      if (first) {
-        first.focus();
-      }
-    });
-  }
-  function closeMenu(returnFocus) {
-    if (menuPanel.hidden) {
-      return;
-    }
-    menuPanel.hidden = true;
-    menuButton.setAttribute("aria-expanded", "false");
-    if (returnFocus) {
-      menuButton.focus();
-    }
-  }
-
-  menuButton.addEventListener("click", () => {
-    if (menuPanel.hidden) {
-      openMenu();
-    } else {
-      closeMenu(true);
-    }
-  });
-  // A click outside the button and the list closes it. composedPath is read before the list may redraw.
-  document.addEventListener("click", event => {
-    if (menuPanel.hidden) {
-      return;
-    }
-    const path = event.composedPath();
-    if (!path.includes(menuPanel) && !path.includes(menuButton)) {
-      closeMenu(false);
-    }
-  });
-  document.addEventListener("keydown", event => {
-    if (menuPanel.hidden) {
-      return;
-    }
-    if (event.key === "Escape") {
-      closeMenu(true);
-      return;
-    }
-    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
-      const items = [...menuPanel.querySelectorAll(".menuItem:not(:disabled)")];
-      if (!items.length) {
-        return;
-      }
-      event.preventDefault();
-      const i = items.indexOf(document.activeElement);
-      const next = event.key === "ArrowDown" ? (i + 1) % items.length : (i <= 0 ? items.length - 1 : i - 1);
-      items[next].focus();
-    }
-  });
 
   // ---- Update notice (background/updateCheck.js). Shown only when a newer GitHub release exists and checks are on. ----
   chrome.storage.local.get("updateCheck", result => {
@@ -427,6 +350,34 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     $("#updateBanner").hidden = false;
   });
 });
+
+// Icons for the menu: 24 x 24 outline shapes, drawn with DOM calls (AMO's validator flags innerHTML).
+const SVG_NS = "http://www.w3.org/2000/svg";
+const ICONS = {
+  block: [["circle", { cx: 12, cy: 12, r: 9 }], ["path", { d: "M5.6 5.6l12.8 12.8" }]],
+  check: [["circle", { cx: 12, cy: 12, r: 9 }], ["path", { d: "M8 12.5l2.7 2.7L16 9.5" }]],
+  globe: [["circle", { cx: 12, cy: 12, r: 9 }], ["path", { d: "M3 12h18" }], ["path", { d: "M12 3c2.6 2.8 2.6 15.2 0 18c-2.6-2.8-2.6-15.2 0-18z" }]],
+  external: [["path", { d: "M14 4h6v6" }], ["path", { d: "M20 4l-9 9" }], ["path", { d: "M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" }]],
+  pdf: [["path", { d: "M6 3h8l4 4v14H6z" }], ["path", { d: "M14 3v4h4" }], ["path", { d: "M9 13h6M9 17h6" }]],
+  sliders: [["path", { d: "M4 7h9M17 7h3M4 17h3M11 17h9" }], ["circle", { cx: 15, cy: 7, r: 2 }], ["circle", { cx: 9, cy: 17, r: 2 }]],
+  info: [["circle", { cx: 12, cy: 12, r: 9 }], ["path", { d: "M12 11v6" }], ["path", { d: "M12 7.5v.01" }]],
+  tick: [["path", { d: "M5 12.5l4.5 4.5L19 7.5" }]]
+};
+function svgIcon(shapes, className) {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("aria-hidden", "true");
+  svg.setAttribute("focusable", "false");
+  svg.setAttribute("class", className);
+  for (const [tag, attrs] of shapes) {
+    const node = document.createElementNS(SVG_NS, tag);
+    for (const [name, value] of Object.entries(attrs)) {
+      node.setAttribute(name, String(value));
+    }
+    svg.append(node);
+  }
+  return svg;
+}
 
 // True when version a is newer than b (numeric parts, like "0.0.1.10").
 function twpVersionIsNewer(a, b) {
