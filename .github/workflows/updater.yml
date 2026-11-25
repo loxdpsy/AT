@@ -61,20 +61,35 @@ jobs:
 
       - name: Installs the latest release into a test folder (uses GitHub, checksum and unzip)
         run: |
-          folder="$RUNNER_TEMP/atlas-install-test"
+          log="${{ runner.temp }}/install-output.txt"
+          : > "$log"
+          exec > >(tee -a "$log") 2>&1
+          folder="${{ runner.temp }}/atlas-install-test"
           rm -rf "$folder"
           mkdir -p "$folder"
           echo '{"name": "Atlas Translation", "version": "0.0.1.0"}' > "$folder/manifest.json"
+          echo "== first run"
           "./target/release/${{ matrix.binary }}" "$folder"
+          echo "== installed files"
+          ls -la "$folder" | head -40
           grep -q '"name": "Atlas Translation"' "$folder/manifest.json"
           if grep -q '"version": "0.0.1.0"' "$folder/manifest.json"; then
             echo "manifest.json was not replaced"
             exit 1
           fi
           test -f "$folder/service_worker.js"
-          second=$("./target/release/${{ matrix.binary }}" "$folder")
+          echo "== second run"
+          second=$("./target/release/${{ matrix.binary }}" "$folder" 2>&1)
           echo "$second"
           echo "$second" | grep -q "You have the latest version"
+
+      - name: Keep the install output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: install-output-${{ matrix.artifact }}
+          path: ${{ runner.temp }}/install-output.txt
+          if-no-files-found: warn
 
       - name: Upload the build
         uses: actions/upload-artifact@v4
