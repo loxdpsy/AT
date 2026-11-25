@@ -488,8 +488,22 @@ input[type="checkbox"] {
 
 /* ---------- Services ---------- */
 
+/* The services list keeps the card's 16px inset, so the checkboxes do not touch the card edge. Each checkbox has a gap from its name. */
 .service {
-  padding: 4px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  cursor: pointer;
+}
+
+.service input[type="checkbox"] {
+  flex: none;
+  margin: 0;
+}
+
+.service .service-note {
+  margin: 0;
 }
 
 .service-card {
@@ -525,6 +539,7 @@ input[type="checkbox"] {
   display: flex;
   flex-direction: column;
   gap: 0;
+  padding: 0 16px 6px;
 }
 
 /* ---------- Keyboard shortcuts ---------- */

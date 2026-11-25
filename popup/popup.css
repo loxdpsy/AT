@@ -618,12 +618,22 @@ hr {
 .serviceBadge img {
   display: block;
   width: auto;
-  height: 16px;
+  height: auto;
+  max-width: 22px;
+  max-height: 14px;
   padding: 0;
   margin: 0;
 }
 .serviceBadge img.wordmark {
-  height: 11px;
+  max-width: 40px;
+  max-height: 11px;
+}
+/* The blue Atlas translate icon, beside the service badge. */
+.atlasTranslateIcon {
+  display: block;
+  width: 20px;
+  height: 20px;
+  flex: none;
 }
 /* Shown while DeepL or Groq translates the page: the quota (DeepL) or the approximate tokens used (Groq). */
 .serviceUsage {
