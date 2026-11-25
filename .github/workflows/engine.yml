@@ -47,6 +47,10 @@ jobs:
           - os: windows-latest
             binary: atlas-engine.exe
             asset: atlas-engine-windows.exe
+    # The PCRE2 copy that SentencePiece downloads is configured during the Build step, not the Configure step, so the
+    # variable must be set for the whole job. CMake 4 refuses the old CMake minimum that PCRE2 and SentencePiece declare.
+    env:
+      CMAKE_POLICY_VERSION_MINIMUM: "3.5"
     defaults:
       run:
         shell: bash
@@ -70,10 +74,6 @@ jobs:
           node-version: 22
 
       - name: Configure
-        # The environment variable reaches the PCRE2 build that SentencePiece downloads. A variable set inside
-        # CMakeLists.txt does not, and that build declares an old CMake minimum too.
-        env:
-          CMAKE_POLICY_VERSION_MINIMUM: "3.5"
         run: cmake -S tools/atlas-engine -B build/engine -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
