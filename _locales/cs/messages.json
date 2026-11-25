@@ -453,7 +453,7 @@
     "message": "Vyberte jiný jazyk"
   },
   "msgHasBeenUpdated": {
-    "message": "Přípona $EXTENSION_NAME$ byla aktualizována na verzi $EXTENSION_NAME$.",
+    "message": "Přípona $EXTENSION_NAME$ byla aktualizována na verzi $EXTENSION_VERSION$.",
     "placeholders": {
       "EXTENSION_NAME": {
         "content": "#EXTENSION_NAME#",

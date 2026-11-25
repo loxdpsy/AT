@@ -77,6 +77,7 @@ npm run check          # validates manifests, JavaScript syntax, referenced file
 npm run build          # Chromium (.zip, .crx) and Firefox (.zip, .xpi) in ./build
 npm run build:chromium # only Chromium
 npm run build:firefox  # only Firefox
+npm run locales:check  # translators: missing messages and placeholder mismatches, per locale
 ```
 
 The CRX is signed with the PEM key in the `CRX_PRIVATE_KEY` environment variable. Keep the same key for every release, so
@@ -188,6 +189,26 @@ notes are set in the workflow. Keep the listing text and screenshots in Partner 
 `manifest.json`. It checks the API rate limit first (`GET /rate_limit`, which does not use up the quota) and skips the lookups when
 too few requests remain. Add `--upstream` to also check FilipePS's project. Set `GITHUB_TOKEN` to raise the limit from
 60 to 5,000 requests per hour. The **Update check** workflow runs this every Monday and writes the result to the run summary.
+
+## Translating the interface
+
+The interface strings live in `_locales/<language>/messages.json`, with English in `_locales/en`. To see what a
+language still needs:
+
+```bash
+npm run locales:check            # one line per language
+node scripts/check-locales.mjs pl --details    # the messages of one language, with each problem
+```
+
+The report lists:
+
+- **missing**: a message that English has and the language does not. Chrome shows English for it.
+- **extra**: a message the language has and English does not. The extension never uses it.
+- **empty**: a message with no text.
+- **placeholder**: a `$NAME$` or `$1` that differs from English. For example, a placeholder that is declared but not
+  used, or a `$1` that is missing. Fix these first, because the text shows the placeholder name instead of the value.
+
+Only placeholder, empty and extra problems fail `npm test`. Missing messages are normal while a language is being translated.
 
 ## Project layout
 
