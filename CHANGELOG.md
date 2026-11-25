@@ -12,6 +12,7 @@ Not released yet. Changes after 0.0.1.9 will be listed here.
   * The ⋮ menu and the two switch buttons are gone. The site and language rules, the page actions and About are always shown in the popup. The gear is at the top right and at the bottom right of the list.
   * There is one popup. The simple interface and its *Select popup interface style* setting are removed.
   * The service badge shows the service; it is not a switch. Choose the service in *Settings → Services*.
+  * The Atlas logo is redesigned as a premium tile. It turns blue while the page is translated, in the toolbar and in the popup header. Rebuild the icons with `scripts/make-atlas-translation-icons.py`.
 
 ## 0.0.1.9
 
