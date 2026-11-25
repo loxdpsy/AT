@@ -162,7 +162,7 @@ gh secret set AMO_JWT_SECRET --body "<secret value from AMO>"
 Steps:
 
 1. Add `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` as secrets (see *Release secrets* above).
-2. Check the store listing text in `.github/amo-metadata.json`, then set the repository variable `AMO_LISTING_READY` to `true` (**Settings → Secrets and variables → Actions → Variables**). Until it is `true`, the store step is skipped, so no empty listing is sent.
+2. Check the store listing text in `.github/amo-metadata.json`, then set the repository variable (or a secret) `AMO_LISTING_READY` to `true` (**Settings → Secrets and variables → Actions → Variables**). Until it is `true`, the store step is skipped, so no empty listing is sent.
 3. Run **Release** with `action: build-and-release` and `submit_amo` on. The GitHub build is signed and attached to the release. The store version is sent for review. The first store submission creates the add-on under the store ID.
 4. Screenshots are the one step the API cannot do. Upload `store/screenshots/` once in the Developer Hub (**Manage listing → Screenshots**). Later versions keep them.
 5. Bump the `version` in `manifest.json` and `firefox_manifest.json` before each tag. AMO rejects a version number that already exists.
