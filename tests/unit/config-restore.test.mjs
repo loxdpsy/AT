@@ -52,7 +52,7 @@ const oldBackup = JSON.stringify({
 });
 
 // A fresh extension context. chrome.storage is a plain object that survives between contexts, like real storage.
-function world(storage) {
+function world(storage, { browserCommands } = {}) {
   const state = { storage, reloaded: false };
   const local = {
     get(keys, cb) { cb && cb(JSON.parse(JSON.stringify(state.storage))); },
@@ -68,6 +68,8 @@ function world(storage) {
       tabs: {}, extension: {}
     }
   };
+  // A browser object whose commands API has no update() (Chromium, or a polyfill). It is only set when a test asks for it.
+  if (browserCommands) ctx.browser = { commands: browserCommands };
   ctx.globalThis = ctx;
   vm.createContext(ctx);
   vm.runInContext(languagesSrc, ctx);
@@ -114,4 +116,17 @@ console.log("ok   a partial restore only changes the keys it lists");
 // 5) A corrupt file throws. The options page then shows its "file is corrupted" message.
 assert.throws(() => world({}).cfg.import("{not json"));
 console.log("ok   a corrupt file throws");
+// 6) A browser object without commands.update (Chromium): restoring a backup must still work.
+//    The shortcut keys cannot be set from code there, so the restore skips that step and reloads.
+const noUpdate = world({}, { browserCommands: {} });
+noUpdate.cfg.import(oldBackup);
+assert.equal(noUpdate.reloaded, true, "import reloads when commands.update is missing");
+assert.equal(world(noUpdate.storage).cfg.get("groqApiKey"), "gsk_PLACEHOLDER_FOR_TESTS");
+console.log("ok   restore works when browser.commands.update is missing");
+
+// 7) Reset to defaults also works without commands.update.
+const resetNoUpdate = world({ hotkeys: { "hotkey-toggle-translation": "Alt+X" } }, { browserCommands: {} });
+resetNoUpdate.cfg.restoreToDefault();
+assert.equal(resetNoUpdate.reloaded, true, "reset reloads when commands.update is missing");
+console.log("ok   reset to defaults works when browser.commands.update is missing");
 console.log("all config restore checks passed");
