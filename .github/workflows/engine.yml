@@ -109,6 +109,15 @@ jobs:
         # The output is kept for the job summary. The step still fails when the test fails (bash runs with pipefail).
         run: node scripts/engine-smoke.mjs "${{ steps.find.outputs.path }}" 2>&1 | tee "$RUNNER_TEMP/engine-smoke.log"
 
+      # When the test fails, the last lines of its log are also written as error annotations. Annotations can be read
+      # without signing in to the run page, so the cause shows even when the job log cannot be downloaded.
+      - name: Annotate the test failure
+        if: failure() && steps.smoke.outcome == 'failure'
+        run: |
+          tail -n 60 "$RUNNER_TEMP/engine-smoke.log" | while IFS= read -r line; do
+            echo "::error title=engine smoke test::${line//%/%25}"
+          done
+
       - name: Name the program for the release
         id: name
         run: cp "${{ steps.find.outputs.path }}" "$RUNNER_TEMP/${{ matrix.asset }}"
