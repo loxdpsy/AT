@@ -314,14 +314,9 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
   function text(key, fallback, substitution) {
     return twpI18n.getMessage(key, substitution) || fallback;
   }
-  // Only web pages have a site to remember. chrome:// and file:// pages return "".
+  // The site key: the hostname of a web page, or the address of a local file (file://). chrome:// pages return "".
   function hostnameOf(url) {
-    try {
-      const parsed = new URL(url);
-      return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.hostname : "";
-    } catch (e) {
-      return "";
-    }
+    return twpConfig.siteKeyOf(url);
   }
   function isOn(listName, value) {
     return value !== "" && twpConfig.get(listName).indexOf(value) !== -1;
