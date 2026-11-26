@@ -41,12 +41,21 @@ jobs:
           - os: ubuntu-latest
             binary: atlas-engine
             asset: atlas-engine-linux
+            library: libatlas_engine.so
+            library_asset: atlas-engine-lib-linux.so
+            checker: atlas-engine-check
           - os: macos-15-intel
             binary: atlas-engine
             asset: atlas-engine-macos
+            library: libatlas_engine.dylib
+            library_asset: atlas-engine-lib-macos.dylib
+            checker: atlas-engine-check
           - os: windows-latest
             binary: atlas-engine.exe
             asset: atlas-engine-windows.exe
+            library: atlas_engine.dll
+            library_asset: atlas-engine-lib-windows.dll
+            checker: atlas-engine-check.exe
     # The PCRE2 copy that SentencePiece downloads is configured during the Build step, not the Configure step, so the
     # variable must be set for the whole job. CMake 4 refuses the old CMake minimum that PCRE2 and SentencePiece declare.
     env:
@@ -127,11 +136,20 @@ jobs:
             exit 1
           fi
           echo "path=$found" >> "$GITHUB_OUTPUT"
+          # The library and the checker of the library (see tools/atlas-engine/CMakeLists.txt).
+          lib=$(find build/engine -type f -name "${{ matrix.library }}" | head -n 1)
+          checker=$(find build/engine -type f -name "${{ matrix.checker }}" | head -n 1)
+          if [ -z "$lib" ] || [ -z "$checker" ]; then
+            echo "::error::${{ matrix.library }} or ${{ matrix.checker }} was not built"
+            exit 1
+          fi
+          echo "lib=$lib" >> "$GITHUB_OUTPUT"
+          echo "checker=$checker" >> "$GITHUB_OUTPUT"
 
       - name: Translate English to French with the real language pack
         id: smoke
         # The output is kept for the job summary. The step still fails when the test fails (bash runs with pipefail).
-        run: node scripts/engine-smoke.mjs "${{ steps.find.outputs.path }}" 2>&1 | tee "$RUNNER_TEMP/engine-smoke.log"
+        run: node scripts/engine-smoke.mjs "${{ steps.find.outputs.path }}" "${{ steps.find.outputs.checker }}" 2>&1 | tee "$RUNNER_TEMP/engine-smoke.log"
 
       # When the test fails, the last lines of its log are also written as error annotations. Annotations can be read
       # without signing in to the run page, so the cause shows even when the job log cannot be downloaded.
@@ -144,13 +162,24 @@ jobs:
 
       - name: Name the program for the release
         id: name
-        run: cp "${{ steps.find.outputs.path }}" "$RUNNER_TEMP/${{ matrix.asset }}"
+        run: |
+          cp "${{ steps.find.outputs.path }}" "$RUNNER_TEMP/${{ matrix.asset }}"
+          cp "${{ steps.find.outputs.lib }}" "$RUNNER_TEMP/${{ matrix.library_asset }}"
 
       - name: Keep the program for the release
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset }}
           path: ${{ runner.temp }}/${{ matrix.asset }}
+          if-no-files-found: error
+
+      # The library the helper loads (atlas_engine.dll, libatlas_engine.so, libatlas_engine.dylib). It is kept as its own
+      # artifact, so the helper's build can check it by SHA-256 and link or load it.
+      - name: Keep the library for the helper
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.library_asset }}
+          path: ${{ runner.temp }}/${{ matrix.library_asset }}
           if-no-files-found: error
 
       # Runs even when a step failed. Shows each step's result, the compiler and linker errors when the build failed,
@@ -209,11 +238,19 @@ jobs:
             file="$RUNNER_TEMP/$ASSET"
             size=$(wc -c < "$file")
             digest=$(node -e "const c=require('crypto'),f=require('fs');process.stdout.write(c.createHash('sha256').update(f.readFileSync(process.argv[1])).digest('hex'))" "$file")
+            libfile="$RUNNER_TEMP/${{ matrix.library_asset }}"
+            libsize=$(wc -c < "$libfile")
+            libdigest=$(node -e "const c=require('crypto'),f=require('fs');process.stdout.write(c.createHash('sha256').update(f.readFileSync(process.argv[1])).digest('hex'))" "$libfile")
             {
               echo "### Program: $ASSET"
               echo ""
               echo "- Size: $size bytes"
               echo "- SHA-256: \`$digest\`"
+              echo ""
+              echo "### Library: ${{ matrix.library_asset }}"
+              echo ""
+              echo "- Size: $libsize bytes"
+              echo "- SHA-256: \`$libdigest\`"
               echo ""
             } >> "$summary"
           fi
