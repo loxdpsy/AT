@@ -398,6 +398,29 @@
   "updateWhatsNew": {
     "message": "What is new in this version:"
   },
+  "onboardingCheckAgain": {
+    "message": "Check the helper again"
+  },
+  "onboardingHelperChecking": {
+    "message": "Checking the helper..."
+  },
+  "onboardingHelperMissing": {
+    "message": "The helper is not running. Start the Atlas helper, then press Check again. Until a language pair is installed, the next enabled service translates the text."
+  },
+  "onboardingHelperNoPacks": {
+    "message": "The helper is running, but no language pair is installed yet. Open the helper, go to its Offline tab, and install the pairs you need. Each pair is about 37 MB."
+  },
+  "onboardingHelperPacks": {
+    "message": "Installed language pairs: $PAIRS$. You can install more or remove them in the helper's Offline tab.",
+    "placeholders": {
+      "PAIRS": {
+        "content": "$1"
+      }
+    }
+  },
+  "onboardingHelperNoEngine": {
+    "message": "The offline engine is not installed yet. Install it from the helper's Offline tab."
+  },
   "lblTranslateWholeParagraphs": {
     "message": "Translate each paragraph as one text"
   },

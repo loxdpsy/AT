@@ -44,6 +44,45 @@
     }
   }
 
+  // Offline needs the helper and at least one language pair. The helper answers its status endpoint (no secret) to
+  // extension pages, so this page can show what is installed, and what to do next.
+  const HELPER_STATUS = "http://127.0.0.1:47632/api/offline/ping";
+
+  function setOfflineText(text) {
+    document.getElementById("offlineStatusText").textContent = text;
+  }
+
+  async function checkHelper() {
+    setOfflineText(twpI18n.getMessage("onboardingHelperChecking") || "Checking the helper...");
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 3000);
+    try {
+      const response = await fetch(HELPER_STATUS, { cache: "no-store", signal: controller.signal });
+      const info = await response.json();
+      if (!info || info.ok !== true) throw new Error("not the helper");
+      const packs = Array.isArray(info.packs) ? info.packs : [];
+      if (packs.length === 0) {
+        setOfflineText(twpI18n.getMessage("onboardingHelperNoPacks") || "The helper is running, but no language pair is installed yet. Open the helper, go to its Offline tab, and install the pairs you need.");
+      } else {
+        setOfflineText(twpI18n.getMessage("onboardingHelperPacks", packs.join(", ")) || `Installed language pairs: ${packs.join(", ")}.`);
+      }
+      if (!info.engine) {
+        setOfflineText(document.getElementById("offlineStatusText").textContent + " " + (twpI18n.getMessage("onboardingHelperNoEngine") || "The offline engine is not installed yet. Install it from the helper's Offline tab."));
+      }
+    } catch (e) {
+      setOfflineText(twpI18n.getMessage("onboardingHelperMissing") || "The helper is not running. Start the Atlas helper, then press Check again. Until a language pair is installed, the next enabled service translates the text.");
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  function updateOfflineBox() {
+    const selected = (document.querySelector("input[name=\"provider\"]:checked") || { value: "keep" }).value;
+    const box = document.getElementById("offlineStatus");
+    box.hidden = selected !== "offline";
+    if (!box.hidden) checkHelper();
+  }
+
   function showResult(message) {
     const result = document.getElementById("result");
     result.textContent = message;
@@ -77,10 +116,14 @@
   }
 
   renderProviders();
+  // Listening on the container once: the radio buttons are built again when the page is translated.
+  document.getElementById("providers").addEventListener("change", updateOfflineBox);
+  document.getElementById("btnCheckHelper").addEventListener("click", checkHelper);
   document.getElementById("btnSave").addEventListener("click", save);
   document.getElementById("btnSkip").addEventListener("click", skip);
   twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     // The page is translated now, so the provider labels are built again in the user's language.
     renderProviders();
+    updateOfflineBox();
   });
 })();
