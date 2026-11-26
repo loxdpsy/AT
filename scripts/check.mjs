@@ -84,10 +84,19 @@ ok(`${jsFiles.length} JavaScript files parsed`);
 console.log("Locales");
 const localeFiles = (await walk("_locales", rel => rel.endsWith("messages.json")));
 for (const file of localeFiles) {
+  const text = await readFile(path.join(root, file), "utf8");
   try {
-    JSON.parse(await readFile(path.join(root, file), "utf8"));
+    JSON.parse(text);
   } catch (e) {
     fail(`${file} is not valid JSON: ${e.message}`);
+    continue;
+  }
+  // JSON.parse keeps the last of two equal keys without a word, and Firefox rejects the file when signing. Message keys
+  // are the top-level keys, each on a line indented by two spaces.
+  const seen = new Set();
+  for (const match of text.matchAll(/^ {2}"([^"]+)": \{/gm)) {
+    if (seen.has(match[1])) fail(`${file}: duplicate key "${match[1]}"`);
+    seen.add(match[1]);
   }
 }
 ok(`${localeFiles.length} locale files parsed`);
