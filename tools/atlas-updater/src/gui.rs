@@ -270,7 +270,7 @@ impl eframe::App for Helper {
 
         let idle = self.busy.is_none();
         egui::CentralPanel::default()
-            .frame(egui::Frame::new().inner_margin(egui::Margin::same(18)))
+            .frame(egui::Frame::new().fill(PAPER).inner_margin(egui::Margin::same(18)))
             .show_inside(ui, |ui| {
                 let align = if self.rtl { egui::Align::Max } else { egui::Align::Min };
                 egui::ScrollArea::vertical().show(ui, |ui| {
@@ -750,6 +750,8 @@ fn visuals() -> egui::Visuals {
     let mut visuals = egui::Visuals::light();
     visuals.hyperlink_color = BLUE;
     visuals.selection.bg_fill = BLUE;
+    // The text of a selected tab sits on the blue fill, so it is white.
+    visuals.selection.stroke = egui::Stroke::new(1.0, Color32::WHITE);
     visuals.panel_fill = PAPER;
     visuals.window_fill = Color32::WHITE;
     for widget in [&mut visuals.widgets.inactive, &mut visuals.widgets.hovered, &mut visuals.widgets.active] {
