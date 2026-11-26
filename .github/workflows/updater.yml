@@ -95,6 +95,16 @@ jobs:
         id: build
         run: cargo build --release
 
+      - name: The Windows program carries its version information
+        if: runner.os == 'Windows'
+        shell: pwsh
+        working-directory: tools/atlas-updater
+        run: |
+          $info = (Get-Item "target/release/atlas-updater.exe").VersionInfo
+          if ($info.CompanyName -ne "Atlas Translation" -or $info.ProductName -ne "Atlas Translation Helper" -or $info.FileVersion -notmatch '^\d+\.\d+\.\d+\.\d+$') {
+            throw "the version information is missing from atlas-updater.exe"
+          }
+
       - name: Refuses a folder that is not Atlas Translation (no network needed)
         id: refuse
         run: |
