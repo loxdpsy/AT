@@ -21,13 +21,12 @@
 
 #include "pack_config.h"
 
-// The same names the program uses (atlas-engine.cpp).
-using namespace marian::bergamot;
-
+// The using-directive for marian::bergamot is not at file scope: MSVC looks up names in marian's templates at their
+// instantiation, and a file-scope directive makes "Logger" ambiguous (C2872). atlas-engine.cpp has the same rule.
 struct AtlasEngine {
-  explicit AtlasEngine(const AsyncService::Config &config) : service(config) {}
-  AsyncService service;
-  std::shared_ptr<TranslationModel> model;
+  explicit AtlasEngine(const marian::bergamot::AsyncService::Config &config) : service(config) {}
+  marian::bergamot::AsyncService service;
+  std::shared_ptr<marian::bergamot::TranslationModel> model;
   std::mutex mutex;
 };
 
@@ -48,6 +47,7 @@ extern "C" {
 int atlas_engine_api_version(void) { return ATLAS_ENGINE_API_VERSION; }
 
 AtlasEngine *atlas_engine_open(const char *packDir, char *errorText, size_t errorSize) {
+  using namespace marian::bergamot;
   if (!packDir) {
     setError(errorText, errorSize, "no language pack folder was given");
     return nullptr;
@@ -73,6 +73,7 @@ AtlasEngine *atlas_engine_open(const char *packDir, char *errorText, size_t erro
 
 int atlas_engine_translate(AtlasEngine *engine, const char *text, size_t len, char **out, size_t *outLen,
                            char *errorText, size_t errorSize) {
+  using namespace marian::bergamot;
   if (!engine || !out || !outLen) {
     setError(errorText, errorSize, "the engine handle or the output is missing");
     return 1;
