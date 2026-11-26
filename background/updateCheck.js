@@ -2,7 +2,8 @@
 
 // Update notice for Atlas Translation installed from a zip or crx file (not from a store).
 // Chrome and Edge update only the copies they got from a store, so a copy loaded from the GitHub zip never updates by itself.
-// Once a day this asks GitHub for the latest release. When it is newer, the popup and the About page say so and link to the zip.
+// Once a day this asks GitHub for the newest release (prereleases included, as the helper does). When it is newer, the
+// Options page says "Please update", links to the zip, and lists what is new from that version's CHANGELOG section.
 // The request carries no personal data. Firefox updates itself (update_url), so nothing here runs in Firefox.
 
 const twpUpdateCheck = (function () {
@@ -27,6 +28,26 @@ const twpUpdateCheck = (function () {
     return false;
   }
 
+  // The bullet lines of a release's notes (its CHANGELOG section). A bullet can wrap onto indented lines. The list ends
+  // at the first heading, because the release page adds its download list after the section. Same rule as the helper.
+  function bulletsFrom(body) {
+    const bullets = [];
+    let open = false; // true while the last bullet can still take wrapped lines
+    for (const raw of String(body || "").split("\n")) {
+      const line = raw.replace(/\s+$/, "");
+      if (line.startsWith("#")) break;
+      if (line.startsWith("- ") || line.startsWith("* ")) {
+        bullets.push(line.slice(2).trim());
+        open = true;
+      } else if (open && raw.startsWith("  ") && line.trim()) {
+        bullets[bullets.length - 1] += " " + line.trim();
+      } else if (line.trim()) {
+        open = false;
+      }
+    }
+    return bullets.filter(text => text).slice(0, 30);
+  }
+
   function readState() {
     return new Promise(resolve => chrome.storage.local.get(STATE_KEY, result => resolve(result[STATE_KEY] || {})));
   }
@@ -44,7 +65,7 @@ const twpUpdateCheck = (function () {
 
     let release;
     try {
-      const response = await fetch(`https://api.github.com/repos/${REPO}/releases/latest`, {
+      const response = await fetch(`https://api.github.com/repos/${REPO}/releases?per_page=10`, {
         headers: { Accept: "application/vnd.github+json" },
         cache: "no-store"
       });
@@ -58,7 +79,13 @@ const twpUpdateCheck = (function () {
         return { status: "none" };
       }
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      release = await response.json();
+      const releases = await response.json();
+      // GitHub lists the newest first. Drafts are not published, so they are skipped.
+      release = (Array.isArray(releases) ? releases : []).find(item => !item.draft);
+      if (!release) {
+        await writeState({ ...state, checkedAt: Date.now(), error: "", retryAt: 0, latest: null });
+        return { status: "none" };
+      }
     } catch (error) {
       await writeState({ ...state, checkedAt: Date.now(), error: "offline" });
       return { status: "offline" };
@@ -70,7 +97,8 @@ const twpUpdateCheck = (function () {
     const latest = {
       version,
       zipUrl: zip ? zip.browser_download_url : release.html_url,
-      pageUrl: release.html_url
+      pageUrl: release.html_url,
+      notes: bulletsFrom(release.body)
     };
     const newer = isNewer(version, current);
     await writeState({ ...state, checkedAt: Date.now(), error: "", retryAt: 0, current, latest: newer ? latest : null });
@@ -100,5 +128,5 @@ const twpUpdateCheck = (function () {
     });
   }
 
-  return { check };
+  return { check, isNewer, bulletsFrom };
 })();

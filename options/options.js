@@ -451,6 +451,9 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
   $("#experimentalOptions").value = twpConfig.get("experimentalOptions");
   showDeveloperDetails($("#experimentalOptions").value === "yes");
   $("#developerVersion").textContent = chrome.runtime.getManifest().version;
+  $("#btnOpenOnboarding").addEventListener("click", () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL("onboarding/onboarding.html") });
+  });
   $("#copyDiagnostics").onclick = async () => {
     // Service names and settings only. API keys and tokens are never copied.
     const info = {
@@ -1399,12 +1402,15 @@ function renderUpdateStatus() {
     const msg = (key, fallback, substitution) => twpI18n.getMessage(key, substitution) || fallback;
     $("#cbUpdateCheck").checked = state.enabled !== false;
     status.replaceChildren();
+    $("#updateNotes").replaceChildren();
+    $("#updateNotesTitle").hidden = true;
     if (state.enabled === false) {
       status.textContent = msg("updateStatusOff", "Checks are turned off.");
     } else if (!state.checkedAt) {
       status.textContent = msg("updateStatusNever", "Not checked yet.");
     } else if (state.latest && twpVersionIsNewer(state.latest.version, chrome.runtime.getManifest().version)) {
-      status.append(msg("updateStatusNewer", `Version ${state.latest.version} is available.`, state.latest.version) + " ");
+      // Please update, then what is new in that version (the bullets of its CHANGELOG section).
+      status.append(msg("updatePleaseUpdate", "Please update.") + " " + msg("updateStatusNewer", `Version ${state.latest.version} is available.`, state.latest.version) + " ");
       const link = document.createElement("a");
       link.className = "btn btn-primary";
       link.href = state.latest.zipUrl;
@@ -1412,6 +1418,17 @@ function renderUpdateStatus() {
       link.rel = "noopener noreferrer";
       link.textContent = msg("updateBannerDownload", "Download");
       status.append(link);
+      const notes = state.latest.notes || [];
+      if (notes.length > 0) {
+        $("#updateNotesTitle").textContent = msg("updateWhatsNew", "What is new in this version:");
+        $("#updateNotesTitle").hidden = false;
+        const list = $("#updateNotes");
+        for (const text of notes) {
+          const item = document.createElement("li");
+          item.textContent = text;
+          list.append(item);
+        }
+      }
     } else if (state.error === "rate-limited") {
       status.textContent = msg("updateStatusRateLimited", "GitHub is limiting requests. Atlas Translation will try again later.");
     } else if (state.error === "offline") {

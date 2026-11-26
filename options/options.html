@@ -585,6 +585,13 @@
           </div>
         </div>
         <div class="card">
+          <h2 class="card-title" data-i18n="onboardingOpenTitle">Setup guide</h2>
+          <p class="card-desc" data-i18n="onboardingOpenDesc">Explains the desktop helper and lets you choose the translation provider again.</p>
+          <div class="btn-row">
+            <button type="button" class="btn btn-ghost" id="btnOpenOnboarding" data-i18n="onboardingOpenButton">Open the setup guide</button>
+          </div>
+        </div>
+        <div class="card">
           <h2 class="card-title" data-i18n="lblExperimental">Experimental</h2>
           <p class="card-desc" data-i18n="msgExperimentalDescription">Experimental options may change or break. Nothing needs them to translate.</p>
           <div class="row">
@@ -625,6 +632,8 @@
           <p class="card-desc" data-i18n="updateCheckDesc">Chrome and Edge update only the copies they got from a store. For a copy installed from the GitHub zip, Atlas Translation checks GitHub once a day and tells you when a newer version is out.</p>
           <label class="check"><input type="checkbox" id="cbUpdateCheck" /><span data-i18n="updateCheckToggle">Check GitHub once a day</span></label>
           <p class="card-desc" id="updateStatus"></p>
+          <p class="card-desc" id="updateNotesTitle" hidden></p>
+          <ul class="update-notes" id="updateNotes"></ul>
           <div class="btn-row">
             <button type="button" class="btn btn-ghost" id="btnUpdateNow" data-i18n="updateCheckNow">Check now</button>
             <button type="button" class="btn btn-ghost" id="btnReloadExtension" data-i18n="updateReloadNow">Reload extension</button>

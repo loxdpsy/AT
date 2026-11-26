@@ -1,0 +1,7 @@
+.onboarding { max-width: 760px; margin: 40px auto; padding: 0 16px; }
+.onboarding h1 { margin-bottom: 8px; }
+.provider { display: flex; gap: 12px; align-items: flex-start; padding: 12px; margin: 8px 0; border: 1px solid #dadce0; border-radius: 8px; cursor: pointer; }
+.provider input { margin-top: 4px; }
+.provider .provider-title { display: block; font-weight: 600; }
+.provider .provider-badge { font-size: 12px; margin-left: 6px; color: #1f63d6; }
+.provider .provider-desc { display: block; margin-top: 4px; color: #5f6368; }

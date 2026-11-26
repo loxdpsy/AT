@@ -43,6 +43,8 @@ struct Release {
     zip_name: String,
     zip_url: String,
     sha256_hex: String,
+    /// The bullet lines of the version's CHANGELOG section (what is new in it). Empty when the notes have none.
+    notes: Vec<String>,
 }
 
 /// The helper's version, the same as the extension's (for example 0.0.2.1). Cargo.toml stores it as 0.0.2+1,
@@ -168,7 +170,36 @@ fn fetch_latest_release() -> Result<Release, String> {
         .ok_or("the zip checksum is not SHA-256, so it will not be installed")?
         .to_lowercase();
 
-    Ok(Release { version, zip_name, zip_url, sha256_hex })
+    let notes = changelog_bullets(release.get("body").and_then(|v| v.as_str()).unwrap_or(""));
+    Ok(Release { version, zip_name, zip_url, sha256_hex, notes })
+}
+
+/// The bullet lines of a release's notes. The notes are the CHANGELOG section of that version, so a bullet is one change.
+/// A bullet can wrap onto indented lines. The list ends at the first heading: the release page adds its download list after it.
+fn changelog_bullets(body: &str) -> Vec<String> {
+    let mut bullets: Vec<String> = Vec::new();
+    // True while the last bullet can still take wrapped lines.
+    let mut open = false;
+    for raw in body.lines() {
+        let line = raw.trim_end();
+        if line.starts_with('#') {
+            break;
+        }
+        if let Some(text) = line.strip_prefix("- ").or_else(|| line.strip_prefix("* ")) {
+            bullets.push(text.trim().to_string());
+            open = true;
+        } else if open && raw.starts_with("  ") && !line.trim().is_empty() {
+            if let Some(last) = bullets.last_mut() {
+                last.push(' ');
+                last.push_str(line.trim());
+            }
+        } else if !line.trim().is_empty() {
+            open = false;
+        }
+    }
+    bullets.retain(|b| !b.is_empty());
+    bullets.truncate(30);
+    bullets
 }
 
 /// True when version a is newer than version b. Compares the numeric parts, so 0.0.2.10 is newer than 0.0.2.9.
@@ -353,6 +384,16 @@ fn copy_tree(from: &Path, to: &Path) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reads_the_changelog_bullets_and_stops_at_the_download_list() {
+        let body = "- First change.\n  continued here.\n* Second change.\n\nA paragraph.\n  not a continuation.\n\n## Downloads\n\n- **Chrome Web Store:** file.zip";
+        assert_eq!(
+            changelog_bullets(body),
+            vec!["First change. continued here.".to_string(), "Second change.".to_string()]
+        );
+        assert!(changelog_bullets("").is_empty());
+    }
 
     #[test]
     fn compares_versions_numerically() {

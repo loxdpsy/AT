@@ -33,6 +33,7 @@ const SHIPPED = [
   "icons",
   "lib",
   "offscreen",
+  "onboarding",
   "options",
   "popup",
   "w3css",

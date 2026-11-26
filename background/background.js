@@ -118,7 +118,10 @@ function updateContextMenu(pageLanguageState = "original") {
 }
 chrome.runtime.onInstalled.addListener(details => {
   if (details.reason == "install") {
-    tabsCreate(chrome.runtime.getURL("/options/options.html"));
+    // The setup page is shown once. onboardingDone is kept across updates, so an update does not show it again.
+    chrome.storage.local.get("onboardingDone", result => {
+      if (!(result && result.onboardingDone)) tabsCreate(chrome.runtime.getURL("/onboarding/onboarding.html"));
+    });
     twpConfig.onReady(async () => {
       if (chrome.i18n.getUILanguage() === "zh-CN") {
         twpConfig.set("pageTranslatorService", "bing");

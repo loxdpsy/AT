@@ -49,6 +49,8 @@ enum Tab {
 struct Status {
     latest: Result<String, String>,
     installed: Result<Option<String>, String>,
+    /// What is new in the latest release (bullets of its CHANGELOG section).
+    notes: Vec<String>,
 }
 
 /// Results from background threads.
@@ -353,12 +355,19 @@ impl Helper {
                         Err(e) => ui.label(RichText::new(format!("This folder: {}", e)).color(RED)),
                     };
                     if let (Ok(latest), Ok(installed)) = (&status.latest, &status.installed) {
+                        let newer = matches!(installed, Some(v) if crate::is_newer(latest, v));
                         let text = match installed {
                             None => "Ready to install.".to_string(),
-                            Some(v) if crate::is_newer(latest, v) => format!("An update is available: {}.", latest),
+                            Some(_) if newer => format!("Please update: version {} is available.", latest),
                             Some(_) => "You have the latest version.".to_string(),
                         };
-                        ui.label(RichText::new(text).color(BLUE));
+                        ui.label(RichText::new(text).color(if newer { RED } else { BLUE }));
+                        if newer && !status.notes.is_empty() {
+                            ui.label(RichText::new(format!("What is new in {}:", latest)).strong());
+                            for note in &status.notes {
+                                ui.label(format!("•  {}", note));
+                            }
+                        }
                     }
                 }
             }
@@ -873,13 +882,16 @@ fn show(ctx: &egui::Context) {
 
 /// Reads the folder's version and the latest release. Runs on a background thread.
 fn load_status(folder: &str) -> Status {
-    let latest = crate::fetch_latest_release().map(|r| r.version);
+    let (latest, notes) = match crate::fetch_latest_release() {
+        Ok(release) => (Ok(release.version), release.notes),
+        Err(e) => (Err(e), Vec::new()),
+    };
     let installed = if folder.is_empty() || is_fresh_folder(Path::new(folder)) {
         Ok(None)
     } else {
         crate::read_installed_version(Path::new(folder)).map(Some)
     };
-    Status { latest, installed }
+    Status { latest, installed, notes }
 }
 
 /// Installs or updates the extension in `folder`. Refuses a folder that is not an Atlas Translation copy.
