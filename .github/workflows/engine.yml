@@ -127,6 +127,15 @@ jobs:
           set -o pipefail
           cmake --build build/engine --config Release --parallel 4 ${{ runner.os != 'Windows' && '-- -k' || '' }} 2>&1 | tee "$RUNNER_TEMP/engine-build.log"
 
+      # When the build fails, the compiler and linker error lines are also written as error annotations. Annotations can
+      # be read without the job log, so the cause shows even when the log cannot be downloaded.
+      - name: Annotate the build failure
+        if: failure() && steps.build.outcome == 'failure'
+        run: |
+          grep -E ': error|error [A-Z]+[0-9]+|LNK[0-9]+|CMake Error|\*\*\* |failed' "$RUNNER_TEMP/engine-build.log" | head -n 60 | while IFS= read -r line; do
+            echo "::error title=engine build::${line//%/%25}"
+          done || true
+
       - name: Find the program
         id: find
         run: |
