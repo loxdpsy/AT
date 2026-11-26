@@ -9,6 +9,7 @@ publish = false
 # The helper is a native app (see src/gui.rs). eframe draws the window with OpenGL (glow), so wgpu is left out: it
 # would add a large GPU stack the helper does not need. Wayland and X11 are both enabled for Linux.
 [dependencies]
+libloading = "0.8"
 eframe = { version = "0.37", default-features = false, features = ["glow", "default_fonts", "clipboard", "wayland", "x11"] }
 
 # The system language, so the window can mirror its layout for right-to-left languages (Arabic, Hebrew, Persian ...).

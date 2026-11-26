@@ -22,6 +22,7 @@ mod autostart;
 mod bind;
 mod browsers;
 mod engine;
+mod enginelib;
 mod gui;
 mod json;
 mod packs;

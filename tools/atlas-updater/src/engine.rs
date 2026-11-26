@@ -81,14 +81,45 @@ pub fn engine_asset_name() -> Option<&'static str> {
     }
 }
 
+/// The engine library for this computer in a GitHub release (see enginelib.rs). None when there is no library for it.
+pub fn library_asset_name() -> Option<&'static str> {
+    if cfg!(windows) {
+        Some("atlas-engine-lib-windows.dll")
+    } else if cfg!(target_os = "macos") {
+        Some("atlas-engine-lib-macos.dylib")
+    } else if cfg!(target_os = "linux") {
+        Some("atlas-engine-lib-linux.so")
+    } else {
+        None
+    }
+}
+
 /// Downloads the engine for this computer from the latest release, checks it against the SHA-256 that GitHub gives for
-/// the file, and installs it in the helper's data folder. Returns the release version.
+/// the file, and installs it in the helper's data folder. The engine library (see enginelib.rs) is fetched the same way
+/// when the release has one. Returns the release version.
 pub fn install_from_latest_release() -> Result<String, String> {
     let asset = engine_asset_name().ok_or("there is no offline engine for this computer")?;
     let release = super::newest_release_json()?;
     let tag = release.get("tag_name").and_then(|v| v.as_str()).ok_or("the latest release has no tag_name")?;
     let version = tag.trim_start_matches(|c: char| c == 'v' || c == 'V').to_string();
     let assets = release.get("assets").and_then(|v| v.as_array()).ok_or("the latest release has no assets")?;
+    let folder = store::data_dir().join("engine");
+    fs::create_dir_all(&folder).map_err(|e| format!("cannot create {}: {}", folder.display(), e))?;
+
+    let target = store::installed_engine();
+    fetch_checked(assets, asset, &version, &target, "the offline engine")?;
+    make_executable(&target)?;
+
+    // The library is optional. A release without it still installs the program, which then does the translation.
+    if let (Some(lib_asset), Some(lib_file)) = (library_asset_name(), crate::enginelib::library_file_name()) {
+        let _ = fetch_checked(assets, lib_asset, &version, &folder.join(lib_file), "the engine library");
+    }
+    Ok(version)
+}
+
+/// Downloads one release asset, checks it against the SHA-256 that GitHub gives for it, and moves it to `target`.
+/// Nothing is written to `target` unless the check passes.
+fn fetch_checked(assets: &[crate::json::Value], asset: &str, version: &str, target: &Path, what: &str) -> Result<(), String> {
     let found = assets
         .iter()
         .find(|a| a.get("name").and_then(|v| v.as_str()) == Some(asset))
@@ -96,34 +127,30 @@ pub fn install_from_latest_release() -> Result<String, String> {
     let url = found
         .get("browser_download_url")
         .and_then(|v| v.as_str())
-        .ok_or("the offline engine has no download link")?
+        .ok_or_else(|| format!("{} has no download link", what))?
         .to_string();
     let digest = found
         .get("digest")
         .and_then(|v| v.as_str())
-        .ok_or("GitHub gives no SHA-256 for the offline engine, so it will not be installed")?;
+        .ok_or_else(|| format!("GitHub gives no SHA-256 for {}, so it will not be installed", what))?;
     let expected = digest
         .strip_prefix("sha256:")
-        .ok_or("the offline engine checksum is not SHA-256, so it will not be installed")?
+        .ok_or_else(|| format!("the checksum of {} is not SHA-256, so it will not be installed", what))?
         .to_lowercase();
 
-    let folder = store::data_dir().join("engine");
-    fs::create_dir_all(&folder).map_err(|e| format!("cannot create {}: {}", folder.display(), e))?;
-    let partial = folder.join(format!("{}.part", store::engine_file_name()));
+    let partial = target.with_extension("part");
     if let Err(e) = super::download(&url, &partial) {
         let _ = fs::remove_file(&partial);
-        return Err(format!("the offline engine could not be downloaded: {}", e));
+        return Err(format!("{} could not be downloaded: {}", what, e));
     }
     let bytes = fs::read(&partial).map_err(|e| format!("cannot read {}: {}", partial.display(), e))?;
     if sha256::hex(&bytes) != expected {
         let _ = fs::remove_file(&partial);
-        return Err("the SHA-256 check of the offline engine failed. Nothing was installed.".to_string());
+        return Err(format!("the SHA-256 check of {} failed. Nothing was installed.", what));
     }
-    let target = store::installed_engine();
-    let _ = fs::remove_file(&target);
-    fs::rename(&partial, &target).map_err(|e| format!("cannot save {}: {}", target.display(), e))?;
-    make_executable(&target)?;
-    Ok(version)
+    let _ = fs::remove_file(target);
+    fs::rename(&partial, target).map_err(|e| format!("cannot save {}: {}", target.display(), e))?;
+    Ok(())
 }
 
 #[cfg(unix)]
@@ -228,6 +255,10 @@ impl Engine {
     }
 
     fn translate_pieces(&self, binary: &Path, pack_dir: &Path, pair: &str, pieces: &[String]) -> Result<Vec<String>, String> {
+        // The engine library, when it is installed and opens the pack: the pieces are translated in this process.
+        if let Some(pack) = crate::enginelib::pack(pack_dir) {
+            return pack.translate_all(pieces, MAX_PER_PAIR);
+        }
         let workers = MAX_PER_PAIR.min(pieces.len()).max(1);
         let processes = self.processes_for(binary, pack_dir, pair, workers)?;
         let chunk = (pieces.len() + workers - 1) / workers;

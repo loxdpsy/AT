@@ -60,7 +60,7 @@ AtlasEngine *atlas_engine_open(const char *packDir, char *errorText, size_t erro
     serviceConfig.logger.level = "warn";
     std::unique_ptr<AtlasEngine> engine(new AtlasEngine(serviceConfig));
     // Not validated, as in atlas-engine.cpp and Firefox's TranslationModel constructor.
-    auto options = parseOptionsFromString(modelConfig(fs::path(packDir)), /*validate=*/false);
+    auto options = parseOptionsFromString(modelConfig(fs::u8path(packDir)), /*validate=*/false);
     engine->model = engine->service.createCompatibleModel(options);
     return engine.release();
   } catch (const std::exception &e) {

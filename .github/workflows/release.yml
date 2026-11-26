@@ -370,7 +370,7 @@ jobs:
             echo "- **Microsoft Edge Add-ons:** \`atlas-translation-$VERSION-edge.zip\` (same package as Chromium). It is submitted to Edge automatically when the Edge secrets are set."
             echo "- **Chromium, self-hosting:** \`atlas-translation-$VERSION-chromium.crx\` (Chromium 109 or newer)"
             echo "- **Helper (atlas-updater):** \`atlas-updater-windows.exe\`, \`atlas-updater-macos\`, \`atlas-updater-linux\`. It installs the newest release into your unpacked copy. See tools/atlas-updater/README.md."
-            echo "- **Offline engine:** \`atlas-engine-windows.exe\`, \`atlas-engine-macos\`, \`atlas-engine-linux\`. The helper runs it for offline translation and installs it from here."
+            echo "- **Offline engine:** \`atlas-engine-windows.exe\`, \`atlas-engine-macos\`, \`atlas-engine-linux\`. The helper runs it for offline translation and installs it from here. The library \`atlas-engine-lib-*\` is the same engine as a shared library, which the helper loads."
             if [ -f "dist/atlas-translation-$VERSION-firefox-signed.xpi" ]; then
               echo "- **Firefox, self-hosted:** \`atlas-translation-$VERSION-firefox-signed.xpi\` is signed. Open it in Firefox to install. Firefox then updates it from \`updates.json\` in this release. Firefox for Android installs from addons.mozilla.org only."
             else
