@@ -370,6 +370,8 @@ mod tests {
         assert_eq!(parse_windows_command("no program here"), None);
     }
 
+    // Desktop entries are read on Linux. Their program paths are Unix paths, which Windows does not see as absolute.
+    #[cfg(unix)]
     #[test]
     fn desktop_entries_that_handle_the_web() {
         let browser = "[Desktop Entry]\nName=Chromium\nExec=/usr/bin/chromium %U\nMimeType=text/html;x-scheme-handler/http;\n";
