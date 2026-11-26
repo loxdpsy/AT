@@ -146,6 +146,7 @@ fn candidates(id: &str) -> Vec<PathBuf> {
             "brave" => &["BraveSoftware\\Brave-Browser\\Application\\brave.exe"],
             "vivaldi" => &["Vivaldi\\Application\\vivaldi.exe"],
             "firefox" => &["Mozilla Firefox\\firefox.exe"],
+            "comet" => &["Perplexity\\Comet\\Application\\comet.exe"],
             _ => &[],
         };
         let mut out = Vec::new();
