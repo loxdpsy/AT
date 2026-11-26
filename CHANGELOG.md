@@ -8,6 +8,10 @@ Not released yet. Changes after 0.0.2.1 will be listed here.
 
 - Desktop helper: the window uses the same logo as the extension, in its header, on its window and in the tray.
 - Desktop helper: a clearer window. The tabs are in a sidebar, each group of settings sits on its own card, the language packs are listed as a table, and the text stays in one readable column.
+- Desktop helper: when it finds a browser on this computer (Chrome, Edge, Brave, Opera, Vivaldi, Firefox), it asks once whether to set Atlas Translation up there too. Firefox opens the add-on page. A Chromium browser opens its extensions page, and you choose Load unpacked. Chromium browsers cannot be set up silently, so the last step is yours. The answer is remembered for each browser, and Settings can show the question again.
+- Desktop helper: the browsers that are found are marked in the Extension tab.
+- Desktop helper: the Offline tab shows how many language packs are installed and how much space they use, and opens the packs folder.
+- Desktop helper: a Settings tab. Experimental is off by default. Turning it on shows the developer details: the data folder, the packs folder, the offline service address, and the helper version.
 
 ## 0.0.2.3
 

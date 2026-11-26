@@ -19,9 +19,10 @@ use eframe::icon_data;
 use crate::api;
 use crate::autostart;
 use crate::bind::{self, BindRequest, Shared};
-use crate::browsers::{self, BROWSERS};
+use crate::browsers::{self, Browser, BROWSERS};
 use crate::engine::{self, Engine};
 use crate::packs::{self, Catalogue, Pack};
+use crate::settings::{self, Settings};
 use crate::store;
 use crate::tray::{self, Tray, TrayAction};
 
@@ -41,6 +42,7 @@ enum Tab {
     Extension,
     Offline,
     Connections,
+    Settings,
 }
 
 /// What the extension folder and the release server say. `installed` is Ok(None) for an empty or new folder.
@@ -68,6 +70,12 @@ enum Action {
     InstallPack(usize),
     RemovePack(usize),
     RemoveBinding(usize),
+    SetupBrowser(&'static str),
+    SetupLater,
+    SetExperimental(bool),
+    ShowSetupAgain,
+    OpenDataFolder,
+    OpenPacksFolder,
     Quit,
 }
 
@@ -92,6 +100,11 @@ pub struct Helper {
     events: Receiver<Event>,
     logo: egui::TextureHandle,
     quitting: bool,
+    /// Browsers found on this computer, with the program that opens each one.
+    detected: Vec<(&'static Browser, PathBuf)>,
+    /// True while the first-run question about setting up the browsers is open.
+    setup_open: bool,
+    settings: Settings,
     /// Kept so the offline service's engine stays alive for the whole run (it is shared with the API thread).
     _engine: Arc<Engine>,
 }
@@ -107,6 +120,13 @@ pub fn run(show_window: bool) -> Result<(), String> {
     let bindings = bind::shared();
     let (bind_tx, bind_rx) = mpsc::channel::<BindRequest>();
     let api_error = api::serve(Arc::clone(&engine), Arc::clone(&bindings), bind_tx).err();
+
+    let detected: Vec<(&'static Browser, PathBuf)> = BROWSERS
+        .iter()
+        .filter_map(|b| browsers::find_program(b).map(|p| (b, p)))
+        .collect();
+    let saved_settings = settings::load();
+    let setup_open = detected.iter().any(|(b, _)| !saved_settings.answered.iter().any(|a| a == b.id));
 
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
@@ -139,6 +159,7 @@ pub fn run(show_window: bool) -> Result<(), String> {
             let start_tab = match std::env::var("ATLAS_HELPER_START_TAB").unwrap_or_default().as_str() {
                 "offline" => Tab::Offline,
                 "connections" => Tab::Connections,
+                "settings" => Tab::Settings,
                 _ => Tab::Extension,
             };
             let mut helper = Helper {
@@ -161,6 +182,9 @@ pub fn run(show_window: bool) -> Result<(), String> {
                 logo: texture,
                 rtl: sys_locale::get_locale().map_or(false, |tag| is_rtl_language(&tag)),
                 quitting: false,
+                detected,
+                setup_open,
+                settings: saved_settings,
                 _engine: engine,
             };
             helper.refresh();
@@ -246,6 +270,7 @@ impl eframe::App for Helper {
                 tab_button(ui, &mut self.tab, Tab::Extension, "Extension");
                 tab_button(ui, &mut self.tab, Tab::Offline, "Offline translation");
                 tab_button(ui, &mut self.tab, Tab::Connections, "Connections");
+                tab_button(ui, &mut self.tab, Tab::Settings, "Settings");
                 ui.add_space(24.0);
                 if ui.add_sized([ui.available_width(), 30.0], egui::Button::new("Quit helper")).clicked() {
                     actions.push(Action::Quit);
@@ -282,12 +307,14 @@ impl eframe::App for Helper {
                             Tab::Extension => self.extension_tab(ui, idle, &mut actions),
                             Tab::Offline => self.offline_tab(ui, idle, &mut actions),
                             Tab::Connections => self.connections_tab(ui, &mut actions),
+                            Tab::Settings => self.settings_tab(ui, &mut actions),
                         }
                     });
                 });
             });
 
         self.bind_dialog(ui.ctx());
+        self.setup_dialog(ui.ctx(), &mut actions);
 
         for action in actions {
             self.perform(action, ui.ctx());
@@ -363,7 +390,9 @@ impl Helper {
         ui.add_space(4.0);
         for browser in BROWSERS {
             let guide = browsers::guide(browser, &self.folder);
-            ui.collapsing(browser.name, |ui| {
+            let found = self.detected.iter().any(|(b, _)| b.id == browser.id);
+            let title = if found { format!("{}  (found on this computer)", browser.name) } else { browser.name.to_string() };
+            ui.collapsing(title, |ui| {
                 for (i, step) in guide.steps.iter().enumerate() {
                     ui.label(format!("{}. {}", i + 1, step));
                 }
@@ -430,6 +459,16 @@ impl Helper {
                 ui.label(RichText::new(format!("Each pack is about 37 MB. {} packs are available.", catalogue.packs.len())).color(GREY));
                 ui.add_space(6.0);
                 let root = store::packs_dir();
+                let installed_packs: Vec<&Pack> = catalogue.packs.iter().filter(|p| packs::is_installed_in(&root, p)).collect();
+                let installed_mb = installed_packs.iter().map(|p| p.bytes as f64).sum::<f64>() / 1_000_000.0;
+                card(ui, |ui| {
+                    ui.label(RichText::new(format!("Installed now: {} pack(s), about {:.0} MB", installed_packs.len(), installed_mb)).strong());
+                    ui.label(RichText::new(format!("Folder: {}", root.display())).color(GREY));
+                    if ui.button("Open the packs folder").clicked() {
+                        actions.push(Action::OpenPacksFolder);
+                    }
+                });
+                ui.add_space(8.0);
                 card(ui, |ui| {
                     egui::Grid::new("language_packs")
                         .num_columns(3)
@@ -532,6 +571,134 @@ impl Helper {
         }
     }
 
+    /// The first-run question: browsers found on this computer that Atlas Translation is not set up in yet.
+    fn setup_dialog(&mut self, ctx: &egui::Context, actions: &mut Vec<Action>) {
+        if !self.setup_open {
+            return;
+        }
+        let pending: Vec<&'static Browser> = self
+            .detected
+            .iter()
+            .map(|(b, _)| *b)
+            .filter(|b| !self.settings.answered.iter().any(|a| a == b.id))
+            .collect();
+        if pending.is_empty() {
+            self.setup_open = false;
+            return;
+        }
+        let rtl = self.rtl;
+        egui::Window::new("Set up Atlas Translation")
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+            .show(ctx, |ui| {
+                let heading = if pending.len() == 1 {
+                    "Atlas found a browser on this computer."
+                } else {
+                    "Atlas found these browsers on this computer."
+                };
+                ui.label(RichText::new(heading).size(16.0).strong());
+                ui.label("Set Atlas Translation up in them too? Firefox opens its add-on page. Chromium browsers open their extensions page, and you choose Load unpacked once.");
+                ui.add_space(8.0);
+                for browser in &pending {
+                    row(ui, rtl, |ui| {
+                        ui.label(RichText::new(browser.name).strong());
+                        if ui.button("Set up here").clicked() {
+                            actions.push(Action::SetupBrowser(browser.id));
+                        }
+                    });
+                }
+                ui.add_space(8.0);
+                if ui.button("Not now").clicked() {
+                    actions.push(Action::SetupLater);
+                }
+            });
+    }
+
+    /// Sets one browser up. Firefox opens its add-on page. A Chromium browser gets the unpacked copy in the folder
+    /// (when the folder is still empty) and opens its extensions page, where the user chooses Load unpacked.
+    fn setup_browser(&mut self, id: &'static str) {
+        let Some((browser, program)) = self.detected.iter().find(|(b, _)| b.id == id).cloned() else {
+            return;
+        };
+        self.remember_answer(id);
+        match browser.kind {
+            browsers::Kind::Firefox => {
+                let text = if open_target(browsers::FIREFOX_STORE_URL) {
+                    (true, "Firefox opened the Atlas Translation add-on page. Click Add to Firefox there.".to_string())
+                } else {
+                    (false, "The Firefox add-on page could not be opened.".to_string())
+                };
+                self.message = Some(text);
+            }
+            browsers::Kind::Chromium => {
+                let folder = self.folder.trim().to_string();
+                let needs_copy = matches!(self.status.as_ref().map(|s| &s.installed), Some(Ok(None)) | None);
+                if needs_copy && !folder.is_empty() {
+                    self.start("Installing the extension into the folder...", move || match install_into_folder(&folder) {
+                        Ok(text) => Event::Done { ok: true, text, reload: true },
+                        Err(text) => Event::Done { ok: false, text, reload: false },
+                    });
+                }
+                let text = if browsers::open_in_browser(&program, browser.extensions_url) {
+                    (true, format!("Opened {}. Turn on Developer mode, choose Load unpacked, and pick {}.", browser.name, self.folder.trim()))
+                } else {
+                    (false, format!("{} could not be opened. Open its extensions page by hand.", browser.name))
+                };
+                self.message = Some(text);
+            }
+        }
+    }
+
+    /// Records that the user answered the setup question for a browser, and saves that.
+    fn remember_answer(&mut self, id: &str) {
+        if !self.settings.answered.iter().any(|a| a == id) {
+            self.settings.answered.push(id.to_string());
+        }
+        self.setup_open = self.detected.iter().any(|(b, _)| !self.settings.answered.iter().any(|a| a == b.id));
+        self.save_settings();
+    }
+
+    fn save_settings(&mut self) {
+        if let Err(e) = settings::save(&self.settings) {
+            self.message = Some((false, e));
+        }
+    }
+
+    fn settings_tab(&mut self, ui: &mut egui::Ui, actions: &mut Vec<Action>) {
+        ui.heading("Settings");
+        ui.label(RichText::new("How the helper behaves. Experimental options may change or break.").color(GREY));
+        ui.add_space(12.0);
+
+        let mut experimental = self.settings.experimental;
+        card(ui, |ui| {
+            ui.label(RichText::new("Experimental").strong());
+            if ui.checkbox(&mut experimental, "Show experimental options and developer tools").changed() {
+                actions.push(Action::SetExperimental(experimental));
+            }
+            ui.label(RichText::new("Off by default. Nothing here is needed to translate.").color(GREY));
+        });
+
+        if self.settings.experimental {
+            ui.add_space(12.0);
+            card(ui, |ui| {
+                ui.label(RichText::new("Developer").strong());
+                ui.label(format!("Data folder: {}", store::data_dir().display()));
+                ui.label(format!("Packs folder: {}", store::packs_dir().display()));
+                ui.label(format!("Offline service address: 127.0.0.1:{}", api::PORT));
+                ui.label(format!("Helper version: {}", crate::app_version()));
+                row(ui, self.rtl, |ui| {
+                    if ui.button("Open the data folder").clicked() {
+                        actions.push(Action::OpenDataFolder);
+                    }
+                    if ui.button("Show the browser setup again").clicked() {
+                        actions.push(Action::ShowSetupAgain);
+                    }
+                });
+            });
+        }
+    }
+
     fn perform(&mut self, action: Action, ctx: &egui::Context) {
         match action {
             Action::Refresh => self.refresh(),
@@ -609,6 +776,39 @@ impl Helper {
                     Ok(()) => (true, "The browser was removed.".into()),
                     Err(e) => (false, e),
                 });
+            }
+            Action::SetupBrowser(id) => self.setup_browser(id),
+            Action::SetupLater => {
+                let ids: Vec<&'static str> = self.detected.iter().map(|(b, _)| b.id).collect();
+                for id in ids {
+                    if !self.settings.answered.iter().any(|a| a == id) {
+                        self.settings.answered.push(id.to_string());
+                    }
+                }
+                self.setup_open = false;
+                self.save_settings();
+            }
+            Action::SetExperimental(on) => {
+                self.settings.experimental = on;
+                self.save_settings();
+            }
+            Action::ShowSetupAgain => {
+                self.settings.answered.clear();
+                self.setup_open = !self.detected.is_empty();
+                self.save_settings();
+                self.message = Some((true, "The browser setup question will show again.".into()));
+            }
+            Action::OpenDataFolder => {
+                let dir = store::data_dir().display().to_string();
+                if !open_target(&dir) {
+                    self.message = Some((false, "The data folder could not be opened.".into()));
+                }
+            }
+            Action::OpenPacksFolder => {
+                let dir = store::packs_dir().display().to_string();
+                if !open_target(&dir) {
+                    self.message = Some((false, "The packs folder could not be opened.".into()));
+                }
             }
             Action::Quit => self.quit(ctx),
         }

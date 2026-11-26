@@ -21,6 +21,7 @@ mod engine;
 mod gui;
 mod json;
 mod packs;
+mod settings;
 mod sha256;
 mod store;
 mod tray;

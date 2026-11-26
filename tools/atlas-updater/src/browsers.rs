@@ -4,6 +4,9 @@
 // The helper cannot add it for them, so the guide tells the user the three clicks. Firefox installs from the
 // Firefox Add-ons store, and the helper only links to it.
 
+use std::path::{Path, PathBuf};
+use std::process::Command;
+
 /// Where Firefox installs Atlas Translation from.
 pub const FIREFOX_STORE_URL: &str = "https://addons.mozilla.org/en-US/firefox/addon/atlas-translation/";
 
@@ -123,4 +126,78 @@ mod tests {
             }
         }
     }
+}
+
+/// The program of a browser installed on this computer, or None. Comet and Iopera are not looked for yet.
+pub fn find_program(browser: &Browser) -> Option<PathBuf> {
+    candidates(browser.id).into_iter().find(|p| p.is_file())
+}
+
+/// Where each browser keeps its program, for the systems the helper runs on.
+fn candidates(id: &str) -> Vec<PathBuf> {
+    if cfg!(target_os = "windows") {
+        let roots: Vec<PathBuf> = ["ProgramFiles", "ProgramFiles(x86)", "LOCALAPPDATA"]
+            .iter()
+            .filter_map(|key| std::env::var_os(key).map(PathBuf::from))
+            .collect();
+        let relative: &[&str] = match id {
+            "chrome" => &["Google\\Chrome\\Application\\chrome.exe"],
+            "edge" => &["Microsoft\\Edge\\Application\\msedge.exe"],
+            "brave" => &["BraveSoftware\\Brave-Browser\\Application\\brave.exe"],
+            "vivaldi" => &["Vivaldi\\Application\\vivaldi.exe"],
+            "firefox" => &["Mozilla Firefox\\firefox.exe"],
+            _ => &[],
+        };
+        let mut out = Vec::new();
+        for root in &roots {
+            for rel in relative {
+                out.push(root.join(rel));
+            }
+        }
+        out
+    } else if cfg!(target_os = "macos") {
+        let apps: &[&str] = match id {
+            "chrome" => &["Google Chrome.app"],
+            "edge" => &["Microsoft Edge.app"],
+            "brave" => &["Brave Browser.app"],
+            "opera" => &["Opera.app"],
+            "vivaldi" => &["Vivaldi.app"],
+            "firefox" => &["Firefox.app"],
+            _ => &[],
+        };
+        apps.iter().map(|app| PathBuf::from("/Applications").join(app)).collect()
+    } else {
+        let names: &[&str] = match id {
+            "chrome" => &["google-chrome", "google-chrome-stable", "chromium"],
+            "edge" => &["microsoft-edge"],
+            "brave" => &["brave-browser"],
+            "opera" => &["opera"],
+            "vivaldi" => &["vivaldi"],
+            "firefox" => &["firefox"],
+            _ => &[],
+        };
+        let dirs: Vec<PathBuf> = std::env::var_os("PATH").map(|p| std::env::split_paths(&p).collect()).unwrap_or_default();
+        let mut out = Vec::new();
+        for dir in &dirs {
+            for name in names {
+                out.push(dir.join(name));
+            }
+        }
+        out
+    }
+}
+
+/// Opens `url` in a new window of an installed browser. On macOS the app is opened by its path with `open`.
+pub fn open_in_browser(program: &Path, url: &str) -> bool {
+    let mut command = if cfg!(target_os = "macos") {
+        let mut c = Command::new("open");
+        c.arg("-a").arg(program).arg(url);
+        c
+    } else {
+        let mut c = Command::new(program);
+        c.arg(url);
+        c
+    };
+    command.stdin(std::process::Stdio::null());
+    crate::autostart::quiet(command).spawn().is_ok()
 }
