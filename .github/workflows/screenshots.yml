@@ -79,24 +79,35 @@ jobs:
             sleep 2
           }
 
+          # Takes a screenshot of the helper window (780x580 at the top left). A blank frame is tiny, so keep trying
+          # until the window has painted.
+          shoot() {
+            for _ in $(seq 1 15); do
+              import -window root -crop 780x580+0+0 +repage "$SHOTS/$1.png"
+              if [ "$(stat -c %s "$SHOTS/$1.png")" -gt 5000 ]; then return 0; fi
+              sleep 2
+            done
+            echo "warning: $1 stayed blank"
+          }
+
           # The Extension tab, then the bind request an extension sends (the window asks the user to allow it).
           start_helper extension
-          import -window root "$SHOTS/01-extension.png"
+          shoot 01-extension
           curl -s -m 150 -X POST http://127.0.0.1:47632/api/offline/bind \
             -H "Origin: $ORIGIN" -H "Content-Type: application/json" \
             -d '{"name":"Screenshot test browser"}' > "$SHOTS/bind-response.txt" 2>&1 &
           CURL=$!
           sleep 4
-          import -window root "$SHOTS/02-bind-request.png"
+          shoot 02-bind-request
           kill "$CURL" 2>/dev/null || true
           stop_helper
 
           start_helper offline
-          import -window root "$SHOTS/03-offline-translation.png"
+          shoot 03-offline-translation
           stop_helper
 
           start_helper connections
-          import -window root "$SHOTS/04-connections.png"
+          shoot 04-connections
           stop_helper
 
           kill "$XVFB" 2>/dev/null || true
