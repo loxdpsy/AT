@@ -21,7 +21,7 @@ pub struct Tray {
 /// Creates the tray icon from square RGBA pixels (size x size). Fails when the desktop has no tray.
 pub fn create(rgba: Vec<u8>, size: u32) -> Result<Tray, String> {
     let icon = Icon::from_rgba(rgba, size, size).map_err(|e| format!("cannot read the tray icon: {}", e))?;
-    let open = MenuItem::new("Open Atlas Translation Helper", true, None);
+    let open = MenuItem::new("Open Atlas Helper", true, None);
     let quit = MenuItem::new("Quit", true, None);
     let menu = Menu::new();
     menu.append(&open).map_err(|e| format!("cannot build the tray menu: {}", e))?;
@@ -29,7 +29,7 @@ pub fn create(rgba: Vec<u8>, size: u32) -> Result<Tray, String> {
     let open_id = open.id().clone();
     let quit_id = quit.id().clone();
     let tray = TrayIconBuilder::new()
-        .with_tooltip("Atlas Translation Helper")
+        .with_tooltip("Atlas Helper")
         .with_icon(icon)
         .with_menu(Box::new(menu))
         .build()

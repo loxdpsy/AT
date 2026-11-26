@@ -23,6 +23,13 @@ use crate::packs;
 use crate::store;
 
 pub const PORT: u16 = 47632;
+
+/// The version of this local API. An extension asks for protocol 2 or newer for offline translation (OFFLINE_PROTOCOL in
+/// background/translationService.js). Bump it only when an older extension would misread an answer.
+pub const PROTOCOL: u32 = 2;
+
+/// What this helper can do. An extension uses the features it knows, and ignores the rest.
+const FEATURES: &[&str] = &["offline", "packs", "bind", "translate"];
 /// The most a request body may be. A page is translated in batches, so this is generous.
 const MAX_BODY: usize = 4 * 1024 * 1024;
 /// The most texts in one request.
@@ -205,9 +212,14 @@ fn ping_body() -> String {
             .collect(),
         Err(_) => Vec::new(),
     };
+    // The protocol number and the features let an extension of another version use what this helper supports, and skip
+    // the rest. An unknown field or feature is ignored by the extension, so a newer helper is never a failure for it.
+    let features: Vec<String> = FEATURES.iter().map(|f| json::quote(f)).collect();
     format!(
-        "{{\"ok\":true,\"name\":\"Atlas Translation helper\",\"version\":{},\"engine\":{},\"packs\":[{}]}}",
+        "{{\"ok\":true,\"name\":\"Atlas Helper\",\"version\":{},\"protocol\":{},\"features\":[{}],\"engine\":{},\"packs\":[{}]}}",
         json::quote(&crate::app_version()),
+        PROTOCOL,
+        features.join(","),
         engine::find_binary().is_some(),
         installed.join(",")
     )

@@ -13,6 +13,10 @@
 //
 // It stores nothing and sends nothing except the request to api.github.com and the zip download from github.com.
 
+// A release build of the Windows program is a GUI program: double-clicking it opens the Atlas Helper window and its tray
+// icon, without a command prompt behind it. (Debug builds keep the console, so their messages still show.)
+#![cfg_attr(all(windows, not(debug_assertions)), windows_subsystem = "windows")]
+
 mod api;
 mod autostart;
 mod bind;

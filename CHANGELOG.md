@@ -4,6 +4,12 @@
 
 Not released yet. Changes after 0.0.2.1 will be listed here.
 
+## 0.0.2.5
+
+- Atlas Helper: the helper is now called Atlas Helper in its window, its tray icon and its menu. Its file names are unchanged for now.
+- Atlas Helper on Windows: the program opens its window and tray icon without a command prompt behind it.
+- Offline translation: the extension and the helper now agree on a protocol version, and the helper says which features it has. A helper that is too old is not used. The Offline settings say "update Atlas Helper", and the text goes to the next enabled service instead of failing.
+
 ## 0.0.2.4
 
 - Desktop helper: the window uses the same logo as the extension, in its header, on its window and in the tray.

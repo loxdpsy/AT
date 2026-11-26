@@ -132,7 +132,7 @@ pub fn run(show_window: bool) -> Result<(), String> {
 
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_title("Atlas Translation Helper")
+            .with_title("Atlas Helper")
             .with_app_id("atlas-translation-helper")
             .with_inner_size([780.0, 580.0])
             .with_min_inner_size([620.0, 460.0])
@@ -142,7 +142,7 @@ pub fn run(show_window: bool) -> Result<(), String> {
     };
 
     eframe::run_native(
-        "Atlas Translation Helper",
+        "Atlas Helper",
         options,
         Box::new(move |cc| {
             cc.egui_ctx.set_visuals(visuals());
@@ -256,7 +256,7 @@ impl eframe::App for Helper {
                     ui.add(egui::Image::new(&self.logo).fit_to_exact_size(egui::vec2(52.0, 52.0)));
                     ui.add_space(12.0);
                     ui.vertical(|ui| {
-                        ui.label(RichText::new("Atlas Translation Helper").size(20.0).strong());
+                        ui.label(RichText::new("Atlas Helper").size(20.0).strong());
                         ui.label(RichText::new(format!("Version {}", crate::app_version())).color(GREY));
                     });
                 });

@@ -1323,10 +1323,13 @@ const translationService = function () {
   };
 
   /**
-   * Offline (desktop helper). The Atlas helper runs an offline engine (Mozilla's Bergamot models) on this computer and
+   * Offline (desktop helper). The Atlas Helper runs an offline engine (Mozilla's Bergamot models) on this computer and
    * serves it on 127.0.0.1 (see tools/atlas-updater/src/api.rs). The helper needs this browser bound to it (Options, Offline).
    */
   const OFFLINE_HELPER_URL = "http://127.0.0.1:47632";
+  // The helper API version this extension needs (PROTOCOL in tools/atlas-updater/src/api.rs). An older helper is not used:
+  // the next enabled service translates instead, and the options page says to update the helper.
+  const OFFLINE_PROTOCOL = 2;
   const OFFLINE_MAX_TEXTS_PER_REQUEST = 500;
   const OFFLINE_PACKS_CACHE_MS = 10000;
   /** @type {{at: number, pairs: string[]}|null} */
@@ -1366,7 +1369,15 @@ const translationService = function () {
     const response = await fetchWithTimeout(OFFLINE_HELPER_URL + "/api/offline/ping", {}, 3000);
     const body = await response.json();
     if (!body || !body.ok) throw new Error("offline: the helper did not answer");
-    offlinePacksCache = { at: Date.now(), pairs: Array.isArray(body.packs) ? body.packs : [], engine: body.engine === true };
+    // protocol and features are read when present. A helper that has neither is an older one (protocol 1).
+    offlinePacksCache = {
+      at: Date.now(),
+      pairs: Array.isArray(body.packs) ? body.packs : [],
+      engine: body.engine === true,
+      protocol: Number(body.protocol) || 1,
+      version: typeof body.version === "string" ? body.version : "",
+      features: Array.isArray(body.features) ? body.features : []
+    };
     return offlinePacksCache;
   }
 
@@ -1401,6 +1412,7 @@ const translationService = function () {
         const pair = offlinePair(sourceLanguage, targetLanguage);
         if (!pair) throw offlineUnavailable(`no language pack translates ${sourceLanguage} to ${targetLanguage}`);
         const packs = await getOfflinePacks();
+        if (packs.protocol < OFFLINE_PROTOCOL) throw offlineUnavailable("the Atlas Helper is older than this extension needs. Update Atlas Helper.");
         if (!packs.engine) throw offlineUnavailable("the offline engine is not installed in the helper");
         if (!packs.pairs.includes(pair)) throw offlineUnavailable(`the ${pair} language pack is not installed in the helper`);
         if (!(twpConfig.get("offlineHelperToken") || "").trim()) throw offlineUnavailable("bind this browser to the helper in the Offline settings");

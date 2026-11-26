@@ -1137,7 +1137,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
   openRouterCheckbox.disabled = !storedOpenRouterKey;
   openRouterCheckbox.checked = storedOpenRouterKey !== "" && twpConfig.get("enabledServices").includes("openrouter");
 
-  // Offline (desktop helper). The Atlas helper runs on this computer at 127.0.0.1:47632 (tools/atlas-updater/src/api.rs).
+  // Offline (desktop helper). The Atlas Helper runs on this computer at 127.0.0.1:47632 (tools/atlas-updater/src/api.rs).
   // When the helper answers and this browser is not bound yet, the page offers to bind it. Binding asks the user in the
   // helper window (Allow or Deny) and gives back a token. The token is kept here and sent with each translation.
   const offlineURL = "http://127.0.0.1:47632";
@@ -1162,7 +1162,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     try {
       return await fetch(offlineURL + path, init);
     } catch (e) {
-      const error = new Error(offlineText("msgOfflineNotRunning", "The helper is not running. Open the Atlas helper, then try again."));
+      const error = new Error(offlineText("msgOfflineNotRunning", "The helper is not running. Open the Atlas Helper, then try again."));
       error.helperDown = true;
       throw error;
     }
@@ -1172,11 +1172,15 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     const response = await callOfflineHelper("/api/offline/ping", {});
     const status = await response.json().catch(() => ({}));
     if (status.ok !== true) {
-      const error = new Error(offlineText("msgOfflineNotRunning", "The helper is not running. Open the Atlas helper, then try again."));
+      const error = new Error(offlineText("msgOfflineNotRunning", "The helper is not running. Open the Atlas Helper, then try again."));
       error.helperDown = true;
       throw error;
     }
     return status;
+  }
+  /** True when the helper is older than this extension needs (OFFLINE_PROTOCOL in background/translationService.js). */
+  function helperIsOld(status) {
+    return (Number(status.protocol) || 1) < 2;
   }
   /** Names this browser in the helper window, so the user knows which browser asks. */
   function browserName() {
@@ -1195,9 +1199,10 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
   }
   $("#addOffline").onclick = async () => {
     offlineBindButton.disabled = true;
-    setOfflineMessage(offlineText("msgOfflineWaiting", "Waiting for your answer in the Atlas helper window..."));
+    setOfflineMessage(offlineText("msgOfflineWaiting", "Waiting for your answer in the Atlas Helper window..."));
     try {
       const status = await helperStatus();
+      if (helperIsOld(status)) throw new Error(offlineText("msgOfflineUpdateHelper", "This extension needs a newer Atlas Helper. Update Atlas Helper, then try again."));
       const response = await callOfflineHelper("/api/offline/bind", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1263,9 +1268,14 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     showOfflineBinding(bound);
     offlineCheckbox.checked = bound && twpConfig.get("enabledServices").includes("offline");
     try {
-      await helperStatus();
+      const status = await helperStatus();
       setOfflineRunning(true);
-      offlinePrompt.textContent = offlineText("msgOfflinePrompt", "The Atlas helper is running. Bind this browser to use offline translation.");
+      if (helperIsOld(status)) {
+        offlinePrompt.style.display = "none";
+        setOfflineMessage(offlineText("msgOfflineUpdateHelper", "This extension needs a newer Atlas Helper. Update Atlas Helper, then try again."), "error");
+        return;
+      }
+      offlinePrompt.textContent = offlineText("msgOfflinePrompt", "The Atlas Helper is running. Bind this browser to use offline translation.");
       offlinePrompt.style.display = bound ? "none" : "";
     } catch (e) {
       setOfflineRunning(false);

@@ -8,14 +8,14 @@ const ROOT = new URL("../../", import.meta.url).pathname;
 const settings = { enabledServices: ["offline"], offlineHelperToken: "c".repeat(64), customServices: [], useAlternativeService: "yes", textTranslatorService: "offline", pageTranslatorService: "offline" };
 const clock = { t: 1_000_000_000_000 };
 const logs = { warn: [], info: [], error: [] };
-const helper = { engine: true, packs: ["enfr", "fren"], code: "c".repeat(64), down: false, requests: [] };
+const helper = { engine: true, protocol: 2, packs: ["enfr", "fren"], code: "c".repeat(64), down: false, requests: [] };
 
 function resp(status, body) { return { ok: status >= 200 && status < 300, status, json: async () => body }; }
 
 async function fakeFetch(url, init = {}) {
   if (!String(url).startsWith("http://127.0.0.1:47632")) throw new TypeError("not reachable in the test: " + url);
   if (helper.down) throw new TypeError("connection refused");
-  if (url.endsWith("/api/offline/ping")) return resp(200, { ok: true, name: "Atlas Translation helper", engine: helper.engine, packs: helper.packs });
+  if (url.endsWith("/api/offline/ping")) return resp(200, { ok: true, name: "Atlas Helper", version: "0.0.2.5", protocol: helper.protocol, features: ["offline", "packs", "bind", "translate"], engine: helper.engine, packs: helper.packs });
   if (url.endsWith("/api/offline/translate")) {
     const body = JSON.parse(init.body);
     helper.requests.push(body);
@@ -113,5 +113,19 @@ clock.t += 11000;
 logs.warn.length = 0;
 await assert.rejects(translate("fr", "en", "bonjour"));
 assert.ok(logs.warn.some(l => l.includes("offline")), "the fallback tried the next service after offline");
+
+// 11. An older helper (no protocol number, protocol 1) is not used: nothing is sent, and the message says to update it.
+settings.enabledServices = ["offline", "google"];
+settings.offlineHelperToken = helper.code;
+helper.packs = ["enfr", "fren"];
+helper.protocol = 1;
+clock.t += 11000;
+const sentBefore = helper.requests.length;
+logs.warn.length = 0;
+await assert.rejects(translate("fr", "en", "bonjour"));
+assert.strictEqual(helper.requests.length, sentBefore, "an older helper: nothing sent");
+assert.ok(logs.warn.some(l => l.includes("offline")), "offline was skipped, and the next service was tried");
+helper.protocol = 2;
+clock.t += 11000;
 
 console.log("offlineService.test.mjs: all assertions passed");
