@@ -70,7 +70,7 @@
         setOfflineText(document.getElementById("offlineStatusText").textContent + " " + (twpI18n.getMessage("onboardingHelperNoEngine") || "The offline engine is not installed yet. Install it from the helper's Offline tab."));
       }
     } catch (e) {
-      setOfflineText(twpI18n.getMessage("onboardingHelperMissing") || "The helper is not running. Start the Atlas helper, then press Check again. Until a language pair is installed, the next enabled service translates the text.");
+      setOfflineText(twpI18n.getMessage("onboardingHelperMissing") || "The helper is not running. Start the Atlas Helper, then press Check again. Until a language pair is installed, the next enabled service translates the text.");
     } finally {
       clearTimeout(timer);
     }

@@ -54,7 +54,7 @@ const stub = `(() => {
     runtime: {
       id: "browser-test", lastError: undefined,
       getURL: p => location.origin + p,
-      getManifest: () => ({ version: "0.0.2.4", name: "Atlas Translation", commands: {} }),
+      getManifest: () => ({ version: "0.0.2.5", name: "Atlas Translation", commands: {} }),
       sendMessage: (msg, callback) => {
         if (msg && msg.action === "translateHTML") {
           window.__translateRequests.push(msg.sourceArray2d);

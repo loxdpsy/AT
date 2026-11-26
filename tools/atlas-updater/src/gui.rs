@@ -19,7 +19,7 @@ use eframe::icon_data;
 use crate::api;
 use crate::autostart;
 use crate::bind::{self, BindRequest, Shared};
-use crate::browsers::{self, Browser, BROWSERS};
+use crate::browsers::{self, Browser};
 use crate::engine::{self, Engine};
 use crate::packs::{self, Catalogue, Pack};
 use crate::settings::{self, Settings};
@@ -72,8 +72,9 @@ enum Action {
     InstallPack(usize),
     RemovePack(usize),
     RemoveBinding(usize),
-    SetupBrowser(&'static str),
-    SetupLater,
+    SetupBrowser(String),
+    SetupAll,
+    FinishWelcome,
     SetExperimental(bool),
     ShowSetupAgain,
     OpenDataFolder,
@@ -103,7 +104,7 @@ pub struct Helper {
     logo: egui::TextureHandle,
     quitting: bool,
     /// Browsers found on this computer, with the program that opens each one.
-    detected: Vec<(&'static Browser, PathBuf)>,
+    detected: Vec<Browser>,
     /// True while the first-run question about setting up the browsers is open.
     setup_open: bool,
     settings: Settings,
@@ -123,16 +124,13 @@ pub fn run(show_window: bool) -> Result<(), String> {
     let (bind_tx, bind_rx) = mpsc::channel::<BindRequest>();
     let api_error = api::serve(Arc::clone(&engine), Arc::clone(&bindings), bind_tx).err();
 
-    let detected: Vec<(&'static Browser, PathBuf)> = BROWSERS
-        .iter()
-        .filter_map(|b| browsers::find_program(b).map(|p| (b, p)))
-        .collect();
+    let detected: Vec<Browser> = browsers::detect();
     let saved_settings = settings::load();
-    let setup_open = detected.iter().any(|(b, _)| !saved_settings.answered.iter().any(|a| a == b.id));
+    let setup_open = !saved_settings.welcomed || detected.iter().any(|b| !saved_settings.answered.iter().any(|a| a == &b.id));
 
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_title("Atlas Translation Helper")
+            .with_title("Atlas Helper")
             .with_app_id("atlas-translation-helper")
             .with_inner_size([780.0, 580.0])
             .with_min_inner_size([620.0, 460.0])
@@ -142,7 +140,7 @@ pub fn run(show_window: bool) -> Result<(), String> {
     };
 
     eframe::run_native(
-        "Atlas Translation Helper",
+        "Atlas Helper",
         options,
         Box::new(move |cc| {
             cc.egui_ctx.set_visuals(visuals());
@@ -256,7 +254,7 @@ impl eframe::App for Helper {
                     ui.add(egui::Image::new(&self.logo).fit_to_exact_size(egui::vec2(52.0, 52.0)));
                     ui.add_space(12.0);
                     ui.vertical(|ui| {
-                        ui.label(RichText::new("Atlas Translation Helper").size(20.0).strong());
+                        ui.label(RichText::new("Atlas Helper").size(20.0).strong());
                         ui.label(RichText::new(format!("Version {}", crate::app_version())).color(GREY));
                     });
                 });
@@ -397,10 +395,12 @@ impl Helper {
         ui.add_space(16.0);
         ui.heading("Browsers");
         ui.add_space(4.0);
-        for browser in BROWSERS {
-            let guide = browsers::guide(browser, &self.folder);
-            let found = self.detected.iter().any(|(b, _)| b.id == browser.id);
-            let title = if found { format!("{}  (found on this computer)", browser.name) } else { browser.name.to_string() };
+        if self.detected.is_empty() {
+            ui.label(RichText::new("No browser was found on this computer. Install one, then open the helper again.").color(GREY));
+        }
+        for browser in self.detected.clone() {
+            let guide = browsers::guide(&browser, &self.folder);
+            let title = format!("{}  (found on this computer)", browser.name);
             ui.collapsing(title, |ui| {
                 for (i, step) in guide.steps.iter().enumerate() {
                     ui.label(format!("{}. {}", i + 1, step));
@@ -580,54 +580,104 @@ impl Helper {
         }
     }
 
-    /// The first-run question: browsers found on this computer that Atlas Translation is not set up in yet.
+    /// The welcome window: first run, and again from Settings. It shows the update state, the browsers found on this
+    /// computer, and the steps for each (from `browsers::guide`). It closes only with Done. Chromium browsers do not
+    /// allow a silent install of an extension from outside their store, so the user always chooses Load unpacked.
     fn setup_dialog(&mut self, ctx: &egui::Context, actions: &mut Vec<Action>) {
-        if !self.setup_open {
+        if !self.setup_open || self.settings.welcomed {
             return;
         }
-        let pending: Vec<&'static Browser> = self
+        let pending: Vec<Browser> = self
             .detected
             .iter()
-            .map(|(b, _)| *b)
-            .filter(|b| !self.settings.answered.iter().any(|a| a == b.id))
+            .filter(|b| !self.settings.answered.iter().any(|a| a == &b.id))
+            .cloned()
             .collect();
-        if pending.is_empty() {
-            self.setup_open = false;
-            return;
-        }
         let rtl = self.rtl;
-        egui::Window::new("Set up Atlas Translation")
+        let folder = self.folder.trim().to_string();
+        let update = self.update_line();
+        egui::Window::new("Welcome to Atlas Helper")
             .collapsible(false)
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
-                let heading = if pending.len() == 1 {
-                    "Atlas found a browser on this computer."
-                } else {
-                    "Atlas found these browsers on this computer."
-                };
-                ui.label(RichText::new(heading).size(16.0).strong());
-                ui.label("Set Atlas Translation up in them too? Firefox opens its add-on page. Chromium browsers open their extensions page, and you choose Load unpacked once.");
-                ui.add_space(8.0);
-                for browser in &pending {
-                    row(ui, rtl, |ui| {
-                        ui.label(RichText::new(browser.name).strong());
-                        if ui.button("Set up here").clicked() {
-                            actions.push(Action::SetupBrowser(browser.id));
-                        }
-                    });
+                ui.label(RichText::new("Welcome to Atlas Helper").size(16.0).strong());
+                ui.label(RichText::new(format!("Helper version {}.", crate::app_version())).color(GREY));
+                if let Some((newer, text)) = &update {
+                    ui.label(RichText::new(text.as_str()).color(if *newer { RED } else { BLUE }));
                 }
                 ui.add_space(8.0);
-                if ui.button("Not now").clicked() {
-                    actions.push(Action::SetupLater);
+                ui.label("The helper runs offline translation on this computer and sets Atlas Translation up in your browsers. Text is not sent to a web service.");
+                ui.add_space(8.0);
+                if pending.is_empty() {
+                    ui.label("No browser was found that Atlas Translation is not set up in yet.");
+                } else {
+                    ui.label(RichText::new("Do you want to install Atlas Translation in these browsers?").strong());
+                    for browser in &pending {
+                        row(ui, rtl, |ui| {
+                            ui.label(RichText::new(browser.name.as_str()).strong());
+                            if ui.button("Install here").clicked() {
+                                actions.push(Action::SetupBrowser(browser.id.clone()));
+                            }
+                        });
+                        let guide = browsers::guide(browser, &folder);
+                        for (i, step) in guide.steps.iter().enumerate() {
+                            ui.label(RichText::new(format!("{}. {}", i + 1, step)).color(GREY));
+                        }
+                        ui.add_space(4.0);
+                    }
+                    if pending.len() > 1 && ui.button("Install in all of them").clicked() {
+                        actions.push(Action::SetupAll);
+                    }
+                }
+                ui.add_space(12.0);
+                if ui.button("Done").clicked() {
+                    actions.push(Action::FinishWelcome);
                 }
             });
     }
 
+    /// The update state shown on the welcome page: the latest release against the copy in this folder.
+    fn update_line(&self) -> Option<(bool, String)> {
+        let status = self.status.as_ref()?;
+        let latest = status.latest.as_ref().ok()?;
+        match &status.installed {
+            Ok(None) => Some((false, format!("Atlas Translation {} is available. It is not in this folder yet.", latest))),
+            Ok(Some(installed)) if crate::is_newer(latest, installed) => Some((
+                true,
+                format!("Please update: Atlas Translation {} is available. Use Install or update in the Extension tab.", latest),
+            )),
+            Ok(Some(_)) => Some((false, "You have the latest Atlas Translation.".to_string())),
+            Err(_) => None,
+        }
+    }
+
     /// Sets one browser up. Firefox opens its add-on page. A Chromium browser gets the unpacked copy in the folder
     /// (when the folder is still empty) and opens its extensions page, where the user chooses Load unpacked.
-    fn setup_browser(&mut self, id: &'static str) {
-        let Some((browser, program)) = self.detected.iter().find(|(b, _)| b.id == id).cloned() else {
+    fn setup_browser(&mut self, id: String) {
+        self.setup_one(&id, true);
+    }
+
+    /// Sets every browser still pending up. The unpacked copy is made once, for the first Chromium browser.
+    fn setup_all(&mut self) {
+        let ids: Vec<String> = self
+            .detected
+            .iter()
+            .filter(|b| !self.settings.answered.iter().any(|a| a == &b.id))
+            .map(|b| b.id.clone())
+            .collect();
+        let mut copy_next = true;
+        for id in ids {
+            let chromium = self.detected.iter().any(|b| b.id == id && b.kind == browsers::Kind::Chromium);
+            self.setup_one(&id, copy_next && chromium);
+            if chromium {
+                copy_next = false;
+            }
+        }
+    }
+
+    fn setup_one(&mut self, id: &str, copy: bool) {
+        let Some(browser) = self.detected.iter().find(|b| b.id == id).cloned() else {
             return;
         };
         self.remember_answer(id);
@@ -643,13 +693,13 @@ impl Helper {
             browsers::Kind::Chromium => {
                 let folder = self.folder.trim().to_string();
                 let needs_copy = matches!(self.status.as_ref().map(|s| &s.installed), Some(Ok(None)) | None);
-                if needs_copy && !folder.is_empty() {
+                if copy && needs_copy && !folder.is_empty() {
                     self.start("Installing the extension into the folder...", move || match install_into_folder(&folder) {
                         Ok(text) => Event::Done { ok: true, text, reload: true },
                         Err(text) => Event::Done { ok: false, text, reload: false },
                     });
                 }
-                let text = if browsers::open_in_browser(&program, browser.extensions_url) {
+                let text = if browsers::open_in_browser(&browser.program, browser.extensions_url()) {
                     (true, format!("Opened {}. Turn on Developer mode, choose Load unpacked, and pick {}.", browser.name, self.folder.trim()))
                 } else {
                     (false, format!("{} could not be opened. Open its extensions page by hand.", browser.name))
@@ -664,7 +714,6 @@ impl Helper {
         if !self.settings.answered.iter().any(|a| a == id) {
             self.settings.answered.push(id.to_string());
         }
-        self.setup_open = self.detected.iter().any(|(b, _)| !self.settings.answered.iter().any(|a| a == b.id));
         self.save_settings();
     }
 
@@ -787,13 +836,15 @@ impl Helper {
                 });
             }
             Action::SetupBrowser(id) => self.setup_browser(id),
-            Action::SetupLater => {
-                let ids: Vec<&'static str> = self.detected.iter().map(|(b, _)| b.id).collect();
+            Action::SetupAll => self.setup_all(),
+            Action::FinishWelcome => {
+                let ids: Vec<String> = self.detected.iter().map(|b| b.id.clone()).collect();
                 for id in ids {
-                    if !self.settings.answered.iter().any(|a| a == id) {
-                        self.settings.answered.push(id.to_string());
+                    if !self.settings.answered.iter().any(|a| a == &id) {
+                        self.settings.answered.push(id);
                     }
                 }
+                self.settings.welcomed = true;
                 self.setup_open = false;
                 self.save_settings();
             }
@@ -803,7 +854,8 @@ impl Helper {
             }
             Action::ShowSetupAgain => {
                 self.settings.answered.clear();
-                self.setup_open = !self.detected.is_empty();
+                self.settings.welcomed = false;
+                self.setup_open = true;
                 self.save_settings();
                 self.message = Some((true, "The browser setup question will show again.".into()));
             }

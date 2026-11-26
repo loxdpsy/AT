@@ -405,7 +405,7 @@
     "message": "Checking the helper..."
   },
   "onboardingHelperMissing": {
-    "message": "The helper is not running. Start the Atlas helper, then press Check again. Until a language pair is installed, the next enabled service translates the text."
+    "message": "The helper is not running. Start the Atlas Helper, then press Check again. Until a language pair is installed, the next enabled service translates the text."
   },
   "onboardingHelperNoPacks": {
     "message": "The helper is running, but no language pair is installed yet. Open the helper, go to its Offline tab, and install the pairs you need. Each pair is about 37 MB."
@@ -837,13 +837,13 @@
     "message": "Text on this page is sent to DeepL to be translated."
   },
   "msgOfflineNeedsHelper": {
-    "message": "Needs the Atlas helper"
+    "message": "Needs the Atlas Helper"
   },
   "msgOfflineTitle": {
     "message": "Offline (desktop helper)"
   },
   "msgOfflineDescription": {
-    "message": "Translates on this computer, with no text sent to a web service. The Atlas helper runs the offline engine and keeps the language packs. Install the helper and a language pack, then click Bind this browser here and allow it in the helper window. If the helper is not running or a pack is missing, the next enabled service translates the text."
+    "message": "Translates on this computer, with no text sent to a web service. The Atlas Helper runs the offline engine and keeps the language packs. Install the helper and a language pack, then click Bind this browser here and allow it in the helper window. If the helper is not running or a pack is missing, the next enabled service translates the text."
   },
   "msgOfflineBind": {
     "message": "Bind this browser"
@@ -852,16 +852,19 @@
     "message": "Unbind"
   },
   "msgOfflinePrompt": {
-    "message": "The Atlas helper is running. Bind this browser to use offline translation."
+    "message": "Do you want to link the Atlas Helper to this browser? It is needed for offline translation. Click Bind this browser to link it, then choose Allow in the helper window."
   },
   "msgOfflineWaiting": {
-    "message": "Waiting for your answer in the Atlas helper window..."
+    "message": "Waiting for your answer in the Atlas Helper window..."
   },
   "msgOfflineBindRefused": {
     "message": "The helper window did not allow this browser. Click Bind this browser again and choose Allow."
   },
   "msgOfflineNoPacksYet": {
     "message": "Connected. Install a language pack in the helper window."
+  },
+  "msgOfflineUpdateHelper": {
+    "message": "This extension needs a newer Atlas Helper. Update Atlas Helper, then try again."
   },
   "msgOfflineCodeLabel": {
     "message": "Pairing code (from the helper window)"
@@ -891,7 +894,7 @@
     }
   },
   "msgOfflineNotRunning": {
-    "message": "The helper is not running. Open the Atlas helper, then try again."
+    "message": "The helper is not running. Open the Atlas Helper, then try again."
   },
   "msgOfflineWrongCode": {
     "message": "The pairing code is wrong. Copy it again from the helper window."

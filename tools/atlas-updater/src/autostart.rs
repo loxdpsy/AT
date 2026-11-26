@@ -119,7 +119,7 @@ fn set_linux(on: bool) -> Result<(), String> {
     }
     let exe = program()?;
     let entry = format!(
-        "[Desktop Entry]\nType=Application\nName=Atlas Translation Helper\nComment=Runs the Atlas Translation helper in the background\nExec=\"{}\" --serve\nX-GNOME-Autostart-enabled=true\nTerminal=false\n",
+        "[Desktop Entry]\nType=Application\nName=Atlas Helper\nComment=Runs the Atlas Helper in the background\nExec=\"{}\" --serve\nX-GNOME-Autostart-enabled=true\nTerminal=false\n",
         exe.display()
     );
     if let Some(parent) = path.parent() {

@@ -1,8 +1,12 @@
-// The browsers the helper window offers, and what each one needs to get Atlas Translation.
+// The browsers on this computer that the helper can set Atlas Translation up in.
 //
-// Chromium browsers (Chrome, Edge, Brave, Opera, Vivaldi, Comet, Iopera) load an unpacked copy from a folder.
-// The helper cannot add it for them, so the guide tells the user the three clicks. Firefox installs from the
-// Firefox Add-ons store, and the helper only links to it.
+// The helper lists them the way the system does: the Windows "Default apps" list (StartMenuInternet in the registry),
+// the applications on macOS that declare the web address schemes, and the desktop entries on Linux that handle web
+// addresses. A browser with Firefox's engine (or a Firefox name) gets the Firefox store page. Safari and Internet
+// Explorer are not supported. Every other browser is treated as Chromium-based.
+//
+// Chromium browsers load an unpacked copy from a folder. The helper cannot add it for them, so the guide tells the
+// user the clicks. Chromium browsers do not allow a silent install of an extension from outside their store.
 
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -10,44 +14,31 @@ use std::process::Command;
 /// Where Firefox installs Atlas Translation from.
 pub const FIREFOX_STORE_URL: &str = "https://addons.mozilla.org/en-US/firefox/addon/atlas-translation/";
 
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Kind {
     Chromium,
     Firefox,
 }
 
+#[derive(Clone, Debug)]
 pub struct Browser {
-    pub id: &'static str,
-    pub name: &'static str,
+    /// A key for this browser: the lower-case path of its program.
+    pub id: String,
+    pub name: String,
     pub kind: Kind,
-    /// The address of the page where the browser manages extensions.
-    pub extensions_url: &'static str,
-    /// An extra step for this browser, or an empty string.
-    pub note: &'static str,
+    /// The program that starts the browser (on macOS, the application bundle).
+    pub program: PathBuf,
 }
 
-pub const BROWSERS: &[Browser] = &[
-    Browser { id: "chrome", name: "Google Chrome", kind: Kind::Chromium, extensions_url: "chrome://extensions", note: "" },
-    Browser { id: "edge", name: "Microsoft Edge", kind: Kind::Chromium, extensions_url: "edge://extensions", note: "" },
-    Browser { id: "brave", name: "Brave", kind: Kind::Chromium, extensions_url: "brave://extensions", note: "" },
-    Browser { id: "opera", name: "Opera", kind: Kind::Chromium, extensions_url: "opera://extensions", note: "" },
-    Browser { id: "vivaldi", name: "Vivaldi", kind: Kind::Chromium, extensions_url: "vivaldi://extensions", note: "" },
-    Browser {
-        id: "comet",
-        name: "Comet",
-        kind: Kind::Chromium,
-        extensions_url: "chrome://extensions",
-        note: "If that address does not open, find Extensions in the browser menu.",
-    },
-    Browser {
-        id: "iopera",
-        name: "Iopera",
-        kind: Kind::Chromium,
-        extensions_url: "chrome://extensions",
-        note: "If that address does not open, find Extensions in the browser menu.",
-    },
-    Browser { id: "firefox", name: "Firefox", kind: Kind::Firefox, extensions_url: "about:addons", note: "" },
-];
+impl Browser {
+    /// The page where the browser manages extensions. Chromium browsers redirect chrome:// addresses to their own page.
+    pub fn extensions_url(&self) -> &'static str {
+        match self.kind {
+            Kind::Chromium => "chrome://extensions",
+            Kind::Firefox => "about:addons",
+        }
+    }
+}
 
 /// What the window shows for one browser.
 pub struct Guide {
@@ -63,7 +54,7 @@ pub struct Guide {
 pub fn guide(browser: &Browser, folder: &str) -> Guide {
     match browser.kind {
         Kind::Firefox => Guide {
-            name: browser.name.to_string(),
+            name: browser.name.clone(),
             steps: vec![
                 "Open the Firefox Add-ons page (the button below) and click Add to Firefox.".to_string(),
                 "Confirm the install. Firefox then keeps Atlas Translation up to date by itself.".to_string(),
@@ -74,117 +65,240 @@ pub fn guide(browser: &Browser, folder: &str) -> Guide {
         },
         Kind::Chromium => {
             let needs_folder = folder.is_empty();
-            let mut steps = vec![format!("Open {} in {}.", browser.extensions_url, browser.name)];
-            if !browser.note.is_empty() {
-                steps.push(browser.note.to_string());
-            }
-            steps.push("Turn on Developer mode (the switch at the top right).".to_string());
+            let mut steps = vec![
+                format!("Open {} in {}.", browser.extensions_url(), browser.name),
+                "If that address does not open, find Extensions in the browser menu.".to_string(),
+                "Turn on Developer mode (the switch at the top right).".to_string(),
+            ];
             if needs_folder {
                 steps.push("Install the update first (Update section), then load its folder with Load unpacked.".to_string());
             } else {
                 steps.push(format!("Click Load unpacked and choose this folder: {}", folder));
             }
-            Guide { name: browser.name.to_string(), steps, link: None, needs_folder }
+            Guide { name: browser.name.clone(), steps, link: None, needs_folder }
         }
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn firefox_points_to_the_store() {
-        let firefox = BROWSERS.iter().find(|b| b.id == "firefox").unwrap();
-        let g = guide(firefox, "");
-        assert_eq!(g.link.as_deref(), Some("https://addons.mozilla.org/en-US/firefox/addon/atlas-translation/"));
-        assert!(!g.needs_folder);
-    }
-
-    #[test]
-    fn chromium_steps_name_the_folder() {
-        let comet = BROWSERS.iter().find(|b| b.id == "comet").unwrap();
-        let g = guide(comet, "C:\\Atlas Translation");
-        assert!(g.steps.iter().any(|s| s.contains("C:\\Atlas Translation")));
-        assert!(g.steps.iter().any(|s| s.contains("Load unpacked")));
-        assert!(g.link.is_none());
-    }
-
-    #[test]
-    fn chromium_without_a_folder_asks_for_the_update_first() {
-        let chrome = BROWSERS.iter().find(|b| b.id == "chrome").unwrap();
-        let g = guide(chrome, "");
-        assert!(g.needs_folder);
-        assert!(g.steps.iter().any(|s| s.contains("Install the update first")));
-    }
-
-    #[test]
-    fn every_browser_has_a_unique_id() {
-        for (i, a) in BROWSERS.iter().enumerate() {
-            for b in &BROWSERS[i + 1..] {
-                assert_ne!(a.id, b.id);
-            }
-        }
-    }
-}
-
-/// The program of a browser installed on this computer, or None. Comet and Iopera are not looked for yet.
-pub fn find_program(browser: &Browser) -> Option<PathBuf> {
-    candidates(browser.id).into_iter().find(|p| p.is_file())
-}
-
-/// Where each browser keeps its program, for the systems the helper runs on.
-fn candidates(id: &str) -> Vec<PathBuf> {
-    if cfg!(target_os = "windows") {
-        let roots: Vec<PathBuf> = ["ProgramFiles", "ProgramFiles(x86)", "LOCALAPPDATA"]
-            .iter()
-            .filter_map(|key| std::env::var_os(key).map(PathBuf::from))
-            .collect();
-        let relative: &[&str] = match id {
-            "chrome" => &["Google\\Chrome\\Application\\chrome.exe"],
-            "edge" => &["Microsoft\\Edge\\Application\\msedge.exe"],
-            "brave" => &["BraveSoftware\\Brave-Browser\\Application\\brave.exe"],
-            "vivaldi" => &["Vivaldi\\Application\\vivaldi.exe"],
-            "firefox" => &["Mozilla Firefox\\firefox.exe"],
-            _ => &[],
+/// The browsers installed on this computer, sorted by name. Each program appears once.
+pub fn detect() -> Vec<Browser> {
+    let mut found: Vec<Browser> = Vec::new();
+    for (name, program) in listed_browsers() {
+        let Some(kind) = classify(&name, &program) else {
+            continue;
         };
-        let mut out = Vec::new();
-        for root in &roots {
-            for rel in relative {
-                out.push(root.join(rel));
-            }
+        let id = program.to_string_lossy().to_lowercase();
+        if found.iter().any(|b| b.id == id) {
+            continue;
         }
-        out
-    } else if cfg!(target_os = "macos") {
-        let apps: &[&str] = match id {
-            "chrome" => &["Google Chrome.app"],
-            "edge" => &["Microsoft Edge.app"],
-            "brave" => &["Brave Browser.app"],
-            "opera" => &["Opera.app"],
-            "vivaldi" => &["Vivaldi.app"],
-            "firefox" => &["Firefox.app"],
-            _ => &[],
-        };
-        apps.iter().map(|app| PathBuf::from("/Applications").join(app)).collect()
+        found.push(Browser { id, name, kind, program });
+    }
+    found.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    found
+}
+
+/// The browsers the system lists, as (name, program). Only the programs that exist are kept.
+fn listed_browsers() -> Vec<(String, PathBuf)> {
+    #[cfg(windows)]
+    let listed = windows_listed();
+    #[cfg(target_os = "macos")]
+    let listed = macos_listed();
+    #[cfg(all(unix, not(target_os = "macos")))]
+    let listed = linux_listed();
+    listed.into_iter().filter(|(_, program)| program.exists()).collect()
+}
+
+/// Firefox, Chromium-based, or None for a browser that is not supported (Safari, Internet Explorer, Orion).
+pub fn classify(name: &str, program: &Path) -> Option<Kind> {
+    let lower = name.to_lowercase();
+    if ["internet explorer", "safari", "orion"].iter().any(|word| lower.contains(word)) {
+        return None;
+    }
+    let firefox_names = ["firefox", "librewolf", "waterfox", "floorp", "zen browser", "tor browser"];
+    if firefox_names.iter().any(|word| lower.contains(word)) || has_firefox_engine(program) {
+        return Some(Kind::Firefox);
+    }
+    Some(Kind::Chromium)
+}
+
+/// True when the program's folder holds Firefox's engine library.
+fn has_firefox_engine(program: &Path) -> bool {
+    let dir = if cfg!(target_os = "macos") {
+        program.join("Contents/Frameworks")
     } else {
-        let names: &[&str] = match id {
-            "chrome" => &["google-chrome", "google-chrome-stable", "chromium"],
-            "edge" => &["microsoft-edge"],
-            "brave" => &["brave-browser"],
-            "opera" => &["opera"],
-            "vivaldi" => &["vivaldi"],
-            "firefox" => &["firefox"],
-            _ => &[],
+        match program.parent() {
+            Some(parent) => parent.to_path_buf(),
+            None => return false,
+        }
+    };
+    ["XUL.framework", "xul.dll", "libxul.so"].iter().any(|file| dir.join(file).exists())
+}
+
+#[cfg(windows)]
+fn windows_listed() -> Vec<(String, PathBuf)> {
+    use winreg::enums::{HKEY_CURRENT_USER, HKEY_LOCAL_MACHINE};
+    use winreg::RegKey;
+    let roots = [
+        (HKEY_LOCAL_MACHINE, "SOFTWARE\\Clients\\StartMenuInternet"),
+        (HKEY_LOCAL_MACHINE, "SOFTWARE\\WOW6432Node\\Clients\\StartMenuInternet"),
+        (HKEY_CURRENT_USER, "SOFTWARE\\Clients\\StartMenuInternet"),
+    ];
+    let mut out = Vec::new();
+    for (hive, path) in roots {
+        let Ok(root) = RegKey::predef(hive).open_subkey(path) else {
+            continue;
         };
-        let dirs: Vec<PathBuf> = std::env::var_os("PATH").map(|p| std::env::split_paths(&p).collect()).unwrap_or_default();
-        let mut out = Vec::new();
-        for dir in &dirs {
-            for name in names {
-                out.push(dir.join(name));
+        for name in root.enum_keys().flatten() {
+            let Ok(command) = root.open_subkey(format!("{}\\shell\\open\\command", name)) else {
+                continue;
+            };
+            let Ok(line) = command.get_value::<String, _>("") else {
+                continue;
+            };
+            if let Some(program) = parse_windows_command(&line) {
+                out.push((name, program));
             }
         }
-        out
     }
+    out
+}
+
+/// The program of a Windows command line such as `"C:\...\chrome.exe" --single-argument %1`.
+#[allow(dead_code)]
+pub fn parse_windows_command(line: &str) -> Option<PathBuf> {
+    let trimmed = line.trim();
+    let lower = trimmed.to_ascii_lowercase();
+    let end = lower.find(".exe")? + 4;
+    Some(PathBuf::from(trimmed[..end].trim_start_matches('"')))
+}
+
+#[cfg(target_os = "macos")]
+fn macos_listed() -> Vec<(String, PathBuf)> {
+    let home = std::env::var_os("HOME").map(PathBuf::from).unwrap_or_default();
+    let mut out = Vec::new();
+    for dir in [PathBuf::from("/Applications"), home.join("Applications")] {
+        let Ok(entries) = std::fs::read_dir(&dir) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let app = entry.path();
+            if app.extension().and_then(|e| e.to_str()) != Some("app") {
+                continue;
+            }
+            if let Some((name, handles_web)) = read_bundle(&app) {
+                if handles_web {
+                    out.push((name, app));
+                }
+            }
+        }
+    }
+    out
+}
+
+/// The name of an application bundle, and whether it handles the http or https address scheme.
+#[cfg(target_os = "macos")]
+fn read_bundle(app: &Path) -> Option<(String, bool)> {
+    let output = Command::new("plutil")
+        .arg("-convert")
+        .arg("json")
+        .arg("-o")
+        .arg("-")
+        .arg(app.join("Contents/Info.plist"))
+        .output()
+        .ok()?;
+    if !output.status.success() {
+        return None;
+    }
+    let value = crate::json::parse(&String::from_utf8(output.stdout).ok()?).ok()?;
+    let name = value
+        .get("CFBundleName")
+        .and_then(|v| v.as_str())
+        .map(str::to_string)
+        .unwrap_or_else(|| app.file_stem().unwrap_or_default().to_string_lossy().into_owned());
+    let handles_web = value.get("CFBundleURLTypes").and_then(|v| v.as_array()).map_or(false, |types| {
+        types.iter().any(|t| {
+            t.get("CFBundleURLSchemes")
+                .and_then(|v| v.as_array())
+                .map_or(false, |schemes| schemes.iter().any(|s| matches!(s.as_str(), Some("http") | Some("https"))))
+        })
+    });
+    Some((name, handles_web))
+}
+
+#[cfg(all(unix, not(target_os = "macos")))]
+fn linux_listed() -> Vec<(String, PathBuf)> {
+    let home = std::env::var_os("HOME").map(PathBuf::from).unwrap_or_default();
+    let dirs = [
+        PathBuf::from("/usr/share/applications"),
+        PathBuf::from("/usr/local/share/applications"),
+        home.join(".local/share/applications"),
+        PathBuf::from("/var/lib/flatpak/exports/share/applications"),
+        home.join(".local/share/flatpak/exports/share/applications"),
+    ];
+    let mut out = Vec::new();
+    for dir in dirs {
+        let Ok(entries) = std::fs::read_dir(&dir) else {
+            continue;
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().and_then(|e| e.to_str()) != Some("desktop") {
+                continue;
+            }
+            let Ok(text) = std::fs::read_to_string(&path) else {
+                continue;
+            };
+            if let Some(found) = parse_desktop(&text) {
+                out.push(found);
+            }
+        }
+    }
+    out
+}
+
+/// The name and program of a desktop entry, when it is a browser (it handles the http scheme) and is not hidden.
+#[allow(dead_code)]
+pub fn parse_desktop(text: &str) -> Option<(String, PathBuf)> {
+    let mut name = None;
+    let mut exec = None;
+    let mut mime = "";
+    let mut hidden = false;
+    let mut in_entry = false;
+    for line in text.lines() {
+        let line = line.trim();
+        if line.starts_with('[') {
+            in_entry = line == "[Desktop Entry]";
+            continue;
+        }
+        if !in_entry {
+            continue;
+        }
+        if let Some(value) = line.strip_prefix("Name=") {
+            name.get_or_insert(value.to_string());
+        } else if let Some(value) = line.strip_prefix("Exec=") {
+            exec.get_or_insert(value.to_string());
+        } else if let Some(value) = line.strip_prefix("MimeType=") {
+            mime = value;
+        } else if line == "NoDisplay=true" {
+            hidden = true;
+        }
+    }
+    if hidden || !mime.split(';').any(|m| m == "x-scheme-handler/http") {
+        return None;
+    }
+    Some((name?, exec_program(&exec?)?))
+}
+
+/// The program of an Exec= line: its first word, found in PATH when it is not a full path.
+#[allow(dead_code)]
+fn exec_program(exec: &str) -> Option<PathBuf> {
+    let word = exec.split_whitespace().next()?.trim_matches('"');
+    let path = PathBuf::from(word);
+    if path.is_absolute() {
+        return Some(path);
+    }
+    let paths = std::env::var_os("PATH")?;
+    std::env::split_paths(&paths).map(|dir| dir.join(word)).find(|p| p.is_file())
 }
 
 /// Opens `url` in a new window of an installed browser. On macOS the app is opened by its path with `open`.
@@ -200,4 +314,71 @@ pub fn open_in_browser(program: &Path, url: &str) -> bool {
     };
     command.stdin(std::process::Stdio::null());
     crate::autostart::quiet(command).spawn().is_ok()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn firefox() -> Browser {
+        Browser { id: "f".into(), name: "Firefox".into(), kind: Kind::Firefox, program: PathBuf::from("/x/firefox") }
+    }
+
+    fn chromium() -> Browser {
+        Browser { id: "c".into(), name: "Comet".into(), kind: Kind::Chromium, program: PathBuf::from("/x/comet") }
+    }
+
+    #[test]
+    fn firefox_points_to_the_store() {
+        let g = guide(&firefox(), "");
+        assert_eq!(g.link.as_deref(), Some("https://addons.mozilla.org/en-US/firefox/addon/atlas-translation/"));
+        assert!(!g.needs_folder);
+    }
+
+    #[test]
+    fn chromium_steps_name_the_folder() {
+        let g = guide(&chromium(), "C:\\Atlas Translation");
+        assert!(g.steps.iter().any(|s| s.contains("C:\\Atlas Translation")));
+        assert!(g.steps.iter().any(|s| s.contains("Load unpacked")));
+        assert!(g.steps.iter().any(|s| s.contains("chrome://extensions")));
+        assert!(g.link.is_none());
+    }
+
+    #[test]
+    fn chromium_without_a_folder_asks_for_the_update_first() {
+        let g = guide(&chromium(), "");
+        assert!(g.needs_folder);
+        assert!(g.steps.iter().any(|s| s.contains("Install the update first")));
+    }
+
+    #[test]
+    fn classify_by_name_and_engine() {
+        assert_eq!(classify("Firefox", Path::new("/nope/firefox")), Some(Kind::Firefox));
+        assert_eq!(classify("LibreWolf", Path::new("/nope/librewolf")), Some(Kind::Firefox));
+        assert_eq!(classify("Brave", Path::new("/nope/brave")), Some(Kind::Chromium));
+        assert_eq!(classify("Internet Explorer", Path::new("/nope/iexplore")), None);
+        assert_eq!(classify("Safari", Path::new("/nope/Safari.app")), None);
+    }
+
+    #[test]
+    fn windows_command_lines() {
+        assert_eq!(
+            parse_windows_command("\"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe\" --single-argument %1"),
+            Some(PathBuf::from("C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"))
+        );
+        assert_eq!(parse_windows_command("C:\\Tools\\brave.exe %1"), Some(PathBuf::from("C:\\Tools\\brave.exe")));
+        assert_eq!(parse_windows_command("no program here"), None);
+    }
+
+    // Desktop entries are read on Linux. Their program paths are Unix paths, which Windows does not see as absolute.
+    #[cfg(unix)]
+    #[test]
+    fn desktop_entries_that_handle_the_web() {
+        let browser = "[Desktop Entry]\nName=Chromium\nExec=/usr/bin/chromium %U\nMimeType=text/html;x-scheme-handler/http;\n";
+        assert_eq!(parse_desktop(browser), Some(("Chromium".to_string(), PathBuf::from("/usr/bin/chromium"))));
+        let editor = "[Desktop Entry]\nName=Editor\nExec=/usr/bin/editor %F\nMimeType=text/plain;\n";
+        assert_eq!(parse_desktop(editor), None);
+        let hidden = "[Desktop Entry]\nName=Old\nExec=/usr/bin/old\nMimeType=x-scheme-handler/http;\nNoDisplay=true\n";
+        assert_eq!(parse_desktop(hidden), None);
+    }
 }

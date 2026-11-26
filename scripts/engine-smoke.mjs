@@ -1,8 +1,11 @@
 // Checks a built atlas-engine with a real language pack: downloads the English to French pack from the catalogue
 // (tools/atlas-updater/src/packs.json), checks every file's size and SHA-256, starts the engine, and translates two
 // sentences. Fails when the download is wrong or the reply does not look like French.
-// Usage: node scripts/engine-smoke.mjs <path to atlas-engine>
-import { spawn } from "node:child_process";
+// With a second path (the atlas-engine-check program built with the library), the same pack is also translated
+// through the library, and the two sentences are checked the same way.
+// Usage: node scripts/engine-smoke.mjs <path to atlas-engine> [path to atlas-engine-check]
+import { execFile, spawn } from "node:child_process";
+import { promisify } from "node:util";
 import { once } from "node:events";
 import { createHash } from "node:crypto";
 import { mkdtemp, readFile, writeFile } from "node:fs/promises";
@@ -13,8 +16,9 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const engine = process.argv[2];
+const checker = process.argv[3];
 if (!engine) {
-  console.error("Usage: node scripts/engine-smoke.mjs <path to atlas-engine>");
+  console.error("Usage: node scripts/engine-smoke.mjs <path to atlas-engine> [path to atlas-engine-check]");
   process.exit(2);
 }
 const catalogue = JSON.parse(await readFile(path.join(root, "tools", "atlas-updater", "src", "packs.json"), "utf8"));
@@ -76,5 +80,15 @@ child.kill();
 const frenchHints = /\b(bonjour|comment|aujourd|temps|est|vous|le|la|parc|très|beau)\b/i;
 for (const text of translations) {
   if (!text.trim() || !frenchHints.test(text)) throw new Error(`the translation does not look like French: "${text}"`);
+}
+
+if (checker) {
+  // The library: the same pack, loaded and translated in the checker's own process.
+  for (const sentence of sentences) {
+    const { stdout } = await promisify(execFile)(checker, [dir, sentence], { timeout: 240000, maxBuffer: 1 << 20 });
+    const text = stdout.trim();
+    if (!text || !frenchHints.test(text)) throw new Error(`the library translation does not look like French: "${text}"`);
+    console.log(`  ok    library: "${sentence}" -> "${text}"`);
+  }
 }
 console.log("Engine smoke test passed.");

@@ -106,6 +106,9 @@ if(MSVC)
   add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/FI${CMAKE_CURRENT_SOURCE_DIR}/compat/msvc_hash_compare.h>")
 endif()
 
+# The library (atlas_engine.dll, libatlas_engine.so, libatlas_engine.dylib) is a shared library, and the static
+# libraries of bergamot and marian are linked into it, so their code must be position independent.
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_subdirectory("${ATLAS_BERGAMOT_SOURCE}" bergamot)
 
 # marian gives each of its own targets -Wall and -Wextra, and those come after the directory options added above.
@@ -133,3 +136,15 @@ endif()
 
 add_executable(atlas-engine atlas-engine.cpp)
 target_link_libraries(atlas-engine PRIVATE bergamot-translator-source marian)
+
+# The same engine as a shared library, with the C interface in include/atlas_engine.h. The helper loads it in its own
+# process, so it needs no separate program and no pipes. atlas-engine-check is a test of the library: it loads a pack and
+# translates one text (scripts/engine-smoke.mjs runs it).
+add_library(atlas-engine-lib SHARED atlas_engine_lib.cpp)
+set_target_properties(atlas-engine-lib PROPERTIES OUTPUT_NAME atlas_engine)
+target_include_directories(atlas-engine-lib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
+target_compile_definitions(atlas-engine-lib PRIVATE ATLAS_ENGINE_BUILD)
+target_link_libraries(atlas-engine-lib PRIVATE bergamot-translator-source marian)
+
+add_executable(atlas-engine-check atlas-engine-check.c)
+target_link_libraries(atlas-engine-check PRIVATE atlas-engine-lib)
