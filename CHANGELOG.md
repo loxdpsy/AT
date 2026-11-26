@@ -12,7 +12,7 @@ Not released yet. Changes after 0.0.2.1 will be listed here.
 - Atlas Helper: a welcome window opens on first run. It shows whether a new Atlas Translation is available, lists the browsers found on this computer, and explains each step. Nothing is installed without the user clicking Install here. Chromium browsers still need Load unpacked, because they do not allow a silent install from outside their store.
 - Atlas Helper: the "Install in all of them" button sets up every browser found, and copies the extension into the folder once.
 - Offline translation: the helper can load the engine as a library in its own process, so no engine program runs for a translation. The engine program is kept as a fallback when the library is missing or does not load.
-- Atlas Helper: Comet is found in its default Windows install folder (Perplexity\Comet\Application).
+- Atlas Helper: browsers are found the way the system lists them (Windows default apps, applications on macOS, desktop entries on Linux), not from a fixed list. Any Chromium-based browser, such as Comet, is offered with its extensions page. Firefox links to the store.
 - Extension: when the helper is running and this browser is not linked, the Offline settings ask whether to link Atlas Helper, and say why it is needed.
 - Atlas Helper: the welcome window and the Extension tab say "please update" when a newer release exists, with that release's "what is new" notes.
 

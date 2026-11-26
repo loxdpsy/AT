@@ -24,3 +24,6 @@ tray-icon = "0.27"
 
 [profile.release]
 strip = true
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.52"

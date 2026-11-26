@@ -29,7 +29,7 @@ tray (Windows and Linux) or the menu bar (macOS). It checks GitHub for a new ver
 
 - **Update:** shows the version you have and the newest release, and installs the update in one click.
 - **Folder:** where the extension lives. A new folder (empty or missing) gets a fresh copy.
-- **Which browser?** Pick Chrome, Edge, Brave, Opera, Vivaldi, Comet, Iopera or Firefox. Firefox links to the
+- **Which browser?** The helper lists the browsers that the system lists for web addresses (Windows default apps, applications on macOS, desktop entries on Linux). Firefox links to the Add-ons store. Every other browser (Chrome, Edge, Brave, Opera, Vivaldi, Comet and any other Chromium-based browser) gets the extensions page and the Load unpacked steps. Safari and Internet Explorer are not supported.
   Firefox Add-ons page. The Chromium browsers get the steps to load the folder with *Load unpacked*.
 
 - **Offline translation:** installs the offline engine, installs or
