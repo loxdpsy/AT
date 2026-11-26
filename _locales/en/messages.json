@@ -293,6 +293,27 @@
   "lblToggleHoverTranslationForTab": {
     "message": "Toggle hover translation for this tab"
   },
+  "lblExperimental": {
+    "message": "Experimental"
+  },
+  "msgExperimentalDescription": {
+    "message": "Experimental options may change or break. Nothing needs them to translate."
+  },
+  "lblShowExperimental": {
+    "message": "Show experimental options and developer details"
+  },
+  "lblDeveloperDetails": {
+    "message": "Developer details"
+  },
+  "msgDiagnosticsDescription": {
+    "message": "Copies the version, the browser and the enabled services, for a bug report. API keys are never included."
+  },
+  "msgCopyDiagnostics": {
+    "message": "Copy diagnostic info"
+  },
+  "msgDiagnosticsCopied": {
+    "message": "Copied"
+  },
   "lblTranslateWholeParagraphs": {
     "message": "Translate each paragraph as one text"
   },

@@ -584,6 +584,29 @@
 </select></div>
           </div>
         </div>
+        <div class="card">
+          <h2 class="card-title" data-i18n="lblExperimental">Experimental</h2>
+          <p class="card-desc" data-i18n="msgExperimentalDescription">Experimental options may change or break. Nothing needs them to translate.</p>
+          <div class="row">
+            <div class="row-text"><div class="row-title" data-i18n="lblShowExperimental">Show experimental options and developer details</div></div>
+            <div class="row-control"><select id="experimentalOptions" class="select">
+<option value="no" data-i18n="msgNo">No</option>
+<option value="yes" data-i18n="msgYes">Yes</option>
+</select></div>
+          </div>
+        </div>
+        <div class="card" id="developerCard" style="display:none">
+          <h2 class="card-title" data-i18n="lblDeveloperDetails">Developer details</h2>
+          <p class="card-desc" data-i18n="msgDiagnosticsDescription">Copies the version, the browser and the enabled services, for a bug report. API keys are never included.</p>
+          <div class="row">
+            <div class="row-text"><div class="row-title">Version</div></div>
+            <div class="row-control"><span id="developerVersion"></span></div>
+          </div>
+          <div class="row">
+            <div class="row-text"><div class="row-title" data-i18n="msgCopyDiagnostics">Copy diagnostic info</div></div>
+            <div class="row-control"><button id="copyDiagnostics" class="btn btn-ghost" data-i18n="msgCopyDiagnostics">Copy diagnostic info</button></div>
+          </div>
+        </div>
       </section>
 
       <!-- ABOUT -->

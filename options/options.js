@@ -442,6 +442,34 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     twpConfig.set("translateWholeParagraphs", e.target.value);
   };
   $("#translateWholeParagraphs").value = twpConfig.get("translateWholeParagraphs");
+  // Experimental: the switch shows the developer details. No feature depends on it yet.
+  const showDeveloperDetails = on => { $("#developerCard").style.display = on ? "" : "none"; };
+  $("#experimentalOptions").onchange = e => {
+    twpConfig.set("experimentalOptions", e.target.value);
+    showDeveloperDetails(e.target.value === "yes");
+  };
+  $("#experimentalOptions").value = twpConfig.get("experimentalOptions");
+  showDeveloperDetails($("#experimentalOptions").value === "yes");
+  $("#developerVersion").textContent = chrome.runtime.getManifest().version;
+  $("#copyDiagnostics").onclick = async () => {
+    // Service names and settings only. API keys and tokens are never copied.
+    const info = {
+      extension: chrome.runtime.getManifest().version,
+      browser: navigator.userAgent,
+      enabledServices: twpConfig.get("enabledServices") || [],
+      pageTranslatorService: twpConfig.get("pageTranslatorService"),
+      textTranslatorService: twpConfig.get("textTranslatorService"),
+    };
+    const button = $("#copyDiagnostics");
+    const original = button.textContent;
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(info, null, 2));
+      button.textContent = chrome.i18n.getMessage("msgDiagnosticsCopied") || "Copied";
+    } catch (e) {
+      button.textContent = "Copy failed";
+    }
+    setTimeout(() => { button.textContent = original; }, 2000);
+  };
   $("#translateAllLanguages").onchange = e => {
     twpConfig.set("translateAllLanguages", e.target.value);
   };
