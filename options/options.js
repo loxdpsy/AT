@@ -438,6 +438,41 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     twpConfig.set("dontSortResults", e.target.value);
   };
   $("#dontSortResults").value = twpConfig.get("dontSortResults");
+  $("#translateWholeParagraphs").onchange = e => {
+    twpConfig.set("translateWholeParagraphs", e.target.value);
+  };
+  $("#translateWholeParagraphs").value = twpConfig.get("translateWholeParagraphs");
+  // Experimental: the switch shows the developer details. No feature depends on it yet.
+  const showDeveloperDetails = on => { $("#developerCard").style.display = on ? "" : "none"; };
+  $("#experimentalOptions").onchange = e => {
+    twpConfig.set("experimentalOptions", e.target.value);
+    showDeveloperDetails(e.target.value === "yes");
+  };
+  $("#experimentalOptions").value = twpConfig.get("experimentalOptions");
+  showDeveloperDetails($("#experimentalOptions").value === "yes");
+  $("#developerVersion").textContent = chrome.runtime.getManifest().version;
+  $("#btnOpenOnboarding").addEventListener("click", () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL("onboarding/onboarding.html") });
+  });
+  $("#copyDiagnostics").onclick = async () => {
+    // Service names and settings only. API keys and tokens are never copied.
+    const info = {
+      extension: chrome.runtime.getManifest().version,
+      browser: navigator.userAgent,
+      enabledServices: twpConfig.get("enabledServices") || [],
+      pageTranslatorService: twpConfig.get("pageTranslatorService"),
+      textTranslatorService: twpConfig.get("textTranslatorService"),
+    };
+    const button = $("#copyDiagnostics");
+    const original = button.textContent;
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(info, null, 2));
+      button.textContent = chrome.i18n.getMessage("msgDiagnosticsCopied") || "Copied";
+    } catch (e) {
+      button.textContent = "Copy failed";
+    }
+    setTimeout(() => { button.textContent = original; }, 2000);
+  };
   $("#translateAllLanguages").onchange = e => {
     twpConfig.set("translateAllLanguages", e.target.value);
   };
@@ -543,7 +578,9 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
       defaultShortcuts[name] = "";
     }
   }
-  function addHotkey(hotkeyname, description) {
+  // currentShortcut is the shortcut the browser has now (chrome.commands.getAll). Chromium cannot be changed from here,
+  // so its field shows the real shortcut, not the one saved in the settings.
+  function addHotkey(hotkeyname, description, currentShortcut) {
     if (hotkeyname === "_execute_browser_action" && !description) {
       description = "Enable the extension";
     }
@@ -567,7 +604,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     const error = li.querySelector(`[name="error"]`);
     const removeKey = li.querySelector(`[name="removeKey"]`);
     const resetKey = li.querySelector(`[name="resetKey"]`);
-    input.value = twpConfig.get("hotkeys")[hotkeyname];
+    input.value = typeof browser === "undefined" ? currentShortcut || "" : twpConfig.get("hotkeys")[hotkeyname];
     if (input.value) {
       resetKey.style.display = "none";
     } else {
@@ -683,7 +720,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
   if (typeof chrome.commands !== "undefined") {
     chrome.commands.getAll(results => {
       for (const result of results) {
-        addHotkey(result.name, result.description);
+        addHotkey(result.name, result.description, result.shortcut);
       }
     });
   }
@@ -693,7 +730,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     twpConfig.set("useAlternativeService", e.target.value);
   };
   $("#useAlternativeService").value = twpConfig.get("useAlternativeService");
-  const pageTranslationServices = ["google", "bing", "yandex", "deepl", "groq"];
+  const pageTranslationServices = ["google", "bing", "yandex", "deepl", "groq", "openrouter", "offline", "libre"];
   const updateServiceSelector = enabledServices => {
     document.querySelectorAll("#pageTranslatorService option").forEach(option => option.setAttribute("hidden", ""));
     document.querySelectorAll("#textTranslatorService option").forEach(option => option.setAttribute("hidden", ""));
@@ -708,6 +745,10 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
         option.removeAttribute("hidden");
       }
     });
+    // LibreTranslate is a saved server, not in enabledServices. Its page option is shown while a server is saved.
+    if (twpConfig.get("customServices").find(cs => cs.name === "libre")) {
+      $('#pageTranslatorService option[value="libre"]').removeAttribute("hidden");
+    }
   };
   const servicesInfo = [{
     selector: "#btnEnableGoogle",
@@ -724,6 +765,12 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
   }, {
     selector: "#btnEnableGroq",
     svName: "groq"
+  }, {
+    selector: "#btnEnableOpenRouter",
+    svName: "openrouter"
+  }, {
+    selector: "#btnEnableOffline",
+    svName: "offline"
   }];
   servicesInfo.forEach(svInfo => {
     $(svInfo.selector).oninput = e => {
@@ -734,7 +781,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
           enabledCount++;
         }
       });
-      if (enabledCount === 0 || enabledCount === 1 && $("#btnEnableDeepL").checked) {
+      if (enabledCount === 0 || enabledCount === 1 && ($("#btnEnableDeepL").checked || $("#btnEnableOffline").checked)) {
         if (e.target === $("#btnEnableGoogle")) {
           $("#btnEnableBing").checked = true;
         } else {
@@ -863,9 +910,9 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
       apiKey: $("#libreKEY").value
     };
     try {
-      new URL(libre.url);
-      if (libre.apiKey.length < 10) {
-        throw new Error("Provides an API Key");
+      const parsed = new URL(libre.url);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        throw new Error("The server URL must start with http:// or https://");
       }
       const customServices = twpConfig.get("customServices");
       const index = customServices.findIndex(cs => cs.name === "libre");
@@ -874,6 +921,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
       }
       customServices.push(libre);
       twpConfig.set("customServices", customServices);
+      $('#pageTranslatorService option[value="libre"]').removeAttribute("hidden");
       chrome.runtime.sendMessage({
         action: "createLibreService",
         libre
@@ -894,6 +942,12 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     }
     if (twpConfig.get("textTranslatorService") === "libre") {
       twpConfig.set("textTranslatorService", twpConfig.get("pageTranslatorService"));
+    }
+    // Without a saved server, LibreTranslate is no longer a page service either.
+    $('#pageTranslatorService option[value="libre"]').setAttribute("hidden", "");
+    if (twpConfig.get("pageTranslatorService") === "libre") {
+      twpConfig.set("pageTranslatorService", "google");
+      $("#pageTranslatorService").value = "google";
     }
     $("#libreURL").value = "";
     $("#libreKEY").value = "";
@@ -991,6 +1045,234 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
   groqKeyInput.value = storedGroqKey;
   groqCheckbox.disabled = !storedGroqKey;
   groqCheckbox.checked = storedGroqKey !== "" && twpConfig.get("enabledServices").includes("groq");
+
+  // OpenRouter (AI). Each user adds their own key. The key is checked with GET /key, which uses no tokens. The model list
+  // is public and is used only to warn about a model name that is not on it.
+  const openRouterKeyInput = $("#openRouterKEY");
+  const openRouterMessage = $("#openRouterApiResponse");
+  const openRouterCheckbox = $("#btnEnableOpenRouter");
+  const openRouterModelInput = $("#openRouterModel");
+  const defaultOpenRouterModel = "openai/gpt-4o-mini";
+  function setOpenRouterMessage(text, kind = "") {
+    openRouterMessage.textContent = text;
+    openRouterMessage.className = "message" + (kind ? " " + kind : "");
+  }
+  async function checkOpenRouterKey(apiKey) {
+    const response = await fetch("https://openrouter.ai/api/v1/key", { headers: { Authorization: "Bearer " + apiKey } });
+    if (!response.ok) {
+      const body = await response.json().catch(() => null);
+      if (response.status === 401 || response.status === 403) {
+        throw new Error(`OpenRouter rejected this key (${response.status}). Check that it is copied correctly.`);
+      }
+      if (response.status === 429) {
+        throw new Error("Too many requests to OpenRouter. Try again in a moment.");
+      }
+      throw new Error("OpenRouter error: " + (body && body.error && body.error.message || "HTTP " + response.status));
+    }
+  }
+  async function requestOpenRouterModelIds() {
+    const response = await fetch("https://openrouter.ai/api/v1/models");
+    if (!response.ok) return null;
+    const body = await response.json();
+    return body && Array.isArray(body.data) ? body.data.map(model => model.id) : null;
+  }
+  $("#toggleOpenRouterKey").onclick = () => {
+    const showing = openRouterKeyInput.type === "text";
+    openRouterKeyInput.type = showing ? "password" : "text";
+    $("#toggleOpenRouterKey").textContent = showing ? "Show" : "Hide";
+  };
+  $("#addOpenRouter").onclick = async () => {
+    const apiKey = openRouterKeyInput.value.trim();
+    const model = openRouterModelInput.value.trim() || defaultOpenRouterModel;
+    if (!apiKey) {
+      setOpenRouterMessage("Paste your OpenRouter API key first.", "error");
+      return;
+    }
+    setOpenRouterMessage("Checking the key…");
+    try {
+      await checkOpenRouterKey(apiKey);
+      const modelIds = await requestOpenRouterModelIds().catch(() => null);
+      twpConfig.set("openRouterApiKey", apiKey);
+      twpConfig.set("openRouterModel", model);
+      const enabledServices = twpConfig.get("enabledServices");
+      if (!enabledServices.includes("openrouter")) {
+        twpConfig.set("enabledServices", [...enabledServices, "openrouter"]);
+      }
+      openRouterCheckbox.disabled = false;
+      openRouterCheckbox.checked = true;
+      updateServiceSelector(twpConfig.get("enabledServices"));
+      if (!modelIds || modelIds.includes(model)) {
+        setOpenRouterMessage("Key saved. OpenRouter is ready to use.", "ok");
+      } else {
+        setOpenRouterMessage(`Key saved. The model "${model}" is not in OpenRouter's list, so translation may fail. Choose another model name.`, "error");
+      }
+    } catch (e) {
+      setOpenRouterMessage(e.message || String(e), "error");
+    }
+  };
+  $("#removeOpenRouter").onclick = () => {
+    twpConfig.set("openRouterApiKey", "");
+    openRouterKeyInput.value = "";
+    setOpenRouterMessage("Key removed. OpenRouter is disabled.");
+    openRouterCheckbox.checked = false;
+    openRouterCheckbox.disabled = true;
+    let enabledServices = twpConfig.get("enabledServices").filter(sv => sv !== "openrouter");
+    if (enabledServices.length === 0) {
+      enabledServices = ["google"];
+    }
+    twpConfig.set("enabledServices", enabledServices);
+    if (twpConfig.get("textTranslatorService") === "openrouter") {
+      twpConfig.set("textTranslatorService", enabledServices[0]);
+    }
+    if (twpConfig.get("pageTranslatorService") === "openrouter") {
+      twpConfig.set("pageTranslatorService", enabledServices[0]);
+    }
+    updateServiceSelector(enabledServices);
+    $("#pageTranslatorService").value = twpConfig.get("pageTranslatorService");
+    $("#textTranslatorService").value = twpConfig.get("textTranslatorService");
+  };
+  const storedOpenRouterKey = twpConfig.get("openRouterApiKey") || "";
+  openRouterModelInput.value = twpConfig.get("openRouterModel") || defaultOpenRouterModel;
+  openRouterKeyInput.value = storedOpenRouterKey;
+  openRouterCheckbox.disabled = !storedOpenRouterKey;
+  openRouterCheckbox.checked = storedOpenRouterKey !== "" && twpConfig.get("enabledServices").includes("openrouter");
+
+  // Offline (desktop helper). The Atlas helper runs on this computer at 127.0.0.1:47632 (tools/atlas-updater/src/api.rs).
+  // When the helper answers and this browser is not bound yet, the page offers to bind it. Binding asks the user in the
+  // helper window (Allow or Deny) and gives back a token. The token is kept here and sent with each translation.
+  const offlineURL = "http://127.0.0.1:47632";
+  const offlineBindButton = $("#addOffline");
+  const offlineUnbindButton = $("#removeOffline");
+  const offlinePrompt = $("#offlinePrompt");
+  const offlineStatus = $("#offlineStatus");
+  const offlineMessage = $("#offlineApiResponse");
+  const offlineCheckbox = $("#btnEnableOffline");
+  const offlineText = (key, fallback, substitution) => twpI18n.getMessage(key, substitution) || fallback;
+  function setOfflineMessage(text, kind) {
+    offlineMessage.textContent = text;
+    offlineMessage.className = "message" + (kind ? " " + kind : "");
+  }
+  function setOfflineRunning(running) {
+    offlineStatus.hidden = false;
+    offlineStatus.textContent = running ? offlineText("msgOfflineRunning", "Helper running") : offlineText("msgOfflineStopped", "Helper not running");
+    offlineStatus.classList.toggle("ok", running);
+  }
+  /** Asks the helper. Throws the "not running" message when nothing answers on the port. */
+  async function callOfflineHelper(path, init) {
+    try {
+      return await fetch(offlineURL + path, init);
+    } catch (e) {
+      const error = new Error(offlineText("msgOfflineNotRunning", "The helper is not running. Open the Atlas helper, then try again."));
+      error.helperDown = true;
+      throw error;
+    }
+  }
+  /** The helper's status: whether it has the engine and which language packs are installed. */
+  async function helperStatus() {
+    const response = await callOfflineHelper("/api/offline/ping", {});
+    const status = await response.json().catch(() => ({}));
+    if (status.ok !== true) {
+      const error = new Error(offlineText("msgOfflineNotRunning", "The helper is not running. Open the Atlas helper, then try again."));
+      error.helperDown = true;
+      throw error;
+    }
+    return status;
+  }
+  /** Names this browser in the helper window, so the user knows which browser asks. */
+  function browserName() {
+    const ua = navigator.userAgent;
+    if (ua.includes("Firefox/")) return "Firefox";
+    if (ua.includes("Edg/")) return "Edge";
+    if (ua.includes("OPR/")) return "Opera";
+    return "Chrome";
+  }
+  /** Shows the Bind or the Unbind button, and enables the service only when this browser is bound. */
+  function showOfflineBinding(bound) {
+    offlineBindButton.style.display = bound ? "none" : "";
+    offlineUnbindButton.style.display = bound ? "" : "none";
+    offlineCheckbox.disabled = !bound;
+    if (!bound) offlineCheckbox.checked = false;
+  }
+  $("#addOffline").onclick = async () => {
+    offlineBindButton.disabled = true;
+    setOfflineMessage(offlineText("msgOfflineWaiting", "Waiting for your answer in the Atlas helper window..."));
+    try {
+      const status = await helperStatus();
+      const response = await callOfflineHelper("/api/offline/bind", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Atlas Translation (" + browserName() + ")" })
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok || typeof body.token !== "string") {
+        throw new Error(body.message || offlineText("msgOfflineBindRefused", "The helper window did not allow this browser. Click Bind this browser again and choose Allow."));
+      }
+      twpConfig.set("offlineHelperToken", body.token);
+      let enabledServices = twpConfig.get("enabledServices");
+      if (!enabledServices.includes("offline")) {
+        enabledServices = [...enabledServices, "offline"];
+        twpConfig.set("enabledServices", enabledServices);
+      }
+      showOfflineBinding(true);
+      offlineCheckbox.checked = true;
+      offlinePrompt.style.display = "none";
+      updateServiceSelector(enabledServices);
+      setOfflineRunning(true);
+      const packs = status.packs || [];
+      setOfflineMessage(packs.length
+        ? offlineText("msgOfflineConnected", "Connected. Language packs: " + packs.join(", "), packs.join(", "))
+        : offlineText("msgOfflineNoPacksYet", "Connected. Install a language pack in the helper window."), "ok");
+    } catch (e) {
+      setOfflineRunning(!e.helperDown);
+      setOfflineMessage(e.message || String(e), "error");
+    } finally {
+      offlineBindButton.disabled = false;
+    }
+  };
+  $("#removeOffline").onclick = async () => {
+    const token = (twpConfig.get("offlineHelperToken") || "").trim();
+    if (token) {
+      // The helper removes the binding too. If the helper is not running, its window still lists the binding until it is removed there.
+      try {
+        await callOfflineHelper("/api/offline/unbind", { method: "POST", headers: { Authorization: "Bearer " + token } });
+      } catch (e) {
+        // Nothing to do: the helper is not running.
+      }
+    }
+    twpConfig.set("offlineHelperToken", "");
+    showOfflineBinding(false);
+    setOfflineMessage(offlineText("msgOfflineRemoved", "Unbound. Offline (desktop helper) is off."));
+    let enabledServices = twpConfig.get("enabledServices").filter(sv => sv !== "offline");
+    if (enabledServices.length === 0) {
+      enabledServices = ["google"];
+    }
+    twpConfig.set("enabledServices", enabledServices);
+    if (twpConfig.get("textTranslatorService") === "offline") {
+      twpConfig.set("textTranslatorService", enabledServices[0]);
+    }
+    if (twpConfig.get("pageTranslatorService") === "offline") {
+      twpConfig.set("pageTranslatorService", enabledServices[0]);
+    }
+    updateServiceSelector(enabledServices);
+    $("#pageTranslatorService").value = twpConfig.get("pageTranslatorService");
+    $("#textTranslatorService").value = twpConfig.get("textTranslatorService");
+  };
+  /** When the helper answers and this browser is not bound, the page offers the Bind button (the helper is found on its own). */
+  async function offerBinding() {
+    const bound = (twpConfig.get("offlineHelperToken") || "").trim() !== "";
+    showOfflineBinding(bound);
+    offlineCheckbox.checked = bound && twpConfig.get("enabledServices").includes("offline");
+    try {
+      await helperStatus();
+      setOfflineRunning(true);
+      offlinePrompt.textContent = offlineText("msgOfflinePrompt", "The Atlas helper is running. Bind this browser to use offline translation.");
+      offlinePrompt.style.display = bound ? "none" : "";
+    } catch (e) {
+      setOfflineRunning(false);
+      offlinePrompt.style.display = "none";
+    }
+  }
+  offerBinding();
 
   // Firefox toolbar icon colour (background/background.js)
   $("#toolbarIconStyle").onchange = e => {
@@ -1120,12 +1402,15 @@ function renderUpdateStatus() {
     const msg = (key, fallback, substitution) => twpI18n.getMessage(key, substitution) || fallback;
     $("#cbUpdateCheck").checked = state.enabled !== false;
     status.replaceChildren();
+    $("#updateNotes").replaceChildren();
+    $("#updateNotesTitle").hidden = true;
     if (state.enabled === false) {
       status.textContent = msg("updateStatusOff", "Checks are turned off.");
     } else if (!state.checkedAt) {
       status.textContent = msg("updateStatusNever", "Not checked yet.");
     } else if (state.latest && twpVersionIsNewer(state.latest.version, chrome.runtime.getManifest().version)) {
-      status.append(msg("updateStatusNewer", `Version ${state.latest.version} is available.`, state.latest.version) + " ");
+      // Please update, then what is new in that version (the bullets of its CHANGELOG section).
+      status.append(msg("updatePleaseUpdate", "Please update.") + " " + msg("updateStatusNewer", `Version ${state.latest.version} is available.`, state.latest.version) + " ");
       const link = document.createElement("a");
       link.className = "btn btn-primary";
       link.href = state.latest.zipUrl;
@@ -1133,6 +1418,17 @@ function renderUpdateStatus() {
       link.rel = "noopener noreferrer";
       link.textContent = msg("updateBannerDownload", "Download");
       status.append(link);
+      const notes = state.latest.notes || [];
+      if (notes.length > 0) {
+        $("#updateNotesTitle").textContent = msg("updateWhatsNew", "What is new in this version:");
+        $("#updateNotesTitle").hidden = false;
+        const list = $("#updateNotes");
+        for (const text of notes) {
+          const item = document.createElement("li");
+          item.textContent = text;
+          list.append(item);
+        }
+      }
     } else if (state.error === "rate-limited") {
       status.textContent = msg("updateStatusRateLimited", "GitHub is limiting requests. Atlas Translation will try again later.");
     } else if (state.error === "offline") {

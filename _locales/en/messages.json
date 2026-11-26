@@ -290,6 +290,140 @@
   "lblSwitchTranslatedAndOriginal": {
     "message": "Switch between the translated and the original page"
   },
+  "lblToggleHoverTranslationForTab": {
+    "message": "Toggle hover translation for this tab"
+  },
+  "lblExperimental": {
+    "message": "Experimental"
+  },
+  "msgExperimentalDescription": {
+    "message": "Experimental options may change or break. Nothing needs them to translate."
+  },
+  "lblShowExperimental": {
+    "message": "Show experimental options and developer details"
+  },
+  "lblDeveloperDetails": {
+    "message": "Developer details"
+  },
+  "msgDiagnosticsDescription": {
+    "message": "Copies the version, the browser and the enabled services, for a bug report. API keys are never included."
+  },
+  "msgCopyDiagnostics": {
+    "message": "Copy diagnostic info"
+  },
+  "msgDiagnosticsCopied": {
+    "message": "Copied"
+  },
+  "onboardingTitle": {
+    "message": "Welcome to Atlas Translation"
+  },
+  "onboardingIntro": {
+    "message": "Choose how pages and selected text are translated. You can change this later in Options."
+  },
+  "onboardingProviderTitle": {
+    "message": "Translation provider"
+  },
+  "onboardingKeepTitle": {
+    "message": "Keep my current setting"
+  },
+  "onboardingKeepDesc": {
+    "message": "Nothing changes now."
+  },
+  "onboardingRecommended": {
+    "message": "Recommended"
+  },
+  "onboardingOfflineTitle": {
+    "message": "Offline (desktop helper)"
+  },
+  "onboardingOfflineDesc": {
+    "message": "Translation runs on your computer, with the Atlas desktop helper and a language pack of about 37 MB each. No text is sent to a web service. Needs the helper installed and running."
+  },
+  "onboardingGoogleTitle": {
+    "message": "Google Translate"
+  },
+  "onboardingGoogleDesc": {
+    "message": "No key needed, and it covers the most languages. Your text is sent to Google."
+  },
+  "onboardingGroqTitle": {
+    "message": "Groq (AI)"
+  },
+  "onboardingGroqDesc": {
+    "message": "An AI model that translates whole sections in context. Needs your own free key from console.groq.com. Your text is sent to Groq with that key."
+  },
+  "onboardingOpenRouterTitle": {
+    "message": "OpenRouter (AI)"
+  },
+  "onboardingOpenRouterDesc": {
+    "message": "One key for many AI models, and you choose the model. Needs your own key from openrouter.ai. Your text is sent to OpenRouter with that key."
+  },
+  "onboardingKeyNote": {
+    "message": "Groq and OpenRouter need your own key. Add it in Options, Services, after you save."
+  },
+  "onboardingHelperTitle": {
+    "message": "Desktop helper (optional)"
+  },
+  "onboardingHelperDesc": {
+    "message": "The helper is a small desktop app for Windows, macOS and Linux. It runs the offline engine and keeps the language packs on your computer. Download it from the Atlas releases page, then open it once. Its Offline tab installs language packs."
+  },
+  "onboardingHelperButton": {
+    "message": "Download the helper"
+  },
+  "onboardingSave": {
+    "message": "Save and finish"
+  },
+  "onboardingSkip": {
+    "message": "Skip for now"
+  },
+  "onboardingSaved": {
+    "message": "Saved. You can close this tab. You can open this guide again from Options, Others."
+  },
+  "onboardingSavedKey": {
+    "message": "Saved. Add your key in Options, Services, before this provider can translate. You can close this tab."
+  },
+  "onboardingSkipped": {
+    "message": "Skipped. You can close this tab. You can open this guide again from Options, Others."
+  },
+  "onboardingOpenTitle": {
+    "message": "Setup guide"
+  },
+  "onboardingOpenDesc": {
+    "message": "Explains the desktop helper and lets you choose the translation provider again."
+  },
+  "onboardingOpenButton": {
+    "message": "Open the setup guide"
+  },
+  "updatePleaseUpdate": {
+    "message": "Please update."
+  },
+  "updateWhatsNew": {
+    "message": "What is new in this version:"
+  },
+  "onboardingCheckAgain": {
+    "message": "Check the helper again"
+  },
+  "onboardingHelperChecking": {
+    "message": "Checking the helper..."
+  },
+  "onboardingHelperMissing": {
+    "message": "The helper is not running. Start the Atlas helper, then press Check again. Until a language pair is installed, the next enabled service translates the text."
+  },
+  "onboardingHelperNoPacks": {
+    "message": "The helper is running, but no language pair is installed yet. Open the helper, go to its Offline tab, and install the pairs you need. Each pair is about 37 MB."
+  },
+  "onboardingHelperPacks": {
+    "message": "Installed language pairs: $PAIRS$. You can install more or remove them in the helper's Offline tab.",
+    "placeholders": {
+      "PAIRS": {
+        "content": "$1"
+      }
+    }
+  },
+  "onboardingHelperNoEngine": {
+    "message": "The offline engine is not installed yet. Install it from the helper's Offline tab."
+  },
+  "lblTranslateWholeParagraphs": {
+    "message": "Translate each paragraph as one text"
+  },
   "lblRestorePageToOriginal": {
     "message": "Restore page to original"
   },
@@ -663,6 +797,24 @@
   "msgIconBlue": {
     "message": "Blue"
   },
+  "msgOpenRouterNeedsKey": {
+    "message": "Needs an API key"
+  },
+  "msgOpenRouterDescription": {
+    "message": "One key for many AI models, and you choose the model. Add your own key from openrouter.ai. The text you translate is sent to OpenRouter with that key, and from there to the model you choose."
+  },
+  "msgOpenRouterKeyLabel": {
+    "message": "OpenRouter API key"
+  },
+  "msgOpenRouterModelLabel": {
+    "message": "Model"
+  },
+  "msgOpenRouterSave": {
+    "message": "Save and test"
+  },
+  "msgOpenRouterRemove": {
+    "message": "Remove key"
+  },
   "msgGroqNeedsKey": {
     "message": "Needs an API key"
   },
@@ -686,5 +838,81 @@
   },
   "msgPageSentToDeepL": {
     "message": "Text on this page is sent to DeepL to be translated."
+  },
+  "msgOfflineNeedsHelper": {
+    "message": "Needs the Atlas helper"
+  },
+  "msgOfflineTitle": {
+    "message": "Offline (desktop helper)"
+  },
+  "msgOfflineDescription": {
+    "message": "Translates on this computer, with no text sent to a web service. The Atlas helper runs the offline engine and keeps the language packs. Install the helper and a language pack, then click Bind this browser here and allow it in the helper window. If the helper is not running or a pack is missing, the next enabled service translates the text."
+  },
+  "msgOfflineBind": {
+    "message": "Bind this browser"
+  },
+  "msgOfflineUnbind": {
+    "message": "Unbind"
+  },
+  "msgOfflinePrompt": {
+    "message": "The Atlas helper is running. Bind this browser to use offline translation."
+  },
+  "msgOfflineWaiting": {
+    "message": "Waiting for your answer in the Atlas helper window..."
+  },
+  "msgOfflineBindRefused": {
+    "message": "The helper window did not allow this browser. Click Bind this browser again and choose Allow."
+  },
+  "msgOfflineNoPacksYet": {
+    "message": "Connected. Install a language pack in the helper window."
+  },
+  "msgOfflineCodeLabel": {
+    "message": "Pairing code (from the helper window)"
+  },
+  "msgOfflineSave": {
+    "message": "Save and test"
+  },
+  "msgOfflineRemove": {
+    "message": "Remove code"
+  },
+  "msgOfflineGetHelper": {
+    "message": "Get the helper"
+  },
+  "msgOfflineRunning": {
+    "message": "Helper running"
+  },
+  "msgOfflineStopped": {
+    "message": "Helper not running"
+  },
+  "msgOfflineConnected": {
+    "message": "Connected. Language packs: $PACKS$",
+    "placeholders": {
+      "PACKS": {
+        "content": "$1",
+        "example": "enfr, fren"
+      }
+    }
+  },
+  "msgOfflineNotRunning": {
+    "message": "The helper is not running. Open the Atlas helper, then try again."
+  },
+  "msgOfflineWrongCode": {
+    "message": "The pairing code is wrong. Copy it again from the helper window."
+  },
+  "msgOfflineNoEngine": {
+    "message": "The offline engine is not installed in the helper. Install it from the helper window."
+  },
+  "msgOfflineNoPacks": {
+    "message": "No language pack is installed. Install one in the helper window."
+  },
+  "msgOfflineCodeFormat": {
+    "message": "The pairing code has 64 letters and digits. Copy it from the helper window."
+  },
+  "msgOfflineRemoved": {
+    "message": "Unbound. Offline (desktop helper) is off."
+  },
+  "fileAccessNotice": {
+    "message": "This is a local file. Allow this extension to read file pages in your browser's extension settings, then reload the page.",
+    "description": "Shown in the popup for a local file (file://) when the browser does not let the extension read it."
   }
 }

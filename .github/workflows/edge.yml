@@ -43,6 +43,10 @@ jobs:
           node-version: 22
           cache: npm
 
+      # check.mjs runs cargo check when CI is set, so this job needs Rust for the helper.
+      - name: Set up Rust (the helper window needs Rust 1.92 or later)
+        uses: dtolnay/rust-toolchain@stable
+
       - name: Install dependencies
         run: npm ci
 
@@ -90,6 +94,14 @@ jobs:
             echo "::error::$ZIP not found in the Chromium artifact"
             exit 1
           fi
+
+          # Edge rejects a "key" field in the manifest ("The manifest shouldn't contain the key field"). The Chromium
+          # package has one, so that the extension ID stays the same. Send a copy without it. The release keeps the original.
+          work=$(mktemp -d)
+          unzip -q "$ZIP" -d "$work/pkg"
+          node -e 'const fs = require("fs"); const p = process.argv[1]; const m = JSON.parse(fs.readFileSync(p, "utf8")); delete m.key; fs.writeFileSync(p, JSON.stringify(m, null, 2) + "\n");' "$work/pkg/manifest.json"
+          (cd "$work/pkg" && zip -q -r -X "$work/edge.zip" .)
+          ZIP="$work/edge.zip"
 
           # Turn a Location header into a full URL. The header can be a full URL, a path starting with /,
           # a path without the leading /, or only the operation ID. $2 is the operations path to use for an ID.

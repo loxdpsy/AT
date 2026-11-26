@@ -1,0 +1,184 @@
+# Takes screenshots of the desktop helper's window (each tab, and the bind request an extension sends),
+# so the progress of the helper's UI can be seen without building it locally.
+#
+# The screenshots are published to the "ui-screenshots" branch in the folder "latest/" (each run replaces
+# the files and adds one commit), and listed in the run's summary. They are also uploaded as an artifact.
+name: Helper screenshots
+
+on:
+  push:
+    branches: ["arena/**"]
+    paths:
+      - "tools/atlas-updater/**"
+      - ".github/workflows/screenshots.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: screenshots-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  screenshots:
+    name: Helper window screenshots
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust (the helper window needs Rust 1.92 or later)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install the virtual display and the screenshot tool
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb imagemagick curl libgl1 libgl1-mesa-dri libegl1 libxkbcommon0 libxkbcommon-x11-0 libxcursor1 libxrandr2 libxi6 libxinerama1
+
+      - name: Build the helper
+        working-directory: tools/atlas-updater
+        run: cargo build --release
+
+      - name: Take the screenshots
+        working-directory: tools/atlas-updater
+        env:
+          SHOTS: ${{ runner.temp }}/shots
+        run: |
+          set -eo pipefail
+          mkdir -p "$SHOTS"
+          BIN="$PWD/target/release/atlas-updater"
+          ORIGIN="chrome-extension://abcdefghijklmnopabcdefghijklmnop"
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1280x800x24 -nolisten tcp > "$SHOTS/xvfb.log" 2>&1 &
+          XVFB=$!
+          sleep 3
+
+          # Starts the helper on a tab and waits until its API answers (that means the window is up).
+          start_helper() {
+            ATLAS_HELPER_START_TAB="$1" "$BIN" > "$SHOTS/helper-$1.log" 2>&1 &
+            HELPER=$!
+            for _ in $(seq 1 60); do
+              if curl -fsS -m 2 http://127.0.0.1:47632/api/offline/ping > /dev/null 2>&1; then
+                sleep 4
+                return 0
+              fi
+              if ! kill -0 "$HELPER" 2>/dev/null; then
+                echo "The helper exited early:"; cat "$SHOTS/helper-$1.log"; return 1
+              fi
+              sleep 1
+            done
+            echo "The helper did not open its port:"; cat "$SHOTS/helper-$1.log"; return 1
+          }
+          stop_helper() {
+            kill "$HELPER" 2>/dev/null || true
+            wait "$HELPER" 2>/dev/null || true
+            sleep 2
+          }
+
+          # Takes a screenshot of the helper window (780x580 at the top left). A blank frame is tiny, so keep trying
+          # until the window has painted.
+          shoot() {
+            for _ in $(seq 1 15); do
+              import -window root -crop 780x580+0+0 +repage "$SHOTS/$1.png"
+              if [ "$(stat -c %s "$SHOTS/$1.png")" -gt 5000 ]; then return 0; fi
+              sleep 2
+            done
+            echo "warning: $1 stayed blank"
+          }
+
+          # The Extension tab, then the bind request an extension sends (the window asks the user to allow it).
+          start_helper extension
+          shoot 01-extension
+          curl -s -m 150 -X POST http://127.0.0.1:47632/api/offline/bind \
+            -H "Origin: $ORIGIN" -H "Content-Type: application/json" \
+            -d '{"name":"Screenshot test browser"}' > "$SHOTS/bind-response.txt" 2>&1 &
+          CURL=$!
+          sleep 4
+          shoot 02-bind-request
+          kill "$CURL" 2>/dev/null || true
+          stop_helper
+
+          start_helper offline
+          shoot 03-offline-translation
+          stop_helper
+
+          start_helper connections
+          shoot 04-connections
+          stop_helper
+
+          kill "$XVFB" 2>/dev/null || true
+          ls -l "$SHOTS"
+
+      - name: Upload the screenshots and logs as an artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: helper-screenshots
+          path: ${{ runner.temp }}/shots
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Publish the screenshots to the ui-screenshots branch
+        if: success()
+        env:
+          SHOTS: ${{ runner.temp }}/shots
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          dest="$RUNNER_TEMP/ui-screenshots"
+          git worktree add --detach "$dest" HEAD
+          cd "$dest"
+          if git ls-remote --exit-code --heads origin ui-screenshots > /dev/null 2>&1; then
+            git fetch --depth=1 origin ui-screenshots
+            git checkout -B ui-screenshots FETCH_HEAD
+          else
+            git checkout --orphan ui-screenshots
+            git rm -rf --quiet . 2>/dev/null || true
+          fi
+          # Only the screenshots live on this branch: remove anything else that came with the checkout.
+          find . -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          mkdir latest
+          cp "$SHOTS"/*.png latest/
+          {
+            echo "# Helper window screenshots"
+            echo
+            echo "Latest run: [run $GITHUB_RUN_NUMBER]($RUN_URL) on commit \`${GITHUB_SHA:0:7}\` (branch \`$GITHUB_REF_NAME\`)."
+            echo
+            echo "The files in \`latest/\` are replaced on every run. Older runs are in this branch's history."
+          } > README.md
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No change in the screenshots."
+          else
+            git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit -q -m "Helper screenshots: run $GITHUB_RUN_NUMBER ($GITHUB_REF_NAME ${GITHUB_SHA:0:7})"
+            git push origin HEAD:refs/heads/ui-screenshots
+          fi
+
+      - name: Show the screenshots in the run summary
+        if: success()
+        env:
+          REPO: ${{ github.repository }}
+          SHOTS: ${{ runner.temp }}/shots
+        run: |
+          base="https://raw.githubusercontent.com/$REPO/ui-screenshots/latest"
+          {
+            echo "## Helper window screenshots"
+            echo
+            echo "Also in the \`ui-screenshots\` branch, folder \`latest/\`, and in the \`helper-screenshots\` artifact."
+            echo
+          } >> "$GITHUB_STEP_SUMMARY"
+          for f in "$SHOTS"/*.png; do
+            name=$(basename "$f")
+            {
+              echo "### $name"
+              echo
+              echo "![$name]($base/$name)"
+              echo
+            } >> "$GITHUB_STEP_SUMMARY"
+          done

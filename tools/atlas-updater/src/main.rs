@@ -5,24 +5,37 @@
 // and copies it over the folder you point it at. Then you click "Reload extension" in the Updates section of Settings.
 //
 // Usage:
-//   atlas-updater                 open the helper window (the browser picker, updates and install)
-//   atlas-updater --serve         start the helper window without opening a browser
+//   atlas-updater                 open the helper window and its tray icon (the browser picker, updates and install)
+//   atlas-updater --serve         start the helper in the tray only; its window opens from the tray icon
 //   atlas-updater [--check] <folder>
 //     <folder>  the folder with manifest.json of the unpacked Atlas Translation
 //     --check   only report whether a newer release exists
 //
 // It stores nothing and sends nothing except the request to api.github.com and the zip download from github.com.
 
+mod api;
+mod autostart;
+mod bind;
 mod browsers;
+mod engine;
+mod gui;
 mod json;
+mod packs;
+mod settings;
 mod sha256;
-mod web;
+mod store;
+mod tray;
 
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+// The release the helper installs from. While Atlas Translation publishes prereleases, that is the newest one in the list
+// that is not a draft (GitHub lists releases newest first). /releases/latest skips prereleases, so it is used only when
+// INCLUDE_PRERELEASES is false. Set it to false at launch, when the releases are no longer prereleases.
+const RELEASES_API: &str = "https://api.github.com/repos/loxdpsy/AT/releases?per_page=10";
 const LATEST_RELEASE_API: &str = "https://api.github.com/repos/loxdpsy/AT/releases/latest";
+const INCLUDE_PRERELEASES: bool = true;
 const EXTENSION_NAME: &str = "Atlas Translation";
 
 struct Release {
@@ -30,6 +43,14 @@ struct Release {
     zip_name: String,
     zip_url: String,
     sha256_hex: String,
+    /// The bullet lines of the version's CHANGELOG section (what is new in it). Empty when the notes have none.
+    notes: Vec<String>,
+}
+
+/// The helper's version, the same as the extension's (for example 0.0.2.1). Cargo.toml stores it as 0.0.2+1,
+/// because Cargo needs three numbers; the fourth part is build metadata. See scripts/sync-version.mjs.
+pub fn app_version() -> String {
+    env!("CARGO_PKG_VERSION").replace('+', ".")
 }
 
 fn main() {
@@ -40,17 +61,17 @@ fn main() {
 }
 
 fn usage() -> String {
-    "Usage: atlas-updater [--serve] | atlas-updater [--check] <folder>\n  no arguments  open the helper window\n  --serve       start the helper window without opening a browser\n  <folder>      the folder with manifest.json of the unpacked Atlas Translation\n  --check       only report whether a newer release exists".to_string()
+    "Usage: atlas-updater [--serve] | atlas-updater [--check] <folder>\n  no arguments  open the helper window and its tray icon\n  --serve       start the helper in the tray only (no window until you click its icon)\n  <folder>      the folder with manifest.json of the unpacked Atlas Translation\n  --check       only report whether a newer release exists".to_string()
 }
 
 fn run() -> Result<(), String> {
     let args: Vec<String> = std::env::args().skip(1).collect();
     if args.is_empty() {
-        // Started by a double click: the helper window opens in the browser.
-        return web::serve(true);
+        // Started by a double click: the helper window and its tray icon open.
+        return gui::run(true);
     }
     if args.iter().any(|a| a.as_str() == "--serve") {
-        return web::serve(false);
+        return gui::run(false);
     }
     let check_only = args.iter().any(|a| a.as_str() == "--check");
     let folder_args: Vec<&String> = args.iter().filter(|a| a.as_str() != "--check").collect();
@@ -100,9 +121,24 @@ fn read_installed_version(folder: &Path) -> Result<String, String> {
         .ok_or_else(|| "manifest.json has no version".to_string())
 }
 
+/// The release that the helper installs from, as GitHub's JSON. See INCLUDE_PRERELEASES.
+fn newest_release_json() -> Result<json::Value, String> {
+    if !INCLUDE_PRERELEASES {
+        let body = github_text(LATEST_RELEASE_API)?;
+        return json::parse(&body).map_err(|e| format!("GitHub sent an unexpected answer: {}", e));
+    }
+    let body = github_text(RELEASES_API)?;
+    let list = json::parse(&body).map_err(|e| format!("GitHub sent an unexpected answer: {}", e))?;
+    let releases = list.as_array().ok_or("GitHub sent an unexpected answer: no release list")?;
+    releases
+        .iter()
+        .find(|r| !matches!(r.get("draft"), Some(json::Value::Bool(true))))
+        .cloned()
+        .ok_or_else(|| "no release has been published yet".to_string())
+}
+
 fn fetch_latest_release() -> Result<Release, String> {
-    let body = curl_text(LATEST_RELEASE_API)?;
-    let release = json::parse(&body).map_err(|e| format!("GitHub sent an unexpected answer: {}", e))?;
+    let release = newest_release_json()?;
 
     let tag = release
         .get("tag_name")
@@ -134,7 +170,36 @@ fn fetch_latest_release() -> Result<Release, String> {
         .ok_or("the zip checksum is not SHA-256, so it will not be installed")?
         .to_lowercase();
 
-    Ok(Release { version, zip_name, zip_url, sha256_hex })
+    let notes = changelog_bullets(release.get("body").and_then(|v| v.as_str()).unwrap_or(""));
+    Ok(Release { version, zip_name, zip_url, sha256_hex, notes })
+}
+
+/// The bullet lines of a release's notes. The notes are the CHANGELOG section of that version, so a bullet is one change.
+/// A bullet can wrap onto indented lines. The list ends at the first heading: the release page adds its download list after it.
+fn changelog_bullets(body: &str) -> Vec<String> {
+    let mut bullets: Vec<String> = Vec::new();
+    // True while the last bullet can still take wrapped lines.
+    let mut open = false;
+    for raw in body.lines() {
+        let line = raw.trim_end();
+        if line.starts_with('#') {
+            break;
+        }
+        if let Some(text) = line.strip_prefix("- ").or_else(|| line.strip_prefix("* ")) {
+            bullets.push(text.trim().to_string());
+            open = true;
+        } else if open && raw.starts_with("  ") && !line.trim().is_empty() {
+            if let Some(last) = bullets.last_mut() {
+                last.push(' ');
+                last.push_str(line.trim());
+            }
+        } else if !line.trim().is_empty() {
+            open = false;
+        }
+    }
+    bullets.retain(|b| !b.is_empty());
+    bullets.truncate(30);
+    bullets
 }
 
 /// True when version a is newer than version b. Compares the numeric parts, so 0.0.2.10 is newer than 0.0.2.9.
@@ -194,36 +259,59 @@ fn install_from(folder: &Path, release: &Release, work: &Path) -> Result<(), Str
 }
 
 /// Downloads with curl, which ships with Windows 10 and later, macOS and most Linux systems.
+/// curl's own --retry does not retry a connection that closes early (EOF), so the helper tries again itself.
 fn download(url: &str, dest: &Path) -> Result<(), String> {
-    let status = Command::new("curl")
-        .args(["-fsSL", "--retry", "3", "--retry-delay", "5", "--max-time", "300", "-o"])
-        .arg(dest)
-        .arg(url)
-        .status()
-        .map_err(|e| format!("cannot run curl ({}). Install curl, then try again.", e))?;
-    if status.success() {
-        Ok(())
-    } else {
-        Err(format!("the download failed ({}). Check your internet connection.", url))
+    const ATTEMPTS: u32 = 3;
+    for attempt in 1..=ATTEMPTS {
+        let status = Command::new("curl")
+            .args(["-fsSL", "--retry", "2", "--retry-delay", "5", "--max-time", "300", "-o"])
+            .arg(dest)
+            .arg(url)
+            .status()
+            .map_err(|e| format!("cannot run curl ({}). Install curl, then try again.", e))?;
+        if status.success() {
+            return Ok(());
+        }
+        if attempt < ATTEMPTS {
+            println!("The download did not finish. Trying again ({} of {}) ...", attempt + 1, ATTEMPTS);
+            std::thread::sleep(std::time::Duration::from_secs(5));
+        }
     }
+    Err(format!("the download failed ({}). Check your internet connection.", url))
+}
+
+/// GitHub allows 60 requests an hour per IP address without a token, and runners on shared networks can use that up.
+/// When GITHUB_TOKEN is set (the install test in CI sets it), requests to api.github.com are sent with it, which allows far more.
+fn github_token() -> Option<String> {
+    std::env::var("GITHUB_TOKEN").ok().map(|t| t.trim().to_string()).filter(|t| !t.is_empty())
 }
 
 fn curl_text(url: &str) -> Result<String, String> {
+    let mut args: Vec<String> = [
+        "-fsSL",
+        "--retry",
+        "3",
+        "--retry-delay",
+        "5",
+        "--max-time",
+        "60",
+        "-H",
+        "Accept: application/vnd.github+json",
+        "-H",
+        "User-Agent: atlas-updater",
+    ]
+    .iter()
+    .map(|s| s.to_string())
+    .collect();
+    if url.starts_with("https://api.github.com/") {
+        if let Some(token) = github_token() {
+            args.push("-H".to_string());
+            args.push(format!("Authorization: Bearer {}", token));
+        }
+    }
+    args.push(url.to_string());
     let output = Command::new("curl")
-        .args([
-            "-fsSL",
-            "--retry",
-            "3",
-            "--retry-delay",
-            "5",
-            "--max-time",
-            "60",
-            "-H",
-            "Accept: application/vnd.github+json",
-            "-H",
-            "User-Agent: atlas-updater",
-            url,
-        ])
+        .args(&args)
         .output()
         .map_err(|e| format!("cannot run curl ({}). Install curl, then try again.", e))?;
     if !output.status.success() {
@@ -231,6 +319,23 @@ fn curl_text(url: &str) -> Result<String, String> {
         return Err(format!("could not reach GitHub. {}", detail));
     }
     String::from_utf8(output.stdout).map_err(|_| "GitHub sent text that is not UTF-8".to_string())
+}
+
+/// curl_text, tried again when GitHub does not answer (curl's own --retry does not retry a 403 rate limit).
+fn github_text(url: &str) -> Result<String, String> {
+    const ATTEMPTS: u32 = 3;
+    let mut last = String::new();
+    for attempt in 1..=ATTEMPTS {
+        match curl_text(url) {
+            Ok(body) => return Ok(body),
+            Err(e) => last = e,
+        }
+        if attempt < ATTEMPTS {
+            println!("GitHub did not answer. Trying again ({} of {}) ...", attempt + 1, ATTEMPTS);
+            std::thread::sleep(std::time::Duration::from_secs(10));
+        }
+    }
+    Err(last)
 }
 
 /// Unzips with PowerShell on Windows and with unzip on macOS and Linux.
@@ -279,6 +384,16 @@ fn copy_tree(from: &Path, to: &Path) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn reads_the_changelog_bullets_and_stops_at_the_download_list() {
+        let body = "- First change.\n  continued here.\n* Second change.\n\nA paragraph.\n  not a continuation.\n\n## Downloads\n\n- **Chrome Web Store:** file.zip";
+        assert_eq!(
+            changelog_bullets(body),
+            vec!["First change. continued here.".to_string(), "Second change.".to_string()]
+        );
+        assert!(changelog_bullets("").is_empty());
+    }
 
     #[test]
     fn compares_versions_numerically() {

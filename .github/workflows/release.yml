@@ -6,12 +6,17 @@ name: Release
 #   - version:  the version to build, for example 9.8.2.0 (no "v")
 #   - action:   "build-and-test"    builds both packages and shows checksums in the summary. Nothing is published.
 #               "build-and-release" also commits the version bump, creates the tag v<version>, and publishes a GitHub release.
+#   - prerelease: mark the GitHub release as a prerelease. It is on until the launch. The helper (atlas-updater) installs
+#     prereleases while INCLUDE_PRERELEASES is true in tools/atlas-updater/src/main.rs. Set both to a full release at launch.
 #   - submit_amo: with build-and-release, send the Firefox store version to
 #     addons.mozilla.org for review. The store step waits for AMO_LISTING_READY to be "true" (a repository variable or a secret of that name).
 #
 # Pushing a tag such as v9.8.2.0 (with manifest.json already at that version) publishes it, the same as build-and-release.
+# Tag pushes are prereleases too, until the launch (see PRERELEASE in the "Work out what to do" step).
 # The release notes come from the matching "## <version>" section in CHANGELOG.md.
 # If the version is already published (its tag and GitHub release both exist), the run reports it and publishes nothing again. It does not fail.
+# To publish a version again, delete its GitHub release. If the tag stays, the run publishes the release on the same tag and commit.
+# To start over completely, delete the release and the tag, then run again. The version commit is made only when it is missing.
 
 on:
   push:
@@ -30,6 +35,10 @@ on:
           - build-and-test
           - build-and-release
         default: build-and-test
+      prerelease:
+        description: "Mark the GitHub release as a prerelease (build-and-release only). Turn it off at the launch."
+        type: boolean
+        default: true
       submit_amo:
         description: "Firefox store: send the store version to addons.mozilla.org for review (build-and-release only). The GitHub build is never sent to Mozilla."
         type: boolean
@@ -52,11 +61,16 @@ jobs:
       publish: ${{ steps.plan.outputs.publish }}
       submit: ${{ steps.plan.outputs.submit }}
       already: ${{ steps.plan.outputs.already }}
+      prerelease: ${{ steps.plan.outputs.prerelease }}
     steps:
       - name: Check out the code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      # check.mjs runs cargo check when CI is set, and it needs the same Rust toolchain as the Checks workflow.
+      - name: Set up Rust (the helper window needs Rust 1.92 or later)
+        uses: dtolnay/rust-toolchain@stable
 
       - name: Work out what to do
         id: plan
@@ -68,22 +82,27 @@ jobs:
           INPUT_VERSION: ${{ github.event.inputs.version }}
           INPUT_ACTION: ${{ github.event.inputs.action }}
           INPUT_SUBMIT: ${{ github.event.inputs.submit_amo }}
+          INPUT_PRERELEASE: ${{ github.event.inputs.prerelease }}
         run: |
           set -euo pipefail
           if [ "$EVENT" = "push" ]; then
             VERSION="${REF_NAME#v}"
             PUBLISH=true
             SUBMIT=true
+            # Prereleases until the launch. Set this to false then, and set INCLUDE_PRERELEASES to false in the helper.
+            PRERELEASE=true
           else
             VERSION="$(echo "$INPUT_VERSION" | tr -d '[:space:]' | sed 's/^v//')"
             PUBLISH=$([ "$INPUT_ACTION" = "build-and-release" ] && echo true || echo false)
             SUBMIT=$([ "$PUBLISH" = "true" ] && [ "$INPUT_SUBMIT" = "true" ] && echo true || echo false)
+            PRERELEASE=$([ "$INPUT_PRERELEASE" = "false" ] && echo false || echo true)
           fi
           if ! echo "$VERSION" | grep -Eq '^[0-9]+(\.[0-9]+){0,3}$'; then
             echo "::error::Version '$VERSION' is not valid. Use 1 to 4 numbers separated by dots, for example 9.8.2.0."
             exit 1
           fi
           ALREADY=false
+          RESUME=false
           if [ "$PUBLISH" = "true" ] && git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null; then
             if gh release view "v$VERSION" >/dev/null 2>&1; then
               # Already published: the tag and the GitHub release both exist. This counts as done.
@@ -93,8 +112,10 @@ jobs:
               PUBLISH=false
               SUBMIT=false
             else
-              echo "::error::The tag v$VERSION exists but has no GitHub release. Choose a new version, or finish that release by hand."
-              exit 1
+              # The tag exists but its GitHub release was deleted, for example to publish the version again. The tag and its
+              # commit stay as they are: nothing is committed or tagged again, and the release is made on the existing tag.
+              echo "The release v$VERSION was deleted but its tag exists. Publishing it again on the tag."
+              RESUME=true
             fi
           fi
 
@@ -106,6 +127,8 @@ jobs:
               exit 1
             fi
             SHA="$GITHUB_SHA"
+          elif [ "$RESUME" = "true" ]; then
+            SHA="$(git rev-parse "v$VERSION^{commit}")"
           elif [ "$PUBLISH" = "true" ]; then
             node scripts/sync-version.mjs "$VERSION"
             # Stop before anything is committed, tagged, or pushed. A missing CHANGELOG.md section, or a failing check or unit test, must not leave a version commit and tag on main.
@@ -135,6 +158,7 @@ jobs:
             echo "publish=$PUBLISH"
             echo "submit=$SUBMIT"
             echo "already=$ALREADY"
+            echo "prerelease=$PRERELEASE"
           } >> "$GITHUB_OUTPUT"
 
       - name: Write job summary
@@ -144,12 +168,14 @@ jobs:
           PUBLISH: ${{ steps.plan.outputs.publish }}
           SUBMIT: ${{ steps.plan.outputs.submit }}
           ALREADY: ${{ steps.plan.outputs.already }}
+          PRERELEASE: ${{ steps.plan.outputs.prerelease }}
         run: |
           {
             echo "## Release plan: Atlas Translation ${VERSION:-?}"
             echo ""
             echo "- Result: **${{ job.status }}**"
             echo "- Mode: $([ "$PUBLISH" = "true" ] && echo "**publish** (tag v$VERSION and a GitHub release)" || echo "**build and test only** (nothing published)")"
+            if [ "$PUBLISH" = "true" ]; then echo "- Release type: $([ "$PRERELEASE" = "true" ] && echo "**prerelease**" || echo "**release**")"; fi
             echo "- Submit to addons.mozilla.org: ${SUBMIT:-false}"
             if [ "$ALREADY" = "true" ]; then
               echo "- Already published: release v$VERSION already exists, so nothing was published again. This run is treated as done."
@@ -201,6 +227,16 @@ jobs:
       ref: ${{ needs.prepare.outputs.sha }}
     secrets: inherit
 
+  # The offline translation engine (tools/atlas-engine), built for Windows, macOS and Linux. The helper installs it
+  # from the release. engine.yml also tests each program with a real language pack. A build failure stops the publish job.
+  engine:
+    name: Offline engine
+    needs: prepare
+    if: ${{ needs.prepare.result == 'success' }}
+    uses: ./.github/workflows/engine.yml
+    with:
+      ref: ${{ needs.prepare.outputs.sha }}
+
   # The atlas-updater helper, built for Windows, macOS and Linux. Every release carries all three programs,
   # so the helper is always the version that matches the release. A build failure stops the publish job.
   helper:
@@ -213,44 +249,42 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            binary: atlas-updater
             asset: atlas-updater-linux
           - os: macos-latest
-            binary: atlas-updater
             asset: atlas-updater-macos
           - os: windows-latest
-            binary: atlas-updater.exe
             asset: atlas-updater-windows.exe
     defaults:
       run:
         shell: bash
-        working-directory: tools/atlas-updater
     steps:
       - name: Check out the code
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.prepare.outputs.sha }}
 
-      - name: Unit tests
-        run: cargo test --release
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
-      - name: Build
-        run: cargo build --release
+      - name: Set up Rust (the helper window needs Rust 1.92 or later)
+        uses: dtolnay/rust-toolchain@stable
 
-      - name: Name the program for the release
-        run: cp "target/release/${{ matrix.binary }}" "$RUNNER_TEMP/${{ matrix.asset }}"
+      - name: Build the helper (runs the Rust tests first)
+        run: node scripts/build-helper.mjs --out "$RUNNER_TEMP/helper"
 
       - name: Keep the program for the publish job
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.asset }}
-          path: ${{ runner.temp }}/${{ matrix.asset }}
+          path: ${{ runner.temp }}/helper/${{ matrix.asset }}
           if-no-files-found: error
 
   publish:
     name: Publish GitHub release
-    needs: [prepare, chromium, firefox, helper]
-    if: ${{ always() && needs.prepare.result == 'success' && needs.prepare.outputs.publish == 'true' && needs.chromium.result == 'success' && needs.firefox.result != 'cancelled' && needs.helper.result == 'success' }}
+    needs: [prepare, chromium, firefox, helper, engine]
+    if: ${{ always() && needs.prepare.result == 'success' && needs.prepare.outputs.publish == 'true' && needs.chromium.result == 'success' && needs.firefox.result != 'cancelled' && needs.helper.result == 'success' && needs.engine.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Check out the code
@@ -274,6 +308,13 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: atlas-updater-*
+          merge-multiple: true
+          path: dist
+
+      - name: Download the offline engine programs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: atlas-engine-*
           merge-multiple: true
           path: dist
 
@@ -309,6 +350,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ needs.prepare.outputs.version }}
           SUBMIT: ${{ needs.prepare.outputs.submit }}
+          PRERELEASE: ${{ needs.prepare.outputs.prerelease }}
         run: |
           TAG="v$VERSION"
           awk -v v="$VERSION" 'BEGIN { p = 0 } /^## / { if (p) exit; if ($2 == v) p = 1; next } p' CHANGELOG.md > notes.md
@@ -318,12 +360,17 @@ jobs:
           fi
           {
             echo ""
+            if [ "$PRERELEASE" = "true" ]; then
+              echo "> **Prerelease.** Not the public launch yet. The helper (atlas-updater) installs it while it includes prereleases."
+              echo ""
+            fi
             echo "## Downloads"
             echo ""
             echo "- **Chrome Web Store:** \`atlas-translation-$VERSION-chromium.zip\`"
             echo "- **Microsoft Edge Add-ons:** \`atlas-translation-$VERSION-edge.zip\` (same package as Chromium). It is submitted to Edge automatically when the Edge secrets are set."
             echo "- **Chromium, self-hosting:** \`atlas-translation-$VERSION-chromium.crx\` (Chromium 109 or newer)"
             echo "- **Helper (atlas-updater):** \`atlas-updater-windows.exe\`, \`atlas-updater-macos\`, \`atlas-updater-linux\`. It installs the newest release into your unpacked copy. See tools/atlas-updater/README.md."
+            echo "- **Offline engine:** \`atlas-engine-windows.exe\`, \`atlas-engine-macos\`, \`atlas-engine-linux\`. The helper runs it for offline translation and installs it from here."
             if [ -f "dist/atlas-translation-$VERSION-firefox-signed.xpi" ]; then
               echo "- **Firefox, self-hosted:** \`atlas-translation-$VERSION-firefox-signed.xpi\` is signed. Open it in Firefox to install. Firefox then updates it from \`updates.json\` in this release. Firefox for Android installs from addons.mozilla.org only."
             else
@@ -337,9 +384,9 @@ jobs:
           } >> notes.md
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" dist/* --clobber
-            gh release edit "$TAG" --title "Atlas Translation $VERSION" --notes-file notes.md
+            gh release edit "$TAG" --title "Atlas Translation $VERSION" --notes-file notes.md --prerelease="$PRERELEASE"
           else
-            gh release create "$TAG" dist/* --title "Atlas Translation $VERSION" --notes-file notes.md
+            gh release create "$TAG" dist/* --title "Atlas Translation $VERSION" --notes-file notes.md --prerelease="$PRERELEASE"
           fi
 
       - name: Write job summary

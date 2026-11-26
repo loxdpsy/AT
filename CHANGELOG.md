@@ -4,8 +4,52 @@
 
 Not released yet. Changes after 0.0.2.1 will be listed here.
 
+## 0.0.2.4
+
+- Desktop helper: the window uses the same logo as the extension, in its header, on its window and in the tray.
+- Desktop helper: a clearer window. The tabs are in a sidebar, each group of settings sits on its own card, the language packs are listed as a table, and the text stays in one readable column.
+- Setup page: when the extension is installed, Atlas Translation opens a setup page. It explains the desktop helper with a download link, and lets you choose the translation provider (Offline, Google, Groq or OpenRouter), with what each one sends. When you choose Offline, the page shows whether the helper is running and which language pairs it has installed, and where to install or change them. The recommended choice, Offline, is selected first; choose Keep to leave your current service as it is. It opens once. Updates do not open it again. Options, Others, "Open the setup guide" opens it again.
+- Updates: when a newer version is out, Options says "Please update" and lists what is new in that version, taken from its changelog section. Prereleases are included. The desktop helper says the same in its Extension tab.
+- Desktop helper: when it finds a browser on this computer (Chrome, Edge, Brave, Opera, Vivaldi, Firefox), it asks once whether to set Atlas Translation up there too. Firefox opens the add-on page. A Chromium browser opens its extensions page, and you choose Load unpacked. Chromium browsers cannot be set up silently, so the last step is yours. The answer is remembered for each browser, and Settings can show the question again.
+- Desktop helper: the browsers that are found are marked in the Extension tab.
+- Desktop helper: the Offline tab shows how many language packs are installed and how much space they use, and opens the packs folder.
+- Desktop helper: a Settings tab. Experimental is off by default. Turning it on shows the developer details: the data folder, the packs folder, the offline service address, and the helper version.
+- Google translation (#1078): an empty result, or a long paragraph (80+ characters) that Google returned unchanged from a known foreign language, is not shown or cached. The batch then falls back to the next enabled service as before, and the rows that were translated stay in the cache. Old cached copies of such results are fetched again.
+- Page translation (#1049): text before and after inline code (`<code>`) or a keyboard key (`<kbd>`) is no longer split into two separate translations. The sentence is sent as one piece, and the code text is part of it. Other inline tags are unchanged.
+- Options, Others: an Experimental switch (off by default). When it is on, the developer details show the version and a Copy diagnostic info button, which copies the version, the browser and the enabled service names. API keys are never copied.
+
+## 0.0.2.3
+
+- Desktop helper: a new window instead of a browser page. It has a tray icon (Open and Quit), closing the window keeps the helper in the tray, and it has three tabs: the extension, offline translation, and connections.
+- Offline translation is bound, not paired: on a page or in the options, Bind this browser asks you in the helper window to Allow it. The pairing code is gone. Remove a browser under Connections, or click Unbind in the options. The helper keeps only a hash of the token.
+- Right-to-left languages on web pages (Arabic, Hebrew, Persian, Urdu and others): the translated text is laid out right to left and aligned to the start edge, also where the site forces left alignment or left-to-right direction. The page itself is still flipped as before, and both are restored when the page is restored.
+- Desktop helper: when the system language is right to left, the window mirrors its layout (tabs on the right, rows right to left). Its text stays English for now; translating it is planned later.
+
+## 0.0.2.2
+
+- Desktop helper: its version is the extension's version (0.0.2.2 for this version), and a README section describes it.
+- Local files (file://): when the browser has not allowed the extension to read file pages, the popup says so and how to allow it (#91, #1051).
+- Local files (file://): "Never translate this site" and "Always translate this site" now work on a local file. The rule applies to that file (#91, #1051).
+- New shortcut, Shift+Alt+H (changeable in the browser's shortcut settings): turns hover translation on or off for the current tab, until the page is reloaded (#1047).
+- LibreTranslate (#278): can translate whole pages once a server is saved (Options, Page Translation Service). The API key is optional, for servers that need none. Each text is sent as its own request.
+- Right-to-left languages (Arabic, Hebrew, Persian, Urdu and others): the popup and options pages are laid out right to left when the interface language is one of them (#638).
+- Options, Keyboard shortcuts: on Chrome and Edge the field shows the shortcut the browser really has, not a saved one (#842). The double-Ctrl options are unchanged.
+- Offline translation is faster: long texts are split at their line breaks, and the parts are translated in parallel on
+  two engine processes per language pair.
+- The helper tries a download again when the network cuts it short.
+- The helper can start when you log in, in the background (its window: "Start the helper when I sign in"). Windows, macOS and Linux.
+- Paragraphs (#727), optional: Options, "Translate each paragraph as one text" (off by default). A sentence split by inline tags (links, bold, spans) is then sent and translated as one text, instead of in fragments.
+- OpenRouter (AI): a new translator with your own OpenRouter key (Settings → Services). Choose any model OpenRouter offers; the default is openai/gpt-4o-mini. Like Groq, the text goes only to OpenRouter with that key, and the answer must match the request, so a broken answer is not shown as a translation (#1029).
+- Translation failures: OpenRouter is included in the retry-with-the-next-service rule and in the removal of failed translations.
+
 ## 0.0.2.1
 
+- Offline translation (desktop helper): a new service, "Offline (desktop helper)", translates on this computer with no text sent to a web service. The Atlas helper (atlas-updater) runs an offline engine built from Mozilla's Bergamot (the engine Firefox uses) and serves it to the extension on 127.0.0.1. Set it up in Options, under Translation services: open the helper, install a language pack in its window, then paste the pairing code from the helper window and choose Save and test.
+- Offline translation: the helper's Offline section lists the language packs (each pack is a language pair with English, from the translation models that Firefox downloads, about 37 MB each), installs and removes them, and installs the engine from the newest release. Each pack file is checked against its SHA-256 before it is kept, and nothing is left behind when a check fails. The packs and the engine are stored in the user's data folder, so updating the extension does not remove them.
+- Offline translation: when the helper is not running, or the language pack for the pair is not installed, the next enabled service translates the text. Those cases do not count as failures, so the service is not put on cooldown for them.
+- Offline translation: once it is set up, Offline appears in the page and text translation choices in Options, in the text-selection bubble, in the translated-page bubble and in the text translation popup. It stays hidden until then.
+- Restore from file: a blank pairing code in a backup keeps the code saved on this device, and Offline is turned off when no code is saved, the same as Groq and DeepL.
+- Release workflow: the offline engine is built for Windows, macOS and Linux and attached to each release as atlas-engine-windows.exe, atlas-engine-macos and atlas-engine-linux. A failed engine build stops the publish job, the same as the helper.
 - Restore from file works on Chrome, Edge and Firefox. On Chrome and Edge, 0.0.2.0 stopped with "browser.commands.update is not a function" after the file was chosen. Restore and Reset to defaults no longer call that function on Chromium.
 - Chromium and Edge: the signed build carries its public key in the manifest, so the unpacked zip has the same extension ID as the CRX. Settings are stored per extension ID, so a copy loaded from the 0.0.2.0 zip keeps its own settings. Use Restore from file to move them.
 - Restore from file: a blank Groq or DeepL key in a backup keeps the key saved on this device.

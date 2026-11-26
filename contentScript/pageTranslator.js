@@ -414,6 +414,12 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
       }
     }
   }
+  // Inline code and keyboard keys stay inside the sentence (#1049). Their text is part of it, so the sentence is sent to
+  // the service as one string (piece.joinsInline). Other inline-ignored tags still end the piece.
+  function isSentenceCode(node) {
+    const nodeName = node.nodeName.toLowerCase();
+    return node.nodeType === 1 && (nodeName === "code" || nodeName === "kbd") && !isNoTranslateNode(node) && !node.classList.contains("notranslate") && node.getAttribute("translate") !== "no" && !node.isContentEditable && !node.classList.contains("material-icons");
+  }
   function getPiecesToTranslate(root = document.documentElement) {
     const piecesToTranslate = [{
       isTranslated: false,
@@ -433,7 +439,9 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
           lastHTMLElement = node;
           const nodeName = node.nodeName.toLowerCase();
           if (nodeName === "select" || nodeName === "datalist") lastSelectOrDataListElement = node;
-          if (htmlTagsInlineIgnore.indexOf(nodeName) !== -1 || isNoTranslateNode(node) || node.classList.contains("notranslate") || node.getAttribute("translate") === "no" || node.isContentEditable || node.classList.contains("material-icons") ||
+          if (isSentenceCode(node)) {
+            piecesToTranslate[index].joinsInline = true;
+          } else if (htmlTagsInlineIgnore.indexOf(nodeName) !== -1 || isNoTranslateNode(node) || node.classList.contains("notranslate") || node.getAttribute("translate") === "no" || node.isContentEditable || node.classList.contains("material-icons") ||
           node.classList.contains("material-symbols-outlined") || nodeName.startsWith("br-") ||
           node.getAttribute("id") === "branch-select-menu" ||
           location.hostname === "twitter.com" && nodeName === "a" && (node.matches ? node.matches("article a") : true)
@@ -460,7 +468,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
               lastHTMLElement = _node;
               if (nodeName === "select" || nodeName === "datalist") lastSelectOrDataListElement = _node;
             }
-            if (htmlTagsInlineText.indexOf(nodeName) == -1) {
+            if (htmlTagsInlineText.indexOf(nodeName) == -1 && !isSentenceCode(_node)) {
               if (piecesToTranslate[index].nodes.length > 0) {
                 currentParagraphSize = 0;
                 piecesToTranslate[index].bottomElement = lastHTMLElement;
@@ -629,8 +637,41 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     node.replaceWith(fontNode);
     return fontNode;
   }
+  // Translated text in a right-to-left language: the block that holds it is laid out right to left, so a site's own
+  // left alignment or LTR direction does not leave Arabic, Hebrew or Persian text on the wrong side. The marks are
+  // removed when the page is restored (clearRightToLeftText).
+  const rtlMarked = new Set();
+  let rtlStyleNode = null;
+  function ensureRightToLeftStyle() {
+    if (rtlStyleNode || !document.head) return;
+    rtlStyleNode = document.createElement("style");
+    rtlStyleNode.id = "twp-rtl-style";
+    rtlStyleNode.textContent = ".twp-rtl-text { direction: rtl !important; text-align: start !important; }";
+    document.head.appendChild(rtlStyleNode);
+  }
+  function markRightToLeftText(node) {
+    if (!isRightToLeftLanguage(currentTargetLanguage) || !node || !node.parentNode) return;
+    // Climb out of inline wrappers (font, span, a): the alignment that matters belongs to the block around them.
+    let block = node.parentNode;
+    while (block && block.nodeType === 1 && block !== document.body && getComputedStyle(block).display.indexOf("inline") === 0 && block.parentElement) {
+      block = block.parentElement;
+    }
+    if (!block || block.nodeType !== 1 || block === document.body || block === document.documentElement || rtlMarked.has(block)) return;
+    ensureRightToLeftStyle();
+    block.classList.add("twp-rtl-text");
+    rtlMarked.add(block);
+  }
+  function clearRightToLeftText() {
+    rtlMarked.forEach(el => el.classList.remove("twp-rtl-text"));
+    rtlMarked.clear();
+    if (rtlStyleNode) {
+      rtlStyleNode.remove();
+      rtlStyleNode = null;
+    }
+  }
   function translateTextContent(node, parentNode, text, toRestore) {
     toRestore.translatedText = text;
+    markRightToLeftText(node);
     if (location.hostname === "pdf.translatewebpages.org") {
       if (parentNode && parentNode.nodeName.toLowerCase() === "span" && parentNode.getAttribute("role") === "presentation") {
         const oldClientWidth = node.parentNode.clientWidth;
@@ -718,6 +759,31 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     }
     mutationObserver.takeRecords();
   }
+  // Paragraph mode: results[i] is the translation of the whole piece i. The first text node takes it, through
+  // translateResults. The other text nodes of the piece are cleared, so the paragraph is not shown twice. They are
+  // recorded in nodesToRestore with an empty translation, so restorePage puts their original text back.
+  function translateParagraphResults(piecesNow, results) {
+    // A piece without a translation keeps its original text, so only pieces with a result are written.
+    const done = piecesNow.map((ptt, i) => ({ ptt, text: results[i] && results[i][0] })).filter(item => typeof item.text === "string");
+    if (done.length === 0) return;
+    translateResults(done.map(item => ({ nodes: item.ptt.nodes.slice(0, 1) })), done.map(item => [item.text]));
+    done.forEach(({ ptt }) => {
+      for (let j = 1; j < ptt.nodes.length; j++) {
+        const node = ptt.nodes[j];
+        if (!node || !node.parentNode || node.textContent === "") continue;
+        nodesToRestore.push({
+          node,
+          original: node,
+          originalText: node.textContent,
+          translatedText: "",
+          originalScale: null,
+          parentNode: node.parentNode
+        });
+        node.textContent = "";
+      }
+    });
+    mutationObserver.takeRecords();
+  }
   function translateAttributes(attributesToTranslateNow, results) {
     for (const i in attributesToTranslateNow) {
       const ati = attributesToTranslateNow[i];
@@ -786,9 +852,22 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
             }
           });
           if (piecesToTranslateNow.length > 0) {
-            backgroundTranslateHTML(currentPageTranslatorService, currentSourceLanguage, currentTargetLanguage, piecesToTranslateNow.map(ptt => ptt.nodes.map(node => filterKeywordsInText(node.textContent, customDictionary, currentPageTranslatorService))), dontSortResults).then(results => {
+            // Paragraph mode (#727): the text of a whole block is sent as one string, so the service translates the
+            // sentence as a unit. Off by default: each text node is then translated on its own, as before.
+            const paragraphMode = twpConfig.get("translateWholeParagraphs") === "yes";
+            const keywordFilter = node => filterKeywordsInText(node.textContent, customDictionary, currentPageTranslatorService);
+            // A piece is sent as one string in paragraph mode, and also when it runs through inline code (#1049). Otherwise
+            // the service would translate the text before and after the code as two separate sentences.
+            const sentenceMode = ptt => paragraphMode || ptt.joinsInline === true;
+            const sourceArray2d = piecesToTranslateNow.map(ptt => sentenceMode(ptt) ? [ptt.nodes.map(keywordFilter).join("")] : ptt.nodes.map(keywordFilter));
+            backgroundTranslateHTML(currentPageTranslatorService, currentSourceLanguage, currentTargetLanguage, sourceArray2d, dontSortResults).then(results => {
               if (pageLanguageState === "translated" && currentFooCount === fooCount) {
-                translateResults(piecesToTranslateNow, results);
+                // Results are matched to their pieces by position, so each kind of piece is written by its own function.
+                const withResult = piecesToTranslateNow.map((ptt, i) => ({ ptt, result: results[i] }));
+                const plain = withResult.filter(item => !sentenceMode(item.ptt));
+                const sentences = withResult.filter(item => sentenceMode(item.ptt));
+                if (plain.length > 0) translateResults(plain.map(item => item.ptt), plain.map(item => item.result));
+                if (sentences.length > 0) translateParagraphResults(sentences.map(item => item.ptt), sentences.map(item => item.result));
               }
             });
           }
@@ -886,6 +965,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
   };
   pageTranslator.restorePage = function () {
     restorePageDirection();
+    clearRightToLeftText();
     fooCount++;
     piecesToTranslate = [];
     showOriginal.disable();

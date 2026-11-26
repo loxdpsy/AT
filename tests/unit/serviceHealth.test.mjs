@@ -103,4 +103,33 @@ function clock(start = 1000) {
   await assert.rejects(runWithServiceFallback([], h, async () => "x"), /No translation service is enabled/);
 }
 
+// An error marked notAFailure (an offline pack that is not installed) skips the service for that text only. It never
+// opens the cooldown, and the next enabled service translates.
+{
+  const h = createServiceHealth({ failuresBeforeCooldown: 2, cooldownMs: 60000 });
+  const skipped = async () => {
+    const error = new Error("offline: not installed");
+    error.notAFailure = true;
+    throw error;
+  };
+  for (let i = 0; i < 4; i++) {
+    await assert.rejects(runWithServiceFallback(["offline"], h, skipped));
+  }
+  assert.strictEqual(h.isHealthy("offline"), true, "errors that are not failures never open the cooldown");
+  const fell = await runWithServiceFallback(["offline", "google"], h, async name => {
+    if (name === "offline") return skipAsSkip();
+    return "translated";
+  }, () => {});
+  assert.strictEqual(fell.service, "google", "the next enabled service translates when offline skips");
+  assert.strictEqual(h.isHealthy("offline"), true, "a skip is not a failure");
+  await assert.rejects(runWithServiceFallback(["offline"], h, async () => { throw new Error("helper down"); }));
+  await assert.rejects(runWithServiceFallback(["offline"], h, async () => { throw new Error("helper down"); }));
+  assert.strictEqual(h.isHealthy("offline"), false, "two real failures do open the cooldown");
+}
+function skipAsSkip() {
+  const error = new Error("offline: not installed");
+  error.notAFailure = true;
+  return Promise.reject(error);
+}
+
 console.log("serviceHealth.test.mjs: all assertions passed");

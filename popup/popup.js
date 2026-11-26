@@ -5,6 +5,18 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
   const darkPref = twpConfig.get("darkMode");
   twpTheme.set(["auto", "yes", "no"].includes(darkPref) ? darkPref : "auto");
   twpI18n.translateDocument();
+  // A local file (file://) is translated only when the browser lets this extension read file pages. Show the notice when it does not.
+  chrome.tabs.query({ active: true, currentWindow: true }, tabs => {
+    const url = (tabs && tabs[0] && tabs[0].url) || "";
+    const api = chrome.extension && chrome.extension.isAllowedFileSchemeAccess;
+    if (!url.startsWith("file:") || typeof api !== "function") return;
+    const show = allowed => {
+      if (allowed === false) $("#fileAccessNotice").hidden = false;
+    };
+    // Chrome calls back; Firefox returns a promise. Accept both.
+    const result = api.call(chrome.extension, show);
+    if (result && typeof result.then === "function") result.then(show, () => {});
+  });
   $("#popupTitle").textContent = chrome.runtime.getManifest().name;
   $("#btnSettings").addEventListener("click", () => {
     chrome.tabs.create({ url: chrome.runtime.getURL("/options/options.html") }, closePopupAfter);
@@ -72,7 +84,10 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     yandex: ["/icons/yandex-translate-32.png", "Yandex Translate", false],
     bing: ["/icons/bing-translate-32.png", "Bing Translator", false],
     deepl: ["/icons/deepl-mark-128.png", "DeepL", false],
-    groq: ["/icons/groq-wordmark.png", "Groq", true]
+    groq: ["/icons/groq-wordmark.png", "Groq", true],
+    openrouter: ["/icons/icon-32.png", "OpenRouter (AI)", false],
+    offline: ["/icons/icon-32.png", "Offline (desktop helper)", false],
+    libre: ["/icons/icon-32.png", "LibreTranslate", false]
   };
   let usageService = null;
 
@@ -301,14 +316,9 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
   function text(key, fallback, substitution) {
     return twpI18n.getMessage(key, substitution) || fallback;
   }
-  // Only web pages have a site to remember. chrome:// and file:// pages return "".
+  // The site key: the hostname of a web page, or the address of a local file (file://). chrome:// pages return "".
   function hostnameOf(url) {
-    try {
-      const parsed = new URL(url);
-      return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.hostname : "";
-    } catch (e) {
-      return "";
-    }
+    return twpConfig.siteKeyOf(url);
   }
   function isOn(listName, value) {
     return value !== "" && twpConfig.get(listName).indexOf(value) !== -1;

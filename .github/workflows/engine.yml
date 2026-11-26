@@ -1,0 +1,233 @@
+# Builds the offline translation engine (tools/atlas-engine, built from Bergamot v0.6.0) for Windows, macOS and
+# Linux. Each build is checked with a real language pack: scripts/engine-smoke.mjs downloads the English to French pack
+# from the catalogue, checks it, and translates. Each program is kept as an artifact for the release.
+#
+# macOS builds on an Intel runner: the int8 models use intgemm, which is an x86 library.
+name: Engine
+
+on:
+  push:
+    paths:
+      - "tools/atlas-engine/**"
+      - "tools/atlas-updater/src/packs.json"
+      - "scripts/engine-smoke.mjs"
+      - ".github/workflows/engine.yml"
+  pull_request:
+    paths:
+      - "tools/atlas-engine/**"
+      - "tools/atlas-updater/src/packs.json"
+      - "scripts/engine-smoke.mjs"
+      - ".github/workflows/engine.yml"
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        description: "The commit to build"
+        type: string
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            binary: atlas-engine
+            asset: atlas-engine-linux
+          - os: macos-15-intel
+            binary: atlas-engine
+            asset: atlas-engine-macos
+          - os: windows-latest
+            binary: atlas-engine.exe
+            asset: atlas-engine-windows.exe
+    # The PCRE2 copy that SentencePiece downloads is configured during the Build step, not the Configure step, so the
+    # variable must be set for the whole job. CMake 4 refuses the old CMake minimum that PCRE2 and SentencePiece declare.
+    env:
+      CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      # Bergamot is the inference/ folder of mozilla/translations, at the commit Firefox builds from (see
+      # tools/atlas-engine/CMakeLists.txt). It comes from the commit's source tarball. Marian reads a .git next to the
+      # folder for its version header, so the folder gets a git repository with one empty commit. That repository has no
+      # submodule entries, so CMake's own submodule updates do nothing. The five submodules that the build needs
+      # are fetched as tarballs at their pinned commits. The other submodules are for CUDA, FBGEMM, or the ARM build.
+      - name: Fetch Bergamot (inference/ of mozilla/translations at eea6e5a8)
+        run: |
+          set -euo pipefail
+          src=tools/atlas-engine/translations-source
+          tmp=$(mktemp -d)
+          mkdir -p "$src"
+          curl -fsSL https://codeload.github.com/mozilla/translations/tar.gz/eea6e5a80aa4ddd86d9cc35ce9a65b79aa3ab96d \
+            | tar xz -C "$tmp"
+          mv "$tmp"/translations-*/inference "$src/inference"
+          rm -rf "$tmp"
+          git init -q "$src"
+          git -C "$src" -c user.name=ci -c user.email=ci@localhost commit -q --allow-empty \
+            -m "mozilla/translations eea6e5a80aa4ddd86d9cc35ce9a65b79aa3ab96d (inference/ from the source tarball)"
+          fetch() { # <owner/repo> <commit> <destination> [extra tar options]
+            mkdir -p "$3"
+            curl -fsSL "https://codeload.github.com/$1/tar.gz/$2" | tar xz --strip-components=1 -C "$3" "${@:4}"
+          }
+          # Commits are the gitlinks of eea6e5a8 (inference/3rd_party/ssplit-cpp, marian-fork/src/3rd_party/...).
+          fetch browsermt/ssplit-cpp a311f9865ade34db1e8e080e6cc146f55dafb067 "$src/inference/3rd_party/ssplit-cpp"
+          # One file is left out of sentencepiece: a symlink to a Python test fixture. Windows cannot always create symlinks.
+          fetch browsermt/sentencepiece ae41b7740d7006596bb9257e83340b2620db9d00 "$src/inference/marian-fork/src/3rd_party/sentencepiece" \
+            --exclude='*/python/test/botchan.txt'
+          fetch kpu/intgemm f7401513da71758dacce52fed1c7855549abee59 "$src/inference/marian-fork/src/3rd_party/intgemm"
+          # onnxjs supplies the float GEMM of the WASM-compatible sources (USE_WASM_COMPATIBLE_SOURCE, see the engine CMakeLists).
+          fetch browsermt/onnxjs 924924b08e9596b41aeebada4a172f026be95f5a "$src/inference/marian-fork/src/3rd_party/onnxjs"
+          fetch abhi-agg/eigen-git-mirror fff37f4ca0397af9ed7e04f3bd6b893a1ea2b08e "$src/inference/marian-fork/src/3rd_party/onnxjs/deps/eigen"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Windows only: PCRE2 for ssplit comes from vcpkg, built as a static library with the static C runtime (/MT), the
+      # same runtime marian and bergamot use. CMAKE_PREFIX_PATH points CMake at it. See tools/atlas-engine/CMakeLists.txt.
+      - name: Install PCRE2 (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          root=$(cygpath -u "$VCPKG_INSTALLATION_ROOT")
+          "$root/vcpkg.exe" install pcre2:x64-windows-static
+          echo "CMAKE_PREFIX_PATH=$(cygpath -m "$root/installed/x64-windows-static")" >> "$GITHUB_ENV"
+
+      - name: Configure
+        id: configure
+        run: cmake -S tools/atlas-engine -B build/engine -DCMAKE_BUILD_TYPE=Release
+
+      # The log is kept for the job summary. On Linux and macOS, -k keeps going after an error, so one run lists every
+      # failing file instead of only the first one. Windows (MSBuild) stops at the failed project.
+      - name: Build
+        id: build
+        run: |
+          set -o pipefail
+          cmake --build build/engine --config Release --parallel 4 ${{ runner.os != 'Windows' && '-- -k' || '' }} 2>&1 | tee "$RUNNER_TEMP/engine-build.log"
+
+      - name: Find the program
+        id: find
+        run: |
+          found=$(find build/engine -type f -name "${{ matrix.binary }}" | head -n 1)
+          if [ -z "$found" ]; then
+            echo "::error::${{ matrix.binary }} was not built"
+            exit 1
+          fi
+          echo "path=$found" >> "$GITHUB_OUTPUT"
+
+      - name: Translate English to French with the real language pack
+        id: smoke
+        # The output is kept for the job summary. The step still fails when the test fails (bash runs with pipefail).
+        run: node scripts/engine-smoke.mjs "${{ steps.find.outputs.path }}" 2>&1 | tee "$RUNNER_TEMP/engine-smoke.log"
+
+      # When the test fails, the last lines of its log are also written as error annotations. Annotations can be read
+      # without signing in to the run page, so the cause shows even when the job log cannot be downloaded.
+      - name: Annotate the test failure
+        if: failure() && steps.smoke.outcome == 'failure'
+        run: |
+          tail -n 60 "$RUNNER_TEMP/engine-smoke.log" | while IFS= read -r line; do
+            echo "::error title=engine smoke test::${line//%/%25}"
+          done
+
+      - name: Name the program for the release
+        id: name
+        run: cp "${{ steps.find.outputs.path }}" "$RUNNER_TEMP/${{ matrix.asset }}"
+
+      - name: Keep the program for the release
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: ${{ runner.temp }}/${{ matrix.asset }}
+          if-no-files-found: error
+
+      # Runs even when a step failed. Shows each step's result, the compiler and linker errors when the build failed,
+      # and the size and SHA-256 of the program when it was built. A summary problem never fails the job.
+      - name: Job summary
+        if: always()
+        continue-on-error: true
+        env:
+          ASSET: ${{ matrix.asset }}
+        run: |
+          summary="$GITHUB_STEP_SUMMARY"
+          {
+            echo "## Offline engine: ${{ matrix.os }}"
+            echo ""
+            echo "| Step | Result |"
+            echo "| --- | --- |"
+            echo "| Configure | ${{ steps.configure.outcome }} |"
+            echo "| Build | ${{ steps.build.outcome }} |"
+            echo "| Find the program | ${{ steps.find.outcome }} |"
+            echo "| Translate with the real language pack | ${{ steps.smoke.outcome }} |"
+            echo "| Name for the release | ${{ steps.name.outcome }} |"
+            echo ""
+          } >> "$summary"
+
+          log="$RUNNER_TEMP/engine-build.log"
+          if [ "${{ steps.build.outcome }}" != "success" ]; then
+            {
+              echo "### Build errors"
+              echo ""
+              echo "Compiler, linker and make lines (the first 80). The full log is in the Build step."
+              echo ""
+              echo '```'
+              if [ -f "$log" ]; then
+                grep -E ': error|error [A-Z]+[0-9]+|LNK[0-9]+|\*\*\* |failed' "$log" | head -n 80 || true
+              fi
+              echo '```'
+              echo ""
+            } >> "$summary"
+          fi
+
+          smokelog="$RUNNER_TEMP/engine-smoke.log"
+          if [ "${{ steps.smoke.outcome }}" = "failure" ] && [ -f "$smokelog" ]; then
+            {
+              echo "### Translation test output"
+              echo ""
+              echo "The last 60 lines of the test output (the download, the engine start and the translations)."
+              echo ""
+              echo '```'
+              tail -n 60 "$smokelog"
+              echo '```'
+              echo ""
+            } >> "$summary"
+          fi
+
+          if [ "${{ steps.name.outcome }}" = "success" ]; then
+            file="$RUNNER_TEMP/$ASSET"
+            size=$(wc -c < "$file")
+            digest=$(node -e "const c=require('crypto'),f=require('fs');process.stdout.write(c.createHash('sha256').update(f.readFileSync(process.argv[1])).digest('hex'))" "$file")
+            {
+              echo "### Program: $ASSET"
+              echo ""
+              echo "- Size: $size bytes"
+              echo "- SHA-256: \`$digest\`"
+              echo ""
+            } >> "$summary"
+          fi
+
+      # The raw logs, as an artifact. Log text from a run is not readable without signing in, so this keeps the
+      # compiler output and the test output for debugging. It is not an atlas-engine-* artifact, so release.yml does not
+      # download it.
+      - name: Keep the logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: engine-logs-${{ matrix.asset }}
+          path: |
+            ${{ runner.temp }}/engine-build.log
+            ${{ runner.temp }}/engine-smoke.log
+          if-no-files-found: ignore
+          retention-days: 7

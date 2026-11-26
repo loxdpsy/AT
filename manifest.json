@@ -3,7 +3,7 @@
   "default_locale": "en",
   "name": "Atlas Translation",
   "description": "__MSG_extensionDescription__",
-  "version": "0.0.2.1",
+  "version": "0.0.2.4",
   "homepage_url": "https://github.com/loxdpsy/AT",
   "minimum_chrome_version": "109.0",
   "commands": {
@@ -12,6 +12,12 @@
         "default": "Alt+T"
       },
       "description": "__MSG_lblSwitchTranslatedAndOriginal__"
+    },
+    "hotkey-toggle-hover-translation": {
+      "suggested_key": {
+        "default": "Shift+Alt+H"
+      },
+      "description": "__MSG_lblToggleHoverTranslationForTab__"
     },
     "hotkey-translate-selected-text": {
       "suggested_key": {

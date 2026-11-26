@@ -63,7 +63,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     }
     return true;
   } else if (request.action === "getTabHostName") {
-    sendResponse(new URL(sender.tab.url).hostname);
+    sendResponse(twpConfig.siteKeyOf(sender.tab.url));
   } else if (request.action === "thisFrameIsInFocus") {
     chrome.tabs.sendMessage(sender.tab.id, {
       action: "anotherFrameIsInFocus"
@@ -118,7 +118,10 @@ function updateContextMenu(pageLanguageState = "original") {
 }
 chrome.runtime.onInstalled.addListener(details => {
   if (details.reason == "install") {
-    tabsCreate(chrome.runtime.getURL("/options/options.html"));
+    // The setup page is shown once. onboardingDone is kept across updates, so an update does not show it again.
+    chrome.storage.local.get("onboardingDone", result => {
+      if (!(result && result.onboardingDone)) tabsCreate(chrome.runtime.getURL("/onboarding/onboarding.html"));
+    });
     twpConfig.onReady(async () => {
       if (chrome.i18n.getUILanguage() === "zh-CN") {
         twpConfig.set("pageTranslatorService", "bing");
@@ -271,8 +274,8 @@ if (typeof chrome.contextMenus !== "undefined") {
       resetBrowserAction();
       if (tabId !== undefined) resetPageAction(tabId);
     } else if (info.menuItemId == "never-translate") {
-      const hostname = new URL(tab.url).hostname;
-      twpConfig.addSiteToNeverTranslate(hostname);
+      const siteKey = twpConfig.siteKeyOf(tab.url);
+      if (siteKey) twpConfig.addSiteToNeverTranslate(siteKey);
     } else if (info.menuItemId == "more-options") {
       tabsCreate(chrome.runtime.getURL("/options/options.html"));
     } else if (info.menuItemId == "action-translate-pdf") {
@@ -545,6 +548,15 @@ if (typeof chrome.commands !== "undefined") {
       }, tabs => {
         chrome.tabs.sendMessage(tabs[0].id, {
           action: "toggle-translation"
+        }, checkedLastError);
+      });
+    } else if (command === "hotkey-toggle-hover-translation") {
+      chrome.tabs.query({
+        currentWindow: true,
+        active: true
+      }, tabs => {
+        if (tabs[0]) chrome.tabs.sendMessage(tabs[0].id, {
+          action: "toggle-hover-translation"
         }, checkedLastError);
       });
     } else if (command === "hotkey-translate-selected-text") {

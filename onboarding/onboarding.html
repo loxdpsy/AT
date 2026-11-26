@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Atlas Translation · Setup</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/w3css/4/w3.css" />
+  <link rel="stylesheet" href="/options/options.css" />
+  <link rel="stylesheet" href="onboarding.css" />
+  <script src="/lib/theme.js"></script>
+</head>
+
+<body>
+  <main class="onboarding">
+    <h1 data-i18n="onboardingTitle">Welcome to Atlas Translation</h1>
+    <p class="card-desc" data-i18n="onboardingIntro">Choose how pages and selected text are translated. You can change this later in Options.</p>
+
+    <section class="card">
+      <h2 class="card-title" data-i18n="onboardingProviderTitle">Translation provider</h2>
+      <div id="providers"></div>
+      <div id="offlineStatus" class="card-desc" hidden>
+        <p id="offlineStatusText"></p>
+        <button id="btnCheckHelper" class="btn btn-ghost" data-i18n="onboardingCheckAgain">Check the helper again</button>
+      </div>
+      <p class="card-desc" data-i18n="onboardingKeyNote">Groq and OpenRouter need your own key. Add it in Options, Services, after you save.</p>
+    </section>
+
+    <section class="card">
+      <h2 class="card-title" data-i18n="onboardingHelperTitle">Desktop helper (optional)</h2>
+      <p class="card-desc" data-i18n="onboardingHelperDesc">The helper is a small desktop app for Windows, macOS and Linux. It runs the offline engine and keeps the language packs on your computer. Download it from the Atlas releases page, then open it once. Its Offline tab installs language packs.</p>
+      <a id="helperLink" class="btn btn-primary" href="https://github.com/loxdpsy/AT/releases" target="_blank" rel="noopener noreferrer" data-i18n="onboardingHelperButton">Download the helper</a>
+    </section>
+
+    <div class="btn-row">
+      <button id="btnSave" class="btn btn-primary" data-i18n="onboardingSave">Save and finish</button>
+      <button id="btnSkip" class="btn btn-ghost" data-i18n="onboardingSkip">Skip for now</button>
+    </div>
+    <p id="result" class="card-desc" hidden></p>
+  </main>
+  <script src="/lib/polyfill.js"></script>
+  <script src="/lib/checkedLastError.js"></script>
+  <script src="/lib/stuff.js"></script>
+  <script src="/lib/languages.js"></script>
+  <script src="/lib/config.js"></script>
+  <script src="/lib/platformInfo.js"></script>
+  <script src="/lib/i18n.js"></script>
+  <script src="onboarding.js"></script>
+</body>
+
+</html>

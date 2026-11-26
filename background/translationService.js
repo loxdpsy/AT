@@ -142,6 +142,40 @@ const translationService = function () {
   }
 
   /**
+   * The text the user sent, without the request wrapper (<pre>) or the inline <a i=N> tags that Google adds, and unescaped.
+   * @param {string} text
+   * @returns {string}
+   */
+  function plainSource(text) {
+    return Utils.unescapeHTML(String(text || "").replace(/<\/?pre>/g, "").replace(/<\/?a(\s+i=\d+)?>/g, ""));
+  }
+
+  /**
+   * Checks one translated text (part 5 of #1078). A translation that is empty for a text with words is not usable.
+   * A text of at least 80 characters and eight words, returned unchanged by a known source language that is not the target, is not usable either.
+   * Target-language, unknown-language and short unchanged texts are accepted.
+   * @param {string} source the text as the user wrote it
+   * @param {string} translated the translation as shown
+   * @param {string|null} detectedLanguage
+   * @param {string} targetLanguage
+   * @returns {boolean}
+   */
+  function isUsableTranslation(source, translated, detectedLanguage, targetLanguage) {
+    const src = String(source || "").trim();
+    const out = String(translated || "").trim();
+    if (src.length > 0 && out.length === 0) return false;
+    if (src.length >= 80 && (src.match(/\p{L}+/gu) || []).length >= 8) {
+      const known = Boolean(detectedLanguage) && detectedLanguage !== "und" && detectedLanguage !== "auto";
+      const baseOf = code => String(code).split("-")[0].toLowerCase();
+      if (known && targetLanguage && baseOf(detectedLanguage) !== baseOf(targetLanguage)) {
+        const normalize = text => text.replace(/\s+/g, " ").toLowerCase();
+        if (normalize(src) === normalize(out)) return false;
+      }
+    }
+    return true;
+  }
+
+  /**
    * Yandex keeps a short-lived session id (SID) that is found on a public page.
    */
   class YandexHelper {
@@ -385,6 +419,25 @@ const translationService = function () {
     }
 
     /**
+     * Whether one result of this service is usable (see isUsableTranslation). A result the service cannot parse is not usable.
+     * @param {string} originalText the request text of the row
+     * @param {string} translatedText the result as the service returned it
+     * @param {string|null} detectedLanguage
+     * @param {string} targetLanguage
+     * @param {boolean} dontSortResults
+     * @returns {boolean}
+     */
+    isUsableResult(originalText, translatedText, detectedLanguage, targetLanguage, dontSortResults = false) {
+      try {
+        const shown = this.cbTransformResponse(translatedText, dontSortResults);
+        const text = Array.isArray(shown) ? shown.join(" ") : String(shown ?? "");
+        return isUsableTranslation(plainSource(originalText), text, detectedLanguage, targetLanguage);
+      } catch (e) {
+        return false;
+      }
+    }
+
+    /**
      * Receives the `sourceArray2d` parameter and prepares the requests.
      * Calls `cbTransformRequest` for each `sourceArray` of `sourceArray2d`.
      * The `currentTranslationsInProgress` array will be the **final result** with requests already completed or in progress. And the `requests` array will only contain the new requests that need to be made.
@@ -451,7 +504,8 @@ const translationService = function () {
       let currentSize = 0;
       lookups.forEach((progressInfo, i) => {
         const cacheEntry = cacheEntries[i];
-        if (cacheEntry) {
+        // A stored entry that is no longer usable (empty, or unchanged in a known foreign language) is fetched again.
+        if (cacheEntry && this.isUsableResult(progressInfo.originalText, cacheEntry.translatedText, cacheEntry.detectedLanguage, targetLanguage)) {
           progressInfo.translatedText = cacheEntry.translatedText;
           progressInfo.detectedLanguage = cacheEntry.detectedLanguage;
           progressInfo.status = "complete";
@@ -540,16 +594,25 @@ const translationService = function () {
       for (const request of requests) {
         promises.push(this.makeRequest(sourceLanguage, targetLanguage, request).then(response => {
           const results = this.cbParseResponse(response);
+          let unusable = 0;
           for (const idx in request) {
             const result = results[idx];
-            this.cbTransformResponse(result.text, dontSortResults); // apenas para gerar error
             const transInfo = request[idx];
+            // Only this row is marked as failed. The other rows of the batch keep their results, and are cached below.
+            if (!result || !this.isUsableResult(transInfo.originalText, result.text, result.detectedLanguage, targetLanguage, dontSortResults)) {
+              transInfo.status = "error";
+              unusable++;
+              continue;
+            }
             transInfo.detectedLanguage = result.detectedLanguage || "und";
             transInfo.translatedText = result.text;
             transInfo.status = "complete";
             if (dontSaveInPersistentCache === false && transInfo.translatedText) {
               translationCache.set(this.serviceName, sourceLanguage, targetLanguage, transInfo.originalText, transInfo.translatedText, transInfo.detectedLanguage);
             }
+          }
+          if (unusable > 0) {
+            throw new Error(`${this.serviceName}: ${unusable} result(s) were empty or unchanged`);
           }
         }).catch(e => {
           console.error(e);
@@ -559,7 +622,8 @@ const translationService = function () {
             this.sendCookies = true; // the captcha is solved in the browser, so its cookie must be sent next time
           }
           for (const transInfo of request) {
-            transInfo.status = "error";
+            // Rows that already have a usable result keep it. Only the rest of the request is marked as failed.
+            if (transInfo.status !== "complete") transInfo.status = "error";
             //this.translationsInProgress.delete([sourceLanguage, targetLanguage, transInfo.originalText])
           }
         }));
@@ -1079,6 +1143,116 @@ const translationService = function () {
   };
 
   /**
+   * OpenRouter (AI): one API for many models, with an OpenAI-compatible chat API. Each user adds their own key, so the
+   * text goes to OpenRouter with that key, and from there to the model the user chose. Like Groq, one batch of texts is
+   * one request, and the answer must have the same shape as the request (see makeRequest). The request asks for a JSON
+   * schema (structured output). provider.require_parameters sends it only to a provider that supports that.
+   * Groq's language names and instruction are used, so both services translate the same way.
+   */
+  const openRouterSchema = {
+    type: "object",
+    properties: {
+      translations: { type: "array", items: { type: "array", items: { type: "string" } } }
+    },
+    required: ["translations"],
+    additionalProperties: false
+  };
+  /**
+   * @param {string} apiKey
+   * @param {string} model
+   * @returns {Service}
+   */
+  const createOpenRouterService = (apiKey, model) => {
+    return new class extends Service {
+      constructor() {
+        super("openrouter", "https://openrouter.ai/api/v1/chat/completions", "POST", function cbTransformRequest(sourceArray) {
+          return JSON.stringify(sourceArray);
+        }, function cbParseResponse(response) {
+          return response.translations.map( /** @return {Service_Single_Result_Response} */pieces => ({
+            text: JSON.stringify(pieces),
+            detectedLanguage: "und"
+          }));
+        }, function cbTransformResponse(result, dontSortResults) {
+          if (typeof result !== "string") throw new Error("OpenRouter: no translation for this text");
+          return JSON.parse(result);
+        }, null, function cbGetRequestBody(sourceLanguage, targetLanguage, requests) {
+          const source = sourceLanguage && sourceLanguage !== "auto" && sourceLanguage !== "und" ? ` The source language is ${groqLanguageName(sourceLanguage)}.` : "";
+          const instruction = `You translate website text into ${groqLanguageName(targetLanguage)}.${source} ` +
+            "The user message is a JSON array. Each item is an array of text strings taken from one part of a web page. " +
+            "Translate every string. Keep HTML-like tags, numbers, URLs and line breaks as they are, and do not add notes. " +
+            "Reply with a JSON object {\"translations\": [...]}. It must have one item per input item, in the same order, " +
+            "and each item must be an array of translated strings with the same length and order as its input array.";
+          return JSON.stringify({
+            model,
+            temperature: 0,
+            provider: { require_parameters: true },
+            response_format: { type: "json_schema", json_schema: { name: "translations", strict: true, schema: openRouterSchema } },
+            messages: [{ role: "system", content: instruction }, { role: "user", content: JSON.stringify(requests.map(info => JSON.parse(info.originalText))) }]
+          });
+        }, function cbGetExtraHeaders() {
+          return [{
+            name: "Content-Type",
+            value: "application/json"
+          }, {
+            name: "Authorization",
+            value: "Bearer " + apiKey.trim()
+          }, {
+            // Names the app on OpenRouter's usage pages. It is not a secret.
+            name: "X-Title",
+            value: "Atlas Translation"
+          }];
+        });
+      }
+
+      /**
+       * Sends one batch. The answer must have one array per request, with the same number of pieces as its input.
+       * @param {string} sourceLanguage
+       * @param {string} targetLanguage
+       * @param {Array<TranslationInfo>} requests
+       */
+      async makeRequest(sourceLanguage, targetLanguage, requests) {
+        const response = await super.makeRequest(sourceLanguage, targetLanguage, requests);
+        const content = response && response.choices && response.choices[0] && response.choices[0].message && response.choices[0].message.content;
+        let parsed = null;
+        try {
+          parsed = JSON.parse(content);
+        } catch (e) {
+          parsed = null;
+        }
+        const inputs = requests.map(info => JSON.parse(info.originalText));
+        const valid = parsed && Array.isArray(parsed.translations) && parsed.translations.length === inputs.length && parsed.translations.every((pieces, i) => Array.isArray(pieces) && pieces.length === inputs[i].length);
+        if (!valid) {
+          const message = response && response.error && response.error.message;
+          throw new Error("OpenRouter error: " + (message || "the answer did not match the request"));
+        }
+        return {
+          translations: parsed.translations.map(pieces => pieces.map(text => String(text)))
+        };
+      }
+    }();
+  };
+
+  /** @type {Service|null} */
+  let openRouterService = null;
+  /** @type {string} */
+  let openRouterServiceKey = "";
+  /**
+   * Returns the OpenRouter service for the key and model saved in the settings. A new service is made when either changes.
+   * @returns {Service|null}
+   */
+  const getOpenRouterService = () => {
+    const apiKey = (twpConfig.get("openRouterApiKey") || "").trim();
+    if (!apiKey) return null;
+    const model = (twpConfig.get("openRouterModel") || "openai/gpt-4o-mini").trim();
+    const key = apiKey + "\n" + model;
+    if (!openRouterService || openRouterServiceKey !== key) {
+      openRouterService = createOpenRouterService(apiKey, model);
+      openRouterServiceKey = key;
+    }
+    return openRouterService;
+  };
+
+  /**
    * Creates the libreTranslate translation service from URL and apiKey
    * @param {string} url
    * @param {string} apiKey
@@ -1102,7 +1276,8 @@ const translationService = function () {
           params.append("source", sourceLanguage);
           params.append("target", targetLanguage);
           params.append("format", "text");
-          params.append("api_key", apiKey);
+          // Many LibreTranslate servers need no key. The key is sent only when one is saved.
+          if (apiKey) params.append("api_key", apiKey);
           return params.toString();
         }, function cbGetExtraHeaders() {
           return [{
@@ -1110,6 +1285,19 @@ const translationService = function () {
             value: "application/x-www-form-urlencoded"
           }];
         });
+      }
+
+      /**
+       * LibreTranslate takes one text per request, so a batch of page texts is split into one request per text.
+       * Without this, only the first text of a batch would be sent.
+       * @param {string} sourceLanguage
+       * @param {string} targetLanguage
+       * @param {Array<string[]>} sourceArray2d
+       * @returns {Promise<[Array<TranslationInfo[]>, TranslationInfo[]]>}
+       */
+      async getRequests(sourceLanguage, targetLanguage, sourceArray2d) {
+        const [batches, inProgress] = await super.getRequests(sourceLanguage, targetLanguage, sourceArray2d);
+        return [batches.flatMap(batch => batch.map(info => [info])), inProgress];
       }
 
       /**
@@ -1134,11 +1322,133 @@ const translationService = function () {
     }();
   };
 
+  /**
+   * Offline (desktop helper). The Atlas helper runs an offline engine (Mozilla's Bergamot models) on this computer and
+   * serves it on 127.0.0.1 (see tools/atlas-updater/src/api.rs). The helper needs this browser bound to it (Options, Offline).
+   */
+  const OFFLINE_HELPER_URL = "http://127.0.0.1:47632";
+  const OFFLINE_MAX_TEXTS_PER_REQUEST = 500;
+  const OFFLINE_PACKS_CACHE_MS = 10000;
+  /** @type {{at: number, pairs: string[]}|null} */
+  let offlinePacksCache = null;
+
+  /**
+   * A service that cannot take this request is not broken, so it does not count as a failure (see serviceHealth.js).
+   * @param {string} message
+   */
+  function offlineUnavailable(message) {
+    const error = new Error("offline: " + message);
+    error.notAFailure = true;
+    return error;
+  }
+
+  /**
+   * The pack pair for a translation, such as "enfr" or "fren". Null when no offline pack translates it.
+   * @param {string} sourceLanguage
+   * @param {string} targetLanguage
+   * @returns {string|null}
+   */
+  function offlinePair(sourceLanguage, targetLanguage) {
+    const from = String(sourceLanguage || "");
+    const to = String(targetLanguage || "");
+    const languages = twpLang.SupportedLanguages.offline;
+    if (from === to || !languages.includes(from) || !languages.includes(to)) return null;
+    if (from !== "en" && to !== "en") return null;
+    return from + to;
+  }
+
+  /**
+   * The language packs the helper has installed, and whether its engine is there. Asked at most every few seconds.
+   * @returns {Promise<{pairs: string[], engine: boolean}>}
+   */
+  async function getOfflinePacks() {
+    if (offlinePacksCache && Date.now() - offlinePacksCache.at < OFFLINE_PACKS_CACHE_MS) return offlinePacksCache;
+    const response = await fetchWithTimeout(OFFLINE_HELPER_URL + "/api/offline/ping", {}, 3000);
+    const body = await response.json();
+    if (!body || !body.ok) throw new Error("offline: the helper did not answer");
+    offlinePacksCache = { at: Date.now(), pairs: Array.isArray(body.packs) ? body.packs : [], engine: body.engine === true };
+    return offlinePacksCache;
+  }
+
+  /**
+   * Creates the Offline (desktop helper) service. A missing helper, engine, pack or binding makes it skip the text
+   * (see offlineUnavailable), and the next enabled service that supports the language translates instead.
+   * @returns {Service}
+   */
+  const createOfflineService = () => {
+    return new class extends Service {
+      constructor() {
+        super("offline", OFFLINE_HELPER_URL + "/api/offline/translate", "POST", function cbTransformRequest(sourceArray) {
+          // translate() sends one piece per request, so there is one entry in the array here.
+          return sourceArray[0];
+        }, function cbParseResponse(response) {
+          return response.translations.map(text => ({ text, detectedLanguage: response.detectedLanguage }));
+        }, function cbTransformResponse(result) {
+          return [result];
+        }, null, null, null);
+      }
+
+      /**
+       * Each piece of text is translated on its own, so the results keep the shape of sourceArray2d.
+       * @param {string} sourceLanguage
+       * @param {string} targetLanguage
+       * @param {Array<string[]>} sourceArray2d
+       * @param {boolean} dontSaveInPersistentCache
+       * @param {boolean} dontSortResults
+       * @returns {Promise<string[][]>}
+       */
+      async translate(sourceLanguage, targetLanguage, sourceArray2d, dontSaveInPersistentCache = false, dontSortResults = false) {
+        const pair = offlinePair(sourceLanguage, targetLanguage);
+        if (!pair) throw offlineUnavailable(`no language pack translates ${sourceLanguage} to ${targetLanguage}`);
+        const packs = await getOfflinePacks();
+        if (!packs.engine) throw offlineUnavailable("the offline engine is not installed in the helper");
+        if (!packs.pairs.includes(pair)) throw offlineUnavailable(`the ${pair} language pack is not installed in the helper`);
+        if (!(twpConfig.get("offlineHelperToken") || "").trim()) throw offlineUnavailable("bind this browser to the helper in the Offline settings");
+        const pieces = [];
+        for (const sourceArray of sourceArray2d) {
+          for (const text of sourceArray) pieces.push([text]);
+        }
+        const results = await super.translate(sourceLanguage, targetLanguage, pieces, dontSaveInPersistentCache, dontSortResults);
+        let next = 0;
+        return sourceArray2d.map(sourceArray => sourceArray.map(() => results[next++][0]));
+      }
+
+      /**
+       * Sends one batch of texts to the helper. The helper checks the binding token and the pack.
+       * @param {string} sourceLanguage
+       * @param {string} targetLanguage
+       * @param {Array<TranslationInfo>} requests
+       */
+      async makeRequest(sourceLanguage, targetLanguage, requests) {
+        const token = (twpConfig.get("offlineHelperToken") || "").trim();
+        const pair = offlinePair(sourceLanguage, targetLanguage);
+        const translations = [];
+        for (let i = 0; i < requests.length; i += OFFLINE_MAX_TEXTS_PER_REQUEST) {
+          const texts = requests.slice(i, i + OFFLINE_MAX_TEXTS_PER_REQUEST).map(info => info.originalText);
+          const response = await fetchWithTimeout(this.baseURL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+            body: JSON.stringify({ pair, texts })
+          }, 60000);
+          const body = await response.json().catch(() => null);
+          if (!response.ok || !body || !Array.isArray(body.translations)) {
+            const message = (body && body.message) || "HTTP " + response.status;
+            if (response.status === 403) throw offlineUnavailable("this browser is not bound to the helper. " + message);
+            throw new Error("offline: " + message);
+          }
+          translations.push(...body.translations);
+        }
+        return { translations, detectedLanguage: sourceLanguage };
+      }
+    }();
+  };
+
   /** @type {Map<string, Service>} */
   const serviceList = new Map();
   serviceList.set("google", googleService);
   serviceList.set("yandex", yandexService);
   serviceList.set("bing", bingService);
+  serviceList.set("offline", createOfflineService());
 
   /**
    * Get translation service from your name
@@ -1150,6 +1460,7 @@ const translationService = function () {
     if (twpConfig.get("enabledServices").includes(serviceName) || twpConfig.get("customServices").find(cs => cs.name === serviceName)) {
       if (serviceName === "deepl") return getDeeplService();
       if (serviceName === "groq") return getGroqService();
+      if (serviceName === "openrouter") return getOpenRouterService();
       return serviceList.get(serviceName);
     } else {
       return null;
@@ -1298,6 +1609,7 @@ const translationService = function () {
       });
       if (deeplService) deeplService.removeTranslationsWithError();
       if (groqService) groqService.removeTranslationsWithError();
+      if (openRouterService) openRouterService.removeTranslationsWithError();
     } else if (request.action === "createLibreService") {
       serviceList.set("libre", createLibreService(request.libre.url, request.libre.apiKey));
     } else if (request.action === "removeLibreService") {

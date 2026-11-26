@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 // Keeps the version the same everywhere it is written:
 //   manifest.json, firefox_manifest.json, package.json, package-lock.json (top level and packages[""]),
+//   tools/atlas-updater/Cargo.toml (the desktop helper follows the extension version),
 //   and the version badge at the top of README.md.
 //
 // Usage:
@@ -18,6 +19,18 @@ export const VERSION_RE = /^\d+(\.\d+){0,3}$/;
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const JSON_FILES = ["manifest.json", "firefox_manifest.json", "package.json", "package-lock.json"];
 export const README_BADGE = /(img\.shields\.io\/badge\/version-)[^-\s)]+(-)/;
+const CARGO_TOML = "tools/atlas-updater/Cargo.toml";
+const CARGO_VERSION = /^(version\s*=\s*")([^"]+)(")/m;
+// Cargo needs three numbers (semver). The fourth part of an extension version goes after a "+" (build metadata):
+// 0.0.2.1 is written as 0.0.2+1 in Cargo.toml. The helper turns it back into 0.0.2.1 (main.rs, app_version).
+export function toCargoVersion(version) {
+  const [a, b = "0", c = "0", d] = version.split(".");
+  return `${a}.${b}.${c}` + (d !== undefined ? `+${d}` : "");
+}
+export function fromCargoVersion(cargo) {
+  const [core, build] = cargo.split("+");
+  return build !== undefined ? `${core}.${build}` : core;
+}
 
 // Returns [{ file, where, version }] for every place a version is written.
 export async function readVersions() {
@@ -29,6 +42,9 @@ export async function readVersions() {
       found.push({ file, where: 'packages[""].version', version: obj.packages[""].version });
     }
   }
+  const cargo = await readFile(path.join(root, CARGO_TOML), "utf8");
+  const cargoVersion = cargo.match(CARGO_VERSION);
+  found.push({ file: CARGO_TOML, where: "[package] version", version: cargoVersion ? fromCargoVersion(cargoVersion[2]) : undefined });
   const readme = await readFile(path.join(root, "README.md"), "utf8");
   const badge = readme.match(README_BADGE);
   found.push({ file: "README.md", where: "version badge", version: badge ? badge[0].split("version-")[1].split("-")[0] : undefined });
@@ -47,6 +63,10 @@ export async function setVersion(version) {
     if (crlf) out = out.replace(/\n/g, "\r\n");
     await writeFile(full, out);
   }
+  const cargoPath = path.join(root, CARGO_TOML);
+  const cargo = await readFile(cargoPath, "utf8");
+  if (!CARGO_VERSION.test(cargo)) throw new Error(`${CARGO_TOML} has no version line`);
+  await writeFile(cargoPath, cargo.replace(CARGO_VERSION, `$1${toCargoVersion(version)}$3`));
   const readmePath = path.join(root, "README.md");
   const readme = await readFile(readmePath, "utf8");
   if (!README_BADGE.test(readme)) throw new Error("README.md has no version badge (img.shields.io/badge/version-...)");
@@ -59,11 +79,16 @@ async function changelogHasVersion(version) {
 }
 
 // Used by npm run check. Returns a list of problems (empty when everything agrees).
+// The badge is not compared with the others. It shows the latest published release (scripts/sync-readme.mjs, run
+// daily), so it lags a version that is merged but not yet released. It must still be a valid version.
 export async function versionProblems() {
   const found = await readVersions();
-  const values = new Set(found.map(f => f.version));
-  if (values.size === 1 && !values.has(undefined)) return [];
-  return found.map(f => `${f.file} (${f.where}): ${f.version ?? "missing"}`);
+  const written = found.filter(f => f.file !== "README.md");
+  const values = new Set(written.map(f => f.version));
+  const problems = values.size === 1 && !values.has(undefined) ? [] : written.map(f => `${f.file} (${f.where}): ${f.version ?? "missing"}`);
+  const badge = found.find(f => f.file === "README.md");
+  if (!badge.version || !VERSION_RE.test(badge.version)) problems.push(`${badge.file} (${badge.where}): ${badge.version ?? "missing"}`);
+  return problems;
 }
 
 async function main() {

@@ -633,3 +633,14 @@ hr {
 .serviceUsage[hidden] {
   display: none;
 }
+
+/* A local file (file://) needs file access for the extension. The notice says so. */
+.fileAccessNotice {
+    margin: 8px 12px 0;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: #fff4c2;
+    color: #3d2e00;
+    font-size: 12px;
+    line-height: 1.4;
+}

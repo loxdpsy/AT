@@ -22,6 +22,12 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
   let showTranslatedTextWhenHoveringThisSite = twpConfig.get("sitesToTranslateWhenHovering").indexOf(tabHostName) !== -1;
   let showTranslatedTextWhenHoveringThisLang = false;
   let translateTextOverMouseWhenPressTwice = twpConfig.get("translateTextOverMouseWhenPressTwice") === "yes";
+  // Set by the "Toggle hover translation for this tab" shortcut. null means the saved site and language rules decide.
+  // It lasts until the page is reloaded.
+  let hoverOverride = null;
+  function hoverIsOn() {
+    return hoverOverride !== null ? hoverOverride : showTranslatedTextWhenHoveringThisSite || showTranslatedTextWhenHoveringThisLang;
+  }
   let fooCount = 0;
   twpConfig.onChanged(function (name, newValue) {
     switch (name) {
@@ -85,10 +91,13 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     if (e.target === divElement) return;
     if (e.target === currentNodeOverMouse) return;
     currentNodeOverMouse = e.target;
-    if (!(!showTranslatedTextWhenHoveringThisSite && !showTranslatedTextWhenHoveringThisLang)) {
+    if (hoverIsOn()) {
       destroy();
       if (e.buttons === 0) {
-        timeoutHandler = setTimeout(translateThisNode, 1250, e.target);
+        // The rules are checked again when the timer ends, in case hover was turned off meanwhile.
+        timeoutHandler = setTimeout(() => {
+          if (hoverIsOn()) translateThisNode(e.target);
+        }, 1250);
       }
     }
   }
@@ -296,6 +305,8 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
                         <li title="Yandex" id="sYandex">y</li>
                         <li title="DeepL" id="sDeepL" hidden>d</li>
                         <li title="Groq (AI)" id="sGroq" hidden>g</li>
+                        <li title="OpenRouter (AI)" id="sOpenRouter" hidden>o</li>
+                        <li title="Offline (desktop helper)" id="sOffline" hidden>o</li>
                         <li title="Listen" data-i18n-title="btnListen" id="listen">
                             <svg version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
                             width="14px" height="12px" viewBox="0 0 93.038 93.038" xml:space="preserve">
@@ -412,6 +423,8 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     const sBing = shadowRoot.getElementById("sBing");
     const sDeepL = shadowRoot.getElementById("sDeepL");
     const sGroq = shadowRoot.getElementById("sGroq");
+    const sOpenRouter = shadowRoot.getElementById("sOpenRouter");
+    const sOffline = shadowRoot.getElementById("sOffline");
     sGoogle.onclick = () => {
       currentTextTranslatorService = "google";
       twpConfig.set("textTranslatorService", "google");
@@ -421,6 +434,8 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
       sBing.classList.remove("selected");
       sDeepL.classList.remove("selected");
       sGroq.classList.remove("selected");
+      sOpenRouter.classList.remove("selected");
+      sOffline.classList.remove("selected");
       sGoogle.classList.add("selected");
     };
     sYandex.onclick = () => {
@@ -432,6 +447,8 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
       sBing.classList.remove("selected");
       sDeepL.classList.remove("selected");
       sGroq.classList.remove("selected");
+      sOpenRouter.classList.remove("selected");
+      sOffline.classList.remove("selected");
       sYandex.classList.add("selected");
     };
     sBing.onclick = () => {
@@ -443,6 +460,8 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
       sBing.classList.remove("selected");
       sDeepL.classList.remove("selected");
       sGroq.classList.remove("selected");
+      sOpenRouter.classList.remove("selected");
+      sOffline.classList.remove("selected");
       sBing.classList.add("selected");
     };
     sDeepL.onclick = () => {
@@ -454,6 +473,8 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
       sBing.classList.remove("selected");
       sDeepL.classList.remove("selected");
       sGroq.classList.remove("selected");
+      sOpenRouter.classList.remove("selected");
+      sOffline.classList.remove("selected");
       sDeepL.classList.add("selected");
     };
     sGroq.onclick = () => {
@@ -464,8 +485,37 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
       sYandex.classList.remove("selected");
       sBing.classList.remove("selected");
       sGroq.classList.remove("selected");
+      sOpenRouter.classList.remove("selected");
+      sOffline.classList.remove("selected");
       sGroq.classList.remove("selected");
+      sOpenRouter.classList.remove("selected");
+      sOffline.classList.remove("selected");
       sGroq.classList.add("selected");
+    };
+    sOpenRouter.onclick = () => {
+      currentTextTranslatorService = "openrouter";
+      twpConfig.set("textTranslatorService", "openrouter");
+      translateThisNode(null, true);
+      sGoogle.classList.remove("selected");
+      sYandex.classList.remove("selected");
+      sBing.classList.remove("selected");
+      sOpenRouter.classList.remove("selected");
+      sOffline.classList.remove("selected");
+      sOpenRouter.classList.remove("selected");
+      sOffline.classList.remove("selected");
+      sOpenRouter.classList.add("selected");
+    };
+    sOffline.onclick = () => {
+      currentTextTranslatorService = "offline";
+      twpConfig.set("textTranslatorService", "offline");
+      translateThisNode(null, true);
+      sGoogle.classList.remove("selected");
+      sYandex.classList.remove("selected");
+      sBing.classList.remove("selected");
+      sDeepL.classList.remove("selected");
+      sGroq.classList.remove("selected");
+      sOpenRouter.classList.remove("selected");
+      sOffline.classList.add("selected");
     };
     const setTargetLanguage = shadowRoot.getElementById("setTargetLanguage");
     setTargetLanguage.onclick = e => {
@@ -514,12 +564,18 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     const enabledServicesNow = twpConfig.get("enabledServices");
     if (enabledServicesNow.includes("deepl")) sDeepL.removeAttribute("hidden");
     if (enabledServicesNow.includes("groq")) sGroq.removeAttribute("hidden");
+    if (enabledServicesNow.includes("openrouter")) sOpenRouter.removeAttribute("hidden");
+    if (enabledServicesNow.includes("offline")) sOffline.removeAttribute("hidden");
     if (currentTextTranslatorService === "yandex") {
       sYandex.classList.add("selected");
     } else if (currentTextTranslatorService == "deepl") {
       sDeepL.classList.add("selected");
     } else if (currentTextTranslatorService == "groq") {
       sGroq.classList.add("selected");
+    } else if (currentTextTranslatorService == "openrouter") {
+      sOpenRouter.classList.add("selected");
+    } else if (currentTextTranslatorService == "offline") {
+      sOffline.classList.add("selected");
     } else if (currentTextTranslatorService == "bing") {
       sBing.classList.add("selected");
     } else {
@@ -566,7 +622,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     }
   }
   function updateEventListener() {
-    if (platformInfo.isMobile.any || pageLanguageState == "translated" || !(showTranslatedTextWhenHoveringThisSite || showTranslatedTextWhenHoveringThisLang || translateTextOverMouseWhenPressTwice)) {
+    if (platformInfo.isMobile.any || pageLanguageState == "translated" || !(hoverIsOn() || translateTextOverMouseWhenPressTwice)) {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mousedown", onMouseDown);
@@ -584,6 +640,15 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     }
   }
   updateEventListener();
+  // The shortcut for this tab. It reverses the hover state that is in effect now, and drops any hover translation
+  // that is queued or showing, so a late answer cannot appear after the switch.
+  chrome.runtime.onMessage.addListener(request => {
+    if (request.action !== "toggle-hover-translation") return;
+    hoverOverride = !hoverIsOn();
+    currentNodeOverMouse = null;
+    destroy();
+    updateEventListener();
+  });
   pageTranslator.onGetOriginalTabLanguage(function (tabLanguage) {
     originalTabLanguage = tabLanguage;
     showTranslatedTextWhenHoveringThisLang = twpConfig.get("langsToTranslateWhenHovering").indexOf(originalTabLanguage) !== -1;
