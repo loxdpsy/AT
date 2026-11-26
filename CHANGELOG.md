@@ -4,6 +4,10 @@
 
 Not released yet. Changes after 0.0.2.1 will be listed here.
 
+- Atlas Helper: the helper no longer runs PowerShell, curl, unzip or reg.exe. Downloads, unzipping and the Windows startup entry are done by the helper itself, so no console window appears.
+- Atlas Helper: a Windows installer (`atlas-updater-windows-setup.exe`) installs for the current user, with a Start menu entry, an optional desktop shortcut and an optional start at sign-in. It needs no administrator password, and it uninstalls cleanly.
+- Atlas Helper: the welcome page is smaller. Each browser is one row, and its steps are folded away under "Steps". It says that Chromium browsers need Load unpacked.
+- Atlas Helper: Internet Explorer is no longer listed as a browser to set up (Windows lists it as IEXPLORE.EXE).
 - Atlas Helper on Windows: the program carries version information (company, product, description and version), which antivirus heuristics look at. It is not signed yet.
 - Atlas Helper: a translation from language packs already on disk is tested with no network. CI runs that test on Linux with the network removed.
 - Atlas Helper: the README says what to do when Windows Defender warns about the helper: check the SHA-256 against the release, allow the file on the device, and report it to Microsoft.

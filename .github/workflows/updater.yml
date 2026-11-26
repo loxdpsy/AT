@@ -162,6 +162,48 @@ jobs:
           path: ${{ runner.temp }}/install-output.txt
           if-no-files-found: warn
 
+      - name: Windows installer (Inno Setup, for the current user only)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        working-directory: tools/atlas-updater
+        run: |
+          choco install innosetup --no-progress -y | Out-Null
+          $iscc = Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { throw "Inno Setup was not installed" }
+          # The version in Cargo.toml is 0.0.2+5; the installer shows 0.0.2.5.
+          $line = Select-String -Path Cargo.toml -Pattern '^version = "([0-9.]+)\+([0-9]+)"' | Select-Object -First 1
+          $version = "$($line.Matches[0].Groups[1].Value).$($line.Matches[0].Groups[2].Value)"
+          & $iscc "/DMyAppVersion=$version" installer\atlas-helper.iss
+          if ($LASTEXITCODE -ne 0) { throw "the installer did not build" }
+          if (-not (Test-Path "dist\atlas-updater-windows-setup.exe")) { throw "the installer file is missing" }
+
+      - name: The installer installs, then uninstalls, silently
+        if: runner.os == 'Windows'
+        shell: pwsh
+        working-directory: tools/atlas-updater
+        run: |
+          $target = Join-Path $env:RUNNER_TEMP "atlas-helper-install-test"
+          Remove-Item -Recurse -Force $target -ErrorAction SilentlyContinue
+          $setup = (Resolve-Path "dist\atlas-updater-windows-setup.exe").Path
+          $install = Start-Process -FilePath $setup -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=`"$target`"" -Wait -PassThru
+          if ($install.ExitCode -ne 0) { throw "the installer exited with $($install.ExitCode)" }
+          $exe = Join-Path $target "atlas-updater.exe"
+          if (-not (Test-Path $exe)) { throw "the installer did not put atlas-updater.exe in $target" }
+          $uninstaller = Get-ChildItem $target -Filter "unins*.exe" | Select-Object -First 1
+          if (-not $uninstaller) { throw "no uninstaller was written" }
+          $un = Start-Process -FilePath $uninstaller.FullName -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait -PassThru
+          if ($un.ExitCode -ne 0) { throw "the uninstaller exited with $($un.ExitCode)" }
+          if (Test-Path $exe) { throw "the uninstaller left atlas-updater.exe behind" }
+          Write-Output "The installer installed and removed the helper in a silent run."
+
+      - name: Upload the installer
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-updater-windows-setup
+          path: tools/atlas-updater/dist/atlas-updater-windows-setup.exe
+          if-no-files-found: error
+
       - name: Upload the build
         uses: actions/upload-artifact@v4
         with:

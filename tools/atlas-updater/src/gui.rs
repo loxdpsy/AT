@@ -599,6 +599,7 @@ impl Helper {
         egui::Window::new("Welcome to Atlas Helper")
             .collapsible(false)
             .resizable(false)
+            .default_width(440.0)
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
                 ui.label(RichText::new("Welcome to Atlas Helper").size(16.0).strong());
@@ -606,31 +607,45 @@ impl Helper {
                 if let Some((newer, text)) = &update {
                     ui.label(RichText::new(text.as_str()).color(if *newer { RED } else { BLUE }));
                 }
-                ui.add_space(8.0);
-                ui.label("The helper runs offline translation on this computer and sets Atlas Translation up in your browsers. Text is not sent to a web service.");
-                ui.add_space(8.0);
+                ui.add_space(6.0);
+                ui.label("The helper runs offline translation on this computer. Text is not sent to a web service.");
+                ui.add_space(6.0);
                 if pending.is_empty() {
                     ui.label("No browser was found that Atlas Translation is not set up in yet.");
                 } else {
-                    ui.label(RichText::new("Do you want to install Atlas Translation in these browsers?").strong());
-                    for browser in &pending {
-                        row(ui, rtl, |ui| {
-                            ui.label(RichText::new(browser.name.as_str()).strong());
-                            if ui.button("Install here").clicked() {
-                                actions.push(Action::SetupBrowser(browser.id.clone()));
-                            }
-                        });
-                        let guide = browsers::guide(browser, &folder);
-                        for (i, step) in guide.steps.iter().enumerate() {
-                            ui.label(RichText::new(format!("{}. {}", i + 1, step)).color(GREY));
+                    ui.label(RichText::new("Install Atlas Translation in these browsers?").strong());
+                    ui.label(
+                        RichText::new(
+                            "Chrome, Edge and other Chromium browsers do not let an app install an extension by itself. \
+                             The helper copies the extension to a folder and opens the browser's extensions page. \
+                             There you choose Load unpacked.",
+                        )
+                        .color(GREY)
+                        .small(),
+                    );
+                    ui.add_space(4.0);
+                    egui::ScrollArea::vertical().max_height(260.0).auto_shrink([false, true]).show(ui, |ui| {
+                        for browser in &pending {
+                            row(ui, rtl, |ui| {
+                                ui.label(RichText::new(browser.name.as_str()).strong());
+                                if ui.button("Install here").clicked() {
+                                    actions.push(Action::SetupBrowser(browser.id.clone()));
+                                }
+                            });
+                            let guide = browsers::guide(browser, &folder);
+                            egui::CollapsingHeader::new("Steps").id_salt(browser.id.as_str()).show(ui, |ui| {
+                                for (i, step) in guide.steps.iter().enumerate() {
+                                    ui.label(RichText::new(format!("{}. {}", i + 1, step)).color(GREY).small());
+                                }
+                            });
+                            ui.add_space(4.0);
                         }
-                        ui.add_space(4.0);
-                    }
+                    });
                     if pending.len() > 1 && ui.button("Install in all of them").clicked() {
                         actions.push(Action::SetupAll);
                     }
                 }
-                ui.add_space(12.0);
+                ui.add_space(8.0);
                 if ui.button("Done").clicked() {
                     actions.push(Action::FinishWelcome);
                 }

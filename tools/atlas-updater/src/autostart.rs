@@ -8,7 +8,8 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 
-const RUN_KEY: &str = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Run";
+#[cfg(windows)]
+const RUN_SUBKEY: &str = r"Software\Microsoft\Windows\CurrentVersion\Run";
 const VALUE_NAME: &str = "AtlasTranslationHelper";
 const LAUNCH_AGENT_LABEL: &str = "com.atlas-translation.helper";
 const DESKTOP_FILE: &str = "atlas-translation-helper.desktop";
@@ -44,46 +45,61 @@ pub fn quiet(mut command: Command) -> Command {
     command
 }
 
+/// The Run key of the current user, opened for reading or for writing.
+#[cfg(windows)]
+fn run_key(write: bool) -> std::io::Result<winreg::RegKey> {
+    use winreg::enums::{HKEY_CURRENT_USER, KEY_READ, KEY_WRITE};
+    let flags = if write { KEY_READ | KEY_WRITE } else { KEY_READ };
+    winreg::RegKey::predef(HKEY_CURRENT_USER).open_subkey_with_flags(RUN_SUBKEY, flags)
+}
+
 /// True when the helper starts at login.
 pub fn is_enabled() -> bool {
-    if cfg!(windows) {
-        let mut command = Command::new("reg");
-        command.args(["query", RUN_KEY, "/v", VALUE_NAME]);
-        quiet(command).output().map(|o| o.status.success()).unwrap_or(false)
-    } else if cfg!(target_os = "macos") {
-        launch_agent_path().map(|p| p.is_file()).unwrap_or(false)
-    } else {
+    #[cfg(windows)]
+    {
+        return run_key(false).and_then(|key| key.get_value::<String, _>(VALUE_NAME)).is_ok();
+    }
+    #[cfg(target_os = "macos")]
+    {
+        return launch_agent_path().map(|p| p.is_file()).unwrap_or(false);
+    }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
         desktop_path().map(|p| p.is_file()).unwrap_or(false)
     }
 }
 
 /// Turns starting at login on or off.
 pub fn set_enabled(on: bool) -> Result<(), String> {
-    if cfg!(windows) {
-        set_windows(on)
-    } else if cfg!(target_os = "macos") {
-        set_macos(on)
-    } else {
+    #[cfg(windows)]
+    {
+        return set_windows(on);
+    }
+    #[cfg(target_os = "macos")]
+    {
+        return set_macos(on);
+    }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
         set_linux(on)
     }
 }
 
+#[cfg(windows)]
 fn set_windows(on: bool) -> Result<(), String> {
-    let output = if on {
-        let exe = program()?;
+    let fail = |e: std::io::Error| format!("cannot change the Windows startup list: {}", e);
+    let key = run_key(true).map_err(fail)?;
+    if on {
         // The value is the command line: the program, then --serve. Quotes keep a path with spaces working.
+        let exe = program()?;
         let command_line = format!("\"{}\" --serve", exe.display());
-        quiet(Command::new("reg"))
-            .args(["add", RUN_KEY, "/v", VALUE_NAME, "/t", "REG_SZ", "/d", command_line.as_str(), "/f"])
-            .output()
+        key.set_value(VALUE_NAME, &command_line).map_err(fail)
     } else {
-        quiet(Command::new("reg")).args(["delete", RUN_KEY, "/v", VALUE_NAME, "/f"]).output()
-    };
-    let output = output.map_err(|e| format!("cannot change the Windows startup list: {}", e))?;
-    if output.status.success() || (!on && !is_enabled()) {
-        Ok(())
-    } else {
-        Err(format!("cannot change the Windows startup list: {}", String::from_utf8_lossy(&output.stderr).trim()))
+        match key.delete_value(VALUE_NAME) {
+            Ok(()) => Ok(()),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            Err(e) => Err(fail(e)),
+        }
     }
 }
 

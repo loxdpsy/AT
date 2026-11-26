@@ -14,22 +14,28 @@ Then, in the browser, open Atlas Translation's Settings and click **Reload exten
 
 ## Get the program
 
-Every release attaches the three programs to its GitHub release: `atlas-updater-windows.exe`, `atlas-updater-macos`
+**Windows: the installer.** `atlas-updater-windows-setup.exe` installs Atlas Helper like most apps do. It asks no
+administrator password: it installs for your user account, in `%LOCALAPPDATA%\Programs\Atlas Helper`. It adds a Start
+menu entry, and it can add a desktop shortcut and a start-at-sign-in entry (both are checkboxes). Uninstall it from
+Windows Settings, under Apps.
+
+Every release also attaches the programs to its GitHub release: `atlas-updater-windows.exe`, `atlas-updater-macos`
 and `atlas-updater-linux`. Between releases, each build is an artifact of the **Updater** workflow run in GitHub Actions
 (Actions tab, then the newest run), under the same names without `.exe`.
 
-The programs are not code-signed. Windows may show a SmartScreen warning (choose **More info**, then **Run anyway**).
+The programs and the installer are not code-signed yet. Windows shows "Unknown publisher" (choose **More info**, then **Run anyway**). Signing is the lasting fix.
 On macOS, run `xattr -d com.apple.quarantine ./atlas-updater-macos` once, and on Linux and macOS run `chmod +x ./atlas-updater-linux` (or `./atlas-updater-macos`).
 
 ## Use
 
 **The helper window.** Start the program with no arguments (double-click it on Windows, or run `./atlas-updater-macos`
 or `./atlas-updater-linux` from a terminal). The helper opens its own native window (drawn with egui, not a browser page), and puts an icon in the
-tray (Windows and Linux) or the menu bar (macOS). It checks GitHub for a new version, then shows:
+tray (Windows and Linux) or the menu bar (macOS). Closing the window keeps the helper in the tray; **Quit helper** stops it.
+When you start it at sign-in, it starts in the tray with no window. It checks GitHub for a new version, then shows:
 
 - **Update:** shows the version you have and the newest release, and installs the update in one click.
 - **Folder:** where the extension lives. A new folder (empty or missing) gets a fresh copy.
-- **Which browser?** The helper lists the browsers that the system lists for web addresses (Windows default apps, applications on macOS, desktop entries on Linux). Firefox links to the Add-ons store. Every other browser (Chrome, Edge, Brave, Opera, Vivaldi, Comet and any other Chromium-based browser) gets the extensions page and the Load unpacked steps. Safari and Internet Explorer are not supported.
+- **Which browser?** The helper lists the browsers that the system lists for web addresses (Windows default apps, applications on macOS, desktop entries on Linux). Firefox links to the Add-ons store. Every other browser (Chrome, Edge, Brave, Opera, Vivaldi, Comet and any other Chromium-based browser) gets the extensions page and the Load unpacked steps. Chromium browsers do not let an app install an extension by itself, so the last step is always yours. Safari and Internet Explorer are not supported.
 
 - **Offline translation:** installs the offline engine, installs or
   removes language packs. A pack is one language pair, such as English to French, from Mozilla's translation models

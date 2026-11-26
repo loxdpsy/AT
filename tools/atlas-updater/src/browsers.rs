@@ -111,7 +111,10 @@ fn listed_browsers() -> Vec<(String, PathBuf)> {
 /// Firefox, Chromium-based, or None for a browser that is not supported (Safari, Internet Explorer, Orion).
 pub fn classify(name: &str, program: &Path) -> Option<Kind> {
     let lower = name.to_lowercase();
-    if ["internet explorer", "safari", "orion"].iter().any(|word| lower.contains(word)) {
+    let file = program.file_stem().map(|s| s.to_string_lossy().to_lowercase()).unwrap_or_default();
+    if ["internet explorer", "iexplore", "safari", "orion"].iter().any(|word| lower.contains(word))
+        || ["iexplore", "safari", "orion"].contains(&file.as_str())
+    {
         return None;
     }
     let firefox_names = ["firefox", "librewolf", "waterfox", "floorp", "zen browser", "tor browser"];
@@ -357,6 +360,7 @@ mod tests {
         assert_eq!(classify("LibreWolf", Path::new("/nope/librewolf")), Some(Kind::Firefox));
         assert_eq!(classify("Brave", Path::new("/nope/brave")), Some(Kind::Chromium));
         assert_eq!(classify("Internet Explorer", Path::new("/nope/iexplore")), None);
+        assert_eq!(classify("IEXPLORE.EXE", Path::new("C:/Program Files/Internet Explorer/iexplore.exe")), None);
         assert_eq!(classify("Safari", Path::new("/nope/Safari.app")), None);
     }
 

@@ -40,5 +40,6 @@ fn windows_version_resource() {
         .set("ProductVersion", &dotted)
         .set_version_info(winresource::VersionInfo::FILEVERSION, packed)
         .set_version_info(winresource::VersionInfo::PRODUCTVERSION, packed);
+    res.set_icon("assets/atlas-helper.ico");
     res.compile().expect("the Windows version information could not be written into the program");
 }
