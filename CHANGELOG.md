@@ -4,6 +4,13 @@
 
 Not released yet. Changes after 0.0.2.1 will be listed here.
 
+## 0.0.2.3
+
+- Desktop helper: a new window instead of a browser page. It has a tray icon (Open and Quit), closing the window keeps the helper in the tray, and it has three tabs: the extension, offline translation, and connections.
+- Offline translation is bound, not paired: on a page or in the options, Bind this browser asks you in the helper window to Allow it. The pairing code is gone. Remove a browser under Connections, or click Unbind in the options. The helper keeps only a hash of the token.
+- Right-to-left languages on web pages (Arabic, Hebrew, Persian, Urdu and others): the translated text is laid out right to left and aligned to the start edge, also where the site forces left alignment or left-to-right direction. The page itself is still flipped as before, and both are restored when the page is restored.
+- Desktop helper: when the system language is right to left, the window mirrors its layout (tabs on the right, rows right to left). Its text stays English for now; translating it is planned later.
+
 ## 0.0.2.2
 
 - Desktop helper: its version is the extension's version (0.0.2.2 for this version), and a README section describes it.
@@ -13,15 +20,11 @@ Not released yet. Changes after 0.0.2.1 will be listed here.
 - LibreTranslate (#278): can translate whole pages once a server is saved (Options, Page Translation Service). The API key is optional, for servers that need none. Each text is sent as its own request.
 - Right-to-left languages (Arabic, Hebrew, Persian, Urdu and others): the popup and options pages are laid out right to left when the interface language is one of them (#638).
 - Options, Keyboard shortcuts: on Chrome and Edge the field shows the shortcut the browser really has, not a saved one (#842). The double-Ctrl options are unchanged.
-- Right-to-left languages on web pages (Arabic, Hebrew, Persian, Urdu and others): the translated text is laid out right to left and aligned to the start edge, also where the site forces left alignment or left-to-right direction. The page itself is still flipped as before, and both are restored when the page is restored.
-- Desktop helper: when the system language is right to left, the window mirrors its layout (tabs on the right, rows right to left). Its text stays English.
 - Offline translation is faster: long texts are split at their line breaks, and the parts are translated in parallel on
   two engine processes per language pair.
 - The helper tries a download again when the network cuts it short.
 - The helper can start when you log in, in the background (its window: "Start the helper when I sign in"). Windows, macOS and Linux.
 - Paragraphs (#727), optional: Options, "Translate each paragraph as one text" (off by default). A sentence split by inline tags (links, bold, spans) is then sent and translated as one text, instead of in fragments.
-- Desktop helper: a native window (not a browser page) with a tray icon, on Windows, macOS and Linux. It has three tabs: the extension (install or update, browser guides, start at login), offline translation (the engine and the language packs), and connections. Closing the window keeps the helper in the tray; Quit in the tray menu stops it.
-- Offline translation is bound, not paired by code: on a page or in the options, Bind this browser asks you in the helper window to Allow it. Remove a browser under Connections, or click Unbind in the options. The helper keeps only a hash of the token.
 - OpenRouter (AI): a new translator with your own OpenRouter key (Settings → Services). Choose any model OpenRouter offers; the default is openai/gpt-4o-mini. Like Groq, the text goes only to OpenRouter with that key, and the answer must match the request, so a broken answer is not shown as a translation (#1029).
 - Translation failures: OpenRouter is included in the retry-with-the-next-service rule and in the removal of failed translations.
 
