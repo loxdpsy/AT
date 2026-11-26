@@ -11,6 +11,7 @@
 
 use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
+use std::path::{Path, PathBuf};
 use std::sync::mpsc::{self, Sender};
 use std::sync::Arc;
 use std::thread;
@@ -250,6 +251,12 @@ fn bind_request(body: &str, origin: Option<&str>, requests: &Sender<BindRequest>
 
 /// Returns the HTTP status and the JSON body for a translate request.
 fn translate_request(body: &str, engine: &Engine, token: Option<&str>, bindings: &Bindings) -> (u16, String) {
+    translate_from(body, engine, token, bindings, &store::packs_dir(), engine::find_binary())
+}
+
+/// The translate request, with the packs folder and the engine program given. It needs no network: the language list is
+/// built into the helper, and the packs and the engine are read from disk.
+fn translate_from(body: &str, engine: &Engine, token: Option<&str>, bindings: &Bindings, packs_root: &Path, binary: Option<PathBuf>) -> (u16, String) {
     let value = match json::parse(body) {
         Ok(v) => v,
         Err(_) => return (400, error_body("the request is not valid JSON")),
@@ -282,17 +289,17 @@ fn translate_request(body: &str, engine: &Engine, token: Option<&str>, bindings:
         Some(p) => p,
         None => return (400, error_body("this language pair is not available offline")),
     };
-    if !packs::is_installed_in(&store::packs_dir(), pack) {
+    if !packs::is_installed_in(packs_root, pack) {
         return (409, error_body(&format!("the {} language pack is not installed in the helper", pair)));
     }
-    let binary = match engine::find_binary() {
+    let binary = match binary {
         Some(b) => b,
         None => return (409, error_body("the offline engine is not installed in the helper")),
     };
     if texts.is_empty() {
         return (200, "{\"ok\":true,\"translations\":[]}".to_string());
     }
-    match engine.translate(&binary, &store::packs_dir().join(&pair), &pair, &texts) {
+    match engine.translate(&binary, &packs_root.join(&pair), &pair, &texts) {
         Ok(translations) => {
             let quoted: Vec<String> = translations.iter().map(|t| json::quote(t)).collect();
             (200, format!("{{\"ok\":true,\"translations\":[{}]}}", quoted.join(",")))
@@ -346,6 +353,45 @@ mod tests {
         let (bindings, token) = bound();
         let (status, _) = translate_request(r#"{"pair":"../etc","texts":["hi"]}"#, &engine, Some(token.as_str()), &bindings);
         assert_eq!(status, 400);
+    }
+
+    // The offline path with no network. The pack files are on disk, the engine is a program on disk, and nothing is
+    // downloaded. The pack files are sparse, so the test does not write tens of megabytes.
+    #[cfg(unix)]
+    #[test]
+    fn a_bound_browser_translates_from_saved_packs_without_a_network() {
+        use std::os::unix::fs::PermissionsExt;
+        let root = std::env::temp_dir().join(format!("atlas-api-offline-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        let pack_dir = root.join("enfr");
+        std::fs::create_dir_all(&pack_dir).unwrap();
+        let catalogue = packs::catalogue().unwrap();
+        let pack = packs::find(&catalogue, "enfr").expect("enfr is in the built-in list");
+        for file in &pack.files {
+            let handle = std::fs::File::create(pack_dir.join(&file.name)).unwrap();
+            handle.set_len(file.size).unwrap();
+        }
+        std::fs::write(pack_dir.join(packs::MARKER), "{}").unwrap();
+
+        // A fake engine: it says ready, then answers each line with the same line.
+        let script = root.join("fake-engine.sh");
+        std::fs::write(&script, "#!/bin/sh\necho ready\nwhile IFS= read -r line; do echo \"$line\"; done\n").unwrap();
+        std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+
+        let engine = Engine::new();
+        let (bindings, token) = bound();
+        let body = r#"{"pair":"enfr","texts":["Hello","Good morning"]}"#;
+        let (status, reply) = translate_from(body, &engine, Some(token.as_str()), &bindings, &root, Some(script.clone()));
+        assert_eq!(status, 200, "{}", reply);
+        assert!(reply.contains("\"Hello\"") && reply.contains("\"Good morning\""), "{}", reply);
+        engine.stop_all();
+
+        // Without the marker the pack is not installed: the helper says so and does not download it.
+        std::fs::remove_file(pack_dir.join(packs::MARKER)).unwrap();
+        let (status, reply) = translate_from(body, &engine, Some(token.as_str()), &bindings, &root, Some(script));
+        assert_eq!(status, 409, "{}", reply);
+        assert!(reply.contains("not installed"), "{}", reply);
+        let _ = std::fs::remove_dir_all(&root);
     }
 
     #[test]

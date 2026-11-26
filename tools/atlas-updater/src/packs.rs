@@ -15,7 +15,7 @@ use crate::json;
 use crate::sha256;
 
 const CATALOGUE_TEXT: &str = include_str!("packs.json");
-const MARKER: &str = "installed.json";
+pub const MARKER: &str = "installed.json";
 
 #[derive(Debug, Clone)]
 pub struct PackFile {

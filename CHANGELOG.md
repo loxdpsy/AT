@@ -4,6 +4,10 @@
 
 Not released yet. Changes after 0.0.2.1 will be listed here.
 
+- Atlas Helper on Windows: the program carries version information (company, product, description and version), which antivirus heuristics look at. It is not signed yet.
+- Atlas Helper: a translation from language packs already on disk is tested with no network. CI runs that test on Linux with the network removed.
+- Atlas Helper: the README says what to do when Windows Defender warns about the helper: check the SHA-256 against the release, allow the file on the device, and report it to Microsoft.
+
 ## 0.0.2.5
 
 - Atlas Helper: the helper is now called Atlas Helper in its window, its tray icon and its menu. Its file names are unchanged for now.

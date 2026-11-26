@@ -72,6 +72,19 @@ jobs:
         id: tests
         run: cargo test --release 2>&1 | tee "$RUNNER_TEMP/updater-test.log"
 
+      - name: Offline translation with no network (Linux)
+        if: runner.os == 'Linux'
+        working-directory: tools/atlas-updater
+        run: |
+          # The test runs in a network namespace that has no interface, so a translation from saved packs must not
+          # need the internet. The build is already done above, so the run uses --offline.
+          status=0
+          sudo -E env PATH="$PATH" CARGO_HOME="${CARGO_HOME:-$HOME/.cargo}" RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}" \
+            unshare -n "$(command -v cargo)" test --release --offline without_a_network || status=$?
+          # The run as root must not leave files that the next steps (as the runner user) cannot write.
+          sudo chown -R "$(id -u):$(id -g)" target "${CARGO_HOME:-$HOME/.cargo}" || true
+          exit $status
+
       - name: Build
         id: build
         run: cargo build --release

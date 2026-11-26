@@ -83,6 +83,21 @@ missing pack, or a language pair the packs do not cover, makes the extension use
 Mozilla's packs translate between English and one other language, so a pair such as French to German is not
 available offline.
 
+## If Windows Defender warns about the helper
+
+Windows Defender sometimes flags a new, unsigned program with a machine-learning guess. The name ends in `!ml`, for
+example `Trojan:Win32/Bearfoos.A!ml`. That is a guess, not a confirmed virus. Before you allow the file:
+
+1. Check its SHA-256 against the release. In PowerShell, run `Get-FileHash -Algorithm SHA256 "<path to the file>"`.
+   Compare the value with the `digest` of the same file on the release page. If the values differ, do not run the
+   file. Download it again from the release.
+2. If they match, open Windows Security, go to Virus & threat protection, then Protection history, and choose
+   **Allow on device** for that file only. Do not turn off Defender, and do not exclude a whole folder.
+3. Report the file to Microsoft as a false positive at https://www.microsoft.com/en-us/wdsi/filesubmission
+   (choose *Software developer*, then *Incorrectly detected*).
+
+Signing the program with a code-signing certificate is the lasting fix. It is not in place yet.
+
 ## Build from source
 
 ```
