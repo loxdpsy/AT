@@ -22,7 +22,7 @@ const ctx = {
     alarms: { get: (name, cb) => cb(undefined), create() {}, onAlarm: { addListener() {} } },
     runtime: {
       onInstalled: { addListener() {} }, onStartup: { addListener() {} }, onMessage: { addListener() {} },
-      getManifest: () => ({ version: "0.0.2.4" }), lastError: null,
+      getManifest: () => ({ version: "0.0.2.5" }), lastError: null,
     },
     storage: {
       local: {
@@ -40,8 +40,8 @@ const plain = value => JSON.parse(JSON.stringify(value));
 
 // Version comparison
 assert.ok(update.isNewer("0.0.2.10", "0.0.2.9"), "0.0.2.10 is newer than 0.0.2.9");
-assert.ok(update.isNewer("v0.0.2.5", "0.0.2.4"), "a leading v is ignored");
-assert.ok(!update.isNewer("0.0.2.4", "0.0.2.4"), "the same version is not newer");
+assert.ok(update.isNewer("v0.0.2.6", "0.0.2.5"), "a leading v is ignored");
+assert.ok(!update.isNewer("0.0.2.5", "0.0.2.5"), "the same version is not newer");
 
 // Bullets: wrapped lines join the bullet; a paragraph ends the wrap; the download list is not included
 assert.deepStrictEqual(
@@ -57,11 +57,11 @@ answer = {
   body: [
     { tag_name: "v0.0.2.6", draft: true, html_url: "draft", assets: [], body: "- Draft only." },
     {
-      tag_name: "v0.0.2.5",
+      tag_name: "v0.0.2.6",
       draft: false,
       prerelease: true,
       html_url: "https://example.test/release",
-      assets: [{ name: "atlas-translation-0.0.2.5-chromium.zip", browser_download_url: "https://example.test/zip" }],
+      assets: [{ name: "atlas-translation-0.0.2.6-chromium.zip", browser_download_url: "https://example.test/zip" }],
       body: "- A new feature.\n  It wraps here.\n\n## Downloads\n\n- **Helper:** atlas-updater",
     },
   ],
@@ -69,13 +69,13 @@ answer = {
 let result = await update.check(true);
 assert.ok(requests.at(-1).endsWith("/releases?per_page=10"), "the list of releases is read, prereleases included");
 assert.strictEqual(result.status, "newer");
-assert.strictEqual(result.latest.version, "0.0.2.5");
+assert.strictEqual(result.latest.version, "0.0.2.6");
 assert.strictEqual(result.latest.zipUrl, "https://example.test/zip");
 assert.deepStrictEqual(plain(result.latest.notes), ["A new feature. It wraps here."]);
 assert.deepStrictEqual(plain(stored.updateCheck.latest.notes), ["A new feature. It wraps here."], "the notes are stored for the Options page");
 
 // The same version as installed: no notice
-answer = { status: 200, body: [{ tag_name: "v0.0.2.4", draft: false, html_url: "x", assets: [], body: "- Old." }] };
+answer = { status: 200, body: [{ tag_name: "v0.0.2.5", draft: false, html_url: "x", assets: [], body: "- Old." }] };
 result = await update.check(true);
 assert.strictEqual(result.status, "current");
 assert.strictEqual(stored.updateCheck.latest, null, "no notice when the version is the same");

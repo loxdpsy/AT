@@ -852,7 +852,7 @@
     "message": "Unbind"
   },
   "msgOfflinePrompt": {
-    "message": "The Atlas Helper is running. Bind this browser to use offline translation."
+    "message": "Do you want to link the Atlas Helper to this browser? It is needed for offline translation. Click Bind this browser to link it, then choose Allow in the helper window."
   },
   "msgOfflineWaiting": {
     "message": "Waiting for your answer in the Atlas Helper window..."

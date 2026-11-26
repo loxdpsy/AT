@@ -9,6 +9,10 @@ Not released yet. Changes after 0.0.2.1 will be listed here.
 - Atlas Helper: the helper is now called Atlas Helper in its window, its tray icon and its menu. Its file names are unchanged for now.
 - Atlas Helper on Windows: the program opens its window and tray icon without a command prompt behind it.
 - Offline translation: the extension and the helper now agree on a protocol version, and the helper says which features it has. A helper that is too old is not used. The Offline settings say "update Atlas Helper", and the text goes to the next enabled service instead of failing.
+- Atlas Helper: a welcome window opens on first run. It shows whether a new Atlas Translation is available, lists the browsers found on this computer, and explains each step. Nothing is installed without the user clicking Install here. Chromium browsers still need Load unpacked, because they do not allow a silent install from outside their store.
+- Atlas Helper: the "Install in all of them" button sets up every browser found, and copies the extension into the folder once.
+- Extension: when the helper is running and this browser is not linked, the Offline settings ask whether to link Atlas Helper, and say why it is needed.
+- Atlas Helper: the welcome window and the Extension tab say "please update" when a newer release exists, with that release's "what is new" notes.
 
 ## 0.0.2.4
 
