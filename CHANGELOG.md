@@ -12,6 +12,7 @@ Not released yet. Changes after 0.0.2.1 will be listed here.
 - Desktop helper: the browsers that are found are marked in the Extension tab.
 - Desktop helper: the Offline tab shows how many language packs are installed and how much space they use, and opens the packs folder.
 - Desktop helper: a Settings tab. Experimental is off by default. Turning it on shows the developer details: the data folder, the packs folder, the offline service address, and the helper version.
+- Google translation (#1078): an empty result, or a long paragraph (80+ characters) that Google returned unchanged from a known foreign language, is not shown or cached. The batch then falls back to the next enabled service as before, and the rows that were translated stay in the cache. Old cached copies of such results are fetched again.
 
 ## 0.0.2.3
 

@@ -142,6 +142,40 @@ const translationService = function () {
   }
 
   /**
+   * The text the user sent, without the request wrapper (<pre>) or the inline <a i=N> tags that Google adds, and unescaped.
+   * @param {string} text
+   * @returns {string}
+   */
+  function plainSource(text) {
+    return Utils.unescapeHTML(String(text || "").replace(/<\/?pre>/g, "").replace(/<\/?a(\s+i=\d+)?>/g, ""));
+  }
+
+  /**
+   * Checks one translated text (part 5 of #1078). A translation that is empty for a text with words is not usable.
+   * A text of at least 80 characters and eight words, returned unchanged by a known source language that is not the target, is not usable either.
+   * Target-language, unknown-language and short unchanged texts are accepted.
+   * @param {string} source the text as the user wrote it
+   * @param {string} translated the translation as shown
+   * @param {string|null} detectedLanguage
+   * @param {string} targetLanguage
+   * @returns {boolean}
+   */
+  function isUsableTranslation(source, translated, detectedLanguage, targetLanguage) {
+    const src = String(source || "").trim();
+    const out = String(translated || "").trim();
+    if (src.length > 0 && out.length === 0) return false;
+    if (src.length >= 80 && (src.match(/\p{L}+/gu) || []).length >= 8) {
+      const known = Boolean(detectedLanguage) && detectedLanguage !== "und" && detectedLanguage !== "auto";
+      const baseOf = code => String(code).split("-")[0].toLowerCase();
+      if (known && targetLanguage && baseOf(detectedLanguage) !== baseOf(targetLanguage)) {
+        const normalize = text => text.replace(/\s+/g, " ").toLowerCase();
+        if (normalize(src) === normalize(out)) return false;
+      }
+    }
+    return true;
+  }
+
+  /**
    * Yandex keeps a short-lived session id (SID) that is found on a public page.
    */
   class YandexHelper {
@@ -385,6 +419,25 @@ const translationService = function () {
     }
 
     /**
+     * Whether one result of this service is usable (see isUsableTranslation). A result the service cannot parse is not usable.
+     * @param {string} originalText the request text of the row
+     * @param {string} translatedText the result as the service returned it
+     * @param {string|null} detectedLanguage
+     * @param {string} targetLanguage
+     * @param {boolean} dontSortResults
+     * @returns {boolean}
+     */
+    isUsableResult(originalText, translatedText, detectedLanguage, targetLanguage, dontSortResults = false) {
+      try {
+        const shown = this.cbTransformResponse(translatedText, dontSortResults);
+        const text = Array.isArray(shown) ? shown.join(" ") : String(shown ?? "");
+        return isUsableTranslation(plainSource(originalText), text, detectedLanguage, targetLanguage);
+      } catch (e) {
+        return false;
+      }
+    }
+
+    /**
      * Receives the `sourceArray2d` parameter and prepares the requests.
      * Calls `cbTransformRequest` for each `sourceArray` of `sourceArray2d`.
      * The `currentTranslationsInProgress` array will be the **final result** with requests already completed or in progress. And the `requests` array will only contain the new requests that need to be made.
@@ -451,7 +504,8 @@ const translationService = function () {
       let currentSize = 0;
       lookups.forEach((progressInfo, i) => {
         const cacheEntry = cacheEntries[i];
-        if (cacheEntry) {
+        // A stored entry that is no longer usable (empty, or unchanged in a known foreign language) is fetched again.
+        if (cacheEntry && this.isUsableResult(progressInfo.originalText, cacheEntry.translatedText, cacheEntry.detectedLanguage, targetLanguage)) {
           progressInfo.translatedText = cacheEntry.translatedText;
           progressInfo.detectedLanguage = cacheEntry.detectedLanguage;
           progressInfo.status = "complete";
@@ -540,16 +594,25 @@ const translationService = function () {
       for (const request of requests) {
         promises.push(this.makeRequest(sourceLanguage, targetLanguage, request).then(response => {
           const results = this.cbParseResponse(response);
+          let unusable = 0;
           for (const idx in request) {
             const result = results[idx];
-            this.cbTransformResponse(result.text, dontSortResults); // apenas para gerar error
             const transInfo = request[idx];
+            // Only this row is marked as failed. The other rows of the batch keep their results, and are cached below.
+            if (!result || !this.isUsableResult(transInfo.originalText, result.text, result.detectedLanguage, targetLanguage, dontSortResults)) {
+              transInfo.status = "error";
+              unusable++;
+              continue;
+            }
             transInfo.detectedLanguage = result.detectedLanguage || "und";
             transInfo.translatedText = result.text;
             transInfo.status = "complete";
             if (dontSaveInPersistentCache === false && transInfo.translatedText) {
               translationCache.set(this.serviceName, sourceLanguage, targetLanguage, transInfo.originalText, transInfo.translatedText, transInfo.detectedLanguage);
             }
+          }
+          if (unusable > 0) {
+            throw new Error(`${this.serviceName}: ${unusable} result(s) were empty or unchanged`);
           }
         }).catch(e => {
           console.error(e);
@@ -559,7 +622,8 @@ const translationService = function () {
             this.sendCookies = true; // the captcha is solved in the browser, so its cookie must be sent next time
           }
           for (const transInfo of request) {
-            transInfo.status = "error";
+            // Rows that already have a usable result keep it. Only the rest of the request is marked as failed.
+            if (transInfo.status !== "complete") transInfo.status = "error";
             //this.translationsInProgress.delete([sourceLanguage, targetLanguage, transInfo.originalText])
           }
         }));
