@@ -83,3 +83,28 @@ assert.ok(noEngine.includes("enfr") && noEngine.includes("offline engine is not 
 assert.ok((await runPage({ ok: false })).includes("not running"), "an answer that is not the helper is treated as not running");
 
 console.log("onboarding checks passed");
+
+// First load, nothing chosen yet: the recommended provider (Offline) is the radio that is checked.
+{
+  const made = [];
+  const ctx = {
+    console: { log() {}, info() {}, warn() {}, error() {} },
+    setTimeout, clearTimeout, AbortController, Promise, JSON, Array, Object, String, Error, TypeError, Number,
+    document: {
+      getElementById: byId,
+      createElement: () => { const el = element(); made.push(el); return el; },
+      querySelector: () => null,
+    },
+    fetch: async () => { throw new TypeError("not running"); },
+    twpConfig: { onReady: () => Promise.resolve(), get: () => [], set() {} },
+    twpI18n: { getMessage: (key, substitution) => msg(key, substitution), updateUiMessages: () => Promise.resolve() },
+    chrome: { storage: { local: { set: (obj, cb) => cb && cb() } } },
+  };
+  vm.createContext(ctx);
+  vm.runInContext(fs.readFileSync(ROOT + "onboarding/onboarding.js", "utf8"), ctx, { filename: "onboarding.js" });
+  await new Promise(resolve => setTimeout(resolve, 20));
+  const radios = made.filter(el => el.type === "radio");
+  const checked = radios.filter(el => el.checked).map(el => el.value);
+  // The page is built twice (before and after translation), so check the values, not the count.
+  assert.ok(checked.length > 0 && checked.every(value => value === "offline"), "the recommended provider is selected on first load");
+}

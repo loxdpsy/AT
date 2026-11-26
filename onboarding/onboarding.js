@@ -14,8 +14,8 @@
 
   function renderProviders() {
     const container = document.getElementById("providers");
-    // Keep the choice the user already made when the page is translated and built again.
-    const selected = (document.querySelector("input[name=\"provider\"]:checked") || { value: "keep" }).value;
+    // The recommended provider (Offline) is selected first. A choice the user already made is kept when the page is built again.
+    const selected = (document.querySelector("input[name=\"provider\"]:checked") || { value: "offline" }).value;
     container.replaceChildren();
     for (const provider of PROVIDERS) {
       const label = document.createElement("label");
@@ -77,7 +77,7 @@
   }
 
   function updateOfflineBox() {
-    const selected = (document.querySelector("input[name=\"provider\"]:checked") || { value: "keep" }).value;
+    const selected = (document.querySelector("input[name=\"provider\"]:checked") || { value: "offline" }).value;
     const box = document.getElementById("offlineStatus");
     box.hidden = selected !== "offline";
     if (!box.hidden) checkHelper();
