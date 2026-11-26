@@ -120,6 +120,7 @@ jobs:
           name: helper-screenshots
           path: ${{ runner.temp }}/shots
           if-no-files-found: warn
+          retention-days: 14
 
       - name: Publish the screenshots to the ui-screenshots branch
         if: success()

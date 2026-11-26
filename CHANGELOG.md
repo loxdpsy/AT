@@ -4,6 +4,11 @@
 
 Not released yet. Changes after 0.0.2.1 will be listed here.
 
+## 0.0.2.4
+
+- Desktop helper: the window uses the same logo as the extension, in its header, on its window and in the tray.
+- Desktop helper: a clearer window. The tabs are in a sidebar, each group of settings sits on its own card, the language packs are listed as a table, and the text stays in one readable column.
+
 ## 0.0.2.3
 
 - Desktop helper: a new window instead of a browser page. It has a tray icon (Open and Quit), closing the window keeps the helper in the tray, and it has three tabs: the extension, offline translation, and connections.
@@ -264,7 +269,7 @@ First release of Atlas Translation. The version numbers start again at 0.0.1.0. 
 - The popup and side pages no longer inject their own hard-coded dark styles, which clashed with the theme.
 - The README version badge and the package version fields are kept in step.
 
-## 9.8.1.0
+## 0.0.0.1
 
 **Important information**
 
