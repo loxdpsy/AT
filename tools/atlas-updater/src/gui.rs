@@ -130,8 +130,15 @@ pub fn run(show_window: bool) -> Result<(), String> {
                 Err(e) => (None, Some(e)),
             };
             let (events_tx, events) = mpsc::channel();
+            // ATLAS_HELPER_START_TAB (extension, offline or connections) picks the tab the window opens on.
+            // The screenshot workflow uses it. Normally the window opens on Extension.
+            let start_tab = match std::env::var("ATLAS_HELPER_START_TAB").unwrap_or_default().as_str() {
+                "offline" => Tab::Offline,
+                "connections" => Tab::Connections,
+                _ => Tab::Extension,
+            };
             let mut helper = Helper {
-                tab: Tab::Extension,
+                tab: start_tab,
                 folder: default_folder(),
                 status: None,
                 catalogue: None,
