@@ -414,6 +414,12 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
       }
     }
   }
+  // Inline code and keyboard keys stay inside the sentence (#1049). Their text is part of it, so the sentence is sent to
+  // the service as one string (piece.joinsInline). Other inline-ignored tags still end the piece.
+  function isSentenceCode(node) {
+    const nodeName = node.nodeName.toLowerCase();
+    return node.nodeType === 1 && (nodeName === "code" || nodeName === "kbd") && !isNoTranslateNode(node) && !node.classList.contains("notranslate") && node.getAttribute("translate") !== "no" && !node.isContentEditable && !node.classList.contains("material-icons");
+  }
   function getPiecesToTranslate(root = document.documentElement) {
     const piecesToTranslate = [{
       isTranslated: false,
@@ -433,7 +439,9 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
           lastHTMLElement = node;
           const nodeName = node.nodeName.toLowerCase();
           if (nodeName === "select" || nodeName === "datalist") lastSelectOrDataListElement = node;
-          if (htmlTagsInlineIgnore.indexOf(nodeName) !== -1 || isNoTranslateNode(node) || node.classList.contains("notranslate") || node.getAttribute("translate") === "no" || node.isContentEditable || node.classList.contains("material-icons") ||
+          if (isSentenceCode(node)) {
+            piecesToTranslate[index].joinsInline = true;
+          } else if (htmlTagsInlineIgnore.indexOf(nodeName) !== -1 || isNoTranslateNode(node) || node.classList.contains("notranslate") || node.getAttribute("translate") === "no" || node.isContentEditable || node.classList.contains("material-icons") ||
           node.classList.contains("material-symbols-outlined") || nodeName.startsWith("br-") ||
           node.getAttribute("id") === "branch-select-menu" ||
           location.hostname === "twitter.com" && nodeName === "a" && (node.matches ? node.matches("article a") : true)
@@ -460,7 +468,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
               lastHTMLElement = _node;
               if (nodeName === "select" || nodeName === "datalist") lastSelectOrDataListElement = _node;
             }
-            if (htmlTagsInlineText.indexOf(nodeName) == -1) {
+            if (htmlTagsInlineText.indexOf(nodeName) == -1 && !isSentenceCode(_node)) {
               if (piecesToTranslate[index].nodes.length > 0) {
                 currentParagraphSize = 0;
                 piecesToTranslate[index].bottomElement = lastHTMLElement;
@@ -848,14 +856,18 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
             // sentence as a unit. Off by default: each text node is then translated on its own, as before.
             const paragraphMode = twpConfig.get("translateWholeParagraphs") === "yes";
             const keywordFilter = node => filterKeywordsInText(node.textContent, customDictionary, currentPageTranslatorService);
-            const sourceArray2d = paragraphMode ? piecesToTranslateNow.map(ptt => [ptt.nodes.map(keywordFilter).join("")]) : piecesToTranslateNow.map(ptt => ptt.nodes.map(keywordFilter));
+            // A piece is sent as one string in paragraph mode, and also when it runs through inline code (#1049). Otherwise
+            // the service would translate the text before and after the code as two separate sentences.
+            const sentenceMode = ptt => paragraphMode || ptt.joinsInline === true;
+            const sourceArray2d = piecesToTranslateNow.map(ptt => sentenceMode(ptt) ? [ptt.nodes.map(keywordFilter).join("")] : ptt.nodes.map(keywordFilter));
             backgroundTranslateHTML(currentPageTranslatorService, currentSourceLanguage, currentTargetLanguage, sourceArray2d, dontSortResults).then(results => {
               if (pageLanguageState === "translated" && currentFooCount === fooCount) {
-                if (paragraphMode) {
-                  translateParagraphResults(piecesToTranslateNow, results);
-                } else {
-                  translateResults(piecesToTranslateNow, results);
-                }
+                // Results are matched to their pieces by position, so each kind of piece is written by its own function.
+                const withResult = piecesToTranslateNow.map((ptt, i) => ({ ptt, result: results[i] }));
+                const plain = withResult.filter(item => !sentenceMode(item.ptt));
+                const sentences = withResult.filter(item => sentenceMode(item.ptt));
+                if (plain.length > 0) translateResults(plain.map(item => item.ptt), plain.map(item => item.result));
+                if (sentences.length > 0) translateParagraphResults(sentences.map(item => item.ptt), sentences.map(item => item.result));
               }
             });
           }

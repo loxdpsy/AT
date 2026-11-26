@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Browser test page</title>
+</head>
+<body>
+<!-- #1049: inline code inside a sentence. -->
+<p id="code-sentence">I'm starting with SDL2 and having some trouble trying to understand what an <code>SDL_Renderer</code> is.</p>
+<!-- Control: no inline code, so each text node is translated on its own, as before. -->
+<p id="plain-sentence">This paragraph has no code and is translated as before.</p>
+<!-- Keyboard keys are inline too. -->
+<p id="kbd-sentence">Press <kbd>Ctrl</kbd> and then <kbd>C</kbd> to copy the selected text.</p>
+<script src="/lib/polyfill.js"></script>
+<script src="/lib/checkedLastError.js"></script>
+<script src="/lib/languages.js"></script>
+<script src="/lib/config.js"></script>
+<script src="/lib/platformInfo.js"></script>
+<script src="/lib/i18n.js"></script>
+<script src="/contentScript/showOriginal.js"></script>
+<script src="/contentScript/pageTranslator.js"></script>
+</body>
+</html>

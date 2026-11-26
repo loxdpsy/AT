@@ -1,0 +1,66 @@
+name: Browser tests
+
+# Runs the page translator in a real Chromium (tests/browser): the real content scripts, with the chrome.* APIs stood in.
+# It checks what the page sends for translation and what it shows afterwards (for example #1049, inline code).
+# Runs on every pull request, on every push to main, and by hand.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser:
+    name: Browser tests (Chromium)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Find Chrome on the runner
+        run: |
+          set -eu
+          chrome="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$chrome" ]; then
+            echo "No Chrome or Chromium was found on this runner." >&2
+            exit 1
+          fi
+          echo "CHROME_PATH=$chrome" >> "$GITHUB_ENV"
+          echo "Using $chrome: $("$chrome" --version 2>/dev/null || echo 'version unknown')"
+
+      - name: Install the test dependencies
+        working-directory: tests/browser
+        run: npm ci
+
+      - name: Run the browser tests
+        id: run
+        working-directory: tests/browser
+        run: |
+          set -o pipefail
+          node run.mjs 2>&1 | tee browser-tests.log
+
+      - name: Write the job summary
+        if: always()
+        run: |
+          {
+            echo "## Browser tests"
+            echo ""
+            if [ "${{ steps.run.outcome }}" = "success" ]; then
+              echo "All browser tests passed."
+            else
+              echo "The browser tests failed. Details are in the log below."
+            fi
+            echo ""
+            echo '```'
+            tail -n 40 tests/browser/browser-tests.log 2>/dev/null || echo "No log was written."
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
