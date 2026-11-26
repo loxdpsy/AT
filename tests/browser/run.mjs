@@ -164,6 +164,25 @@ await check("control: a paragraph without code is still translated", async page 
   }
 });
 
+await check("#1033: lines split by line breaks are all translated", async page => {
+  await translateAndWait(page, "br-lines");
+  await new Promise(resolve => setTimeout(resolve, 600));
+  const shown = await page.evaluate(() => document.getElementById("br-lines").textContent);
+  for (const line of ["Line one is here.", "Line two is here.", "Line three is here."]) {
+    if (!shown.includes("T[" + line + "]")) throw new Error("not translated: " + line + "; shown: " + JSON.stringify(shown));
+  }
+});
+
+await check("#922: text below the first screen is translated after scrolling", async page => {
+  await page.evaluate(() => {
+    for (const listener of window.__listeners) listener({ action: "translatePage", targetLanguage: "es" }, {}, () => {});
+  });
+  await page.evaluate(() => window.scrollTo(0, document.getElementById("below-fold").offsetTop - 50));
+  await page.waitForFunction(() => document.getElementById("below-fold").textContent.includes("T["), { timeout: 15000 });
+  const shown = await page.evaluate(() => document.getElementById("below-fold").textContent.trim());
+  if (shown !== "T[Text far below the first screen is translated when it is reached.]") throw new Error("shown text is " + JSON.stringify(shown));
+});
+
 await browser.close();
 server.close();
 const failed = results.filter(r => !r.ok).length;

@@ -11,6 +11,11 @@
 <p id="plain-sentence">This paragraph has no code and is translated as before.</p>
 <!-- Keyboard keys are inline too. -->
 <p id="kbd-sentence">Press <kbd>Ctrl</kbd> and then <kbd>C</kbd> to copy the selected text.</p>
+<!-- #1033: lines split by line breaks must all be translated. -->
+<div id="br-lines"><span>Line one is here.</span><br>Line two is here.<br>Line three is here.</div>
+<!-- #922: text below the first screen is translated once it is reached. -->
+<div style="height: 2000px"></div>
+<p id="below-fold">Text far below the first screen is translated when it is reached.</p>
 <script src="/lib/polyfill.js"></script>
 <script src="/lib/checkedLastError.js"></script>
 <script src="/lib/languages.js"></script>
