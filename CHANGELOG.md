@@ -13,6 +13,8 @@ Not released yet. Changes after 0.0.2.1 will be listed here.
 - LibreTranslate (#278): can translate whole pages once a server is saved (Options, Page Translation Service). The API key is optional, for servers that need none. Each text is sent as its own request.
 - Right-to-left languages (Arabic, Hebrew, Persian, Urdu and others): the popup and options pages are laid out right to left when the interface language is one of them (#638).
 - Options, Keyboard shortcuts: on Chrome and Edge the field shows the shortcut the browser really has, not a saved one (#842). The double-Ctrl options are unchanged.
+- Right-to-left languages on web pages (Arabic, Hebrew, Persian, Urdu and others): the translated text is laid out right to left and aligned to the start edge, also where the site forces left alignment or left-to-right direction. The page itself is still flipped as before, and both are restored when the page is restored.
+- Desktop helper: when the system language is right to left, the window mirrors its layout (tabs on the right, rows right to left). Its text stays English.
 - Offline translation is faster: long texts are split at their line breaks, and the parts are translated in parallel on
   two engine processes per language pair.
 - The helper tries a download again when the network cuts it short.

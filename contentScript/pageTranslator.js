@@ -629,8 +629,41 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     node.replaceWith(fontNode);
     return fontNode;
   }
+  // Translated text in a right-to-left language: the block that holds it is laid out right to left, so a site's own
+  // left alignment or LTR direction does not leave Arabic, Hebrew or Persian text on the wrong side. The marks are
+  // removed when the page is restored (clearRightToLeftText).
+  const rtlMarked = new Set();
+  let rtlStyleNode = null;
+  function ensureRightToLeftStyle() {
+    if (rtlStyleNode || !document.head) return;
+    rtlStyleNode = document.createElement("style");
+    rtlStyleNode.id = "twp-rtl-style";
+    rtlStyleNode.textContent = ".twp-rtl-text { direction: rtl !important; text-align: start !important; }";
+    document.head.appendChild(rtlStyleNode);
+  }
+  function markRightToLeftText(node) {
+    if (!isRightToLeftLanguage(currentTargetLanguage) || !node || !node.parentNode) return;
+    // Climb out of inline wrappers (font, span, a): the alignment that matters belongs to the block around them.
+    let block = node.parentNode;
+    while (block && block.nodeType === 1 && block !== document.body && getComputedStyle(block).display.indexOf("inline") === 0 && block.parentElement) {
+      block = block.parentElement;
+    }
+    if (!block || block.nodeType !== 1 || block === document.body || block === document.documentElement || rtlMarked.has(block)) return;
+    ensureRightToLeftStyle();
+    block.classList.add("twp-rtl-text");
+    rtlMarked.add(block);
+  }
+  function clearRightToLeftText() {
+    rtlMarked.forEach(el => el.classList.remove("twp-rtl-text"));
+    rtlMarked.clear();
+    if (rtlStyleNode) {
+      rtlStyleNode.remove();
+      rtlStyleNode = null;
+    }
+  }
   function translateTextContent(node, parentNode, text, toRestore) {
     toRestore.translatedText = text;
+    markRightToLeftText(node);
     if (location.hostname === "pdf.translatewebpages.org") {
       if (parentNode && parentNode.nodeName.toLowerCase() === "span" && parentNode.getAttribute("role") === "presentation") {
         const oldClientWidth = node.parentNode.clientWidth;
@@ -920,6 +953,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
   };
   pageTranslator.restorePage = function () {
     restorePageDirection();
+    clearRightToLeftText();
     fooCount++;
     piecesToTranslate = [];
     showOriginal.disable();

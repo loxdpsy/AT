@@ -81,6 +81,8 @@ pub struct Helper {
     api_error: Option<String>,
     bindings: Shared,
     bind_requests: Receiver<BindRequest>,
+    /// True when the system language is written right to left: the window then mirrors its layout.
+    rtl: bool,
     pending_bind: Option<BindRequest>,
     events_tx: Sender<Event>,
     events: Receiver<Event>,
@@ -146,6 +148,7 @@ pub fn run(show_window: bool) -> Result<(), String> {
                 events_tx,
                 events,
                 logo: texture,
+                rtl: sys_locale::get_locale().map_or(false, |tag| is_rtl_language(&tag)),
                 quitting: false,
                 _engine: engine,
             };
@@ -211,7 +214,7 @@ impl eframe::App for Helper {
 
         egui::Panel::top("header").show_inside(ui, |ui| {
             ui.add_space(8.0);
-            ui.horizontal(|ui| {
+            row(ui, self.rtl, |ui| {
                 ui.add(egui::Image::new(&self.logo).max_size(egui::vec2(220.0, 64.0)));
                 ui.add_space(12.0);
                 ui.vertical(|ui| {
@@ -222,7 +225,8 @@ impl eframe::App for Helper {
             ui.add_space(8.0);
         });
 
-        egui::Panel::left("tabs").resizable(false).default_size(176.0).show_inside(ui, |ui| {
+        let tabs_side = if self.rtl { egui::Panel::right("tabs") } else { egui::Panel::left("tabs") };
+        tabs_side.resizable(false).default_size(176.0).show_inside(ui, |ui| {
             ui.add_space(8.0);
             ui.selectable_value(&mut self.tab, Tab::Extension, "Extension");
             ui.selectable_value(&mut self.tab, Tab::Offline, "Offline translation");
@@ -235,7 +239,7 @@ impl eframe::App for Helper {
 
         egui::Panel::bottom("footer").show_inside(ui, |ui| {
             ui.add_space(4.0);
-            ui.horizontal(|ui| {
+            row(ui, self.rtl, |ui| {
                 if let Some(label) = &self.busy {
                     ui.spinner();
                     ui.label(label.as_str());
@@ -251,10 +255,13 @@ impl eframe::App for Helper {
 
         let idle = self.busy.is_none();
         egui::CentralPanel::default().show_inside(ui, |ui| {
-            egui::ScrollArea::vertical().show(ui, |ui| match self.tab {
-                Tab::Extension => self.extension_tab(ui, idle, &mut actions),
-                Tab::Offline => self.offline_tab(ui, idle, &mut actions),
-                Tab::Connections => self.connections_tab(ui, &mut actions),
+            let align = if self.rtl { egui::Align::Max } else { egui::Align::Min };
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                ui.with_layout(egui::Layout::top_down(align), |ui| match self.tab {
+                    Tab::Extension => self.extension_tab(ui, idle, &mut actions),
+                    Tab::Offline => self.offline_tab(ui, idle, &mut actions),
+                    Tab::Connections => self.connections_tab(ui, &mut actions),
+                });
             });
         });
 
@@ -273,7 +280,7 @@ impl Helper {
         ui.add_space(8.0);
 
         ui.label("Folder with the unpacked copy of the extension (Chromium browsers):");
-        ui.horizontal(|ui| {
+        row(ui, self.rtl, |ui| {
             ui.add(egui::TextEdit::singleline(&mut self.folder).desired_width(360.0));
             if ui.button("Default").clicked() {
                 actions.push(Action::UseDefaultFolder);
@@ -307,7 +314,7 @@ impl Helper {
         }
         ui.add_space(8.0);
 
-        ui.horizontal(|ui| {
+        row(ui, self.rtl, |ui| {
             if ui.add_enabled(idle, egui::Button::new("Check again")).clicked() {
                 actions.push(Action::Refresh);
             }
@@ -394,7 +401,7 @@ impl Helper {
                 let root = store::packs_dir();
                 for (index, pack) in catalogue.packs.iter().enumerate() {
                     let installed = packs::is_installed_in(&root, pack);
-                    ui.horizontal(|ui| {
+                    row(ui, self.rtl, |ui| {
                         ui.label(format!("{} to {}", pack.from, pack.to));
                         ui.label(RichText::new(size_text(pack)).color(GREY));
                         if installed {
@@ -427,7 +434,7 @@ impl Helper {
             ui.label(RichText::new("No browser is connected yet. Open the Atlas Translation settings in the browser and choose Bind.").color(GREY));
         }
         for (index, binding) in items.iter().enumerate() {
-            ui.horizontal(|ui| {
+            row(ui, self.rtl, |ui| {
                 ui.label(RichText::new(&binding.name).strong());
                 if ui.button("Remove").clicked() {
                     actions.push(Action::RemoveBinding(index));
@@ -453,7 +460,7 @@ impl Helper {
                 ui.add_space(6.0);
                 ui.label(RichText::new(format!("Requested from: {}", origin)).color(GREY).small());
                 ui.add_space(10.0);
-                ui.horizontal(|ui| {
+                row(ui, self.rtl, |ui| {
                     if ui.button("Allow").clicked() {
                         answer = Some(true);
                     }
@@ -600,6 +607,21 @@ impl Helper {
     }
 }
 
+/// True for the languages written right to left (the same list the extension uses for its own pages).
+fn is_rtl_language(tag: &str) -> bool {
+    let language = tag.split(|c| c == '-' || c == '_').next().unwrap_or("").to_ascii_lowercase();
+    matches!(language.as_str(), "ar" | "he" | "iw" | "fa" | "prs" | "ps" | "sd" | "ug" | "ur" | "yi" | "dv" | "ckb")
+}
+
+/// A row of widgets: left to right, or right to left when the window is mirrored.
+fn row<R>(ui: &mut egui::Ui, rtl: bool, add: impl FnOnce(&mut egui::Ui) -> R) -> R {
+    if rtl {
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), add).inner
+    } else {
+        ui.horizontal(add).inner
+    }
+}
+
 /// Shows the window and brings it to the front (from the tray or for a bind request).
 fn show(ctx: &egui::Context) {
     ctx.send_viewport_cmd(ViewportCommand::Visible(true));
@@ -709,4 +731,19 @@ fn square(icon: &IconData, size: u32) -> IconData {
         }
     }
     IconData { rgba, width: size, height: size }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn right_to_left_languages_mirror_the_window() {
+        for tag in ["ar", "ar-EG", "he-IL", "iw", "fa_IR", "ur", "ckb", "ps"] {
+            assert!(is_rtl_language(tag), "{} should mirror", tag);
+        }
+        for tag in ["en-US", "fr", "ja-JP", "zh_CN", "", "a"] {
+            assert!(!is_rtl_language(tag), "{} should not mirror", tag);
+        }
+    }
 }
