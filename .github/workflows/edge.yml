@@ -127,6 +127,10 @@ jobs:
                 Succeeded) return 0 ;;
                 Failed)
                   echo "$body"
+                  # The version is already with Edge (an earlier run sent it). Return 3 so the caller reports it as done.
+                  if printf '%s' "$body" | grep -qiE 'duplicate|already'; then
+                    return 3
+                  fi
                   # Edge accepts one submission at a time. Return 2 so the caller can report it without failing the run.
                   if printf '%s' "$body" | jq -e '.errorCode == "InProgressSubmission"' >/dev/null 2>&1; then
                     return 2
@@ -163,15 +167,21 @@ jobs:
 
           # 2. Submit the draft for certification.
           headers=$(mktemp)
-          code=$(curl -sS -o /dev/null -D "$headers" -w "%{http_code}" -X POST \
+          code=$(curl -sS -o "$headers.body" -D "$headers" -w "%{http_code}" -X POST \
             -H "Authorization: ApiKey $EDGE_API_KEY" \
             -H "X-ClientID: $EDGE_CLIENT_ID" \
             -H "Content-Type: application/json" \
             -d "{\"notes\": \"Atlas Translation $VERSION. Release notes are on the GitHub release.\"}" \
             "$EDGE_API/v1/products/$EDGE_PRODUCT_ID/submissions")
           if [ "$code" != "202" ]; then
+            # The version is already with Edge (an earlier run sent it). That is done, not failed: nothing is sent again.
+            if grep -qiE 'duplicate|already' "$headers" "$headers.body"; then
+              echo "done: $VERSION is already with Edge Add-ons (an earlier run sent it). Nothing was sent again."
+              exit 0
+            fi
             echo "::error::Submission returned HTTP $code"
             cat "$headers"
+            cat "$headers.body"
             exit 1
           fi
           loc=$(tr -d '\r' < "$headers" | grep -i '^location:' | sed 's/^[Ll]ocation: *//' || true)
@@ -182,6 +192,10 @@ jobs:
             wait_for_operation "$(resolve "$loc" "submissions/operations")" "submission"
             rc=$?
             set -e
+          fi
+          if [ "$rc" = "3" ]; then
+            echo "done: $VERSION is already with Edge Add-ons (an earlier run sent it). Nothing was sent again."
+            exit 0
           fi
           if [ "$rc" = "2" ]; then
             # The package is in the draft. Edge will not take a second submission until the earlier one finishes.
