@@ -141,12 +141,22 @@ jobs:
           fi
           echo "failed: the unlisted signing did not finish. See the log below." > build/amo-sign-status.txt
           set -o pipefail
-          npx --yes web-ext@8 sign \
+          if ! npx --yes web-ext@8 sign \
             --source-dir build/staging/firefox \
             --artifacts-dir build/signed-github \
             --channel unlisted \
             --api-key "$AMO_JWT_ISSUER" \
-            --api-secret "$AMO_JWT_SECRET" 2>&1 | tee build/amo-sign.log || exit 1
+            --api-secret "$AMO_JWT_SECRET" 2>&1 | tee build/amo-sign.log; then
+            # Mozilla will not sign the same version twice. That is done, not failed: an earlier run signed it. The unsigned
+            # file is removed so that it is not published as if it were the signed one.
+            if grep -qiE 'already exists|already been|duplicate' build/amo-sign.log; then
+              VERSION=$(python3 -c "import json; print(json.load(open('firefox_manifest.json'))['version'])")
+              rm -f "build/atlas-translation-$VERSION-firefox.xpi"
+              echo "done: version $VERSION is already signed on addons.mozilla.org (an earlier run). Nothing was sent again." > build/amo-sign-status.txt
+              exit 0
+            fi
+            exit 1
+          fi
           SIGNED=$(ls build/signed-github/*.xpi 2>/dev/null | head -n 1)
           if [ -z "$SIGNED" ]; then
             echo "No signed file came back from addons.mozilla.org." >&2
@@ -200,14 +210,22 @@ jobs:
           # Overwritten below if the upload succeeds, so a failed run never reports success.
           echo "failed: the upload did not finish. See the log below." > build/amo-status.txt
           set -o pipefail
-          npx --yes web-ext@8 sign \
+          if ! npx --yes web-ext@8 sign \
             --source-dir build/staging/firefox \
             --artifacts-dir build/signed \
             --channel "$CHANNEL" \
             --amo-metadata .github/amo-metadata.json \
             --api-key "$AMO_JWT_ISSUER" \
             --api-secret "$AMO_JWT_SECRET" \
-            $APPROVAL 2>&1 | tee build/amo-submit.log
+            $APPROVAL 2>&1 | tee build/amo-submit.log; then
+            # Mozilla already has this version (an earlier run sent it). That is done, not failed: nothing is sent again.
+            if grep -qiE 'already exists|already been|duplicate' build/amo-submit.log; then
+              VERSION=$(python3 -c "import json; print(json.load(open('firefox_manifest.json'))['version'])")
+              echo "done: version $VERSION is already on addons.mozilla.org (an earlier run sent it). Nothing was sent again." > build/amo-status.txt
+              exit 0
+            fi
+            exit 1
+          fi
           if [ "$CHANNEL" = "listed" ]; then
             echo "sent: the store version is with Mozilla for review. It is public after approval." > build/amo-status.txt
           else
