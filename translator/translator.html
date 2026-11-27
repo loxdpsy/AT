@@ -22,24 +22,56 @@
 
     <main class="page">
         <section id="panelText" role="tabpanel" aria-labelledby="tabText">
-            <div class="langRow">
-                <select id="sourceLang" aria-label="Translate from"></select>
+            <div class="langBar">
+                <div class="sideBar">
+                    <div id="sourceChips" class="chips" role="group" aria-label="Translate from"></div>
+                    <button type="button" id="sourceMore" class="moreButton" aria-label="All languages to translate from" title="All languages">&#8964;</button>
+                </div>
                 <button type="button" id="btnSwap" class="iconButton" title="Swap languages" aria-label="Swap languages">&#8644;</button>
-                <select id="targetLang" aria-label="Translate to"></select>
+                <div class="sideBar">
+                    <div id="targetChips" class="chips" role="group" aria-label="Translate to"></div>
+                    <button type="button" id="targetMore" class="moreButton" aria-label="All languages to translate to" title="All languages">&#8964;</button>
+                </div>
             </div>
+            <select id="sourceLang" class="hiddenSelect" tabindex="-1" aria-hidden="true"></select>
+            <select id="targetLang" class="hiddenSelect" tabindex="-1" aria-hidden="true"></select>
+
             <div class="panels">
                 <div class="panel">
                     <textarea id="input" maxlength="5000" placeholder="Type or paste text to translate" aria-label="Text to translate"></textarea>
                     <div class="panelFoot">
                         <span id="count" class="muted">0 / 5000</span>
-                        <button type="button" id="btnClearInput" class="linkButton">Clear</button>
+                        <span class="footActions">
+                            <button type="button" id="btnListenInput" class="linkButton" aria-label="Listen to the text">&#128266; Listen</button>
+                            <button type="button" id="btnClearInput" class="linkButton">Clear</button>
+                        </span>
                     </div>
                 </div>
                 <div class="panel output">
                     <div id="output" class="output-text" aria-live="polite" aria-label="Translation"></div>
                     <div class="panelFoot">
-                        <button type="button" id="btnCopy" class="linkButton">Copy</button>
-                        <button type="button" id="btnSave" class="linkButton" aria-pressed="false">Save</button>
+                        <span class="footActions">
+                            <button type="button" id="btnListenOutput" class="linkButton" aria-label="Listen to the translation">&#128266; Listen</button>
+                            <span class="speedWrap">
+                                <button type="button" id="btnSpeed" class="linkButton" aria-haspopup="true" aria-expanded="false">Speed</button>
+                                <div id="speedMenu" class="speedMenu" role="menu" hidden>
+                                    <p class="speedTitle">Reading speed</p>
+                                    <div class="speedRow" role="menuitemradio" aria-checked="true" data-speed="normal" tabindex="0">
+                                        <span class="speedName">Normal</span><button type="button" class="linkButton testSpeed" data-speed="normal">Test</button>
+                                    </div>
+                                    <div class="speedRow" role="menuitemradio" aria-checked="false" data-speed="slow" tabindex="0">
+                                        <span class="speedName">Slow</span><button type="button" class="linkButton testSpeed" data-speed="slow">Test</button>
+                                    </div>
+                                    <div class="speedRow" role="menuitemradio" aria-checked="false" data-speed="slowest" tabindex="0">
+                                        <span class="speedName">Slowest</span><button type="button" class="linkButton testSpeed" data-speed="slowest">Test</button>
+                                    </div>
+                                </div>
+                            </span>
+                        </span>
+                        <span class="footActions">
+                            <button type="button" id="btnCopy" class="linkButton">Copy</button>
+                            <button type="button" id="btnSave" class="linkButton" aria-pressed="false">Save</button>
+                        </span>
                     </div>
                 </div>
             </div>
@@ -85,6 +117,15 @@
         </section>
     </main>
 
+    <div id="langPanel" class="langPanel" role="dialog" aria-modal="true" aria-labelledby="langTitle" hidden>
+        <div class="langHead">
+            <button type="button" id="langBack" class="iconButton" aria-label="Close the language list">&#8592;</button>
+            <h2 id="langTitle" class="langTitle">Translate to</h2>
+            <input id="langSearch" type="search" placeholder="Search a language" aria-label="Search a language">
+        </div>
+        <div id="langGrid" class="langGrid"></div>
+    </div>
+
     <script src="/lib/polyfill.js"></script>
     <script src="/lib/checkedLastError.js"></script>
     <script src="/lib/stuff.js"></script>
@@ -92,6 +133,7 @@
     <script src="/lib/config.js"></script>
     <script src="/lib/i18n.js"></script>
     <script src="history.js"></script>
+    <script src="language-picker.js"></script>
     <script src="translator.js"></script>
     <script src="pdf-text.js"></script>
     <script type="module" src="pdf-translate.mjs"></script>

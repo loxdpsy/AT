@@ -93,6 +93,11 @@ function setupPdfPanel() {
   }
   $("pdfSource").value = "en";
   $("pdfTarget").value = offline.includes("fr") ? "fr" : offline[0];
+  // The PDF prompt opens this page with ?from=, ?to=, ?pdf= (the address) and ?auto=1 (start at once).
+  const params = new URLSearchParams(location.search);
+  if (offline.includes(params.get("from"))) $("pdfSource").value = params.get("from");
+  if (offline.includes(params.get("to"))) $("pdfTarget").value = params.get("to");
+  if (params.get("pdf")) $("pdfUrl").value = params.get("pdf");
 
   let lastTranslated = null;
 
@@ -185,6 +190,7 @@ function setupPdfPanel() {
   }
 
   $("btnPdfTranslate").addEventListener("click", translate);
+  if (params.get("auto") === "1" && params.get("pdf")) translate();
   $("pdfUrl").addEventListener("keydown", event => {
     if (event.key === "Enter") translate();
   });

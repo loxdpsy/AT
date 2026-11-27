@@ -8,6 +8,9 @@ Not released yet. Changes after 0.0.2.5 are listed here.
   History keeps the newest 100 translations. Saved items stay until you remove them. "Clear history" removes only unsaved items.
 - Translator PDF tab: choose a PDF file or paste its address. The text is read and translated on this computer with the
   Offline helper (one side must be English, and the language pack must be installed). Scanned PDFs are not supported.
+- Translator text tab: a Google-style language chooser (chips for the current and recent languages, a full list with search, swap).
+- Translator: Listen to the source or the translation, at Normal, Slow or Slowest speed (system voices for now).
+- Opening a PDF shows a prompt to translate it (From and To). It opens the Translator's PDF tab, which translates on this computer with the Offline helper.
 - Setup page: Save closes the page. When the helper still needs connecting, the note stays for a few seconds first.
 
 ## 0.0.2.7

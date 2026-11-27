@@ -40,7 +40,15 @@ Other extensions with a similar name are not Atlas Translation. Store links will
   - OpenRouter (AI, your own key; you choose the model)
   - LibreTranslate (your own server and key)
   - When a service fails, the next enabled service that supports the language translates the text. A service that fails three times in a row is skipped for five minutes (see *Notes and limits*).
-- **Text-to-speech** for translated text (Chromium 109+ and Firefox).
+- **Translator page** (toolbar popup menu, *Translator*), like Google Translate:
+  - translate as you type, with a language chooser: chips for the current and recent languages, a full list with search, and a swap button;
+  - Copy, Save, and a History of the newest 100 translations. Saved items stay until you remove them;
+  - **Listen** to the source or the translation, at *Normal*, *Slow* or *Slowest* speed. Reading uses the voices of this computer for now.
+- **PDF translation.** When the tab is a PDF, the toolbar popup offers to translate it (From and To languages). It opens the
+  Translator's PDF tab and translates the text on this computer with the Atlas Helper and an installed language pack (one side must be
+  English). Scanned PDFs without text are not supported. Limits: 50 MB and 300 pages. The result is text with Copy and
+  Download .txt; the PDF layout is not rebuilt.
+- **Text-to-speech** for translated text in the page translation (Chromium 109+ and Firefox).
 - **Update check** script that uses the GitHub API and respects the rate limit (see *Checking for updates*).
 - **Per-site and per-language rules**: never translate a site or language, always translate, auto-translate links.
 - **Keyboard shortcuts** for toggling, showing the original, and switching services.

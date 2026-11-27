@@ -33,11 +33,12 @@ const server = http.createServer((req, res) => {
 await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
 const base = `http://127.0.0.1:${server.address().port}`;
 
-const store = { targetLanguage: "fr", textTranslatorService: "google", pageTranslatorService: "google", enabledServices: ["google", "offline"], uiLanguage: "en" };
+const store = { targetLanguage: "fr", targetLanguages: ["fr"], textTranslatorService: "google", pageTranslatorService: "google", enabledServices: ["google", "offline"], uiLanguage: "en" };
 const stub = `(() => {
   const store = ${JSON.stringify(store)};
   window.__listeners = [];
   window.__messages = [];
+  window.__tabs = [];
   const ev = () => ({ addListener(fn) { window.__listeners.push(fn); }, removeListener() {}, hasListener() { return false; } });
   const cb = (fn, ...a) => { if (typeof fn === "function") fn(...a); };
   window.chrome = {
@@ -67,7 +68,7 @@ const stub = `(() => {
       onChanged: ev(),
     },
     i18n: { getUILanguage: () => "en-US", getAcceptLanguages: c => cb(c, ["en"]), getMessage: () => "" },
-    tabs: { query: (q, c) => cb(c, []), create() {}, getCurrent: c => cb(c, undefined), remove() {} },
+    tabs: { query: (q, c) => cb(c, []), create: opts => window.__tabs.push(opts), getCurrent: c => cb(c, undefined), remove() {} },
     extension: { isAllowedFileSchemeAccess: c => cb(c, false), inIncognitoContext: false },
     commands: { getAll: c => cb(c, []), onCommand: ev() },
     contextMenus: { create() {}, removeAll: c => cb(c), onClicked: ev() },
@@ -81,15 +82,14 @@ const browser = await puppeteer.launch({
   args: ["--no-sandbox", "--disable-gpu", "--disable-dev-shm-usage"],
 });
 
-async function openPage() {
+async function openPage(address = "/translator/translator.html") {
   const page = await browser.newPage();
   await page.setViewport({ width: 1100, height: 900 });
   const errors = [];
   page.on("pageerror", e => errors.push(e.message));
   await page.evaluateOnNewDocument(stub);
-  await page.goto(base + "/translator/translator.html", { waitUntil: "load" });
+  await page.goto(base + address, { waitUntil: "load" });
   await page.waitForFunction(() => window.__listeners.length > 0, { timeout: 10000 });
-  await page.click("#tabPdf");
   return { page, errors };
 }
 
@@ -112,6 +112,7 @@ async function check(name, fn) {
 const fixture = path.join(root, "tests/fixtures/sample-text.pdf");
 
 await check("a PDF file is read into paragraphs and translated through the offline-only message", async page => {
+  await page.click("#tabPdf");
   const input = await page.$("#pdfFile");
   await input.uploadFile(fixture);
   await page.select("#pdfSource", "en");
@@ -137,6 +138,7 @@ await check("a PDF file is read into paragraphs and translated through the offli
 });
 
 await check("a pair without English is refused before anything is sent", async page => {
+  await page.click("#tabPdf");
   await page.evaluate(() => { window.__messages.length = 0; });
   await page.$eval("#pdfFile", () => {});
   await (await page.$("#pdfFile")).uploadFile(fixture);
@@ -168,6 +170,73 @@ await check("the text tab translates as you type, saves an item and keeps a hist
   assert.strictEqual(historyAfter, 1, "unsaved items are cleared");
   assert.deepEqual(historyKept, ["Good morning"], "the saved item is the one left");
 });
+
+await check("the language chooser searches, picks a language, and the chip and select follow", async page => {
+  await page.click("#targetMore");
+  await page.waitForFunction(() => !document.getElementById("langPanel").hidden);
+  await page.type("#langSearch", "japan");
+  const items = await page.$$eval("#langGrid .langItem span:last-child", els => els.map(el => el.textContent));
+  assert.ok(items.includes("Japanese"), "the search finds Japanese");
+  assert.ok(items.every(name => name.toLowerCase().includes("japan")), "only matches are listed");
+  await page.evaluate(() => [...document.querySelectorAll("#langGrid .langItem")].find(el => el.textContent.trim() === "Japanese").click());
+  await page.waitForFunction(() => document.getElementById("langPanel").hidden);
+  assert.strictEqual(await page.$eval("#targetLang", el => el.value), "ja", "the select has Japanese");
+  const chips = await page.$$eval("#targetChips .chip.active", els => els.map(el => el.textContent));
+  assert.deepEqual(chips, ["Japanese"], "the chip shows Japanese as selected");
+});
+
+await check("the chooser closes with Escape, and swap exchanges the languages", async page => {
+  await page.click("#sourceMore");
+  await page.waitForFunction(() => !document.getElementById("langPanel").hidden);
+  await page.keyboard.press("Escape");
+  await page.waitForFunction(() => document.getElementById("langPanel").hidden);
+  await page.evaluate(() => { document.getElementById("sourceLang").value = "en"; document.getElementById("targetLang").value = "fr"; });
+  await page.click("#btnSwap");
+  assert.strictEqual(await page.$eval("#sourceLang", el => el.value), "fr");
+  assert.strictEqual(await page.$eval("#targetLang", el => el.value), "en");
+});
+
+await check("reading speed: the menu opens and the choice is kept", async page => {
+  await page.click("#btnSpeed");
+  assert.strictEqual(await page.$eval("#speedMenu", el => el.hidden), false, "the speed menu opens");
+  await page.evaluate(() => document.querySelector('.speedRow[data-speed="slow"]').click());
+  const checked = await page.$eval('.speedRow[data-speed="slow"]', el => el.getAttribute("aria-checked"));
+  assert.strictEqual(checked, "true", "Slow is chosen");
+});
+
+// The PDF prompt is a popup page: it opens the Translator's PDF tab for the document, with the languages chosen.
+{
+  const pdfAddress = "http://127.0.0.1/sample.pdf";
+  const page = await browser.newPage();
+  const errors = [];
+  page.on("pageerror", e => errors.push(e.message));
+  await page.evaluateOnNewDocument(stub);
+  await page.goto(base + "/popup/popup-pdf-prompt.html?url=" + encodeURIComponent(pdfAddress), { waitUntil: "load" });
+  try {
+    await page.waitForFunction(() => document.getElementById("translate").textContent.length > 0, { timeout: 10000 });
+    const label = await page.$eval("#translate", el => el.textContent);
+    assert.ok(label.includes("English") && label.includes("French"), "the button names both languages: " + label);
+    await page.click("#translate");
+    await new Promise(r => setTimeout(r, 200));
+    const tabs = await page.evaluate(() => window.__tabs.map(o => o.url));
+    assert.strictEqual(tabs.length, 1, "one Translator tab is opened");
+    const url = new URL(tabs[0]);
+    assert.ok(url.pathname.endsWith("/translator/translator.html"), "it opens the Translator");
+    assert.strictEqual(url.searchParams.get("pdf"), pdfAddress, "the PDF address is passed on");
+    assert.strictEqual(url.searchParams.get("from"), "en", "the document is English (default From)");
+    assert.strictEqual(url.searchParams.get("to"), "fr", "the target is the Settings language");
+    assert.strictEqual(url.searchParams.get("auto"), "1", "it starts at once");
+    assert.strictEqual(url.hash, "#pdf", "the PDF tab is shown");
+    if (errors.length) throw new Error("page errors: " + errors.join("; "));
+    results.push({ name: "the PDF prompt opens the Translator with the document", ok: true });
+    console.log("  ok    the PDF prompt opens the Translator with the document");
+  } catch (e) {
+    results.push({ name: "the PDF prompt opens the Translator with the document", ok: false });
+    console.log("  FAIL  the PDF prompt opens the Translator with the document\n        " + e.message);
+  } finally {
+    await page.close();
+  }
+}
 
 await browser.close();
 server.close();
