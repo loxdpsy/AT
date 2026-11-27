@@ -92,8 +92,8 @@ pub fn install(root: &Path, transfer: &Transfer) -> Result<(), String> {
         return Err("the SHA-256 check of the text recognition models failed. Nothing was installed.".to_string());
     }
 
-    let det = entry(&wheel, DET_IN_WHEEL)?;
-    let rec = entry(&wheel, REC_IN_WHEEL)?;
+    let det = plain_dimension_names(&entry(&wheel, DET_IN_WHEEL)?);
+    let rec = plain_dimension_names(&entry(&wheel, REC_IN_WHEEL)?);
     write_file(&d.join(DET_FILE), &det)?;
     write_file(&d.join(REC_FILE), &rec)?;
     let marker = format!(
@@ -114,6 +114,25 @@ fn entry(wheel: &[u8], name: &str) -> Result<Vec<u8>, String> {
     file.read_to_end(&mut out)
         .map_err(|e| format!("cannot unpack {}: {}", name, e))?;
     Ok(out)
+}
+
+/// PaddleOCR exports name the dynamic input sizes "p2o.DynamicDimension.N", and tract refuses the dots in those
+/// names when it reads the model. Each dot is replaced by an underscore. The names have the same length, so the
+/// protobuf lengths in the file stay valid, and the names carry no meaning otherwise.
+pub fn plain_dimension_names(model: &[u8]) -> Vec<u8> {
+    const FROM: &[u8] = b"p2o.DynamicDimension.";
+    const TO: &[u8] = b"p2o_DynamicDimension_";
+    let mut out = model.to_vec();
+    let mut i = 0;
+    while i + FROM.len() <= out.len() {
+        if out[i..i + FROM.len()] == *FROM {
+            out[i..i + FROM.len()].copy_from_slice(TO);
+            i += FROM.len();
+        } else {
+            i += 1;
+        }
+    }
+    out
 }
 
 fn write_file(path: &Path, bytes: &[u8]) -> Result<(), String> {
@@ -525,6 +544,14 @@ mod tests {
         bytes.extend_from_slice(&[0xac, 0x02]);
         bytes.extend_from_slice(value.as_bytes());
         assert_eq!(metadata_text(&bytes, "character").map(|v| v.len()), Some(300));
+    }
+
+    #[test]
+    fn dimension_names_lose_their_dots_and_keep_their_length() {
+        let before = b"\x0a\x15p2o.DynamicDimension.0 and p2o.DynamicDimension.12 other.name".to_vec();
+        let after = plain_dimension_names(&before);
+        assert_eq!(after.len(), before.len());
+        assert_eq!(&after[..], &b"\x0a\x15p2o_DynamicDimension_0 and p2o_DynamicDimension_12 other.name"[..]);
     }
 
     #[test]
