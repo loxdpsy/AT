@@ -111,7 +111,7 @@ extension zip. See [tools/atlas-updater/README.md](tools/atlas-updater/README.md
   first, showing the size and each licence. The welcome page offers the English voices after the helper is installed,
   so the installer itself stays small. Voices come from the k2-fsa sherpa-onnx release and are checked with SHA-256:
   Supertone Supertonic 3 (31 languages, OpenRAIL-M: you accept its use restrictions before the download), Kokoro v1.1
-  (English and Chinese, Apache-2.0), and four Piper English voices (public domain, CC0, Apache-2.0, CC BY 4.0). Credits
+  (English and Chinese, Apache-2.0), Kitten nano 0.2 (English, Apache-2.0), and four Piper English voices (public domain, CC0, Apache-2.0, CC BY 4.0). Credits
   are in [NOTICE.md](NOTICE.md).
 - **Not built yet:** reading the text aloud. The voices can be installed and listed, but the helper does not speak yet.
   Piper's phonemizer is espeak-ng (GPL-3.0). A licence review is needed before any release that ships the voices.

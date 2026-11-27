@@ -231,7 +231,7 @@ mod tests {
     fn english_gets_every_voice_that_speaks_it_with_the_default_first() {
         let voices = catalogue().unwrap();
         let english = voices_for(&voices, "en");
-        assert_eq!(english.len(), 6);
+        assert_eq!(english.len(), 7);
         assert!(english[0].default);
         assert_eq!(total_bytes(&english), english.iter().map(|v| v.bytes).sum::<u64>());
     }
@@ -307,10 +307,10 @@ mod tests {
     }
 
     #[test]
-    fn english_has_six_voices_and_the_size_is_their_sum() {
+    fn english_has_seven_voices_and_the_size_is_their_sum() {
         let voices = catalogue().unwrap();
         let english = voices_for(&voices, "en");
-        assert_eq!(english.len(), 6);
+        assert_eq!(english.len(), 7);
         assert_eq!(english[0].id, "supertonic-3");
         let sum: u64 = english.iter().map(|v| v.bytes).sum();
         assert_eq!(total_bytes(&english), sum);

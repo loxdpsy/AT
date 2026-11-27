@@ -28,6 +28,8 @@ Yandex, DeepL, LibreTranslate). Use your own DeepL or LibreTranslate key when yo
   - Piper voices, from the rhasspy/piper-voices model cards: John (US, public domain, LibriVox recordings), Joe (US,
     CC0), Sam (US, Apache-2.0), Cori (UK, CC BY 4.0, from the Hi-Fi Multi-Speaker English TTS dataset, NVIDIA, and the
     LibriVox reader Cori Samuel). Attribution for Cori: "Cori Samuel, LibriVox; Hi-Fi TTS, NVIDIA, CC BY 4.0".
+  - Kitten nano 0.2 (English), KittenML: Apache-2.0, as declared on the Hugging Face model card
+    (`license: apache-2.0`). Code: KittenML/KittenTTS, Apache-2.0.
   - Open question before shipping: the sherpa-onnx build may use espeak-ng (GPL-3.0) for phonemes. Piper voices use it.
 
 - pdf.js 4.10.38 (Apache License 2.0, Mozilla). In `lib/pdfjs/`: the minified library, its worker and the CJK

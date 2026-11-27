@@ -68,6 +68,23 @@
       "openIssue": "The model's own usage notes install espeak-ng (GPL-3.0) for some text. Confirm before shipping."
     },
     {
+      "id": "kitten-nano-en-v0_2",
+      "name": "Kitten nano 0.2 (English, 8 voices)",
+      "languages": [
+        "en"
+      ],
+      "file": "kitten-nano-en-v0_2-fp16.tar.bz2",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kitten-nano-en-v0_2-fp16.tar.bz2",
+      "bytes": 26586708,
+      "sha256": "0345a8a2f4a710cb8f7912c9a731ded8b3e1e69b33a871efa95c2e64651518fe",
+      "licence": "Apache-2.0",
+      "licenceUrl": "https://huggingface.co/KittenML/kitten-tts-nano-0.2",
+      "acceptLicence": false,
+      "default": false,
+      "modelCard": "https://huggingface.co/KittenML/kitten-tts-nano-0.2",
+      "openIssue": "The sherpa-onnx archive may include espeak-ng data (GPL-3.0), as the Piper and Kokoro archives do. Confirm before release."
+    },
+    {
       "id": "piper-john-us",
       "name": "Piper John (US English, medium)",
       "languages": [
