@@ -22,6 +22,10 @@ pub struct Settings {
     pub download_connections: usize,
     /// Start the helper in the tray when the browser starts (the browser asks through its native messaging host).
     pub start_with_browser: bool,
+    /// The colour of the window: blue (default), teal, green, violet or orange.
+    pub accent: String,
+    /// "system" (the language of the computer) or a language code such as "fr" or "ar".
+    pub language: String,
 }
 
 fn path() -> PathBuf {
@@ -39,6 +43,8 @@ pub fn load() -> Settings {
         keep_in_tray: true,
         download_connections: DEFAULT_CONNECTIONS,
         start_with_browser: false,
+        accent: "blue".to_string(),
+        language: "system".to_string(),
     };
     for line in text.lines() {
         if let Some((key, value)) = line.split_once('=') {
@@ -52,6 +58,8 @@ pub fn load() -> Settings {
                     settings.download_connections = value.trim().parse::<usize>().unwrap_or(DEFAULT_CONNECTIONS).clamp(MIN_CONNECTIONS, MAX_CONNECTIONS)
                 }
                 "start_with_browser" => settings.start_with_browser = value.trim() == "true",
+                "accent" => settings.accent = value.trim().to_string(),
+                "language" => settings.language = value.trim().to_string(),
                 "setup_answered" => {
                     settings.answered = value.split(',').map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect();
                 }
@@ -66,7 +74,7 @@ pub fn save(settings: &Settings) -> Result<(), String> {
     let dir = store::data_dir();
     std::fs::create_dir_all(&dir).map_err(|e| format!("cannot create the data folder: {}", e))?;
     let text = format!(
-        "experimental={}\nsetup_answered={}\nwelcomed={}\ntheme={}\ntext_size={}\nkeep_in_tray={}\ndownload_connections={}\nstart_with_browser={}\n",
+        "experimental={}\nsetup_answered={}\nwelcomed={}\ntheme={}\ntext_size={}\nkeep_in_tray={}\ndownload_connections={}\nstart_with_browser={}\naccent={}\nlanguage={}\n",
         settings.experimental,
         settings.answered.join(","),
         settings.welcomed,
@@ -74,7 +82,9 @@ pub fn save(settings: &Settings) -> Result<(), String> {
         settings.text_size,
         settings.keep_in_tray,
         settings.download_connections,
-        settings.start_with_browser
+        settings.start_with_browser,
+        settings.accent,
+        settings.language
     );
     std::fs::write(path(), text).map_err(|e| format!("cannot save the settings: {}", e))
 }

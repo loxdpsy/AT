@@ -9,6 +9,8 @@ Not released yet. Changes after 0.0.2.5 are listed here.
 Next release (not published yet).
 
 - Atlas Helper on Windows: the offline engine is inside the setup file, next to the helper. The helper no longer downloads an engine program and runs it on Windows. The installer also removes copies that older helpers downloaded.
+- Atlas Helper: Settings has a colour choice (blue, teal, green, violet or orange) for the window, next to the light, dark and system themes.
+- Atlas Helper: Settings has a language choice (the languages of the extension, or the computer's language). It sets the layout direction: right to left for Arabic, Hebrew, Persian and Urdu. The helper's text stays English until it is translated.
 - Atlas Helper: the README has a "Windows: every detail" section. It lists the files, the folders, the registry keys, the network addresses, the startup shortcut, uninstalling, and the steps for Defender and the SHA-256 check.
 - Atlas Helper on Windows: starting at sign-in is a shortcut in the Startup folder, made by the installer, like other programs. The helper no longer writes a Run entry in the registry, and the installer removes the old one. Windows Settings, under Apps, then Startup, turns it on or off. The Settings card shows the state and opens that page.
 - Atlas Helper: the helper no longer runs PowerShell, curl, unzip or reg.exe. Downloads, unzipping and the Windows startup entry are done by the helper itself, so no console window appears.

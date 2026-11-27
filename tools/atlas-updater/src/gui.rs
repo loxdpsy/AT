@@ -87,6 +87,8 @@ enum Action {
     SetExperimental(bool),
     SetTheme(&'static str),
     SetTextSize(&'static str),
+    SetAccent(String),
+    SetLanguage(String),
     SetKeepInTray(bool),
     ShowSetupAgain,
     OpenDataFolder,
@@ -126,7 +128,7 @@ pub struct Helper {
     /// True while the first-run question about setting up the browsers is open.
     setup_open: bool,
     settings: Settings,
-    applied_dark: Option<bool>,
+    applied_look: Option<(bool, String)>,
     /// Kept so the offline service's engine stays alive for the whole run (it is shared with the API thread).
     _engine: Arc<Engine>,
 }
@@ -167,7 +169,7 @@ pub fn run(show_window: bool) -> Result<(), String> {
         "Atlas Helper",
         options,
         Box::new(move |cc| {
-            cc.egui_ctx.set_visuals(visuals(false));
+            cc.egui_ctx.set_visuals(visuals(false, "blue"));
             let texture = cc.egui_ctx.load_texture(
                 "atlas-logo",
                 egui::ColorImage::from_rgba_unmultiplied([logo.width as usize, logo.height as usize], &logo.rgba),
@@ -208,12 +210,12 @@ pub fn run(show_window: bool) -> Result<(), String> {
                 events_tx,
                 events,
                 logo: texture,
-                rtl: sys_locale::get_locale().map_or(false, |tag| is_rtl_language(&tag)),
+                rtl: effective_rtl(&saved_settings.language),
                 quitting: false,
                 detected,
                 setup_open,
                 settings: saved_settings,
-                applied_dark: None,
+                applied_look: None,
                 _engine: engine,
             };
             helper.refresh();
@@ -232,9 +234,10 @@ impl eframe::App for Helper {
             _ => ctx.system_theme() == Some(egui::Theme::Dark),
         };
         let zoom = if self.settings.text_size == "large" { 1.25 } else { 1.0 };
-        if self.applied_dark != Some(dark) {
-            ctx.set_visuals(visuals(dark));
-            self.applied_dark = Some(dark);
+        let look = (dark, self.settings.accent.clone());
+        if self.applied_look.as_ref() != Some(&look) {
+            ctx.set_visuals(visuals(dark, &look.1));
+            self.applied_look = Some(look);
         }
         if (ctx.zoom_factor() - zoom).abs() > f32::EPSILON {
             ctx.set_zoom_factor(zoom);
@@ -409,7 +412,7 @@ impl Helper {
                             Some(_) if newer => format!("Please update: version {} is available.", latest),
                             Some(_) => "You have the latest version.".to_string(),
                         };
-                        ui.label(RichText::new(text).color(if newer { RED } else { BLUE }));
+                        ui.label(RichText::new(text).color(if newer { RED } else { ui.visuals().hyperlink_color }));
                         if newer && !status.notes.is_empty() {
                             ui.label(RichText::new(format!("What is new in {}:", latest)).strong());
                             for note in &status.notes {
@@ -731,7 +734,7 @@ impl Helper {
                 ui.label(RichText::new("Welcome to Atlas Helper").size(16.0).strong());
                 ui.label(RichText::new(format!("Helper version {}.", crate::app_version())).color(muted(ui)));
                 if let Some((newer, text)) = &update {
-                    ui.label(RichText::new(text.as_str()).color(if *newer { RED } else { BLUE }));
+                    ui.label(RichText::new(text.as_str()).color(if *newer { RED } else { ui.visuals().hyperlink_color }));
                 }
                 ui.add_space(6.0);
                 ui.label("The helper runs offline translation on this computer. Text is not sent to a web service.");
@@ -880,6 +883,39 @@ impl Helper {
                     }
                 }
             });
+            ui.add_space(6.0);
+            ui.label("Colour");
+            let current_accent = self.settings.accent.clone();
+            let mut picked_accent: Option<&str> = None;
+            egui::ComboBox::from_id_salt("accent").selected_text(accent_label(&current_accent)).show_ui(ui, |ui| {
+                for &(value, label) in ACCENTS {
+                    if ui.selectable_label(current_accent == value, label).clicked() {
+                        picked_accent = Some(value);
+                    }
+                }
+            });
+            if let Some(value) = picked_accent {
+                if value != current_accent {
+                    actions.push(Action::SetAccent(value.to_string()));
+                }
+            }
+            ui.add_space(6.0);
+            ui.label("Language");
+            let current_language = self.settings.language.clone();
+            let mut picked_language: Option<&str> = None;
+            egui::ComboBox::from_id_salt("language").selected_text(language_label(&current_language)).show_ui(ui, |ui| {
+                for &(code, label) in LANGUAGES {
+                    if ui.selectable_label(current_language == code, label).clicked() {
+                        picked_language = Some(code);
+                    }
+                }
+            });
+            if let Some(code) = picked_language {
+                if code != current_language {
+                    actions.push(Action::SetLanguage(code.to_string()));
+                }
+            }
+            ui.label(RichText::new("The layout follows the language (right to left for Arabic, Hebrew, Persian and Urdu). The helper's text stays English until it is translated.").color(muted(ui)));
             ui.add_space(6.0);
             ui.label("Text size");
             row(ui, self.rtl, |ui| {
@@ -1073,6 +1109,15 @@ impl Helper {
                 self.settings.text_size = value.to_string();
                 self.save_settings();
             }
+            Action::SetAccent(value) => {
+                self.settings.accent = value;
+                self.save_settings();
+            }
+            Action::SetLanguage(value) => {
+                self.rtl = effective_rtl(&value);
+                self.settings.language = value;
+                self.save_settings();
+            }
             Action::SetKeepInTray(on) => {
                 self.settings.keep_in_tray = on;
                 self.save_settings();
@@ -1162,6 +1207,49 @@ impl Helper {
 }
 
 /// True for the languages written right to left (the same list the extension uses for its own pages).
+/// The colour choices for the window. The first is the default.
+const ACCENTS: &[(&str, &str)] = &[("blue", "Blue"), ("teal", "Teal"), ("green", "Green"), ("violet", "Violet"), ("orange", "Orange")];
+
+/// The languages the helper can be set to. "system" uses the language of the computer. The helper's text stays English
+/// until it is translated; the language now sets the layout direction (right to left for the languages below).
+const LANGUAGES: &[(&str, &str)] = &[
+    ("system", "System default"), ("af", "Afrikaans"), ("ar", "العربية"), ("bn", "বাংলা"), ("ca", "Català"),
+    ("cs", "Čeština"), ("da", "Dansk"), ("de", "Deutsch"), ("el", "Ελληνικά"), ("en", "English"), ("es", "Español"),
+    ("fa", "فارسی"), ("fi", "Suomi"), ("fr", "Français"), ("he", "עברית"), ("hi", "हिन्दी"), ("hr", "Hrvatski"),
+    ("hu", "Magyar"), ("is", "Íslenska"), ("it", "Italiano"), ("ja", "日本語"), ("ko", "한국어"), ("lv", "Latviešu"),
+    ("nl", "Nederlands"), ("no", "Norsk"), ("pl", "Polski"), ("pt_BR", "Português (Brasil)"), ("pt_PT", "Português (Portugal)"),
+    ("ro", "Română"), ("ru", "Русский"), ("sl", "Slovenščina"), ("sr", "Српски"), ("sv", "Svenska"), ("th", "ไทย"),
+    ("tr", "Türkçe"), ("ug", "ئۇيغۇرچە"), ("uk", "Українська"), ("vi", "Tiếng Việt"), ("zh_CN", "简体中文"), ("zh_TW", "繁體中文"),
+];
+
+/// The colour of the window's accent for a choice from ACCENTS.
+fn accent_color(name: &str) -> Color32 {
+    match name {
+        "teal" => Color32::from_rgb(0x0f, 0x76, 0x6e),
+        "green" => Color32::from_rgb(0x15, 0x80, 0x3d),
+        "violet" => Color32::from_rgb(0x6d, 0x28, 0xd9),
+        "orange" => Color32::from_rgb(0xc2, 0x41, 0x0c),
+        _ => BLUE,
+    }
+}
+
+fn accent_label(name: &str) -> &'static str {
+    ACCENTS.iter().find(|(value, _)| *value == name).map(|(_, label)| *label).unwrap_or("Blue")
+}
+
+fn language_label(code: &str) -> &'static str {
+    LANGUAGES.iter().find(|(value, _)| *value == code).map(|(_, label)| *label).unwrap_or("System default")
+}
+
+/// True when the layout should mirror: the chosen language, or the computer's language for "system".
+fn effective_rtl(language: &str) -> bool {
+    if language.is_empty() || language == "system" {
+        sys_locale::get_locale().map_or(false, |tag| is_rtl_language(&tag))
+    } else {
+        is_rtl_language(language)
+    }
+}
+
 fn is_rtl_language(tag: &str) -> bool {
     let language = tag.split(|c| c == '-' || c == '_').next().unwrap_or("").to_ascii_lowercase();
     matches!(language.as_str(), "ar" | "he" | "iw" | "fa" | "prs" | "ps" | "sd" | "ug" | "ur" | "yi" | "dv" | "ckb")
@@ -1267,10 +1355,11 @@ fn open_target(target: &str) -> bool {
 }
 
 /// The Atlas colours on top of the light theme: a soft background, white cards, rounded corners.
-fn visuals(dark: bool) -> egui::Visuals {
+fn visuals(dark: bool, accent: &str) -> egui::Visuals {
     let mut visuals = if dark { egui::Visuals::dark() } else { egui::Visuals::light() };
-    visuals.hyperlink_color = BLUE;
-    visuals.selection.bg_fill = BLUE;
+    let accent = accent_color(accent);
+    visuals.hyperlink_color = accent;
+    visuals.selection.bg_fill = accent;
     // The text of a selected tab sits on the blue fill, so it is white.
     visuals.selection.stroke = egui::Stroke::new(1.0, Color32::WHITE);
     visuals.panel_fill = if dark { DARK_PAPER } else { PAPER };
