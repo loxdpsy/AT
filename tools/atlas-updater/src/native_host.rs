@@ -33,26 +33,62 @@ pub fn is_launch(args: &[String]) -> bool {
     args.iter().any(|a| a.starts_with("chrome-extension://") || a.starts_with("moz-extension://") || a == FIREFOX_ID || a.ends_with(MANIFEST_FILE))
 }
 
-/// The browser's side: read its message, make sure the helper runs, answer, and return. Opens no window.
+/// The browser's side: read its message, answer it, and return. Opens no window.
 pub fn run() -> Result<(), String> {
     let mut stdin = std::io::stdin();
     let mut length = [0u8; 4];
     let has_message = stdin.read_exact(&mut length).is_ok();
+    let mut body = String::new();
     if has_message {
-        // The content is not needed: any message asks for the helper to run. It is read so the pipe stays clean.
         let size = (u32::from_le_bytes(length) as usize).min(1024 * 1024);
-        let mut body = vec![0u8; size];
-        let _ = stdin.read_exact(&mut body);
+        let mut bytes = vec![0u8; size];
+        if stdin.read_exact(&mut bytes).is_ok() {
+            body = String::from_utf8_lossy(&bytes).to_string();
+        }
     }
-    let started = ensure_helper_running();
+    let reply = handle(&body);
     if has_message {
-        let reply = format!("{{\"ok\":true,\"started\":{}}}", started);
         let mut out = std::io::stdout();
         let _ = out.write_all(&(reply.len() as u32).to_le_bytes());
         let _ = out.write_all(reply.as_bytes());
         let _ = out.flush();
     }
     Ok(())
+}
+
+/// Answers one message from the extension. "start" starts the helper if the user turned that on (the default for any
+/// message that is not "get" or "set"). "get" reports the setting. "set" changes it and saves it in the helper's settings.
+fn handle(body: &str) -> String {
+    match field(body, "action").as_deref() {
+        Some("get") => format!("{{\"ok\":true,\"start_with_browser\":{}}}", crate::settings::load().start_with_browser),
+        Some("set") => {
+            let on = field(body, "value").as_deref() == Some("true");
+            let mut settings = crate::settings::load();
+            settings.start_with_browser = on;
+            match crate::settings::save(&settings) {
+                Ok(()) => format!("{{\"ok\":true,\"start_with_browser\":{}}}", on),
+                Err(e) => format!("{{\"ok\":false,\"error\":\"{}\"}}", escape(&e)),
+            }
+        }
+        _ => {
+            let wanted = crate::settings::load().start_with_browser;
+            let started = wanted && ensure_helper_running();
+            format!("{{\"ok\":true,\"started\":{}}}", started)
+        }
+    }
+}
+
+/// The value of one field of the small JSON message the extension sends, such as "set" for "action". Plain text
+/// (quoted or not) is enough for the three messages the host knows.
+fn field(body: &str, key: &str) -> Option<String> {
+    let marker = format!("\"{}\"", key);
+    let start = body.find(&marker)? + marker.len();
+    let rest = body[start..].trim_start().strip_prefix(':')?.trim_start();
+    if let Some(quoted) = rest.strip_prefix('"') {
+        return quoted.find('"').map(|end| quoted[..end].to_string());
+    }
+    let end = rest.find(|c: char| c == ',' || c == '}').unwrap_or(rest.len());
+    Some(rest[..end].trim().to_string())
 }
 
 /// Starts the helper in the tray (--serve) unless it already answers on its port. Returns true when it was started.
@@ -223,6 +259,15 @@ mod tests {
         assert!(is_launch(&firefox));
         assert!(!is_launch(&["--serve".to_string()]));
         assert!(!is_launch(&[]));
+    }
+
+    #[test]
+    fn the_message_fields_are_read() {
+        let set = "{\"action\":\"set\",\"value\":true}";
+        assert_eq!(field(set, "action").as_deref(), Some("set"));
+        assert_eq!(field(set, "value").as_deref(), Some("true"));
+        assert_eq!(field("{\"action\": \"get\"}", "action").as_deref(), Some("get"));
+        assert_eq!(field("{\"action\":\"start\"}", "value"), None);
     }
 
     #[test]

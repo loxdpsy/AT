@@ -451,6 +451,7 @@
             <div class="row-text"><div class="row-title">Start the helper when the browser starts</div><div class="row-desc">The browser starts the Atlas Helper in the tray each time it starts, so Offline is ready. Off by default. Needs the helper installed.</div></div>
             <div class="row-control"><input type="checkbox" id="startHelperWithBrowser" /></div>
           </div>
+          <p class="message" id="startWithBrowserMessage" role="status"></p>
         </div>
 
         <div class="card service-card">
@@ -707,6 +708,7 @@
   <script src="/lib/config.js"></script>
   <script src="/lib/platformInfo.js"></script>
   <script src="/lib/i18n.js"></script>
+  <script src="/lib/helperPort.js"></script>
   <script src="options.js"></script>
 </body>
 

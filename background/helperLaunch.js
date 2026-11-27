@@ -1,27 +1,16 @@
 "use strict";
 
-// Starts the Atlas Helper when the browser starts, if the user turned on "Start the helper when the browser starts"
-// (Options, Services, Offline). The extension connects to the helper's native messaging host (com.atlas.helper). The
-// browser starts that host, the host starts the helper in the tray if it is not running, and then the host exits.
-// Nothing is started unless the setting is on, and nothing opens a window.
+// Starts the Atlas Helper when the browser starts. The helper's own setting decides whether it really starts: the
+// Settings window and the Options page (Services, Offline) both change that setting (lib/helperPort.js). This runs only
+// when this browser is connected to the helper (a binding token is saved), so nothing is sent to a helper that was
+// never installed here.
 (function () {
-  const HOST_NAME = "com.atlas.helper";
-
   function startHelper() {
     twpConfig.onReady().then(() => {
-      if (twpConfig.get("startHelperWithBrowser") !== "yes") return;
-      let port;
-      try {
-        port = chrome.runtime.connectNative(HOST_NAME);
-      } catch (e) {
-        return;
-      }
-      port.onMessage.addListener(() => port.disconnect());
-      port.onDisconnect.addListener(() => {
-        // The helper is not installed or the browser refused the host. Nothing else to do; reading the error clears it.
-        void chrome.runtime.lastError;
+      if (!String(twpConfig.get("offlineHelperToken") || "").trim()) return;
+      self.twpHelperPort.sendToHelper({ action: "start" }).catch(() => {
+        // The helper is not installed or the browser refused the host. Nothing else to do.
       });
-      port.postMessage({ action: "start" });
     });
   }
 

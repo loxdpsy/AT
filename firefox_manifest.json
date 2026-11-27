@@ -185,6 +185,7 @@
       "/background/translationService.js",
       "/lib/audioPlayer.js",
       "/background/textToSpeech.js",
+      "/lib/helperPort.js",
       "/background/helperLaunch.js",
       "/background/background.js"
     ]

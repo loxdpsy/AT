@@ -76,6 +76,7 @@ enum Action {
     OpenLink(String),
     Autostart(bool),
     SetConnections(usize),
+    SetStartWithBrowser(bool),
     InstallEngine,
     InstallPack(usize),
     RemovePack(usize),
@@ -905,6 +906,15 @@ impl Helper {
                 actions.push(Action::Autostart(on));
             }
             ui.label(RichText::new("It starts minimised to the tray, so it never opens a window by itself.").color(muted(ui)));
+            ui.add_space(6.0);
+            let mut with_browser = self.settings.start_with_browser;
+            if ui.checkbox(&mut with_browser, "Start the helper when the browser starts").changed() {
+                actions.push(Action::SetStartWithBrowser(with_browser));
+            }
+            ui.label(
+                RichText::new("The browser starts the helper in the tray. It works only once this browser is connected to the helper (Options, Services, Offline).")
+                    .color(muted(ui)),
+            );
         });
         ui.add_space(12.0);
 
@@ -1055,6 +1065,10 @@ impl Helper {
             }
             Action::SetKeepInTray(on) => {
                 self.settings.keep_in_tray = on;
+                self.save_settings();
+            }
+            Action::SetStartWithBrowser(on) => {
+                self.settings.start_with_browser = on;
                 self.save_settings();
             }
             Action::SetConnections(n) => {
