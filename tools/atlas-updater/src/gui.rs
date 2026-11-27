@@ -901,9 +901,19 @@ impl Helper {
             }
             ui.label(RichText::new("Off means closing the window quits the helper.").color(muted(ui)));
             ui.add_space(6.0);
-            let mut on = self.autostart;
-            if ui.checkbox(&mut on, "Start the helper when I sign in").changed() {
-                actions.push(Action::Autostart(on));
+            if cfg!(windows) {
+                // Windows keeps this list: the installer makes the Startup shortcut, and Windows Settings changes it.
+                let state = if self.autostart { "On: the helper starts when you sign in." } else { "Off: the helper does not start when you sign in." };
+                ui.label(state);
+                ui.label(RichText::new("To change it, open Windows Settings, under Apps, then Startup.").color(muted(ui)));
+                if ui.button("Open Windows startup settings").clicked() {
+                    actions.push(Action::OpenLink("ms-settings:startupapps".to_string()));
+                }
+            } else {
+                let mut on = self.autostart;
+                if ui.checkbox(&mut on, "Start the helper when I sign in").changed() {
+                    actions.push(Action::Autostart(on));
+                }
             }
             ui.label(RichText::new("It starts minimised to the tray, so it never opens a window by itself.").color(muted(ui)));
             ui.add_space(6.0);

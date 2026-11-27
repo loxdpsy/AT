@@ -50,10 +50,13 @@ Source: "{#SourceExe}"; DestDir: "{app}"; DestName: "atlas-updater.exe"; Flags: 
 Name: "{group}\Atlas Helper"; Filename: "{app}\atlas-updater.exe"; IconFilename: "{app}\atlas-updater.exe"
 Name: "{group}\Uninstall Atlas Helper"; Filename: "{uninstallexe}"
 Name: "{userdesktop}\Atlas Helper"; Filename: "{app}\atlas-updater.exe"; Tasks: desktopicon
+; Starts the helper in the tray at sign-in. Windows Settings, under Apps, then Startup, lists it and can turn it off.
+Name: "{userstartup}\Atlas Helper"; Filename: "{app}\atlas-updater.exe"; Parameters: "--serve"; IconFilename: "{app}\atlas-updater.exe"; Tasks: autostart
 
 [Registry]
 ; The same value the helper's Settings switch writes. --serve starts it in the tray with no window.
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "AtlasTranslationHelper"; ValueData: """{app}\atlas-updater.exe"" --serve"; Flags: uninsdeletevalue; Tasks: autostart
+; Older versions wrote a Run entry. It is removed here, so the start-with-Windows setting is only the Startup shortcut below.
+Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueName: "AtlasTranslationHelper"; Flags: deletevalue
 
 [Run]
 ; Opens the window once, so the welcome page explains the browser steps. Skipped in silent installs.

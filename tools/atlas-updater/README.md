@@ -16,7 +16,7 @@ Then, in the browser, open Atlas Translation's Settings and click **Reload exten
 
 **Windows: the installer.** `atlas-updater-windows-setup.exe` installs Atlas Helper like most apps do. It asks no
 administrator password: it installs for your user account, in `%LOCALAPPDATA%\Programs\Atlas Helper`. It adds a Start
-menu entry, and it can add a desktop shortcut and a start-at-sign-in entry (both are checkboxes). Uninstall it from
+menu entry, and it can add a desktop shortcut and a start-at-sign-in shortcut (both are checkboxes). The shortcut lives in your Startup folder, and Windows Settings, under Apps, then Startup, can turn it off. The helper does not write to the Windows startup registry. Uninstall it from
 Windows Settings, under Apps.
 
 Every release also attaches the programs to its GitHub release: `atlas-updater-windows.exe` (a portable copy: it installs
