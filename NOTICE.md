@@ -30,7 +30,10 @@ Yandex, DeepL, LibreTranslate). Use your own DeepL or LibreTranslate key when yo
     LibriVox reader Cori Samuel). Attribution for Cori: "Cori Samuel, LibriVox; Hi-Fi TTS, NVIDIA, CC BY 4.0".
   - Kitten nano 0.2 (English), KittenML: Apache-2.0, as declared on the Hugging Face model card
     (`license: apache-2.0`). Code: KittenML/KittenTTS, Apache-2.0.
-  - Open question before shipping: the sherpa-onnx build may use espeak-ng (GPL-3.0) for phonemes. Piper voices use it.
+  - Open question before any release: the sherpa-onnx Piper and Kokoro model folders contain `espeak-ng-data/`
+    (phoneme data from espeak-ng, GPL-3.0; see espeak-ng/COPYING). Kitten nano is probably packaged the same way.
+    The helper downloads these archives from k2-fsa and does not redistribute them. Review whether the GPL notice
+    and source offer are needed in releases.
 
 - pdf.js 4.10.38 (Apache License 2.0, Mozilla). In `lib/pdfjs/`: the minified library, its worker and the CJK
   character maps, unchanged. It reads the text of PDF files for the Translator page. The licence text is in
