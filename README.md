@@ -1,5 +1,5 @@
 # Helper window screenshots
 
-Latest run: [run 15](https://github.com/loxdpsy/AT/actions/runs/45913807984) on commit `e0f8898` (branch `arena/64b035fe-twp`).
+Latest run: [run 16](https://github.com/loxdpsy/AT/actions/runs/45914313877) on commit `2365bf7` (branch `arena/64b035fe-twp`).
 
 The files in `latest/` are replaced on every run. Older runs are in this branch's history.
