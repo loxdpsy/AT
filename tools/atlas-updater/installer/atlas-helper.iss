@@ -4,7 +4,7 @@
 ; Nothing is downloaded and run by the installer: every program it installs is in this file.
 
 #ifndef MyAppVersion
-  #define MyAppVersion "0.0.2.6"
+  #define MyAppVersion "0.0.2.7"
 #endif
 #ifndef SourceExe
   #define SourceExe "..\target\release\atlas-updater.exe"

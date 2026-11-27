@@ -43,6 +43,7 @@ const DARK_PAPER: Color32 = Color32::from_rgb(0x17, 0x1a, 0x21);
 const DARK_CARD: Color32 = Color32::from_rgb(0x20, 0x24, 0x2d);
 const DARK_MUTED: Color32 = Color32::from_rgb(0xa8, 0xb0, 0xbd);
 const DARK_BORDER: Color32 = Color32::from_rgb(0x3a, 0x40, 0x4c);
+const DARK_SIDEBAR: Color32 = Color32::from_rgb(0x12, 0x15, 0x1c);
 
 #[derive(Clone, Copy, PartialEq)]
 enum Tab {
@@ -80,6 +81,7 @@ enum Action {
     InstallEngine,
     InstallPack(usize),
     RemovePack(usize),
+    InstallPacks(Vec<usize>),
     RemoveBinding(usize),
     SetupBrowser(String),
     SetupAll,
@@ -106,6 +108,10 @@ pub struct Helper {
     installed_pairs: Option<HashSet<String>>,
     pack_search: String,
     installed_only: bool,
+    /// The language chosen in "Install many packs" ("Translate to").
+    pack_target: Option<String>,
+    /// Packs waiting for the user to confirm a batch install (indices into the catalogue).
+    confirm_install: Option<Vec<usize>>,
     busy: Option<String>,
     // The progress popup's counters, set while a download or install runs.
     progress: Option<Arc<transfer::Progress>>,
@@ -197,6 +203,8 @@ pub fn run(show_window: bool) -> Result<(), String> {
                 installed_pairs: None,
                 pack_search: String::new(),
                 installed_only: false,
+                pack_target: None,
+                confirm_install: None,
                 busy: None,
                 progress: None,
                 message: None,
@@ -298,9 +306,10 @@ impl eframe::App for Helper {
 
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let mut actions: Vec<Action> = Vec::new();
+        let dark = ui.visuals().dark_mode;
 
         egui::Panel::top("header")
-            .frame(egui::Frame::new().fill(Color32::WHITE).inner_margin(egui::Margin::same(12)))
+            .frame(egui::Frame::new().fill(if dark { DARK_CARD } else { Color32::WHITE }).inner_margin(egui::Margin::same(12)))
             .show_inside(ui, |ui| {
                 row(ui, self.rtl, |ui| {
                     ui.add(egui::Image::new(&self.logo).fit_to_exact_size(egui::vec2(52.0, 52.0)));
@@ -316,7 +325,7 @@ impl eframe::App for Helper {
         tabs_side
             .resizable(false)
             .default_size(190.0)
-            .frame(egui::Frame::new().fill(SIDEBAR).inner_margin(egui::Margin::same(10)))
+            .frame(egui::Frame::new().fill(if dark { DARK_SIDEBAR } else { SIDEBAR }).inner_margin(egui::Margin::same(10)))
             .show_inside(ui, |ui| {
                 ui.add_space(4.0);
                 tab_button(ui, &mut self.tab, Tab::Extension, "Extension");
@@ -330,7 +339,7 @@ impl eframe::App for Helper {
             });
 
         egui::Panel::bottom("footer")
-            .frame(egui::Frame::new().fill(Color32::WHITE).inner_margin(egui::Margin::same(8)))
+            .frame(egui::Frame::new().fill(if dark { DARK_CARD } else { Color32::WHITE }).inner_margin(egui::Margin::same(8)))
             .show_inside(ui, |ui| {
                 row(ui, self.rtl, |ui| {
                     if let Some(label) = &self.busy {
@@ -368,6 +377,7 @@ impl eframe::App for Helper {
         self.bind_dialog(ui.ctx());
         self.setup_dialog(ui.ctx(), &mut actions);
         self.progress_dialog(ui.ctx());
+        self.install_confirm_dialog(ui.ctx(), &mut actions);
 
         for action in actions {
             self.perform(action, ui.ctx());
@@ -538,6 +548,43 @@ impl Helper {
                     ui.checkbox(&mut self.installed_only, "Installed only");
                 });
 
+                // Install many packs: every pack into one language ("Translate to French"), or every pack at once.
+                let mut targets: Vec<String> = catalogue.packs.iter().map(|p| p.to.clone()).collect();
+                targets.sort_by(|a, b| packs::language_name(a).cmp(packs::language_name(b)));
+                targets.dedup();
+                let not_installed: Vec<usize> = (0..catalogue.packs.len()).filter(|&i| !installed.contains(&catalogue.packs[i].pair)).collect();
+                let target = self.pack_target.clone();
+                let for_target: Vec<usize> = match &target {
+                    Some(code) => not_installed.iter().copied().filter(|&i| &catalogue.packs[i].to == code).collect(),
+                    None => Vec::new(),
+                };
+                let target_name = target.as_deref().map(packs::language_name).unwrap_or("a language").to_string();
+                ui.add_space(8.0);
+                card(ui, |ui| {
+                    ui.label(RichText::new("Install many packs").strong());
+                    ui.label(RichText::new("Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.").color(muted(ui)).small());
+                    ui.add_space(6.0);
+                    ui.horizontal_wrapped(|ui| {
+                        ui.label("Translate to");
+                        let current_name = target.as_deref().map(packs::language_name).unwrap_or("Choose a language");
+                        egui::ComboBox::from_id_salt("pack_target").selected_text(current_name).show_ui(ui, |ui| {
+                            for code in &targets {
+                                let selected = target.as_deref() == Some(code.as_str());
+                                if ui.selectable_label(selected, packs::language_name(code)).clicked() {
+                                    self.pack_target = Some(code.clone());
+                                }
+                            }
+                        });
+                        if ui.add_enabled(idle && !for_target.is_empty(), egui::Button::new(format!("Install all to {}", target_name))).clicked() {
+                            self.confirm_install = Some(for_target.clone());
+                        }
+                        if ui.add_enabled(idle && !not_installed.is_empty(), egui::Button::new("Install all packs")).clicked() {
+                            self.confirm_install = Some(not_installed.clone());
+                        }
+                    });
+                });
+                ui.add_space(10.0);
+
                 // The list: installed packs first, then by language name. The search and the filter narrow it.
                 let search = self.pack_search.clone();
                 let installed_only = self.installed_only;
@@ -595,6 +642,50 @@ impl Helper {
         if retry {
             self.catalogue_asked = false;
             self.catalogue = None;
+        }
+    }
+
+    /// Asks before a batch install. The packs are large, so the total size is shown first.
+    fn install_confirm_dialog(&mut self, ctx: &egui::Context, actions: &mut Vec<Action>) {
+        let indices = match &self.confirm_install {
+            Some(list) => list.clone(),
+            None => return,
+        };
+        let (count, megabytes) = match &self.catalogue {
+            Some(Ok(c)) => {
+                let bytes: u64 = indices.iter().filter_map(|&i| c.packs.get(i)).map(|p| p.bytes).sum();
+                (indices.len(), bytes as f64 / 1_000_000.0)
+            }
+            _ => (indices.len(), 0.0),
+        };
+        let mut open = true;
+        let mut decided: Option<bool> = None;
+        egui::Window::new("Install these packs?")
+            .collapsible(false)
+            .resizable(false)
+            .open(&mut open)
+            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+            .show(ctx, |ui| {
+                ui.label(format!("{} pack(s), about {:.0} MB in total. The downloads can take a long time.", count, megabytes));
+                ui.label(RichText::new("Each pack is checked with SHA-256 before it is saved. You can remove any pack later.").color(muted(ui)).small());
+                ui.add_space(8.0);
+                ui.horizontal(|ui| {
+                    if ui.button("Install").clicked() {
+                        decided = Some(true);
+                    }
+                    if ui.button("Cancel").clicked() {
+                        decided = Some(false);
+                    }
+                });
+            });
+        match decided {
+            Some(true) => {
+                self.confirm_install = None;
+                actions.push(Action::InstallPacks(indices));
+            }
+            Some(false) => self.confirm_install = None,
+            None if !open => self.confirm_install = None,
+            None => {}
         }
     }
 
@@ -1061,6 +1152,18 @@ impl Helper {
                     self.start_download(&label, move |transfer| pack_result(packs::install_into(&store::packs_dir(), &pack, &commit, &transfer), &pack, "installed"));
                 }
             }
+            Action::InstallPacks(indices) => {
+                let picked = match &self.catalogue {
+                    Some(Ok(c)) => Some((indices.iter().filter_map(|&i| c.packs.get(i).cloned()).collect::<Vec<Pack>>(), c.commit.clone())),
+                    _ => None,
+                };
+                if let Some((list, commit)) = picked {
+                    if !list.is_empty() {
+                        let label = format!("Installing {} pack(s). This can take a long time.", list.len());
+                        self.start_download(&label, move |transfer| install_many(&store::packs_dir(), &list, &commit, &transfer));
+                    }
+                }
+            }
             Action::RemovePack(index) => {
                 let picked = match &self.catalogue {
                     Some(Ok(c)) => c.packs.get(index).cloned().map(|p| (p, c.clone())),
@@ -1305,6 +1408,36 @@ fn install_into_folder(folder: &str, transfer: &Transfer) -> Result<String, Stri
     }
     crate::install(&path, &release, transfer)?;
     Ok(format!("Installed version {} in {}. Reload Atlas Translation in your browser.", release.version, folder))
+}
+
+/// Installs packs one after another in one background job. A pack that fails is reported, and the rest still install.
+fn install_many(root: &Path, list: &[Pack], commit: &str, transfer: &Transfer) -> Event {
+    let total = list.len();
+    let mut failed: Vec<String> = Vec::new();
+    for (n, pack) in list.iter().enumerate() {
+        // Each pack has its own byte counter, so the progress bar starts again for each one.
+        transfer.progress.done.store(0, Ordering::Relaxed);
+        transfer.progress.set_stage(&format!(
+            "Installing pack {} of {}: {} to {}",
+            n + 1,
+            total,
+            packs::language_name(&pack.from),
+            packs::language_name(&pack.to)
+        ));
+        if let Err(e) = packs::install_into(root, pack, commit, transfer) {
+            failed.push(format!("{} to {}: {}", pack.from, pack.to, e));
+        }
+    }
+    let installed = total - failed.len();
+    if failed.is_empty() {
+        Event::Done { ok: true, text: format!("Installed {} pack(s).", installed), reload: false }
+    } else {
+        Event::Done {
+            ok: false,
+            text: format!("Installed {} of {} pack(s). Not installed: {}", installed, total, failed.join("; ")),
+            reload: false,
+        }
+    }
 }
 
 fn pack_result(result: Result<(), String>, pack: &Pack, verb: &str) -> Event {

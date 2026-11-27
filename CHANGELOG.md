@@ -4,6 +4,17 @@
 
 Not released yet. Changes after 0.0.2.5 are listed here.
 
+## 0.0.2.7
+
+Prepared, not published yet.
+
+- Atlas Helper: the dark theme is readable. The header, the footer and the sidebar follow the theme, so the tab names no longer disappear on a dark background.
+- Atlas Helper: Offline translation has "Install many packs". Choose a language under "Translate to" and install all of its packs at once, or install all packs. The window shows the number of packs and the total size first, and the packs install one after another. A pack that fails is reported, and the others still install.
+- Atlas Helper for Linux: `atlas-updater-linux.AppImage` is one file with the helper and the offline engine. It needs no installation. Start-at-login and the browser connection use the AppImage file, so they keep working after the helper closes.
+- Atlas Helper for macOS: `atlas-updater-macos.dmg` holds Atlas Helper.app with the offline engine inside. Drag it to Applications. The app has an ad-hoc signature, not an Apple certificate, so the first start needs right-click, Open.
+- Release: the offline engine is no longer attached as separate files. The setup file, the AppImage and the disk image include it, and the helper finds it beside itself. The raw Linux and macOS helper programs are no longer attached either.
+- Atlas Helper: when a release has no separate engine file, the message says to install the AppImage or the disk image, which include the engine.
+
 ## 0.0.2.6
 
 Next release (not published yet).
