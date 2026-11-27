@@ -8,6 +8,8 @@ Not released yet. Changes after 0.0.2.5 are listed here.
 
 Next release (not published yet).
 
+- Release: the version commit includes tools/atlas-updater/Cargo.toml, so every version field agrees (npm run check).
+- Release: when addons.mozilla.org already has this version, the Firefox step reports it as done and does not fail. Nothing is sent again.
 - Atlas Helper on Windows: the offline engine is inside the setup file, next to the helper. The helper no longer downloads an engine program and runs it on Windows. The installer also removes copies that older helpers downloaded.
 - Atlas Helper: Settings has a colour choice (blue, teal, green, violet or orange) for the window, next to the light, dark and system themes.
 - Atlas Helper: Settings has a language choice (the languages of the extension, or the computer's language). It sets the layout direction: right to left for Arabic, Hebrew, Persian and Urdu. The helper's text stays English until it is translated.

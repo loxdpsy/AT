@@ -137,7 +137,7 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             # Every file that sync-version.mjs changes. Staging only the manifests left package.json and the README badge behind.
-            git add manifest.json firefox_manifest.json package.json package-lock.json README.md
+            git add manifest.json firefox_manifest.json package.json package-lock.json README.md tools/atlas-updater/Cargo.toml
             if git diff --cached --quiet; then
               echo "manifest.json already has version $VERSION."
             else

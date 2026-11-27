@@ -1,6 +1,6 @@
 [package]
 name = "atlas-updater"
-version = "0.0.2+5"
+version = "0.0.2+6"
 edition = "2021"
 description = "Atlas Translation helper: a native window and tray icon that installs the extension, the offline engine and the language packs."
 license = "MPL-2.0"
