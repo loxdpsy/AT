@@ -74,5 +74,5 @@ Name: "{userstartup}\Atlas Helper"; Filename: "{app}\atlas-updater.exe"; Paramet
 Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueName: "AtlasTranslationHelper"; Flags: deletevalue
 
 [Run]
-; Opens the window once, so the welcome page explains the browser steps. Skipped in silent installs.
-Filename: "{app}\atlas-updater.exe"; Description: "Open Atlas Helper"; Flags: nowait postinstall skipifsilent
+; Starts the helper in the tray only, with no window and no console. Its window opens from the tray icon.
+Filename: "{app}\atlas-updater.exe"; Parameters: "--serve"; Description: "Start Atlas Helper in the tray"; Flags: nowait postinstall skipifsilent

@@ -2,6 +2,7 @@
 
 ## Unreleased
 - Helper: checks for a newer helper, not only a newer extension. It shows "A new version is available, please update" with what is new, and a button to the release page.
+- Atlas Helper starts silently: after install and at sign-in it runs in the tray only, with no window and no console. Its window opens from the tray icon.
 - Read-aloud voices: seven voices for English, Arabic, Chinese and 31 languages in all (Kitten nano 0.2 added for English), with licences and SHA-256 checksums. In the Offline tab, choose a language and install all its voices: the size and licence are shown first, and each download is checked. Reading aloud is not built yet.
 
 Not released yet. Changes after 0.0.2.5 are listed here.
