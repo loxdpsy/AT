@@ -125,6 +125,8 @@ pub struct Helper {
     confirm_voices: Option<String>,
     /// True when the user has accepted the licence of the voices in that confirmation.
     voice_licence_accepted: bool,
+    /// The voices the user has ticked (ids from voices.json), to install together.
+    voice_picked: HashSet<String>,
     busy: Option<String>,
     // The progress popup's counters, set while a download or install runs.
     progress: Option<Arc<transfer::Progress>>,
@@ -222,6 +224,7 @@ pub fn run(show_window: bool) -> Result<(), String> {
                 voice_language: None,
                 confirm_voices: None,
                 voice_licence_accepted: false,
+                voice_picked: HashSet::new(),
                 busy: None,
                 progress: None,
                 message: None,
@@ -544,11 +547,12 @@ impl Helper {
         let here: Vec<&voices::Voice> = voices::voices_for(&list, &chosen);
         let missing: Vec<&voices::Voice> = here.iter().copied().filter(|v| !voices::is_installed_in(&root, v)).collect();
         let name = packs::language_name(&chosen).to_string();
+        let picked_now: usize = missing.iter().filter(|v| self.voice_picked.contains(&v.id)).count();
 
         card(ui, |ui| {
             ui.label(RichText::new("Read-aloud voices").strong());
             ui.label(
-                RichText::new("Choose a language to see the voices that speak it. Install them all at once. Each download is checked with SHA-256 before it is saved.")
+                RichText::new("Choose a language, tick the voices you want, then install them. Each download is checked with SHA-256 before it is saved.")
                     .color(muted(ui))
                     .small(),
             );
@@ -563,8 +567,16 @@ impl Helper {
                         }
                     }
                 });
+                if ui.add_enabled(idle && !missing.is_empty(), egui::Button::new("Select all")).clicked() {
+                    for voice in &missing {
+                        self.voice_picked.insert(voice.id.clone());
+                    }
+                }
                 if ui
-                    .add_enabled(idle && !missing.is_empty(), egui::Button::new(format!("Install all voices for {}", name)))
+                    .add_enabled(
+                        idle && picked_now > 0,
+                        egui::Button::new(format!("Install {} selected voice(s) for {}", picked_now, name)),
+                    )
                     .clicked()
                 {
                     self.confirm_voices = Some(chosen.clone());
@@ -575,14 +587,21 @@ impl Helper {
             for voice in &here {
                 let installed = voices::is_installed_in(&root, voice);
                 ui.horizontal_wrapped(|ui| {
-                    ui.label(RichText::new(voice.name.clone()).strong());
-                    ui.label(RichText::new(format!("about {:.0} MB", voice.bytes as f64 / 1_000_000.0)).color(muted(ui)));
-                    ui.label(RichText::new(format!("Licence: {}", voice.licence)).color(muted(ui)));
                     if installed {
+                        ui.label(RichText::new(voice.name.clone()).strong());
                         ui.label(RichText::new("Installed").color(GREEN));
                     } else {
-                        ui.label(RichText::new("Not installed").color(muted(ui)));
+                        let mut on = self.voice_picked.contains(&voice.id);
+                        if ui.add_enabled(idle, egui::Checkbox::new(&mut on, voice.name.clone())).changed() {
+                            if on {
+                                self.voice_picked.insert(voice.id.clone());
+                            } else {
+                                self.voice_picked.remove(&voice.id);
+                            }
+                        }
                     }
+                    ui.label(RichText::new(format!("about {:.0} MB", voice.bytes as f64 / 1_000_000.0)).color(muted(ui)));
+                    ui.label(RichText::new(format!("Licence: {}", voice.licence)).color(muted(ui)));
                 });
             }
         });
@@ -604,7 +623,7 @@ impl Helper {
         let root = store::voices_dir();
         let missing: Vec<voices::Voice> = voices::voices_for(&list, &language)
             .into_iter()
-            .filter(|v| !voices::is_installed_in(&root, v))
+            .filter(|v| !voices::is_installed_in(&root, v) && self.voice_picked.contains(&v.id))
             .cloned()
             .collect();
         let megabytes = missing.iter().map(|v| v.bytes).sum::<u64>() as f64 / 1_000_000.0;
@@ -1368,7 +1387,13 @@ impl Helper {
             }
             Action::InstallVoices(language) => {
                 let picked = match &self.voices {
-                    Some(Ok(list)) => Some(voices::voices_for(list, &language).into_iter().cloned().collect::<Vec<voices::Voice>>()),
+                    Some(Ok(list)) => Some(
+                        voices::voices_for(list, &language)
+                            .into_iter()
+                            .filter(|v| self.voice_picked.contains(&v.id))
+                            .cloned()
+                            .collect::<Vec<voices::Voice>>(),
+                    ),
                     _ => None,
                 };
                 if let Some(chosen) = picked {

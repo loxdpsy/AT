@@ -92,7 +92,7 @@ optional. It does three things for the extension:
   pages and selected text can be translated without sending them to a web service.
 - **A window of its own.** A tray icon opens the helper's settings: the folder, the language packs, and the update
   check. It runs in the background from the tray, not in a terminal.
-- **Read-aloud voices (Offline tab).** Choose a language and install all of its voices at once. The size and each
+- **Read-aloud voices (Offline tab).** Choose a language, tick the voices you want (or select all), and install them. The size and each
   licence are shown first; a voice with terms (Supertone Supertonic 3) needs you to accept them. Each download is checked
   with SHA-256. Reading aloud is not built yet.
 - **Helper updates.** The helper checks GitHub for a newer helper, not only a newer extension. When one is out, the window says
@@ -107,7 +107,7 @@ extension zip. See [tools/atlas-updater/README.md](tools/atlas-updater/README.md
 - **Translation packs.** Each language pair is a pack of about 37 MB, downloaded once and checked with SHA-256. The
   helper's Offline tab installs one pack, every pack into one language ("Translate to"), or all packs. A pair needs
   English on one side. Text is translated on this computer.
-- **Read-aloud voices.** The Offline tab lists the voices for each language. "Install all voices for <language>" asks
+- **Read-aloud voices.** The Offline tab lists the voices for each language. "Install the selected voices" asks
   first, showing the size and each licence. The welcome page offers the English voices after the helper is installed,
   so the installer itself stays small. Voices come from the k2-fsa sherpa-onnx release and are checked with SHA-256:
   Supertone Supertonic 3 (31 languages, OpenRAIL-M: you accept its use restrictions before the download), Kokoro v1.1
