@@ -1412,10 +1412,10 @@ const translationService = function () {
         const pair = offlinePair(sourceLanguage, targetLanguage);
         if (!pair) throw offlineUnavailable(`no language pack translates ${sourceLanguage} to ${targetLanguage}`);
         const packs = await getOfflinePacks();
-        if (packs.protocol < OFFLINE_PROTOCOL) throw offlineUnavailable("the Atlas Helper is older than this extension needs. Update Atlas Helper.");
-        if (!packs.engine) throw offlineUnavailable("the offline engine is not installed in the helper");
-        if (!packs.pairs.includes(pair)) throw offlineUnavailable(`the ${pair} language pack is not installed in the helper`);
-        if (!(twpConfig.get("offlineHelperToken") || "").trim()) throw offlineUnavailable("bind this browser to the helper in the Offline settings");
+        if (packs.protocol < OFFLINE_PROTOCOL) throw offlineUnavailable("please update the Atlas Helper to the newest version, then try again.");
+        if (!packs.engine) throw offlineUnavailable("please install the offline engine in the Atlas Helper (Offline tab).");
+        if (!packs.pairs.includes(pair)) throw offlineUnavailable(`please install the ${pair} language pack in the Atlas Helper (Offline tab).`);
+        if (!(twpConfig.get("offlineHelperToken") || "").trim()) throw offlineUnavailable("please connect this browser to the Atlas Helper in the Offline settings.");
         const pieces = [];
         for (const sourceArray of sourceArray2d) {
           for (const text of sourceArray) pieces.push([text]);
