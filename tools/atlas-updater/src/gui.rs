@@ -28,6 +28,7 @@ use crate::settings::{self, Settings};
 use crate::store;
 use crate::transfer::{self, Transfer};
 use crate::tray::{self, Tray, TrayAction};
+use crate::voices;
 
 /// The Atlas logo, the same one the extension uses (icons/icon-128.png). The window shows it at the top, and the
 /// window and tray icons are made from it.
@@ -82,6 +83,8 @@ enum Action {
     InstallPack(usize),
     RemovePack(usize),
     InstallPacks(Vec<usize>),
+    /// Installs every read-aloud voice for a language that is not installed yet.
+    InstallVoices(String),
     RemoveBinding(usize),
     SetupBrowser(String),
     SetupAll,
@@ -112,6 +115,14 @@ pub struct Helper {
     pack_target: Option<String>,
     /// Packs waiting for the user to confirm a batch install (indices into the catalogue).
     confirm_install: Option<Vec<usize>>,
+    /// The read-aloud voices (voices.json), read the first time the Offline tab is shown.
+    voices: Option<Result<Vec<voices::Voice>, String>>,
+    /// The language chosen in the read-aloud voices card.
+    voice_language: Option<String>,
+    /// The language whose voices wait for the user to confirm an install.
+    confirm_voices: Option<String>,
+    /// True when the user has accepted the licence of the voices in that confirmation.
+    voice_licence_accepted: bool,
     busy: Option<String>,
     // The progress popup's counters, set while a download or install runs.
     progress: Option<Arc<transfer::Progress>>,
@@ -205,6 +216,10 @@ pub fn run(show_window: bool) -> Result<(), String> {
                 installed_only: false,
                 pack_target: None,
                 confirm_install: None,
+                voices: None,
+                voice_language: None,
+                confirm_voices: None,
+                voice_licence_accepted: false,
                 busy: None,
                 progress: None,
                 message: None,
@@ -398,6 +413,7 @@ impl eframe::App for Helper {
         self.setup_dialog(ui.ctx(), &mut actions);
         self.progress_dialog(ui.ctx());
         self.install_confirm_dialog(ui.ctx(), &mut actions);
+        self.voice_confirm_dialog(ui.ctx(), &mut actions);
 
         for action in actions {
             self.perform(action, ui.ctx());
@@ -497,6 +513,159 @@ impl Helper {
         }
     }
 
+    /// Read-aloud voices: choose a language, see the voices that speak it, and install them all at once.
+    fn voices_card(&mut self, ui: &mut egui::Ui, idle: bool) {
+        if self.voices.is_none() {
+            self.voices = Some(voices::catalogue());
+        }
+        let list = match &self.voices {
+            Some(Ok(list)) => list.clone(),
+            Some(Err(e)) => {
+                let text = format!("The read-aloud voices could not be listed: {}", e);
+                card(ui, |ui| {
+                    ui.label(RichText::new(text).color(RED));
+                });
+                return;
+            }
+            None => return,
+        };
+        let root = store::voices_dir();
+        // Every language the voices speak, by name.
+        let mut languages: Vec<String> = list.iter().flat_map(|v| v.languages.iter().cloned()).collect();
+        languages.sort_by(|a, b| packs::language_name(a).cmp(packs::language_name(b)));
+        languages.dedup();
+        let chosen: String = self
+            .voice_language
+            .clone()
+            .filter(|c| languages.contains(c))
+            .unwrap_or_else(|| "en".to_string());
+        let here: Vec<&voices::Voice> = voices::voices_for(&list, &chosen);
+        let missing: Vec<&voices::Voice> = here.iter().copied().filter(|v| !voices::is_installed_in(&root, v)).collect();
+        let name = packs::language_name(&chosen).to_string();
+
+        card(ui, |ui| {
+            ui.label(RichText::new("Read-aloud voices").strong());
+            ui.label(
+                RichText::new("Choose a language to see the voices that speak it. Install them all at once. Each download is checked with SHA-256 before it is saved.")
+                    .color(muted(ui))
+                    .small(),
+            );
+            ui.add_space(6.0);
+            ui.horizontal_wrapped(|ui| {
+                ui.label("Voices for");
+                egui::ComboBox::from_id_salt("voice_language").selected_text(name.clone()).show_ui(ui, |ui| {
+                    for code in &languages {
+                        let selected = *code == chosen;
+                        if ui.selectable_label(selected, packs::language_name(code)).clicked() {
+                            self.voice_language = Some(code.clone());
+                        }
+                    }
+                });
+                if ui
+                    .add_enabled(idle && !missing.is_empty(), egui::Button::new(format!("Install all voices for {}", name)))
+                    .clicked()
+                {
+                    self.confirm_voices = Some(chosen.clone());
+                    self.voice_licence_accepted = false;
+                }
+            });
+            ui.add_space(4.0);
+            for voice in &here {
+                let installed = voices::is_installed_in(&root, voice);
+                ui.horizontal_wrapped(|ui| {
+                    ui.label(RichText::new(voice.name.clone()).strong());
+                    ui.label(RichText::new(format!("about {:.0} MB", voice.bytes as f64 / 1_000_000.0)).color(muted(ui)));
+                    ui.label(RichText::new(format!("Licence: {}", voice.licence)).color(muted(ui)));
+                    if installed {
+                        ui.label(RichText::new("Installed").color(GREEN));
+                    } else {
+                        ui.label(RichText::new("Not installed").color(muted(ui)));
+                    }
+                });
+            }
+        });
+    }
+
+    /// Asks before the voices of one language are installed. Shows the size, and the licence the user must accept.
+    fn voice_confirm_dialog(&mut self, ctx: &egui::Context, actions: &mut Vec<Action>) {
+        let language = match &self.confirm_voices {
+            Some(language) => language.clone(),
+            None => return,
+        };
+        let list = match &self.voices {
+            Some(Ok(list)) => list.clone(),
+            _ => {
+                self.confirm_voices = None;
+                return;
+            }
+        };
+        let root = store::voices_dir();
+        let missing: Vec<voices::Voice> = voices::voices_for(&list, &language)
+            .into_iter()
+            .filter(|v| !voices::is_installed_in(&root, v))
+            .cloned()
+            .collect();
+        let megabytes = missing.iter().map(|v| v.bytes).sum::<u64>() as f64 / 1_000_000.0;
+        let needs_licence: Vec<voices::Voice> = missing.iter().filter(|v| v.accept_licence).cloned().collect();
+        let name = packs::language_name(&language).to_string();
+        let mut open = true;
+        let mut decided: Option<bool> = None;
+        egui::Window::new("Install these voices?")
+            .collapsible(false)
+            .resizable(false)
+            .open(&mut open)
+            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+            .show(ctx, |ui| {
+                ui.label(format!(
+                    "{} voice(s) for {}, about {:.0} MB in total. The downloads can take a long time.",
+                    missing.len(),
+                    name,
+                    megabytes
+                ));
+                for voice in &missing {
+                    ui.label(format!("- {} ({}, about {:.0} MB)", voice.name, voice.licence, voice.bytes as f64 / 1_000_000.0));
+                }
+                ui.add_space(8.0);
+                for voice in &needs_licence {
+                    ui.label(RichText::new(format!("{} needs you to accept its licence: {}.", voice.name, voice.licence)).color(RED));
+                    if ui.button("Read the licence").clicked() {
+                        actions.push(Action::OpenLink(voice.licence_url.clone()));
+                    }
+                }
+                let licence_needed = !needs_licence.is_empty();
+                if licence_needed {
+                    ui.checkbox(&mut self.voice_licence_accepted, "I accept the licence of these voices");
+                }
+                ui.label(RichText::new("Each download is checked with SHA-256 before it is saved. You can remove a voice later.").color(muted(ui)).small());
+                ui.add_space(8.0);
+                ui.horizontal(|ui| {
+                    let can_install = !missing.is_empty() && (!licence_needed || self.voice_licence_accepted);
+                    if ui.add_enabled(can_install, egui::Button::new("Install")).clicked() {
+                        decided = Some(true);
+                    }
+                    if ui.button("Cancel").clicked() {
+                        decided = Some(false);
+                    }
+                });
+            });
+        match decided {
+            Some(true) => {
+                self.confirm_voices = None;
+                self.voice_licence_accepted = false;
+                actions.push(Action::InstallVoices(language));
+            }
+            Some(false) => {
+                self.confirm_voices = None;
+                self.voice_licence_accepted = false;
+            }
+            None if !open => {
+                self.confirm_voices = None;
+                self.voice_licence_accepted = false;
+            }
+            None => {}
+        }
+    }
+
     fn offline_tab(&mut self, ui: &mut egui::Ui, idle: bool, actions: &mut Vec<Action>) {
         ui.heading("Offline translation");
         ui.label(RichText::new("Translation that runs on this computer. Each language pair is a pack that you install here.").color(muted(ui)));
@@ -522,6 +691,7 @@ impl Helper {
             ui.label(RichText::new(format!("Data folder: {}", store::data_dir().display())).color(muted(ui)));
         });
 
+        self.voices_card(ui, idle);
         ui.add_space(14.0);
         ui.heading("Language packs");
         if !self.catalogue_asked {
@@ -1184,6 +1354,22 @@ impl Helper {
                     }
                 }
             }
+            Action::InstallVoices(language) => {
+                let picked = match &self.voices {
+                    Some(Ok(list)) => Some(voices::voices_for(list, &language).into_iter().cloned().collect::<Vec<voices::Voice>>()),
+                    _ => None,
+                };
+                if let Some(chosen) = picked {
+                    if !chosen.is_empty() {
+                        let label = format!(
+                            "Installing the read-aloud voices for {}. This can take a long time.",
+                            packs::language_name(&language)
+                        );
+                        let root = store::voices_dir();
+                        self.start_download(&label, move |transfer| install_voices(&root, &chosen, &transfer));
+                    }
+                }
+            }
             Action::RemovePack(index) => {
                 let picked = match &self.catalogue {
                     Some(Ok(c)) => c.packs.get(index).cloned().map(|p| (p, c.clone())),
@@ -1431,6 +1617,22 @@ fn install_into_folder(folder: &str, transfer: &Transfer) -> Result<String, Stri
 }
 
 /// Installs packs one after another in one background job. A pack that fails is reported, and the rest still install.
+/// Installs the read-aloud voices of one language that are not installed yet, one after another.
+fn install_voices(root: &Path, chosen: &[voices::Voice], transfer: &Transfer) -> Event {
+    let pending: Vec<&voices::Voice> = chosen.iter().filter(|v| !voices::is_installed_in(root, v)).collect();
+    let total = pending.len();
+    let failures = voices::install_all(root, &pending, transfer);
+    if failures.is_empty() {
+        Event::Done { ok: true, text: format!("Installed {} voice(s).", total), reload: false }
+    } else {
+        Event::Done {
+            ok: false,
+            text: format!("Installed {} of {} voice(s). Not installed: {}", total - failures.len(), total, failures.join("; ")),
+            reload: false,
+        }
+    }
+}
+
 fn install_many(root: &Path, list: &[Pack], commit: &str, transfer: &Transfer) -> Event {
     let total = list.len();
     let mut failed: Vec<String> = Vec::new();

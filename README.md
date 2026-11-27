@@ -92,6 +92,9 @@ optional. It does three things for the extension:
   pages and selected text can be translated without sending them to a web service.
 - **A window of its own.** A tray icon opens the helper's settings: the folder, the language packs, and the update
   check. It runs in the background from the tray, not in a terminal.
+- **Read-aloud voices (Offline tab).** Choose a language and install all of its voices at once. The size and each
+  licence are shown first; a voice with terms (Supertone Supertonic 3) needs you to accept them. Each download is checked
+  with SHA-256. Reading aloud is not built yet.
 - **Helper updates.** The helper checks GitHub for a newer helper, not only a newer extension. When one is out, the window says
   "A new version is available, please update" with what is new, and a button opens the release page. The helper does not
   replace itself; download the new one from the release.

@@ -2,7 +2,7 @@
 
 ## Unreleased
 - Helper: checks for a newer helper, not only a newer extension. It shows "A new version is available, please update" with what is new, and a button to the release page.
-- Read-aloud voices: six voices for English, Arabic, Chinese and 31 languages in all, with licences and SHA-256 checksums. The helper can install every voice for a language, checking each one. The window button and reading aloud are not built yet.
+- Read-aloud voices: six voices for English, Arabic, Chinese and 31 languages in all, with licences and SHA-256 checksums. In the Offline tab, choose a language and install all its voices: the size and licence are shown first, and each download is checked. Reading aloud is not built yet.
 
 Not released yet. Changes after 0.0.2.5 are listed here.
 
