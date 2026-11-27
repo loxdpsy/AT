@@ -29,6 +29,10 @@ On macOS, run `xattr -d com.apple.quarantine ./atlas-updater-macos` once, and on
 
 ## Use
 
+**Settings.** Look: the theme (system, light or dark), the colour (blue, teal, green, violet or orange), the language
+and the text size. The language sets the layout direction (right to left for Arabic, Hebrew, Persian and Urdu); the helper's
+text stays English until it is translated.
+
 **The helper window.** Start the program with no arguments (double-click it on Windows, or run `./atlas-updater-macos`
 or `./atlas-updater-linux` from a terminal). The helper opens its own native window (drawn with egui, not a browser page), and puts an icon in the
 tray (Windows and Linux) or the menu bar (macOS). Closing the window keeps the helper in the tray; **Quit helper** stops it.
