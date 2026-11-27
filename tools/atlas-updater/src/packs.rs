@@ -114,6 +114,84 @@ pub fn parse_catalogue(text: &str) -> Result<Catalogue, String> {
     Ok(Catalogue { commit, packs })
 }
 
+/// The English name of a language code in the catalogue. A code with no name is shown as it is.
+pub fn language_name(code: &str) -> &str {
+    match code {
+        "af" => "Afrikaans",
+        "ar" => "Arabic",
+        "az" => "Azerbaijani",
+        "be" => "Belarusian",
+        "bg" => "Bulgarian",
+        "bn" => "Bengali",
+        "bs" => "Bosnian",
+        "ca" => "Catalan",
+        "cs" => "Czech",
+        "da" => "Danish",
+        "de" => "German",
+        "el" => "Greek",
+        "en" => "English",
+        "es" => "Spanish",
+        "et" => "Estonian",
+        "eu" => "Basque",
+        "fa" => "Persian",
+        "fi" => "Finnish",
+        "fr" => "French",
+        "gl" => "Galician",
+        "gu" => "Gujarati",
+        "he" => "Hebrew",
+        "hi" => "Hindi",
+        "hr" => "Croatian",
+        "hu" => "Hungarian",
+        "id" => "Indonesian",
+        "is" => "Icelandic",
+        "it" => "Italian",
+        "ja" => "Japanese",
+        "kn" => "Kannada",
+        "ko" => "Korean",
+        "lt" => "Lithuanian",
+        "lv" => "Latvian",
+        "ml" => "Malayalam",
+        "mr" => "Marathi",
+        "ms" => "Malay",
+        "nb" => "Norwegian Bokmal",
+        "nl" => "Dutch",
+        "pl" => "Polish",
+        "pt" => "Portuguese",
+        "ro" => "Romanian",
+        "ru" => "Russian",
+        "sk" => "Slovak",
+        "sl" => "Slovenian",
+        "sq" => "Albanian",
+        "sr" => "Serbian",
+        "sv" => "Swedish",
+        "ta" => "Tamil",
+        "te" => "Telugu",
+        "th" => "Thai",
+        "tl" => "Tagalog",
+        "tr" => "Turkish",
+        "ug" => "Uyghur",
+        "uk" => "Ukrainian",
+        "ur" => "Urdu",
+        "vi" => "Vietnamese",
+        _ => code,
+    }
+}
+
+/// True when every word of the search matches the pack. A word matches a pack when it is its pair ("enfr"), one of
+/// its language codes ("fr"), or part of an English language name ("german", written with three or more letters).
+/// An empty search matches every pack.
+pub fn matches(pack: &Pack, search: &str) -> bool {
+    let words: Vec<String> = search.split_whitespace().map(|w| w.to_lowercase()).collect();
+    words.iter().all(|word| {
+        if *word == pack.pair {
+            return true;
+        }
+        [pack.from.as_str(), pack.to.as_str()].iter().any(|code| {
+            *word == *code || (word.chars().count() >= 3 && language_name(code).to_lowercase().contains(word.as_str()))
+        })
+    })
+}
+
 /// The catalogue built into this helper.
 pub fn catalogue() -> Result<Catalogue, String> {
     parse_catalogue(CATALOGUE_TEXT)
@@ -194,6 +272,31 @@ mod tests {
         let _ = fs::remove_dir_all(&dir);
         fs::create_dir_all(&dir).unwrap();
         dir
+    }
+
+    #[test]
+    fn every_language_in_the_catalogue_has_a_name() {
+        let catalogue = catalogue().unwrap();
+        for pack in &catalogue.packs {
+            for code in [&pack.from, &pack.to] {
+                assert_ne!(language_name(code), code.as_str(), "no name for {}", code);
+            }
+        }
+    }
+
+    #[test]
+    fn search_matches_codes_names_and_pairs() {
+        let bengali_to_german = Pack { pair: "bnde".into(), from: "bn".into(), to: "de".into(), bytes: 0, files: Vec::new() };
+        assert!(matches(&bengali_to_german, ""), "an empty search matches all");
+        assert!(matches(&bengali_to_german, "   "), "a blank search matches all");
+        assert!(matches(&bengali_to_german, "de"), "a language code");
+        assert!(matches(&bengali_to_german, "bnde"), "the pair");
+        assert!(matches(&bengali_to_german, "ger"), "part of an English name");
+        assert!(matches(&bengali_to_german, "ben"), "part of an English name of the other language");
+        assert!(!matches(&bengali_to_german, "japanese"), "a language that is not in the pack");
+        assert!(!matches(&bengali_to_german, "en"), "a two-letter word matches codes only, not names inside other names");
+        assert!(matches(&bengali_to_german, "de ben"), "every word matches one of the languages");
+        assert!(!matches(&bengali_to_german, "de japanese"), "every word must match");
     }
 
     #[test]

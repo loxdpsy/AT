@@ -5,6 +5,7 @@
 // while (checking releases, downloading, installing) runs on a background thread and reports back through a channel,
 // so the window never freezes. Closing the window hides it; the tray icon brings it back, and Quit stops the helper.
 
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::mpsc::{self, Receiver, Sender};
@@ -95,6 +96,10 @@ pub struct Helper {
     status: Option<Status>,
     catalogue: Option<Result<Catalogue, String>>,
     catalogue_asked: bool,
+    // The packs installed on disk, read once and cleared after each install or removal.
+    installed_pairs: Option<HashSet<String>>,
+    pack_search: String,
+    installed_only: bool,
     busy: Option<String>,
     message: Option<(bool, String)>,
     autostart: bool,
@@ -176,6 +181,9 @@ pub fn run(show_window: bool) -> Result<(), String> {
                 status: None,
                 catalogue: None,
                 catalogue_asked: false,
+                installed_pairs: None,
+                pack_search: String::new(),
+                installed_only: false,
                 busy: None,
                 message: None,
                 autostart: autostart::is_enabled(),
@@ -253,9 +261,13 @@ impl eframe::App for Helper {
         while let Ok(event) = self.events.try_recv() {
             match event {
                 Event::Status(status) => self.status = Some(status),
-                Event::Catalogue(result) => self.catalogue = Some(result),
+                Event::Catalogue(result) => {
+                    self.catalogue = Some(result);
+                    self.installed_pairs = None;
+                }
                 Event::Done { ok, text, reload } => {
                     self.busy = None;
+                    self.installed_pairs = None;
                     self.message = Some((ok, text));
                     if reload {
                         self.refresh();
@@ -477,6 +489,12 @@ impl Helper {
             self.catalogue_asked = true;
             self.load_catalogue();
         }
+        let root = store::packs_dir();
+        if self.installed_pairs.is_none() {
+            if let Some(Ok(catalogue)) = &self.catalogue {
+                self.installed_pairs = Some(installed_pairs(&root, catalogue));
+            }
+        }
         let mut retry = false;
         match &self.catalogue {
             None => {
@@ -489,31 +507,68 @@ impl Helper {
                 }
             }
             Some(Ok(catalogue)) => {
-                ui.label(RichText::new(format!("Each pack is about 37 MB. {} packs are available.", catalogue.packs.len())).color(muted(ui)));
-                ui.add_space(6.0);
-                let root = store::packs_dir();
-                let installed_packs: Vec<&Pack> = catalogue.packs.iter().filter(|p| packs::is_installed_in(&root, p)).collect();
+                let installed = self.installed_pairs.clone().unwrap_or_default();
+                let installed_packs: Vec<&Pack> = catalogue.packs.iter().filter(|p| installed.contains(&p.pair)).collect();
                 let installed_mb = installed_packs.iter().map(|p| p.bytes as f64).sum::<f64>() / 1_000_000.0;
                 card(ui, |ui| {
                     ui.label(RichText::new(format!("Installed now: {} pack(s), about {:.0} MB", installed_packs.len(), installed_mb)).strong());
+                    ui.label(RichText::new(format!("Each pack is about 37 MB. {} packs are available.", catalogue.packs.len())).color(muted(ui)));
                     ui.label(RichText::new(format!("Folder: {}", root.display())).color(muted(ui)));
                     if ui.button("Open the packs folder").clicked() {
                         actions.push(Action::OpenPacksFolder);
                     }
                 });
-                ui.add_space(8.0);
+                ui.add_space(10.0);
+
+                ui.horizontal(|ui| {
+                    ui.add(
+                        egui::TextEdit::singleline(&mut self.pack_search)
+                            .hint_text("Search a language, for example German or de")
+                            .desired_width(340.0),
+                    );
+                    ui.checkbox(&mut self.installed_only, "Installed only");
+                });
+
+                // The list: installed packs first, then by language name. The search and the filter narrow it.
+                let search = self.pack_search.clone();
+                let installed_only = self.installed_only;
+                let mut shown: Vec<usize> = (0..catalogue.packs.len())
+                    .filter(|&i| {
+                        let pack = &catalogue.packs[i];
+                        packs::matches(pack, &search) && (!installed_only || installed.contains(&pack.pair))
+                    })
+                    .collect();
+                shown.sort_by(|&a, &b| {
+                    let (pa, pb) = (&catalogue.packs[a], &catalogue.packs[b]);
+                    installed
+                        .contains(&pb.pair)
+                        .cmp(&installed.contains(&pa.pair))
+                        .then_with(|| packs::language_name(&pa.from).cmp(packs::language_name(&pb.from)))
+                        .then_with(|| packs::language_name(&pa.to).cmp(packs::language_name(&pb.to)))
+                });
+                ui.add_space(4.0);
+                ui.label(RichText::new(format!("Showing {} of {} packs.", shown.len(), catalogue.packs.len())).color(muted(ui)));
+                if shown.is_empty() {
+                    ui.label(RichText::new(format!("No language matches \"{}\".", self.pack_search.trim())).color(muted(ui)));
+                }
+                ui.add_space(4.0);
                 card(ui, |ui| {
                     egui::Grid::new("language_packs")
                         .num_columns(3)
                         .striped(true)
                         .spacing([18.0, 8.0])
+                        .min_col_width(170.0)
                         .show(ui, |ui| {
-                            for (index, pack) in catalogue.packs.iter().enumerate() {
-                                let installed = packs::is_installed_in(&root, pack);
-                                ui.label(RichText::new(format!("{} to {}", pack.from, pack.to)).strong());
+                            for &index in &shown {
+                                let pack = &catalogue.packs[index];
+                                let is_installed = installed.contains(&pack.pair);
+                                ui.vertical(|ui| {
+                                    ui.label(RichText::new(format!("{} to {}", packs::language_name(&pack.from), packs::language_name(&pack.to))).strong());
+                                    ui.label(RichText::new(format!("{} to {}", pack.from, pack.to)).color(muted(ui)).small());
+                                });
                                 ui.label(RichText::new(size_text(pack)).color(muted(ui)));
                                 ui.horizontal(|ui| {
-                                    if installed {
+                                    if is_installed {
                                         ui.label(RichText::new("installed").color(GREEN));
                                         if ui.add_enabled(idle, egui::Button::new("Remove")).clicked() {
                                             actions.push(Action::RemovePack(index));
@@ -1057,6 +1112,11 @@ fn pack_result(result: Result<(), String>, pack: &Pack, verb: &str) -> Event {
         Ok(()) => Event::Done { ok: true, text: format!("The {} to {} pack was {}.", pack.from, pack.to, verb), reload: false },
         Err(e) => Event::Done { ok: false, text: e, reload: false },
     }
+}
+
+/// The packs whose three files are all on disk with the catalogue's sizes.
+fn installed_pairs(root: &Path, catalogue: &Catalogue) -> HashSet<String> {
+    catalogue.packs.iter().filter(|p| packs::is_installed_in(root, p)).map(|p| p.pair.clone()).collect()
 }
 
 fn size_text(pack: &Pack) -> String {

@@ -201,14 +201,9 @@ fn macos_listed() -> Vec<(String, PathBuf)> {
 /// The name of an application bundle, and whether it handles the http or https address scheme.
 #[cfg(target_os = "macos")]
 fn read_bundle(app: &Path) -> Option<(String, bool)> {
-    let output = Command::new("plutil")
-        .arg("-convert")
-        .arg("json")
-        .arg("-o")
-        .arg("-")
-        .arg(app.join("Contents/Info.plist"))
-        .output()
-        .ok()?;
+    let mut command = Command::new("plutil");
+    command.arg("-convert").arg("json").arg("-o").arg("-").arg(app.join("Contents/Info.plist"));
+    let output = crate::autostart::quiet(command).output().ok()?;
     if !output.status.success() {
         return None;
     }

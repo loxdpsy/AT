@@ -61,8 +61,8 @@ atlas-updater --check ~/atlas-translation               # macOS and Linux
 The folder is the one that holds `manifest.json` of the unpacked extension. The program refuses any other folder (the window
 only makes a new folder when it is empty or missing).
 
-Needs `curl` (built in on Windows 10 and later, macOS and most Linux systems). Unzipping uses PowerShell on Windows
-and `unzip` on macOS and Linux (install it with your package manager if it is missing).
+The helper downloads and unzips the release itself. It needs no PowerShell, curl, unzip or other program, and it opens no
+command window on Windows.
 
 ## Offline translation
 
@@ -70,8 +70,9 @@ The helper can translate text on this computer, so the extension does not send i
 uses it as the service named **Offline (desktop helper)**.
 
 1. Open the helper window and install the offline engine (**Install the offline engine**).
-2. Install one or more language packs. Each pack is about 37 MB. A pack is downloaded from the catalogue in the
-   program, checked against its SHA-256, and only then kept. A file that fails the check is removed, and nothing is
+2. Install one or more language packs. Each pack is about 37 MB. Type a language name or code in the search box (for
+   example `German` or `de`), or tick **Installed only**. Installed packs are listed first. A pack is downloaded from
+   the catalogue in the program, checked against its SHA-256, and only then kept. A file that fails the check is removed, and nothing is
    left behind.
 3. In the extension's options, under Translation services, turn on Offline (desktop helper) and choose **Bind this
    browser**. The helper window asks you to allow it (Allow or Deny). Nothing is sent until you allow it.
