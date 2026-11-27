@@ -17,6 +17,10 @@ Not released yet. Changes after 0.0.2.1 will be listed here.
 - Atlas Helper: the published 0.0.2.5 Windows helper ran PowerShell to unzip and curl to download, and those opened a command window. The helper now downloads and unzips by itself. This fix is on the branch and needs a new release.
 - Atlas Helper: the Offline translation list has a search box (by language name or code, for example "German" or "de") and an "Installed only" filter. Installed packs are listed first. The list reads the installed packs once, not on every frame.
 - Atlas Helper: the README says what to do when Windows Defender warns about the helper: check the SHA-256 against the release, allow the file on the device, and report it to Microsoft.
+- Atlas Helper: downloads are faster. A file is split into parts that download over several connections at once, and the helper puts them back together before checking the SHA-256. A server that does not allow parts still gets one download. Settings > Downloads sets the number of connections (1 to 8, 4 by default).
+- Atlas Helper: a progress popup for installs and downloads. It shows the current step (checking the version, downloading, checking, unpacking, copying), the megabytes so far, and a Cancel button. Cancelling stops the download and installs nothing.
+- Atlas Helper: "Start the helper when I sign in" moved to Settings. The helper starts minimised to the tray.
+- Extension: Options has a Text size setting (normal, large, extra large) and a Text direction setting (automatic, left to right, right to left). They also apply to the popup. Helper text is not translated yet.
 
 ## 0.0.2.5
 

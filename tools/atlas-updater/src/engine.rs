@@ -18,6 +18,7 @@ use std::thread;
 use std::time::Duration;
 
 use crate::sha256;
+use crate::transfer::Transfer;
 use crate::store;
 
 /// Engine processes per language pair. Texts are split into pieces, and the pieces are translated in parallel by these.
@@ -97,7 +98,7 @@ pub fn library_asset_name() -> Option<&'static str> {
 /// Downloads the engine for this computer from the latest release, checks it against the SHA-256 that GitHub gives for
 /// the file, and installs it in the helper's data folder. The engine library (see enginelib.rs) is fetched the same way
 /// when the release has one. Returns the release version.
-pub fn install_from_latest_release() -> Result<String, String> {
+pub fn install_from_latest_release(transfer: &Transfer) -> Result<String, String> {
     let asset = engine_asset_name().ok_or("there is no offline engine for this computer")?;
     let release = super::newest_release_json()?;
     let tag = release.get("tag_name").and_then(|v| v.as_str()).ok_or("the latest release has no tag_name")?;
@@ -107,19 +108,19 @@ pub fn install_from_latest_release() -> Result<String, String> {
     fs::create_dir_all(&folder).map_err(|e| format!("cannot create {}: {}", folder.display(), e))?;
 
     let target = store::installed_engine();
-    fetch_checked(assets, asset, &version, &target, "the offline engine")?;
+    fetch_checked(assets, asset, &version, &target, "the offline engine", transfer)?;
     make_executable(&target)?;
 
     // The library is optional. A release without it still installs the program, which then does the translation.
     if let (Some(lib_asset), Some(lib_file)) = (library_asset_name(), crate::enginelib::library_file_name()) {
-        let _ = fetch_checked(assets, lib_asset, &version, &folder.join(lib_file), "the engine library");
+        let _ = fetch_checked(assets, lib_asset, &version, &folder.join(lib_file), "the engine library", transfer);
     }
     Ok(version)
 }
 
 /// Downloads one release asset, checks it against the SHA-256 that GitHub gives for it, and moves it to `target`.
 /// Nothing is written to `target` unless the check passes.
-fn fetch_checked(assets: &[crate::json::Value], asset: &str, version: &str, target: &Path, what: &str) -> Result<(), String> {
+fn fetch_checked(assets: &[crate::json::Value], asset: &str, version: &str, target: &Path, what: &str, transfer: &Transfer) -> Result<(), String> {
     let found = assets
         .iter()
         .find(|a| a.get("name").and_then(|v| v.as_str()) == Some(asset))
@@ -139,7 +140,7 @@ fn fetch_checked(assets: &[crate::json::Value], asset: &str, version: &str, targ
         .to_lowercase();
 
     let partial = target.with_extension("part");
-    if let Err(e) = super::download(&url, &partial) {
+    if let Err(e) = transfer.download(&url, &partial, None) {
         let _ = fs::remove_file(&partial);
         return Err(format!("{} could not be downloaded: {}", what, e));
     }

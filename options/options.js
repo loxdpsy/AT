@@ -541,6 +541,15 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     updateDarkMode();
   };
   $("#darkMode").value = twpConfig.get("darkMode");
+  // Text size and direction are kept on this device, like the theme cache, so the page paints the same way at once.
+  $("#selectTextSize").value = twpLook.getTextSize();
+  $("#selectTextSize").onchange = e => {
+    twpLook.setTextSize(e.target.value);
+  };
+  $("#selectTextDirection").value = twpLook.getDirection();
+  $("#selectTextDirection").onchange = e => {
+    twpLook.setDirection(e.target.value);
+  };
   $("#popupBlueWhenSiteIsTranslated").onchange = e => {
     twpConfig.set("popupBlueWhenSiteIsTranslated", e.target.value);
   };

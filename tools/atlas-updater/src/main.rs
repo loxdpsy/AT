@@ -30,9 +30,12 @@ mod settings;
 mod sha256;
 mod store;
 mod tray;
+mod transfer;
 
 use std::fs;
 use std::path::{Path, PathBuf};
+
+use crate::transfer::Transfer;
 
 // The release the helper installs from. While Atlas Translation publishes prereleases, that is the newest one in the list
 // that is not a draft (GitHub lists releases newest first). /releases/latest skips prereleases, so it is used only when
@@ -98,7 +101,7 @@ fn run() -> Result<(), String> {
         return Ok(());
     }
 
-    install(&folder, &release)?;
+    install(&folder, &release, &Transfer::quiet())?;
     println!("Installed {} in {}.", release.version, folder.display());
     println!("Next: open Atlas Translation's Settings in your browser, and click \"Reload extension\" in the Updates section.");
     Ok(())
@@ -227,29 +230,32 @@ fn version_parts(v: &str) -> Vec<u64> {
         .collect()
 }
 
-fn install(folder: &Path, release: &Release) -> Result<(), String> {
+fn install(folder: &Path, release: &Release, transfer: &Transfer) -> Result<(), String> {
     let work = std::env::temp_dir().join(format!("atlas-updater-{}", std::process::id()));
     let _ = fs::remove_dir_all(&work);
     fs::create_dir_all(&work).map_err(|e| format!("cannot create {}: {}", work.display(), e))?;
-    let result = install_from(folder, release, &work);
+    let result = install_from(folder, release, &work, transfer);
     // Remove the download and the unpacked files whether or not the install worked.
     let _ = fs::remove_dir_all(&work);
     result
 }
 
-fn install_from(folder: &Path, release: &Release, work: &Path) -> Result<(), String> {
+fn install_from(folder: &Path, release: &Release, work: &Path, transfer: &Transfer) -> Result<(), String> {
     let zip_path = work.join(&release.zip_name);
     let unpacked = work.join("unpacked");
 
     println!("Downloading {} ...", release.zip_name);
-    download(&release.zip_url, &zip_path)?;
+    transfer.progress.set_stage("Downloading the extension...");
+    transfer.download(&release.zip_url, &zip_path, None)?;
 
+    transfer.progress.set_stage("Checking the download...");
     let bytes = fs::read(&zip_path).map_err(|e| format!("cannot read the download: {}", e))?;
     if sha256::hex(&bytes) != release.sha256_hex {
         return Err("the download does not match GitHub's SHA-256. Nothing was changed. Try again later.".to_string());
     }
     println!("Checksum OK.");
 
+    transfer.progress.set_stage("Unpacking...");
     extract(&zip_path, &unpacked)?;
     let unpacked_version = read_installed_version(&unpacked)?;
     if unpacked_version != release.version {
@@ -259,44 +265,8 @@ fn install_from(folder: &Path, release: &Release, work: &Path) -> Result<(), Str
         ));
     }
 
+    transfer.progress.set_stage("Copying the files into the folder...");
     copy_tree(&unpacked, folder)
-}
-
-/// Downloads a file. The helper makes the request itself, so no other program runs and no console window opens.
-/// A download that stops early is tried again.
-fn download(url: &str, dest: &Path) -> Result<(), String> {
-    const ATTEMPTS: u32 = 3;
-    let mut last = String::new();
-    for attempt in 1..=ATTEMPTS {
-        match download_once(url, dest) {
-            Ok(()) => return Ok(()),
-            Err(e) => last = e,
-        }
-        if attempt < ATTEMPTS {
-            println!("The download did not finish. Trying again ({} of {}) ...", attempt + 1, ATTEMPTS);
-            std::thread::sleep(std::time::Duration::from_secs(5));
-        }
-    }
-    Err(format!("the download failed. {}", last))
-}
-
-fn download_once(url: &str, dest: &Path) -> Result<(), String> {
-    // The tests install packs from files on disk. The program downloads over https only (packs::parse_catalogue checks it).
-    #[cfg(test)]
-    {
-        if let Some(path) = url.strip_prefix("file://") {
-            fs::copy(path, dest).map_err(|e| format!("cannot copy {}: {}", path, e))?;
-            return Ok(());
-        }
-    }
-    let response = ureq::get(url)
-        .timeout(std::time::Duration::from_secs(300))
-        .call()
-        .map_err(|e| format!("could not download ({}). Check your internet connection.", e))?;
-    let mut file = fs::File::create(dest).map_err(|e| format!("cannot write {}: {}", dest.display(), e))?;
-    let mut reader = response.into_reader();
-    std::io::copy(&mut reader, &mut file).map_err(|e| format!("the download stopped: {}", e))?;
-    Ok(())
 }
 
 /// GitHub allows 60 requests an hour per IP address without a token, and runners on shared networks can use that up.

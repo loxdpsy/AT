@@ -13,6 +13,7 @@ use std::path::{Path, PathBuf};
 
 use crate::json;
 use crate::sha256;
+use crate::transfer::Transfer;
 
 const CATALOGUE_TEXT: &str = include_str!("packs.json");
 pub const MARKER: &str = "installed.json";
@@ -213,17 +214,19 @@ pub fn is_installed_in(root: &Path, pack: &Pack) -> bool {
 }
 
 /// Installs a pack into `root` (normally store::packs_dir()). Nothing is left behind when a file fails its check.
-pub fn install_into(root: &Path, pack: &Pack, commit: &str) -> Result<(), String> {
+pub fn install_into(root: &Path, pack: &Pack, commit: &str, transfer: &Transfer) -> Result<(), String> {
     if !valid_pair(&pack.pair) {
         return Err(format!("{} is not a language pair", pack.pair));
     }
+    // The window shows the whole pack: its three files together.
+    transfer.progress.total.store(pack.files.iter().map(|f| f.size).sum(), std::sync::atomic::Ordering::Relaxed);
     let dir = root.join(&pack.pair);
     fs::create_dir_all(&dir).map_err(|e| format!("cannot create {}: {}", dir.display(), e))?;
     let _ = fs::remove_file(dir.join(MARKER));
     for file in &pack.files {
         let target = dir.join(&file.name);
         let partial = dir.join(format!("{}.part", file.name));
-        if let Err(e) = super::download(&file.url, &partial) {
+        if let Err(e) = transfer.download(&file.url, &partial, Some(file.size)) {
             let _ = fs::remove_file(&partial);
             return Err(format!("{} could not be downloaded: {}", file.name, e));
         }
@@ -344,16 +347,16 @@ mod tests {
 
         // A wrong checksum: nothing is installed and no file is left behind.
         let wrong = "0".repeat(64);
-        assert!(install_into(&root, &pack(&wrong, content.len() as u64), "abc").is_err());
+        assert!(install_into(&root, &pack(&wrong, content.len() as u64), "abc", &Transfer::quiet()).is_err());
         assert!(!root.join("enfr").join("model.test.bin").exists());
         assert!(!root.join("enfr").join(MARKER).exists());
 
         // A wrong size is refused too.
-        assert!(install_into(&root, &pack(&good_hash, 3), "abc").is_err());
+        assert!(install_into(&root, &pack(&good_hash, 3), "abc", &Transfer::quiet()).is_err());
 
         // The right file installs, and the marker is written.
         let good = pack(&good_hash, content.len() as u64);
-        install_into(&root, &good, "abc123").expect("install");
+        install_into(&root, &good, "abc123", &Transfer::quiet()).expect("install");
         assert!(is_installed_in(&root, &good));
         assert_eq!(fs::read(root.join("enfr").join("model.test.bin")).unwrap(), content);
 

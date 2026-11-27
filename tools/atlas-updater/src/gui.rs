@@ -9,6 +9,7 @@ use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::mpsc::{self, Receiver, Sender};
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
@@ -25,6 +26,7 @@ use crate::engine::{self, Engine};
 use crate::packs::{self, Catalogue, Pack};
 use crate::settings::{self, Settings};
 use crate::store;
+use crate::transfer::{self, Transfer};
 use crate::tray::{self, Tray, TrayAction};
 
 /// The Atlas logo, the same one the extension uses (icons/icon-128.png). The window shows it at the top, and the
@@ -73,6 +75,7 @@ enum Action {
     UseDefaultFolder,
     OpenLink(String),
     Autostart(bool),
+    SetConnections(usize),
     InstallEngine,
     InstallPack(usize),
     RemovePack(usize),
@@ -101,6 +104,8 @@ pub struct Helper {
     pack_search: String,
     installed_only: bool,
     busy: Option<String>,
+    // The progress popup's counters, set while a download or install runs.
+    progress: Option<Arc<transfer::Progress>>,
     message: Option<(bool, String)>,
     autostart: bool,
     tray: Option<Tray>,
@@ -123,6 +128,11 @@ pub struct Helper {
     applied_dark: Option<bool>,
     /// Kept so the offline service's engine stays alive for the whole run (it is shared with the API thread).
     _engine: Arc<Engine>,
+}
+
+/// Formats a byte count as megabytes for the progress popup.
+fn megabytes(bytes: u64) -> String {
+    format!("{:.1}", bytes as f64 / 1_048_576.0)
 }
 
 /// Starts the helper's window, its tray icon, and the offline translation service. When `show_window` is false the
@@ -185,6 +195,7 @@ pub fn run(show_window: bool) -> Result<(), String> {
                 pack_search: String::new(),
                 installed_only: false,
                 busy: None,
+                progress: None,
                 message: None,
                 autostart: autostart::is_enabled(),
                 tray,
@@ -267,6 +278,7 @@ impl eframe::App for Helper {
                 }
                 Event::Done { ok, text, reload } => {
                     self.busy = None;
+                    self.progress = None;
                     self.installed_pairs = None;
                     self.message = Some((ok, text));
                     if reload {
@@ -351,6 +363,7 @@ impl eframe::App for Helper {
 
         self.bind_dialog(ui.ctx());
         self.setup_dialog(ui.ctx(), &mut actions);
+        self.progress_dialog(ui.ctx());
 
         for action in actions {
             self.perform(action, ui.ctx());
@@ -418,14 +431,6 @@ impl Helper {
                     actions.push(Action::OpenFolder);
                 }
             });
-        });
-
-        ui.add_space(12.0);
-        card(ui, |ui| {
-            let mut on = self.autostart;
-            if ui.checkbox(&mut on, "Start the helper when I sign in").changed() {
-                actions.push(Action::Autostart(on));
-            }
         });
 
         ui.add_space(16.0);
@@ -612,6 +617,43 @@ impl Helper {
         });
     }
 
+    /// The popup for a download or an install: the current step, the size so far, and a Cancel button.
+    fn progress_dialog(&mut self, ctx: &egui::Context) {
+        let progress = match &self.progress {
+            Some(p) => Arc::clone(p),
+            None => return,
+        };
+        let done = progress.done.load(Ordering::Relaxed);
+        let total = progress.total.load(Ordering::Relaxed);
+        let stage = progress.stage();
+        let mut cancel = false;
+        egui::Window::new("Atlas Helper is working")
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+            .show(ctx, |ui| {
+                ui.set_min_width(360.0);
+                ui.label(RichText::new(stage.as_str()).size(16.0).strong());
+                ui.add_space(8.0);
+                if total > 0 {
+                    let fraction = (done as f32 / total as f32).clamp(0.0, 1.0);
+                    let text = format!("{} of {} MB", megabytes(done), megabytes(total));
+                    ui.add(egui::ProgressBar::new(fraction).text(text).desired_width(360.0));
+                } else {
+                    ui.add(egui::ProgressBar::new(0.0).animate(true).desired_width(360.0));
+                }
+                ui.add_space(8.0);
+                ui.label(RichText::new("This window closes when the step finishes. Nothing is installed until the file checks out.").color(muted(ui)).small());
+                ui.add_space(6.0);
+                if ui.button("Cancel").clicked() {
+                    cancel = true;
+                }
+            });
+        if cancel {
+            progress.cancel.store(true, Ordering::Relaxed);
+        }
+    }
+
     /// The question shown when an extension asks to bind. Allow gives it a token; Deny (or closing) refuses it.
     fn bind_dialog(&mut self, ctx: &egui::Context) {
         let (name, origin) = match &self.pending_bind {
@@ -788,7 +830,7 @@ impl Helper {
                 let folder = self.folder.trim().to_string();
                 let needs_copy = matches!(self.status.as_ref().map(|s| &s.installed), Some(Ok(None)) | None);
                 if copy && needs_copy && !folder.is_empty() {
-                    self.start("Installing the extension into the folder...", move || match install_into_folder(&folder) {
+                    self.start_download("Installing the extension into the folder...", move |transfer| match install_into_folder(&folder, &transfer) {
                         Ok(text) => Event::Done { ok: true, text, reload: true },
                         Err(text) => Event::Done { ok: false, text, reload: false },
                     });
@@ -853,6 +895,25 @@ impl Helper {
                 actions.push(Action::SetKeepInTray(keep));
             }
             ui.label(RichText::new("Off means closing the window quits the helper.").color(muted(ui)));
+            ui.add_space(6.0);
+            let mut on = self.autostart;
+            if ui.checkbox(&mut on, "Start the helper when I sign in").changed() {
+                actions.push(Action::Autostart(on));
+            }
+            ui.label(RichText::new("It starts minimised to the tray, so it never opens a window by itself.").color(muted(ui)));
+        });
+        ui.add_space(12.0);
+
+        card(ui, |ui| {
+            ui.label(RichText::new("Downloads").strong());
+            let mut connections = self.settings.download_connections;
+            if ui.add(egui::Slider::new(&mut connections, transfer::MIN_CONNECTIONS..=transfer::MAX_CONNECTIONS).text("Connections at once")).changed() {
+                actions.push(Action::SetConnections(connections));
+            }
+            ui.label(
+                RichText::new("Each file is split into parts that download together, which is faster on most connections. Use 1 on a slow or metered connection.")
+                    .color(muted(ui)),
+            );
         });
         ui.add_space(12.0);
 
@@ -907,7 +968,7 @@ impl Helper {
             }
             Action::Install => {
                 let folder = self.folder.trim().to_string();
-                self.start("Installing the extension...", move || match install_into_folder(&folder) {
+                self.start_download("Installing the extension...", move |transfer| match install_into_folder(&folder, &transfer) {
                     Ok(text) => Event::Done { ok: true, text, reload: true },
                     Err(text) => Event::Done { ok: false, text, reload: false },
                 });
@@ -925,7 +986,7 @@ impl Helper {
                 let _ = self.events_tx.send(event);
             }
             Action::InstallEngine => {
-                self.start("Installing the offline engine...", move || match engine::install_from_latest_release() {
+                self.start_download("Installing the offline engine...", move |transfer| match engine::install_from_latest_release(&transfer) {
                     Ok(v) => Event::Done { ok: true, text: format!("Installed the offline engine {}.", v), reload: false },
                     Err(e) => Event::Done { ok: false, text: e, reload: false },
                 });
@@ -937,7 +998,7 @@ impl Helper {
                 };
                 if let Some((pack, commit)) = picked {
                     let label = format!("Installing the {} to {} pack...", pack.from, pack.to);
-                    self.start(&label, move || pack_result(packs::install_into(&store::packs_dir(), &pack, &commit), &pack, "installed"));
+                    self.start_download(&label, move |transfer| pack_result(packs::install_into(&store::packs_dir(), &pack, &commit, &transfer), &pack, "installed"));
                 }
             }
             Action::RemovePack(index) => {
@@ -992,6 +1053,10 @@ impl Helper {
                 self.settings.keep_in_tray = on;
                 self.save_settings();
             }
+            Action::SetConnections(n) => {
+                self.settings.download_connections = n.clamp(transfer::MIN_CONNECTIONS, transfer::MAX_CONNECTIONS);
+                self.save_settings();
+            }
             Action::ShowSetupAgain => {
                 self.settings.answered.clear();
                 self.settings.welcomed = false;
@@ -1025,6 +1090,24 @@ impl Helper {
         let tx = self.events_tx.clone();
         thread::spawn(move || {
             let _ = tx.send(job());
+        });
+    }
+
+    /// Starts a download or install. The job gets a Transfer that counts its bytes for the progress popup and uses the
+    /// number of connections from the settings.
+    fn start_download<F>(&mut self, label: &str, job: F)
+    where
+        F: FnOnce(Transfer) -> Event + Send + 'static,
+    {
+        let progress = Arc::new(transfer::Progress::default());
+        progress.set_stage(label);
+        let download = Transfer::new(self.settings.download_connections, Arc::clone(&progress));
+        self.busy = Some(label.to_string());
+        self.progress = Some(progress);
+        self.message = None;
+        let tx = self.events_tx.clone();
+        thread::spawn(move || {
+            let _ = tx.send(job(download));
         });
     }
 
@@ -1087,13 +1170,14 @@ fn load_status(folder: &str) -> Status {
 }
 
 /// Installs or updates the extension in `folder`. Refuses a folder that is not an Atlas Translation copy.
-fn install_into_folder(folder: &str) -> Result<String, String> {
+fn install_into_folder(folder: &str, transfer: &Transfer) -> Result<String, String> {
     if folder.is_empty() {
         return Err("Choose a folder first.".into());
     }
     let path = PathBuf::from(folder);
     let fresh = is_fresh_folder(&path);
     let installed = if fresh { None } else { Some(crate::read_installed_version(&path)?) };
+    transfer.progress.set_stage("Checking the latest version...");
     let release = crate::fetch_latest_release()?;
     if let Some(v) = &installed {
         if !crate::is_newer(&release.version, v) {
@@ -1103,7 +1187,7 @@ fn install_into_folder(folder: &str) -> Result<String, String> {
     if fresh {
         std::fs::create_dir_all(&path).map_err(|e| format!("cannot create the folder: {}", e))?;
     }
-    crate::install(&path, &release)?;
+    crate::install(&path, &release, transfer)?;
     Ok(format!("Installed version {} in {}. Reload Atlas Translation in your browser.", release.version, folder))
 }
 

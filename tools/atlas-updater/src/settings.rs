@@ -5,10 +5,12 @@
 // theme: "system", "light" or "dark". The window follows the operating system unless the user picks one.
 // text_size: "normal" or "large". Large scales the whole window up.
 // keep_in_tray: closing the window keeps the helper running in the tray. Off means closing quits it.
+// download_connections: how many connections a download uses at once (1 to 8). Each file is split into parts over them.
 
 use std::path::PathBuf;
 
 use crate::store;
+use crate::transfer::{DEFAULT_CONNECTIONS, MAX_CONNECTIONS, MIN_CONNECTIONS};
 
 pub struct Settings {
     pub experimental: bool,
@@ -17,6 +19,7 @@ pub struct Settings {
     pub theme: String,
     pub text_size: String,
     pub keep_in_tray: bool,
+    pub download_connections: usize,
 }
 
 fn path() -> PathBuf {
@@ -32,6 +35,7 @@ pub fn load() -> Settings {
         theme: "system".to_string(),
         text_size: "normal".to_string(),
         keep_in_tray: true,
+        download_connections: DEFAULT_CONNECTIONS,
     };
     for line in text.lines() {
         if let Some((key, value)) = line.split_once('=') {
@@ -41,6 +45,9 @@ pub fn load() -> Settings {
                 "theme" => settings.theme = value.trim().to_string(),
                 "text_size" => settings.text_size = value.trim().to_string(),
                 "keep_in_tray" => settings.keep_in_tray = value.trim() != "false",
+                "download_connections" => {
+                    settings.download_connections = value.trim().parse::<usize>().unwrap_or(DEFAULT_CONNECTIONS).clamp(MIN_CONNECTIONS, MAX_CONNECTIONS)
+                }
                 "setup_answered" => {
                     settings.answered = value.split(',').map(|s| s.trim().to_string()).filter(|s| !s.is_empty()).collect();
                 }
@@ -55,13 +62,14 @@ pub fn save(settings: &Settings) -> Result<(), String> {
     let dir = store::data_dir();
     std::fs::create_dir_all(&dir).map_err(|e| format!("cannot create the data folder: {}", e))?;
     let text = format!(
-        "experimental={}\nsetup_answered={}\nwelcomed={}\ntheme={}\ntext_size={}\nkeep_in_tray={}\n",
+        "experimental={}\nsetup_answered={}\nwelcomed={}\ntheme={}\ntext_size={}\nkeep_in_tray={}\ndownload_connections={}\n",
         settings.experimental,
         settings.answered.join(","),
         settings.welcomed,
         settings.theme,
         settings.text_size,
-        settings.keep_in_tray
+        settings.keep_in_tray,
+        settings.download_connections
     );
     std::fs::write(path(), text).map_err(|e| format!("cannot save the settings: {}", e))
 }
