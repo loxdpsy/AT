@@ -137,6 +137,38 @@ await check("a PDF file is read into paragraphs and translated through the offli
   assert.ok(shown, "copy and download buttons are shown");
 });
 
+await check("a French PDF: From is set to French from the text, and the translation uses it", async page => {
+  await page.click("#tabPdf");
+  await (await page.$("#pdfFile")).uploadFile(path.join(root, "tests/fixtures/sample-fr-text.pdf"));
+  // From is set to German, which the document is not: the detection changes it to French (French to English works offline).
+  await page.select("#pdfSource", "de");
+  await page.select("#pdfTarget", "en");
+  await page.evaluate(() => { window.__messages.length = 0; });
+  await page.click("#btnPdfTranslate");
+  await page.waitForFunction(() => document.querySelectorAll("#pdfResult p").length > 0, { timeout: 30000 });
+  assert.strictEqual(await page.$eval("#pdfSource", el => el.value), "fr", "From is set to French");
+  const status = await page.$eval("#pdfStatus", el => el.textContent);
+  assert.ok(status.includes("From is set to French"), "the status says so: " + status);
+  const sent = await page.evaluate(() => window.__messages.filter(m => m && m.action === "translateTextOnly"));
+  assert.ok(sent.length >= 1 && sent.every(m => m.sourceLanguage === "fr" && m.targetLanguage === "en"), "the requests go French to English");
+});
+
+await check("show original text: the source is shown under each paragraph when the box is ticked", async page => {
+  await page.click("#tabPdf");
+  await (await page.$("#pdfFile")).uploadFile(fixture);
+  await page.select("#pdfSource", "en");
+  await page.select("#pdfTarget", "fr");
+  await page.click("#btnPdfTranslate");
+  await page.waitForFunction(() => document.querySelectorAll("#pdfResult p").length > 0, { timeout: 30000 });
+  assert.strictEqual(await page.$$eval("#pdfResult .pdfOriginal", els => els.length), 0, "hidden by default");
+  await page.click("#pdfShowOriginal");
+  const originals = await page.$$eval("#pdfResult .pdfOriginal", els => els.map(el => el.textContent));
+  assert.strictEqual(originals.length, 3, "one original per paragraph");
+  assert.ok(originals[1].startsWith("The quick brown fox"), "the source text is shown");
+  await page.click("#pdfShowOriginal");
+  assert.strictEqual(await page.$$eval("#pdfResult .pdfOriginal", els => els.length), 0, "hidden again");
+});
+
 await check("a pair without English is refused before anything is sent", async page => {
   await page.click("#tabPdf");
   await page.evaluate(() => { window.__messages.length = 0; });

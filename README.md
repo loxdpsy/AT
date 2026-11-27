@@ -47,7 +47,10 @@ Other extensions with a similar name are not Atlas Translation. Store links will
 - **PDF translation.** When the tab is a PDF, the toolbar popup offers to translate it (From and To languages). It opens the
   Translator's PDF tab and translates the text on this computer with the Atlas Helper and an installed language pack (one side must be
   English). Scanned PDFs without text are not supported. Limits: 50 MB and 300 pages. The result is text with Copy and
-  Download .txt; the PDF layout is not rebuilt.
+  Download .txt; the PDF layout is not rebuilt. The document's language is guessed from its text (a best guess, shown in the status).
+  *Show original text* puts each paragraph's source under its translation.
+- **Open the Translator with a keyboard shortcut.** Firefox: `Shift+Alt+Y`. Chromium browsers allow only four built-in shortcut
+  suggestions, so set one yourself at `chrome://extensions/shortcuts` (the command is *Open the Translator*).
 - **Text-to-speech** for translated text in the page translation (Chromium 109+ and Firefox).
 - **Update check** script that uses the GitHub API and respects the rate limit (see *Checking for updates*).
 - **Per-site and per-language rules**: never translate a site or language, always translate, auto-translate links.

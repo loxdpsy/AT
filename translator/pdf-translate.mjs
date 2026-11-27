@@ -99,7 +99,8 @@ function setupPdfPanel() {
   if (offline.includes(params.get("to"))) $("pdfTarget").value = params.get("to");
   if (params.get("pdf")) $("pdfUrl").value = params.get("pdf");
 
-  let lastTranslated = null;
+  let lastOriginal = null; // the paragraphs of each page, as read from the PDF
+  let lastTranslated = null; // the same shape, translated
 
   function setStatus(message, isError = false) {
     const el = $("pdfStatus");
@@ -128,25 +129,32 @@ function setupPdfPanel() {
     return buffer;
   }
 
-  function render(pages) {
+  // Shows the translation. With "Show original", each paragraph's source text is shown under its translation.
+  function render() {
     const result = $("pdfResult");
     result.replaceChildren();
-    pages.forEach((paragraphs, index) => {
+    const showOriginal = $("pdfShowOriginal").checked;
+    lastTranslated.forEach((paragraphs, index) => {
       if (paragraphs.length === 0) return;
       const section = document.createElement("section");
       section.className = "pdfPage";
       const heading = document.createElement("h3");
       heading.textContent = `Page ${index + 1}`;
       section.append(heading);
-      for (const paragraph of paragraphs) {
+      paragraphs.forEach((paragraph, i) => {
         const p = document.createElement("p");
         p.textContent = paragraph;
         section.append(p);
-      }
+        if (showOriginal) {
+          const original = document.createElement("p");
+          original.className = "pdfOriginal";
+          original.textContent = lastOriginal[index][i];
+          section.append(original);
+        }
+      });
       result.append(section);
     });
-    const hasResult = pages.some(p => p.length > 0);
-    $("pdfActions").hidden = !hasResult;
+    $("pdfActions").hidden = !lastTranslated.some(p => p.length > 0);
   }
 
   function plainText(pages) {
@@ -156,12 +164,28 @@ function setupPdfPanel() {
       .join("\n\n");
   }
 
+  // The document's language, guessed from its text. When it is clear and the offline pair works, From is set to it.
+  // Returns the language to translate from, or null when the choice does not work (the status says why).
+  function chooseSource(pages, chosen, target) {
+    const sample = pages.flat().join(" ").slice(0, 4000);
+    const guess = TwpPdfText.detectLanguage(sample, offline);
+    if (!guess || guess.code === chosen) return { source: chosen, note: "" };
+    const name = twpLang.codeToLanguage(guess.code) || guess.code;
+    if (offlinePairAllowed(guess.code, target)) {
+      $("pdfSource").value = guess.code;
+      return { source: guess.code, note: ` The document looks like ${name}, so From is set to ${name}.` };
+    }
+    setStatus(`The document looks like ${name}. Offline translation needs English on one side, so choose From again.`, true);
+    return null;
+  }
+
   async function translate() {
-    const source = $("pdfSource").value;
+    const chosen = $("pdfSource").value;
     const target = $("pdfTarget").value;
     $("pdfResult").replaceChildren();
     $("pdfActions").hidden = true;
-    if (!offlinePairAllowed(source, target)) {
+    lastTranslated = null;
+    if (!offlinePairAllowed(chosen, target)) {
       setStatus("Offline translation needs English on one side, for example English to French.", true);
       return;
     }
@@ -175,13 +199,16 @@ function setupPdfPanel() {
         setStatus("No text was found. Scanned PDFs (images of text) cannot be translated here.", true);
         return;
       }
-      setStatus(`Translating ${count} paragraphs...`);
-      const translated = await translatePages(pages, source, target, (done, total) => {
-        setStatus(`Translating... ${done} of ${total} paragraphs`);
+      const choice = chooseSource(pages, chosen, target);
+      if (choice === null) return;
+      setStatus(`Translating ${count} paragraphs...${choice.note}`);
+      const translated = await translatePages(pages, choice.source, target, (done, total) => {
+        setStatus(`Translating... ${done} of ${total} paragraphs.${choice.note}`);
       });
+      lastOriginal = pages;
       lastTranslated = translated;
-      render(translated);
-      setStatus(`Translated ${count} paragraphs. Nothing was sent to an online service.`);
+      render();
+      setStatus(`Translated ${count} paragraphs. Nothing was sent to an online service.${choice.note}`);
     } catch (error) {
       setStatus(error && error.message ? error.message : String(error), true);
     } finally {
@@ -190,9 +217,11 @@ function setupPdfPanel() {
   }
 
   $("btnPdfTranslate").addEventListener("click", translate);
-  if (params.get("auto") === "1" && params.get("pdf")) translate();
   $("pdfUrl").addEventListener("keydown", event => {
     if (event.key === "Enter") translate();
+  });
+  $("pdfShowOriginal").addEventListener("change", () => {
+    if (lastTranslated) render();
   });
   $("pdfCopy").addEventListener("click", () => {
     if (lastTranslated && navigator.clipboard) navigator.clipboard.writeText(plainText(lastTranslated)).catch(() => {});
@@ -208,6 +237,7 @@ function setupPdfPanel() {
     link.remove();
     setTimeout(() => URL.revokeObjectURL(link.href), 1000);
   });
+  if (params.get("auto") === "1" && params.get("pdf")) translate();
 }
 
 if (typeof document !== "undefined" && typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.getURL) {

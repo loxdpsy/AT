@@ -105,5 +105,64 @@ var TwpPdfText = (function () {
     return out;
   }
 
-  return { groupLines, buildParagraphs, splitLong, batches };
+  // Common words of some languages. A best guess only: the text is matched by how many of these words it contains.
+  const STOPWORDS = {
+    en: ["the", "and", "of", "to", "is", "that", "with", "for", "are", "this", "was", "not"],
+    fr: ["le", "les", "et", "des", "est", "une", "que", "dans", "pour", "pas", "vous", "sont"],
+    de: ["der", "die", "und", "das", "ist", "nicht", "ein", "eine", "mit", "auf", "auch", "sich"],
+    es: ["el", "los", "las", "y", "que", "es", "por", "para", "una", "como", "pero", "sus"],
+    it: ["il", "che", "di", "non", "sono", "con", "del", "della", "per", "gli", "anche", "questo"],
+    pt: ["os", "as", "uma", "para", "com", "não", "mais", "seu", "dos", "das", "muito", "também"],
+    nl: ["het", "een", "van", "niet", "zijn", "met", "voor", "dat", "ook", "maar", "bij", "naar"],
+    sv: ["och", "att", "det", "som", "och", "inte", "med", "för", "till", "är", "den", "har"],
+    pl: ["się", "nie", "jest", "że", "na", "to", "jak", "tak", "do", "po", "czy", "przez"],
+    tr: ["ve", "bir", "bu", "için", "ile", "çok", "daha", "gibi", "olarak", "var", "değil", "ama"],
+    id: ["yang", "dan", "di", "itu", "dengan", "untuk", "tidak", "ini", "dari", "dalam", "akan", "adalah"]
+  };
+  const SCRIPTS = [
+    { code: "ru", pattern: /\p{Script=Cyrillic}/gu },
+    { code: "ar", pattern: /\p{Script=Arabic}/gu },
+    { code: "el", pattern: /\p{Script=Greek}/gu },
+    { code: "he", pattern: /\p{Script=Hebrew}/gu },
+    { code: "ko", pattern: /\p{Script=Hangul}/gu },
+    { code: "ja", pattern: /[\p{Script=Hiragana}\p{Script=Katakana}]/gu },
+    { code: "zh", pattern: /\p{Script=Han}/gu }
+  ];
+
+  // Guesses the language of a text. `allowed` lists the language codes that may be returned (for example the offline
+  // languages). Returns { code, hits, share } or null when the text is too short or no language clearly wins.
+  function detectLanguage(text, allowed) {
+    const ok = code => !allowed || allowed.includes(code);
+    const sample = String(text || "");
+    const letters = sample.match(/\p{L}/gu) || [];
+    if (letters.length < 20) return null;
+    // Scripts first: a text that is mostly one non-Latin script names that language.
+    // Kana is used only in Japanese, so a noticeable share of it means Japanese (kanji alone could be Chinese).
+    const kana = (sample.match(/[\p{Script=Hiragana}\p{Script=Katakana}]/gu) || []).length;
+    if (kana / letters.length > 0.1 && ok("ja")) return { code: "ja", hits: kana, share: kana / letters.length };
+    let best = null;
+    for (const script of SCRIPTS) {
+      const count = (sample.match(script.pattern) || []).length;
+      if (count / letters.length > 0.5 && ok(script.code)) {
+        best = { code: script.code, hits: count, share: count / letters.length };
+      }
+    }
+    if (best) return best;
+    const words = sample.toLowerCase().match(/\p{L}+/gu) || [];
+    if (words.length < 20) return null;
+    const scores = [];
+    for (const [code, list] of Object.entries(STOPWORDS)) {
+      if (!ok(code)) continue;
+      const hits = words.filter(w => list.includes(w)).length;
+      scores.push({ code, hits, share: hits / words.length });
+    }
+    scores.sort((a, b) => b.hits - a.hits);
+    const top = scores[0];
+    const runnerUp = scores[1];
+    if (!top || top.hits < 8 || top.share < 0.1) return null;
+    if (runnerUp && runnerUp.hits >= top.hits * 0.8) return null; // too close to call
+    return top;
+  }
+
+  return { groupLines, buildParagraphs, splitLong, batches, detectLanguage };
 })();

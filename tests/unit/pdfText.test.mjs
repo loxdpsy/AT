@@ -75,4 +75,22 @@ const T = context.TwpPdfText;
   assert.deepEqual(T.batches([], 5, 100), []);
 }
 
+// Language guess from a sample text
+{
+  const en = "The report is based on the data that was collected during the study and this is not the final version of the work for the team.";
+  const fr = "Le rapport est basé sur les données qui ont été collectées pendant l'étude et ce n'est pas la version finale du travail pour une équipe.";
+  const de = "Der Bericht basiert auf den Daten, die während der Studie gesammelt wurden, und das ist nicht die endgültige Fassung der Arbeit für das Team.";
+  assert.strictEqual(T.detectLanguage(en).code, "en");
+  assert.strictEqual(T.detectLanguage(fr).code, "fr");
+  assert.strictEqual(T.detectLanguage(de).code, "de");
+  // Only the allowed languages are returned
+  assert.strictEqual(T.detectLanguage(fr, ["en", "de"]), null, "French is not allowed here");
+  // Scripts
+  assert.strictEqual(T.detectLanguage("Привет, это тестовый документ с достаточно длинным текстом для проверки языка.").code, "ru");
+  assert.strictEqual(T.detectLanguage("これはテストの文書です。言語を判定するために十分な長さの文章を用意しています。").code, "ja");
+  // Too short, or no clear winner
+  assert.strictEqual(T.detectLanguage("Hello there."), null);
+  assert.strictEqual(T.detectLanguage("the de la der die und et y il che"), null);
+}
+
 console.log("pdfText: all checks passed");

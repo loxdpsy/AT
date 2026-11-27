@@ -255,3 +255,6 @@ button.primary {
 .speedRow[aria-checked="true"] .speedName::before { content: "\25CF\00a0"; color: var(--blue); }
 .speedRow[aria-checked="false"] .speedName::before { content: "\25CB\00a0"; color: var(--muted); }
 .testSpeed { color: var(--blue); }
+
+.checkLabel { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 14px; cursor: pointer; }
+.pdfOriginal { color: var(--muted); font-size: 14px; border-left: 3px solid var(--line); padding-left: 10px; }

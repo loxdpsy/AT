@@ -22,6 +22,12 @@
     }
   },
   "commands": {
+    "open-translator": {
+      "suggested_key": {
+        "default": "Shift+Alt+Y"
+      },
+      "description": "Open the Translator"
+    },
     "hotkey-toggle-translation": {
       "suggested_key": {
         "default": "Ctrl+Alt+T"

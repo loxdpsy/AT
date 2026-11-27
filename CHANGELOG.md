@@ -11,6 +11,8 @@ Not released yet. Changes after 0.0.2.5 are listed here.
 - Translator text tab: a Google-style language chooser (chips for the current and recent languages, a full list with search, swap).
 - Translator: Listen to the source or the translation, at Normal, Slow or Slowest speed (system voices for now).
 - Opening a PDF shows a prompt to translate it (From and To). It opens the Translator's PDF tab, which translates on this computer with the Offline helper.
+- PDF translation: the document's language is guessed from its text, and From is set to it. A "Show original text" box shows each paragraph's source.
+- Keyboard command "Open the Translator" (Firefox: Shift+Alt+Y; Chromium: set it at chrome://extensions/shortcuts).
 - Setup page: Save closes the page. When the helper still needs connecting, the note stays for a few seconds first.
 
 ## 0.0.2.7
