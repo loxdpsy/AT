@@ -19,7 +19,8 @@ administrator password: it installs for your user account, in `%LOCALAPPDATA%\Pr
 menu entry, and it can add a desktop shortcut and a start-at-sign-in entry (both are checkboxes). Uninstall it from
 Windows Settings, under Apps.
 
-Every release also attaches the programs to its GitHub release: `atlas-updater-windows.exe`, `atlas-updater-macos`
+Every release also attaches the programs to its GitHub release: `atlas-updater-windows.exe` (a portable copy: it installs
+nothing, has no Start menu entry, and Task Manager shows the file name you downloaded), `atlas-updater-macos`
 and `atlas-updater-linux`. Between releases, each build is an artifact of the **Updater** workflow run in GitHub Actions
 (Actions tab, then the newest run), under the same names without `.exe`.
 

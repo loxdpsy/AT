@@ -32,7 +32,7 @@ fn windows_version_resource() {
     let mut res = winresource::WindowsResource::new();
     res.set("CompanyName", "Atlas Translation")
         .set("ProductName", "Atlas Translation Helper")
-        .set("FileDescription", "Atlas Translation Helper: the window, the tray icon and the offline translation")
+        .set("FileDescription", "Atlas Translation Helper")
         .set("InternalName", "atlas-updater")
         .set("OriginalFilename", "atlas-updater.exe")
         .set("LegalCopyright", "Licensed under the Mozilla Public License 2.0")
