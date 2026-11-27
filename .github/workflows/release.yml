@@ -11,17 +11,14 @@ name: Release
 #   - submit_amo: with build-and-release, send the Firefox store version to
 #     addons.mozilla.org for review. The store step waits for AMO_LISTING_READY to be "true" (a repository variable or a secret of that name).
 #
-# Pushing a tag such as v9.8.2.0 (with manifest.json already at that version) publishes it, the same as build-and-release.
-# Tag pushes are prereleases too, until the launch (see PRERELEASE in the "Work out what to do" step).
+# Pushing a tag does NOT start this workflow any more. A tag push used to publish the release and submit it to the stores,
+# so moving or pushing a tag could publish by accident. Only the manual run above publishes.
 # The release notes come from the matching "## <version>" section in CHANGELOG.md.
 # If the version is already published (its tag and GitHub release both exist), the run reports it and publishes nothing again. It does not fail.
 # To publish a version again, delete its GitHub release. If the tag stays, the run publishes the release on the same tag and commit.
 # To start over completely, delete the release and the tag, then run again. The version commit is made only when it is missing.
 
 on:
-  push:
-    tags:
-      - "v*"
   workflow_dispatch:
     inputs:
       version:
