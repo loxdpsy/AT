@@ -646,7 +646,7 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     if (rtlStyleNode || !document.head) return;
     rtlStyleNode = document.createElement("style");
     rtlStyleNode.id = "twp-rtl-style";
-    rtlStyleNode.textContent = ".twp-rtl-text { direction: rtl !important; text-align: start !important; }";
+    rtlStyleNode.textContent = ".twp-rtl-text { unicode-bidi: plaintext !important; text-align: start !important; }";
     document.head.appendChild(rtlStyleNode);
   }
   function markRightToLeftText(node) {
@@ -940,7 +940,6 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
       currentTargetLanguage = targetLanguage;
     }
     customDictionary = sortDictionary(twpConfig.get("customDictionary"));
-    applyPageDirection(currentTargetLanguage);
 
     if (location.hostname === "sberbank.com" || location.hostname === "www.sberbank.com") {
       document.body.classList.remove("notranslate");
@@ -964,7 +963,6 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     translationRoutine();
   };
   pageTranslator.restorePage = function () {
-    restorePageDirection();
     clearRightToLeftText();
     fooCount++;
     piecesToTranslate = [];
@@ -1139,29 +1137,9 @@ Promise.all([twpConfig.onReady(), getTabHostName()]).then(function (_) {
     }
     observers.forEach(callback => callback(originalTabLanguage));
   }
-  // While translated, the page is flipped (dir="rtl" or "ltr") when its direction differs from the target language's.
-  // restorePage puts the original dir attribute back.
-  let pageDirectionChanged = false;
-  let pageDirectionBefore = null;
-  function applyPageDirection(langCode) {
-    const root = document.documentElement;
-    const wanted = isRightToLeftLanguage(langCode) ? "rtl" : "ltr";
-    if (getComputedStyle(root).direction === wanted) return;
-    pageDirectionBefore = root.getAttribute("dir");
-    root.setAttribute("dir", wanted);
-    pageDirectionChanged = true;
-  }
-  function restorePageDirection() {
-    if (!pageDirectionChanged) return;
-    const root = document.documentElement;
-    if (pageDirectionBefore === null) {
-      root.removeAttribute("dir");
-    } else {
-      root.setAttribute("dir", pageDirectionBefore);
-    }
-    pageDirectionChanged = false;
-    pageDirectionBefore = null;
-  }
+  // The page keeps its own direction. Flipping the whole page to right-to-left also flipped the untranslated English
+  // around the translation: question marks and brackets moved to the wrong side. Only the translated blocks change
+  // (see ensureRightToLeftStyle), and each one takes its direction from its own text.
   // A translation service asked for a captcha. It is shown in a dialog on this page (not in a new tab). The user solves
   // it, then presses "Translate again". "Open in a small window" is the fallback for sites where the box stays blank.
   let translationCaptchaDialog = null;

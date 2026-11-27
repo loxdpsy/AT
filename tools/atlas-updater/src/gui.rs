@@ -36,6 +36,10 @@ const GREY: Color32 = Color32::from_rgb(0x5f, 0x63, 0x68);
 const PAPER: Color32 = Color32::from_rgb(0xf3, 0xf5, 0xf9);
 const SIDEBAR: Color32 = Color32::from_rgb(0xe6, 0xeb, 0xf3);
 const BORDER: Color32 = Color32::from_rgb(0xd3, 0xd9, 0xe3);
+const DARK_PAPER: Color32 = Color32::from_rgb(0x17, 0x1a, 0x21);
+const DARK_CARD: Color32 = Color32::from_rgb(0x20, 0x24, 0x2d);
+const DARK_MUTED: Color32 = Color32::from_rgb(0xa8, 0xb0, 0xbd);
+const DARK_BORDER: Color32 = Color32::from_rgb(0x3a, 0x40, 0x4c);
 
 #[derive(Clone, Copy, PartialEq)]
 enum Tab {
@@ -76,6 +80,9 @@ enum Action {
     SetupAll,
     FinishWelcome,
     SetExperimental(bool),
+    SetTheme(&'static str),
+    SetTextSize(&'static str),
+    SetKeepInTray(bool),
     ShowSetupAgain,
     OpenDataFolder,
     OpenPacksFolder,
@@ -108,6 +115,7 @@ pub struct Helper {
     /// True while the first-run question about setting up the browsers is open.
     setup_open: bool,
     settings: Settings,
+    applied_dark: Option<bool>,
     /// Kept so the offline service's engine stays alive for the whole run (it is shared with the API thread).
     _engine: Arc<Engine>,
 }
@@ -185,6 +193,7 @@ pub fn run(show_window: bool) -> Result<(), String> {
                 detected,
                 setup_open,
                 settings: saved_settings,
+                applied_dark: None,
                 _engine: engine,
             };
             helper.refresh();
@@ -196,6 +205,21 @@ pub fn run(show_window: bool) -> Result<(), String> {
 
 impl eframe::App for Helper {
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // The look follows the settings: the theme (system, light or dark) and the text size.
+        let dark = match self.settings.theme.as_str() {
+            "dark" => true,
+            "light" => false,
+            _ => ctx.system_theme() == Some(egui::Theme::Dark),
+        };
+        let zoom = if self.settings.text_size == "large" { 1.25 } else { 1.0 };
+        if self.applied_dark != Some(dark) {
+            ctx.set_visuals(visuals(dark));
+            self.applied_dark = Some(dark);
+        }
+        if (ctx.zoom_factor() - zoom).abs() > f32::EPSILON {
+            ctx.set_zoom_factor(zoom);
+        }
+
         // Tray clicks and menu choices.
         let mut tray_actions = Vec::new();
         if let Some(tray) = &self.tray {
@@ -209,7 +233,7 @@ impl eframe::App for Helper {
         }
 
         // A close button press hides the window while the tray is there. Without a tray, closing quits.
-        if ctx.input(|i| i.viewport().close_requested()) && !self.quitting && self.tray.is_some() {
+        if ctx.input(|i| i.viewport().close_requested()) && !self.quitting && self.tray.is_some() && self.settings.keep_in_tray {
             ctx.send_viewport_cmd(ViewportCommand::CancelClose);
             ctx.send_viewport_cmd(ViewportCommand::Visible(false));
         }
@@ -255,7 +279,7 @@ impl eframe::App for Helper {
                     ui.add_space(12.0);
                     ui.vertical(|ui| {
                         ui.label(RichText::new("Atlas Helper").size(20.0).strong());
-                        ui.label(RichText::new(format!("Version {}", crate::app_version())).color(GREY));
+                        ui.label(RichText::new(format!("Version {}", crate::app_version())).color(muted(ui)));
                     });
                 });
             });
@@ -288,7 +312,7 @@ impl eframe::App for Helper {
                         let color = if *ok { GREEN } else { RED };
                         ui.label(RichText::new(text.as_str()).color(color));
                     } else {
-                        ui.label(RichText::new("Ready.").color(GREY));
+                        ui.label(RichText::new("Ready.").color(muted(ui)));
                     }
                 });
             });
@@ -325,7 +349,7 @@ impl eframe::App for Helper {
 impl Helper {
     fn extension_tab(&mut self, ui: &mut egui::Ui, idle: bool, actions: &mut Vec<Action>) {
         ui.heading("Atlas Translation extension");
-        ui.label(RichText::new("Install or update the extension here. Firefox users get updates from the Add-ons store, so they only need the link below.").color(GREY));
+        ui.label(RichText::new("Install or update the extension here. Firefox users get updates from the Add-ons store, so they only need the link below.").color(muted(ui)));
         ui.add_space(12.0);
 
         card(ui, |ui| {
@@ -340,7 +364,7 @@ impl Helper {
 
             match &self.status {
                 None => {
-                    ui.label(RichText::new("Checking the latest release...").color(GREY));
+                    ui.label(RichText::new("Checking the latest release...").color(muted(ui)));
                 }
                 Some(status) => {
                     match &status.latest {
@@ -396,7 +420,7 @@ impl Helper {
         ui.heading("Browsers");
         ui.add_space(4.0);
         if self.detected.is_empty() {
-            ui.label(RichText::new("No browser was found on this computer. Install one, then open the helper again.").color(GREY));
+            ui.label(RichText::new("No browser was found on this computer. Install one, then open the helper again.").color(muted(ui)));
         }
         for browser in self.detected.clone() {
             let guide = browsers::guide(&browser, &self.folder);
@@ -406,7 +430,7 @@ impl Helper {
                     ui.label(format!("{}. {}", i + 1, step));
                 }
                 if guide.needs_folder {
-                    ui.label(RichText::new("Choose the folder above first.").color(GREY));
+                    ui.label(RichText::new("Choose the folder above first.").color(muted(ui)));
                 }
                 if let Some(link) = &guide.link {
                     if ui.button(format!("Open the page for {}", guide.name)).clicked() {
@@ -424,7 +448,7 @@ impl Helper {
 
     fn offline_tab(&mut self, ui: &mut egui::Ui, idle: bool, actions: &mut Vec<Action>) {
         ui.heading("Offline translation");
-        ui.label(RichText::new("Translation that runs on this computer. Each language pair is a pack that you install here.").color(GREY));
+        ui.label(RichText::new("Translation that runs on this computer. Each language pair is a pack that you install here.").color(muted(ui)));
         ui.add_space(12.0);
 
         card(ui, |ui| {
@@ -444,7 +468,7 @@ impl Helper {
                 actions.push(Action::InstallEngine);
             }
             ui.add_space(6.0);
-            ui.label(RichText::new(format!("Data folder: {}", store::data_dir().display())).color(GREY));
+            ui.label(RichText::new(format!("Data folder: {}", store::data_dir().display())).color(muted(ui)));
         });
 
         ui.add_space(14.0);
@@ -456,7 +480,7 @@ impl Helper {
         let mut retry = false;
         match &self.catalogue {
             None => {
-                ui.label(RichText::new("Loading the list of packs...").color(GREY));
+                ui.label(RichText::new("Loading the list of packs...").color(muted(ui)));
             }
             Some(Err(e)) => {
                 ui.label(RichText::new(format!("The packs could not be listed: {}", e)).color(RED));
@@ -465,14 +489,14 @@ impl Helper {
                 }
             }
             Some(Ok(catalogue)) => {
-                ui.label(RichText::new(format!("Each pack is about 37 MB. {} packs are available.", catalogue.packs.len())).color(GREY));
+                ui.label(RichText::new(format!("Each pack is about 37 MB. {} packs are available.", catalogue.packs.len())).color(muted(ui)));
                 ui.add_space(6.0);
                 let root = store::packs_dir();
                 let installed_packs: Vec<&Pack> = catalogue.packs.iter().filter(|p| packs::is_installed_in(&root, p)).collect();
                 let installed_mb = installed_packs.iter().map(|p| p.bytes as f64).sum::<f64>() / 1_000_000.0;
                 card(ui, |ui| {
                     ui.label(RichText::new(format!("Installed now: {} pack(s), about {:.0} MB", installed_packs.len(), installed_mb)).strong());
-                    ui.label(RichText::new(format!("Folder: {}", root.display())).color(GREY));
+                    ui.label(RichText::new(format!("Folder: {}", root.display())).color(muted(ui)));
                     if ui.button("Open the packs folder").clicked() {
                         actions.push(Action::OpenPacksFolder);
                     }
@@ -487,7 +511,7 @@ impl Helper {
                             for (index, pack) in catalogue.packs.iter().enumerate() {
                                 let installed = packs::is_installed_in(&root, pack);
                                 ui.label(RichText::new(format!("{} to {}", pack.from, pack.to)).strong());
-                                ui.label(RichText::new(size_text(pack)).color(GREY));
+                                ui.label(RichText::new(size_text(pack)).color(muted(ui)));
                                 ui.horizontal(|ui| {
                                     if installed {
                                         ui.label(RichText::new("installed").color(GREEN));
@@ -512,7 +536,7 @@ impl Helper {
 
     fn connections_tab(&mut self, ui: &mut egui::Ui, actions: &mut Vec<Action>) {
         ui.heading("Connections");
-        ui.label(RichText::new("Browsers that the helper allowed to use the offline service. Remove one to stop it.").color(GREY));
+        ui.label(RichText::new("Browsers that the helper allowed to use the offline service. Remove one to stop it.").color(muted(ui)));
         ui.add_space(12.0);
         let items = match self.bindings.lock() {
             Ok(b) => b.items.clone(),
@@ -520,7 +544,7 @@ impl Helper {
         };
         card(ui, |ui| {
             if items.is_empty() {
-                ui.label(RichText::new("No browser is connected yet. Open the Atlas Translation settings in the browser and choose Bind.").color(GREY));
+                ui.label(RichText::new("No browser is connected yet. Open the Atlas Translation settings in the browser and choose Bind.").color(muted(ui)));
             }
             for (index, binding) in items.iter().enumerate() {
                 row(ui, self.rtl, |ui| {
@@ -548,7 +572,7 @@ impl Helper {
                 ui.label(RichText::new(format!("\"{}\" wants to use the offline translation.", name)).size(16.0).strong());
                 ui.label("Allow it only if you use Atlas Translation in that browser. You can remove it later under Connections.");
                 ui.add_space(6.0);
-                ui.label(RichText::new(format!("Requested from: {}", origin)).color(GREY).small());
+                ui.label(RichText::new(format!("Requested from: {}", origin)).color(muted(ui)).small());
                 ui.add_space(10.0);
                 row(ui, self.rtl, |ui| {
                     if ui.button("Allow").clicked() {
@@ -603,7 +627,7 @@ impl Helper {
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
                 ui.label(RichText::new("Welcome to Atlas Helper").size(16.0).strong());
-                ui.label(RichText::new(format!("Helper version {}.", crate::app_version())).color(GREY));
+                ui.label(RichText::new(format!("Helper version {}.", crate::app_version())).color(muted(ui)));
                 if let Some((newer, text)) = &update {
                     ui.label(RichText::new(text.as_str()).color(if *newer { RED } else { BLUE }));
                 }
@@ -620,7 +644,7 @@ impl Helper {
                              The helper copies the extension to a folder and opens the browser's extensions page. \
                              There you choose Load unpacked.",
                         )
-                        .color(GREY)
+                        .color(muted(ui))
                         .small(),
                     );
                     ui.add_space(4.0);
@@ -635,7 +659,7 @@ impl Helper {
                             let guide = browsers::guide(browser, &folder);
                             egui::CollapsingHeader::new("Steps").id_salt(browser.id.as_str()).show(ui, |ui| {
                                 for (i, step) in guide.steps.iter().enumerate() {
-                                    ui.label(RichText::new(format!("{}. {}", i + 1, step)).color(GREY).small());
+                                    ui.label(RichText::new(format!("{}. {}", i + 1, step)).color(muted(ui)).small());
                                 }
                             });
                             ui.add_space(4.0);
@@ -740,7 +764,41 @@ impl Helper {
 
     fn settings_tab(&mut self, ui: &mut egui::Ui, actions: &mut Vec<Action>) {
         ui.heading("Settings");
-        ui.label(RichText::new("How the helper behaves. Experimental options may change or break.").color(GREY));
+        ui.label(RichText::new("How the helper behaves. Experimental options may change or break.").color(muted(ui)));
+        ui.add_space(12.0);
+
+        card(ui, |ui| {
+            ui.label(RichText::new("Look").strong());
+            ui.label("Theme");
+            row(ui, self.rtl, |ui| {
+                let current = self.settings.theme.clone();
+                for (value, label) in [("system", "Follow the system"), ("light", "Light"), ("dark", "Dark")] {
+                    if ui.selectable_label(current == value, label).clicked() && current != value {
+                        actions.push(Action::SetTheme(value));
+                    }
+                }
+            });
+            ui.add_space(6.0);
+            ui.label("Text size");
+            row(ui, self.rtl, |ui| {
+                let current = self.settings.text_size.clone();
+                for (value, label) in [("normal", "Normal"), ("large", "Large")] {
+                    if ui.selectable_label(current == value, label).clicked() && current != value {
+                        actions.push(Action::SetTextSize(value));
+                    }
+                }
+            });
+        });
+        ui.add_space(12.0);
+
+        card(ui, |ui| {
+            ui.label(RichText::new("Window and tray").strong());
+            let mut keep = self.settings.keep_in_tray;
+            if ui.checkbox(&mut keep, "Closing the window keeps the helper in the tray").changed() {
+                actions.push(Action::SetKeepInTray(keep));
+            }
+            ui.label(RichText::new("Off means closing the window quits the helper.").color(muted(ui)));
+        });
         ui.add_space(12.0);
 
         let mut experimental = self.settings.experimental;
@@ -749,7 +807,7 @@ impl Helper {
             if ui.checkbox(&mut experimental, "Show experimental options and developer tools").changed() {
                 actions.push(Action::SetExperimental(experimental));
             }
-            ui.label(RichText::new("Off by default. Nothing here is needed to translate.").color(GREY));
+            ui.label(RichText::new("Off by default. Nothing here is needed to translate.").color(muted(ui)));
         });
 
         if self.settings.experimental {
@@ -865,6 +923,18 @@ impl Helper {
             }
             Action::SetExperimental(on) => {
                 self.settings.experimental = on;
+                self.save_settings();
+            }
+            Action::SetTheme(value) => {
+                self.settings.theme = value.to_string();
+                self.save_settings();
+            }
+            Action::SetTextSize(value) => {
+                self.settings.text_size = value.to_string();
+                self.save_settings();
+            }
+            Action::SetKeepInTray(on) => {
+                self.settings.keep_in_tray = on;
                 self.save_settings();
             }
             Action::ShowSetupAgain => {
@@ -1025,25 +1095,31 @@ fn open_target(target: &str) -> bool {
 }
 
 /// The Atlas colours on top of the light theme: a soft background, white cards, rounded corners.
-fn visuals() -> egui::Visuals {
-    let mut visuals = egui::Visuals::light();
+fn visuals(dark: bool) -> egui::Visuals {
+    let mut visuals = if dark { egui::Visuals::dark() } else { egui::Visuals::light() };
     visuals.hyperlink_color = BLUE;
     visuals.selection.bg_fill = BLUE;
     // The text of a selected tab sits on the blue fill, so it is white.
     visuals.selection.stroke = egui::Stroke::new(1.0, Color32::WHITE);
-    visuals.panel_fill = PAPER;
-    visuals.window_fill = Color32::WHITE;
+    visuals.panel_fill = if dark { DARK_PAPER } else { PAPER };
+    visuals.window_fill = if dark { DARK_CARD } else { Color32::WHITE };
     for widget in [&mut visuals.widgets.inactive, &mut visuals.widgets.hovered, &mut visuals.widgets.active] {
         widget.corner_radius = egui::CornerRadius::same(8);
     }
     visuals
 }
 
+/// The secondary text colour for the current theme.
+fn muted(ui: &egui::Ui) -> Color32 {
+    if ui.visuals().dark_mode { DARK_MUTED } else { GREY }
+}
+
 /// A white card with a thin border, around a group of related controls.
 fn card<R>(ui: &mut egui::Ui, add: impl FnOnce(&mut egui::Ui) -> R) -> R {
+    let dark = ui.visuals().dark_mode;
     egui::Frame::new()
-        .fill(Color32::WHITE)
-        .stroke(egui::Stroke::new(1.0, BORDER))
+        .fill(if dark { DARK_CARD } else { Color32::WHITE })
+        .stroke(egui::Stroke::new(1.0, if dark { DARK_BORDER } else { BORDER }))
         .corner_radius(egui::CornerRadius::same(10))
         .inner_margin(egui::Margin::same(14))
         .show(ui, add)
