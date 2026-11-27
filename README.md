@@ -102,6 +102,20 @@ optional. It does three things for the extension:
 The helper has the same version as the extension (for example 0.0.2.1). Download it from the release next to the
 extension zip. See [tools/atlas-updater/README.md](tools/atlas-updater/README.md) for the details.
 
+### Offline translation and offline voice
+
+- **Translation packs.** Each language pair is a pack of about 37 MB, downloaded once and checked with SHA-256. The
+  helper's Offline tab installs one pack, every pack into one language ("Translate to"), or all packs. A pair needs
+  English on one side. Text is translated on this computer.
+- **Read-aloud voices.** The Offline tab lists the voices for each language. "Install all voices for <language>" asks
+  first, showing the size and each licence. The welcome page offers the English voices after the helper is installed,
+  so the installer itself stays small. Voices come from the k2-fsa sherpa-onnx release and are checked with SHA-256:
+  Supertone Supertonic 3 (31 languages, OpenRAIL-M: you accept its use restrictions before the download), Kokoro v1.1
+  (English and Chinese, Apache-2.0), and four Piper English voices (public domain, CC0, Apache-2.0, CC BY 4.0). Credits
+  are in [NOTICE.md](NOTICE.md).
+- **Not built yet:** reading the text aloud. The voices can be installed and listed, but the helper does not speak yet.
+  Piper's phonemizer is espeak-ng (GPL-3.0). A licence review is needed before any release that ships the voices.
+
 ## Build from source
 
 Requirements: Node.js 22 or newer.

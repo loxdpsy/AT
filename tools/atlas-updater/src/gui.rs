@@ -85,6 +85,8 @@ enum Action {
     InstallPacks(Vec<usize>),
     /// Installs every read-aloud voice for a language that is not installed yet.
     InstallVoices(String),
+    /// Opens the Offline tab with a language's voices ready to confirm (from the welcome page).
+    OfferVoices(String),
     RemoveBinding(usize),
     SetupBrowser(String),
     SetupAll,
@@ -1056,6 +1058,16 @@ impl Helper {
                     }
                 }
                 ui.add_space(8.0);
+                ui.label(RichText::new("Read-aloud voices (optional)").strong());
+                ui.label(
+                    RichText::new("The English voices are large, several hundred MB, so they are not part of this install. Install them now, or later from the Offline tab. The confirmation shows the exact size first.")
+                        .color(muted(ui))
+                        .small(),
+                );
+                if ui.button("Show the English voices").clicked() {
+                    actions.push(Action::OfferVoices("en".to_string()));
+                }
+                ui.add_space(8.0);
                 if ui.button("Done").clicked() {
                     actions.push(Action::FinishWelcome);
                 }
@@ -1369,6 +1381,12 @@ impl Helper {
                         self.start_download(&label, move |transfer| install_voices(&root, &chosen, &transfer));
                     }
                 }
+            }
+            Action::OfferVoices(language) => {
+                self.tab = Tab::Offline;
+                self.voice_language = Some(language.clone());
+                self.voice_licence_accepted = false;
+                self.confirm_voices = Some(language);
             }
             Action::RemovePack(index) => {
                 let picked = match &self.catalogue {
