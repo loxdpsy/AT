@@ -151,7 +151,7 @@ pub fn run(show_window: bool) -> Result<(), String> {
         "Atlas Helper",
         options,
         Box::new(move |cc| {
-            cc.egui_ctx.set_visuals(visuals());
+            cc.egui_ctx.set_visuals(visuals(false));
             let texture = cc.egui_ctx.load_texture(
                 "atlas-logo",
                 egui::ColorImage::from_rgba_unmultiplied([logo.width as usize, logo.height as usize], &logo.rgba),
