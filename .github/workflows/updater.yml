@@ -70,6 +70,9 @@ jobs:
 
       - name: Unit tests
         id: tests
+        # ATLAS_OCR_TEST downloads the text models from PyPI and reads a sample page with them.
+        env:
+          ATLAS_OCR_TEST: "1"
         run: cargo test --release 2>&1 | tee "$RUNNER_TEMP/updater-test.log"
 
       - name: Offline translation with no network (Linux)

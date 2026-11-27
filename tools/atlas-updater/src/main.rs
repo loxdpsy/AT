@@ -26,6 +26,7 @@ mod enginelib;
 mod gui;
 mod json;
 mod native_host;
+mod ocr;
 mod packs;
 mod settings;
 mod speak;

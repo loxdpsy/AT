@@ -20,6 +20,10 @@ Translation services are external. Their APIs and terms belong to their owners (
 Yandex, DeepL, LibreTranslate). Use your own DeepL or LibreTranslate key when you need one.
 
 ## Third-party code
+- Text recognition (OCR) models, PP-OCRv4 detector and recogniser (Chinese and English), from PaddleOCR (PaddlePaddle
+  Authors, Apache-2.0), packaged as ONNX by RapidOCR (RapidAI, Apache-2.0; `rapidocr_onnxruntime` 1.4.4 on PyPI). The
+  helper downloads that wheel, checks its SHA-256 and takes the two model files out of it. The character list is read
+  from the model's metadata. The RapidOCR and PaddleOCR licences apply; the wheel's direction classifier is not used.
 - Read-aloud voices (the helper's list is `tools/atlas-updater/src/voices.json`; the helper downloads them from the
   k2-fsa sherpa-onnx release, `tts-models`, and checks each SHA-256):
   - Supertonic 3, Supertone Inc.: model under the BigScience Open RAIL-M licence, with use restrictions the user accepts
