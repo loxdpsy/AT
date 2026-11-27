@@ -67,7 +67,7 @@ Steps:
 2. Create the API keys (Developer Hub → **Manage API Keys**) and add them as `AMO_JWT_ISSUER` and `AMO_JWT_SECRET` (see README, *Release secrets*).
 3. Check the listing text in `.github/amo-metadata.json`: name, summary, description, category (*Productivity*), license (MPL-2.0), tags, and privacy policy.
 4. Set the repository variable (or a secret) `AMO_LISTING_READY` to `true`. Until then the store step is skipped, so Mozilla never reviews an empty listing.
-5. Run **Release** with `submit_amo` on, or push a tag. The store version is sent for review. The first version creates the store add-on.
+5. Run **Release** (`build-and-release`) with `submit_amo` on. Pushing a tag no longer sends anything. The store version is sent for review. The first version creates the store add-on.
 6. Upload the screenshots from `store/screenshots/` once in the Developer Hub (**Manage listing → Screenshots**). The API cannot upload them. Later versions keep them.
 
 Mozilla reviews every store version before it is public. Firefox for Android installs listed add-ons from the same store listing, so there is no separate Android submission.
@@ -76,6 +76,6 @@ Mozilla reviews every store version before it is public. Firefox for Android ins
 
 - [ ] Bump `version` in `manifest.json` and `firefox_manifest.json`, then add a `## <version>` section to `CHANGELOG.md`.
 - [ ] Run `npm run check` and `npm run build`.
-- [ ] Tag the commit (`git tag v<version>` and `git push origin v<version>`).
+- [ ] Tag the commit (`git tag v<version>` and `git push origin v<version>`). A tag push does not publish; run **Release** by hand.
 - [ ] Check the **Release** run summary and the **Firefox** AMO submission log.
 - [ ] Upload the Chromium ZIP to the Chrome Web Store (not automated yet). Edge Add-ons is submitted by the release workflow when the `EDGE_*` secrets are set. Check the Edge job summary.

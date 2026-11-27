@@ -103,13 +103,9 @@ the extension ID does not change. Without it, a new key is generated for each bu
 
 ## Release workflows
 
-Pushing a version tag builds both packages and publishes one GitHub release. The tag must match the version in `manifest.json`
-(for example `v9.8.1.0`). The release notes come from the matching section in `CHANGELOG.md`.
-
-```bash
-git tag v9.8.1.0
-git push origin v9.8.1.0
-```
+Releases are made by hand: Actions > Release > Run workflow. Pushing a tag does not publish anything (the workflow no longer
+starts on tags). Choose `build-and-test` to build without publishing, or `build-and-release` to publish one GitHub release.
+The version must match `manifest.json` (for example `9.8.1.0`). The release notes come from the matching section in `CHANGELOG.md`.
 
 | Workflow | What it does |
 | --- | --- |
