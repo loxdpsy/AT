@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-Not released yet. Changes after 0.0.2.1 will be listed here.
+Not released yet. Changes after 0.0.2.5 are listed here.
+
+## 0.0.2.6
+
+Next release (not published yet).
 
 - Atlas Helper: the helper no longer runs PowerShell, curl, unzip or reg.exe. Downloads, unzipping and the Windows startup entry are done by the helper itself, so no console window appears.
 - Atlas Helper: a Windows installer (`atlas-updater-windows-setup.exe`) installs for the current user, with a Start menu entry, an optional desktop shortcut and an optional start at sign-in. It needs no administrator password, and it uninstalls cleanly.
