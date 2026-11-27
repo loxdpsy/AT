@@ -28,6 +28,7 @@ mod json;
 mod native_host;
 mod packs;
 mod settings;
+mod speak;
 mod sha256;
 mod store;
 mod tray;

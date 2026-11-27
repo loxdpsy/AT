@@ -187,7 +187,7 @@ pub fn install_all(root: &Path, voices: &[&Voice], transfer: &Transfer) -> Vec<S
 }
 
 /// Unpacks a .tar.bz2 archive into `into`. The tar library refuses paths that leave that folder.
-fn unpack(bytes: &[u8], into: &Path) -> Result<(), String> {
+pub(crate) fn unpack(bytes: &[u8], into: &Path) -> Result<(), String> {
     let decoder = bzip2::read::BzDecoder::new(bytes);
     let mut archive = tar::Archive::new(decoder);
     archive
@@ -197,7 +197,7 @@ fn unpack(bytes: &[u8], into: &Path) -> Result<(), String> {
 
 /// Moves the unpacked files into `dir`. An archive that has one top folder (sherpa-onnx packs its voices that way)
 /// gives its contents, not the folder itself.
-fn settle(work: &Path, dir: &Path) -> Result<(), String> {
+pub(crate) fn settle(work: &Path, dir: &Path) -> Result<(), String> {
     let entries: Vec<PathBuf> = fs::read_dir(work)
         .map_err(|e| format!("cannot read {}: {}", work.display(), e))?
         .filter_map(|e| e.ok().map(|e| e.path()))
