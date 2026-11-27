@@ -1243,6 +1243,12 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
       offlineBindButton.disabled = false;
     }
   };
+  // Starts the helper when the browser starts (background/helperLaunch.js). Stored as "yes" or "no".
+  const startWithBrowser = $("#startHelperWithBrowser");
+  startWithBrowser.checked = twpConfig.get("startHelperWithBrowser") === "yes";
+  startWithBrowser.onchange = e => {
+    twpConfig.set("startHelperWithBrowser", e.target.checked ? "yes" : "no");
+  };
   $("#removeOffline").onclick = async () => {
     const token = (twpConfig.get("offlineHelperToken") || "").trim();
     if (token) {

@@ -144,6 +144,7 @@
   ],
   "permissions": [
     "storage",
+    "nativeMessaging",
     "activeTab",
     "contextMenus",
     "webRequest"
@@ -184,6 +185,7 @@
       "/background/translationService.js",
       "/lib/audioPlayer.js",
       "/background/textToSpeech.js",
+      "/background/helperLaunch.js",
       "/background/background.js"
     ]
   }

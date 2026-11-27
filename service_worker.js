@@ -16,6 +16,7 @@ importScripts(
   "background/serviceHealth.js",
   "background/translationService.js",
   "background/updateCheck.js",
+  "background/helperLaunch.js",
   "lib/audioPlayer.js",
   "background/textToSpeech.js",
   "background/background.js"

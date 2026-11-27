@@ -25,6 +25,7 @@ mod engine;
 mod enginelib;
 mod gui;
 mod json;
+mod native_host;
 mod packs;
 mod settings;
 mod sha256;
@@ -73,6 +74,10 @@ fn usage() -> String {
 
 fn run() -> Result<(), String> {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    // A browser started this program to connect its extension: start the helper in the tray and answer. No window.
+    if native_host::is_launch(&args) {
+        return native_host::run();
+    }
     if args.is_empty() {
         // Started by a double click: the helper window and its tray icon open.
         return gui::run(true);

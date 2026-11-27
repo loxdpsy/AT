@@ -54,6 +54,7 @@
   },
   "permissions": [
     "storage",
+    "nativeMessaging",
     "alarms",
     "activeTab",
     "contextMenus",

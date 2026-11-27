@@ -682,6 +682,10 @@ impl Helper {
             });
         if let Some(allow) = answer {
             if let Some(request) = self.pending_bind.take() {
+                if allow {
+                    // Lets the browser start the helper with itself (native messaging). Failing here does not stop the binding.
+                    let _ = crate::native_host::register_origin(&request.origin);
+                }
                 let token = if allow {
                     match self.bindings.lock() {
                         Ok(mut b) => b.add(&request.name).ok(),
