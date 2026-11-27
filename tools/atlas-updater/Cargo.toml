@@ -15,6 +15,9 @@ libloading = "0.8"
 ureq = "2"
 # Unzips the downloads itself, on every system, not with PowerShell or unzip.
 zip = { version = "2", default-features = false, features = ["deflate"] }
+# Unpacks the read-aloud voice archives (.tar.bz2) itself, the same way.
+bzip2 = "0.5"
+tar = "0.4"
 eframe = { version = "0.37", default-features = false, features = ["glow", "default_fonts", "clipboard", "wayland", "x11"] }
 
 # The system language, so the window can mirror its layout for right-to-left languages (Arabic, Hebrew, Persian ...).

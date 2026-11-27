@@ -20,10 +20,15 @@ Translation services are external. Their APIs and terms belong to their owners (
 Yandex, DeepL, LibreTranslate). Use your own DeepL or LibreTranslate key when you need one.
 
 ## Third-party code
-- Read-aloud voices (planned, not yet in the helper). The helper's voice catalogue is `tools/atlas-updater/src/voices.json`.
-  Supertonic 3 (Supertone Inc.): model under the BigScience Open RAIL-M licence with use restrictions. Sample code MIT.
-  Kokoro v1.1-zh (hexgrad): Apache-2.0. Both are in the sherpa-onnx voice release (k2-fsa, Apache-2.0).
-  Open question before shipping: the sherpa-onnx build may use espeak-ng (GPL-3.0) for phonemes.
+- Read-aloud voices (the helper's list is `tools/atlas-updater/src/voices.json`; the helper downloads them from the
+  k2-fsa sherpa-onnx release, `tts-models`, and checks each SHA-256):
+  - Supertonic 3, Supertone Inc.: model under the BigScience Open RAIL-M licence, with use restrictions the user accepts
+    before the download. Sample code MIT.
+  - Kokoro v1.1 (English and Chinese), hexgrad: Apache-2.0.
+  - Piper voices, from the rhasspy/piper-voices model cards: John (US, public domain, LibriVox recordings), Joe (US,
+    CC0), Sam (US, Apache-2.0), Cori (UK, CC BY 4.0, from the Hi-Fi Multi-Speaker English TTS dataset, NVIDIA, and the
+    LibriVox reader Cori Samuel). Attribution for Cori: "Cori Samuel, LibriVox; Hi-Fi TTS, NVIDIA, CC BY 4.0".
+  - Open question before shipping: the sherpa-onnx build may use espeak-ng (GPL-3.0) for phonemes. Piper voices use it.
 
 - pdf.js 4.10.38 (Apache License 2.0, Mozilla). In `lib/pdfjs/`: the minified library, its worker and the CJK
   character maps, unchanged. It reads the text of PDF files for the Translator page. The licence text is in

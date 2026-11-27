@@ -66,6 +66,70 @@
       "default": false,
       "modelCard": "https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh",
       "openIssue": "The model's own usage notes install espeak-ng (GPL-3.0) for some text. Confirm before shipping."
+    },
+    {
+      "id": "piper-john-us",
+      "name": "Piper John (US English, medium)",
+      "languages": [
+        "en"
+      ],
+      "file": "vits-piper-en_US-john-medium.tar.bz2",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-john-medium.tar.bz2",
+      "bytes": 67249181,
+      "sha256": "d90362cfa48e429d3096f644785184446145b6e38216f2eaf4c0601b8aad5a36",
+      "licence": "Public domain (LibriVox recordings)",
+      "licenceUrl": "https://huggingface.co/rhasspy/piper-voices/blob/main/en/en_US/john/medium/MODEL_CARD",
+      "acceptLicence": false,
+      "default": false,
+      "modelCard": "https://huggingface.co/rhasspy/piper-voices"
+    },
+    {
+      "id": "piper-joe-us",
+      "name": "Piper Joe (US English, medium)",
+      "languages": [
+        "en"
+      ],
+      "file": "vits-piper-en_US-joe-medium.tar.bz2",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-joe-medium.tar.bz2",
+      "bytes": 67169394,
+      "sha256": "261b903a1fb2ce621e2b5b14233cd41223c3b9f9590f896c11daee4df22d9bd3",
+      "licence": "CC0",
+      "licenceUrl": "https://huggingface.co/rhasspy/piper-voices/blob/main/en/en_US/joe/medium/MODEL_CARD",
+      "acceptLicence": false,
+      "default": false,
+      "modelCard": "https://huggingface.co/rhasspy/piper-voices"
+    },
+    {
+      "id": "piper-sam-us",
+      "name": "Piper Sam (US English, medium)",
+      "languages": [
+        "en"
+      ],
+      "file": "vits-piper-en_US-sam-medium.tar.bz2",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_US-sam-medium.tar.bz2",
+      "bytes": 67249919,
+      "sha256": "7bcfcf73d7eb3dc7d2cba41ef4b1474d08819b581bafa9e9200821d607b74639",
+      "licence": "Apache-2.0",
+      "licenceUrl": "https://huggingface.co/rhasspy/piper-voices/blob/main/en/en_US/sam/medium/MODEL_CARD",
+      "acceptLicence": false,
+      "default": false,
+      "modelCard": "https://huggingface.co/rhasspy/piper-voices"
+    },
+    {
+      "id": "piper-cori-gb",
+      "name": "Piper Cori (UK English, medium)",
+      "languages": [
+        "en"
+      ],
+      "file": "vits-piper-en_GB-cori-medium.tar.bz2",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-en_GB-cori-medium.tar.bz2",
+      "bytes": 67257412,
+      "sha256": "49c9a5361bbdd95d7ca9687c4de11e5908481f65e7c7c368960df79949fdac2b",
+      "licence": "CC BY 4.0 (attribution in NOTICE.md)",
+      "licenceUrl": "https://huggingface.co/rhasspy/piper-voices/blob/main/en/en_GB/cori/medium/MODEL_CARD",
+      "acceptLicence": false,
+      "default": false,
+      "modelCard": "https://huggingface.co/rhasspy/piper-voices"
     }
   ]
 }
