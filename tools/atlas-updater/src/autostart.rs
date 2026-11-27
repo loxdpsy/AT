@@ -1,5 +1,6 @@
 // Starts the helper when the user logs in, in the background (no window, no terminal).
-//   Windows: a value in the Run key of the current user's registry.
+//   Windows: a shortcut in the current user's Startup folder. The installer makes it (no registry, no program runs
+//            to set it up). Windows Settings, under Apps, then Startup, turns it on or off.
 //   macOS:   a LaunchAgent in ~/Library/LaunchAgents.
 //   Linux:   a desktop entry in ~/.config/autostart (XDG autostart).
 // The helper starts with --serve, which does not open a browser window.
@@ -8,8 +9,6 @@ use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
 
-const RUN_KEY: &str = r"HKCU\Software\Microsoft\Windows\CurrentVersion\Run";
-const VALUE_NAME: &str = "AtlasTranslationHelper";
 const LAUNCH_AGENT_LABEL: &str = "com.atlas-translation.helper";
 const DESKTOP_FILE: &str = "atlas-translation-helper.desktop";
 
@@ -29,6 +28,20 @@ fn desktop_path() -> Option<PathBuf> {
     Some(base.join("autostart").join(DESKTOP_FILE))
 }
 
+/// The Startup folder shortcut the installer makes when the user chooses to start with Windows.
+#[cfg(windows)]
+fn startup_shortcut_path() -> Option<PathBuf> {
+    std::env::var_os("APPDATA").map(|appdata| {
+        PathBuf::from(appdata)
+            .join("Microsoft")
+            .join("Windows")
+            .join("Start Menu")
+            .join("Programs")
+            .join("Startup")
+            .join("Atlas Helper.lnk")
+    })
+}
+
 fn program() -> Result<PathBuf, String> {
     std::env::current_exe().map_err(|e| format!("cannot find the helper program: {}", e))
 }
@@ -46,44 +59,35 @@ pub fn quiet(mut command: Command) -> Command {
 
 /// True when the helper starts at login.
 pub fn is_enabled() -> bool {
-    if cfg!(windows) {
-        let mut command = Command::new("reg");
-        command.args(["query", RUN_KEY, "/v", VALUE_NAME]);
-        quiet(command).output().map(|o| o.status.success()).unwrap_or(false)
-    } else if cfg!(target_os = "macos") {
-        launch_agent_path().map(|p| p.is_file()).unwrap_or(false)
-    } else {
+    #[cfg(windows)]
+    {
+        return startup_shortcut_path().map(|p| p.is_file()).unwrap_or(false);
+    }
+    #[cfg(target_os = "macos")]
+    {
+        return launch_agent_path().map(|p| p.is_file()).unwrap_or(false);
+    }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
         desktop_path().map(|p| p.is_file()).unwrap_or(false)
     }
 }
 
 /// Turns starting at login on or off.
 pub fn set_enabled(on: bool) -> Result<(), String> {
-    if cfg!(windows) {
-        set_windows(on)
-    } else if cfg!(target_os = "macos") {
-        set_macos(on)
-    } else {
-        set_linux(on)
+    #[cfg(windows)]
+    {
+        // The helper does not write to Windows. The installer makes the shortcut; Windows Settings changes it.
+        let _ = on;
+        return Err("Windows keeps the startup list. Turn it on or off in Windows Settings, under Apps, then Startup.".to_string());
     }
-}
-
-fn set_windows(on: bool) -> Result<(), String> {
-    let output = if on {
-        let exe = program()?;
-        // The value is the command line: the program, then --serve. Quotes keep a path with spaces working.
-        let command_line = format!("\"{}\" --serve", exe.display());
-        quiet(Command::new("reg"))
-            .args(["add", RUN_KEY, "/v", VALUE_NAME, "/t", "REG_SZ", "/d", command_line.as_str(), "/f"])
-            .output()
-    } else {
-        quiet(Command::new("reg")).args(["delete", RUN_KEY, "/v", VALUE_NAME, "/f"]).output()
-    };
-    let output = output.map_err(|e| format!("cannot change the Windows startup list: {}", e))?;
-    if output.status.success() || (!on && !is_enabled()) {
-        Ok(())
-    } else {
-        Err(format!("cannot change the Windows startup list: {}", String::from_utf8_lossy(&output.stderr).trim()))
+    #[cfg(target_os = "macos")]
+    {
+        return set_macos(on);
+    }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        set_linux(on)
     }
 }
 

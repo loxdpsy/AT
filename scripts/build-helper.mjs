@@ -1,7 +1,7 @@
 // Builds the atlas-updater helper for this computer and puts it in the output folder under its release name:
 //   atlas-updater-windows.exe, atlas-updater-macos or atlas-updater-linux.
 // It also prints the SHA-256 of the program, so a download can be checked.
-// Needs Rust (cargo). The crate has no dependencies, so no network is needed.
+// Needs Rust (cargo). The first build downloads the crates the helper uses, so it needs the network once.
 // Usage: node scripts/build-helper.mjs [--no-test] [--out <folder>]
 //   --no-test   skip "cargo test" (the release job runs the tests in its own step)
 //   --out       where the program is written (default build/helper)

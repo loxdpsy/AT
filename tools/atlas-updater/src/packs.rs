@@ -13,9 +13,10 @@ use std::path::{Path, PathBuf};
 
 use crate::json;
 use crate::sha256;
+use crate::transfer::Transfer;
 
 const CATALOGUE_TEXT: &str = include_str!("packs.json");
-const MARKER: &str = "installed.json";
+pub const MARKER: &str = "installed.json";
 
 #[derive(Debug, Clone)]
 pub struct PackFile {
@@ -114,6 +115,84 @@ pub fn parse_catalogue(text: &str) -> Result<Catalogue, String> {
     Ok(Catalogue { commit, packs })
 }
 
+/// The English name of a language code in the catalogue. A code with no name is shown as it is.
+pub fn language_name(code: &str) -> &str {
+    match code {
+        "af" => "Afrikaans",
+        "ar" => "Arabic",
+        "az" => "Azerbaijani",
+        "be" => "Belarusian",
+        "bg" => "Bulgarian",
+        "bn" => "Bengali",
+        "bs" => "Bosnian",
+        "ca" => "Catalan",
+        "cs" => "Czech",
+        "da" => "Danish",
+        "de" => "German",
+        "el" => "Greek",
+        "en" => "English",
+        "es" => "Spanish",
+        "et" => "Estonian",
+        "eu" => "Basque",
+        "fa" => "Persian",
+        "fi" => "Finnish",
+        "fr" => "French",
+        "gl" => "Galician",
+        "gu" => "Gujarati",
+        "he" => "Hebrew",
+        "hi" => "Hindi",
+        "hr" => "Croatian",
+        "hu" => "Hungarian",
+        "id" => "Indonesian",
+        "is" => "Icelandic",
+        "it" => "Italian",
+        "ja" => "Japanese",
+        "kn" => "Kannada",
+        "ko" => "Korean",
+        "lt" => "Lithuanian",
+        "lv" => "Latvian",
+        "ml" => "Malayalam",
+        "mr" => "Marathi",
+        "ms" => "Malay",
+        "nb" => "Norwegian Bokmal",
+        "nl" => "Dutch",
+        "pl" => "Polish",
+        "pt" => "Portuguese",
+        "ro" => "Romanian",
+        "ru" => "Russian",
+        "sk" => "Slovak",
+        "sl" => "Slovenian",
+        "sq" => "Albanian",
+        "sr" => "Serbian",
+        "sv" => "Swedish",
+        "ta" => "Tamil",
+        "te" => "Telugu",
+        "th" => "Thai",
+        "tl" => "Tagalog",
+        "tr" => "Turkish",
+        "ug" => "Uyghur",
+        "uk" => "Ukrainian",
+        "ur" => "Urdu",
+        "vi" => "Vietnamese",
+        _ => code,
+    }
+}
+
+/// True when every word of the search matches the pack. A word matches a pack when it is its pair ("enfr"), one of
+/// its language codes ("fr"), or part of an English language name ("german", written with three or more letters).
+/// An empty search matches every pack.
+pub fn matches(pack: &Pack, search: &str) -> bool {
+    let words: Vec<String> = search.split_whitespace().map(|w| w.to_lowercase()).collect();
+    words.iter().all(|word| {
+        if *word == pack.pair {
+            return true;
+        }
+        [pack.from.as_str(), pack.to.as_str()].iter().any(|code| {
+            *word == *code || (word.chars().count() >= 3 && language_name(code).to_lowercase().contains(word.as_str()))
+        })
+    })
+}
+
 /// The catalogue built into this helper.
 pub fn catalogue() -> Result<Catalogue, String> {
     parse_catalogue(CATALOGUE_TEXT)
@@ -135,17 +214,19 @@ pub fn is_installed_in(root: &Path, pack: &Pack) -> bool {
 }
 
 /// Installs a pack into `root` (normally store::packs_dir()). Nothing is left behind when a file fails its check.
-pub fn install_into(root: &Path, pack: &Pack, commit: &str) -> Result<(), String> {
+pub fn install_into(root: &Path, pack: &Pack, commit: &str, transfer: &Transfer) -> Result<(), String> {
     if !valid_pair(&pack.pair) {
         return Err(format!("{} is not a language pair", pack.pair));
     }
+    // The window shows the whole pack: its three files together.
+    transfer.progress.total.store(pack.files.iter().map(|f| f.size).sum(), std::sync::atomic::Ordering::Relaxed);
     let dir = root.join(&pack.pair);
     fs::create_dir_all(&dir).map_err(|e| format!("cannot create {}: {}", dir.display(), e))?;
     let _ = fs::remove_file(dir.join(MARKER));
     for file in &pack.files {
         let target = dir.join(&file.name);
         let partial = dir.join(format!("{}.part", file.name));
-        if let Err(e) = super::download(&file.url, &partial) {
+        if let Err(e) = transfer.download(&file.url, &partial, Some(file.size)) {
             let _ = fs::remove_file(&partial);
             return Err(format!("{} could not be downloaded: {}", file.name, e));
         }
@@ -197,6 +278,31 @@ mod tests {
     }
 
     #[test]
+    fn every_language_in_the_catalogue_has_a_name() {
+        let catalogue = catalogue().unwrap();
+        for pack in &catalogue.packs {
+            for code in [&pack.from, &pack.to] {
+                assert_ne!(language_name(code), code.as_str(), "no name for {}", code);
+            }
+        }
+    }
+
+    #[test]
+    fn search_matches_codes_names_and_pairs() {
+        let bengali_to_german = Pack { pair: "bnde".into(), from: "bn".into(), to: "de".into(), bytes: 0, files: Vec::new() };
+        assert!(matches(&bengali_to_german, ""), "an empty search matches all");
+        assert!(matches(&bengali_to_german, "   "), "a blank search matches all");
+        assert!(matches(&bengali_to_german, "de"), "a language code");
+        assert!(matches(&bengali_to_german, "bnde"), "the pair");
+        assert!(matches(&bengali_to_german, "ger"), "part of an English name");
+        assert!(matches(&bengali_to_german, "ben"), "part of an English name of the other language");
+        assert!(!matches(&bengali_to_german, "japanese"), "a language that is not in the pack");
+        assert!(!matches(&bengali_to_german, "en"), "a two-letter word matches codes only, not names inside other names");
+        assert!(matches(&bengali_to_german, "de ben"), "every word matches one of the languages");
+        assert!(!matches(&bengali_to_german, "de japanese"), "every word must match");
+    }
+
+    #[test]
     fn the_built_in_catalogue_has_the_expected_packs() {
         let cat = catalogue().expect("packs.json must parse");
         assert_eq!(cat.commit.len(), 40);
@@ -241,16 +347,16 @@ mod tests {
 
         // A wrong checksum: nothing is installed and no file is left behind.
         let wrong = "0".repeat(64);
-        assert!(install_into(&root, &pack(&wrong, content.len() as u64), "abc").is_err());
+        assert!(install_into(&root, &pack(&wrong, content.len() as u64), "abc", &Transfer::quiet()).is_err());
         assert!(!root.join("enfr").join("model.test.bin").exists());
         assert!(!root.join("enfr").join(MARKER).exists());
 
         // A wrong size is refused too.
-        assert!(install_into(&root, &pack(&good_hash, 3), "abc").is_err());
+        assert!(install_into(&root, &pack(&good_hash, 3), "abc", &Transfer::quiet()).is_err());
 
         // The right file installs, and the marker is written.
         let good = pack(&good_hash, content.len() as u64);
-        install_into(&root, &good, "abc123").expect("install");
+        install_into(&root, &good, "abc123", &Transfer::quiet()).expect("install");
         assert!(is_installed_in(&root, &good));
         assert_eq!(fs::read(root.join("enfr").join("model.test.bin")).unwrap(), content);
 

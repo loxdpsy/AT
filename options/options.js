@@ -541,6 +541,15 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
     updateDarkMode();
   };
   $("#darkMode").value = twpConfig.get("darkMode");
+  // Text size and direction are kept on this device, like the theme cache, so the page paints the same way at once.
+  $("#selectTextSize").value = twpLook.getTextSize();
+  $("#selectTextSize").onchange = e => {
+    twpLook.setTextSize(e.target.value);
+  };
+  $("#selectTextDirection").value = twpLook.getDirection();
+  $("#selectTextDirection").onchange = e => {
+    twpLook.setDirection(e.target.value);
+  };
   $("#popupBlueWhenSiteIsTranslated").onchange = e => {
     twpConfig.set("popupBlueWhenSiteIsTranslated", e.target.value);
   };
@@ -1232,6 +1241,36 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages(sessionStorage.getItem("
       setOfflineMessage(e.message || String(e), "error");
     } finally {
       offlineBindButton.disabled = false;
+    }
+  };
+  // Starts the helper when the browser starts. The helper keeps this setting (the same one its Settings window shows),
+  // so the switch reads and writes it through the native messaging host (lib/helperPort.js).
+  const startWithBrowser = $("#startHelperWithBrowser");
+  const startWithBrowserMessage = $("#startWithBrowserMessage");
+  const setStartWithBrowserMessage = (text, kind) => {
+    startWithBrowserMessage.textContent = text || "";
+    startWithBrowserMessage.className = "message" + (kind ? " " + kind : "");
+  };
+  const askHelper = message => (window.twpHelperPort ? window.twpHelperPort.sendToHelper(message) : Promise.reject(new Error("no helper link")));
+  askHelper({ action: "get" }).then(
+    reply => {
+      startWithBrowser.checked = !!(reply && reply.start_with_browser);
+      setStartWithBrowserMessage("", "");
+    },
+    () => {
+      startWithBrowser.disabled = true;
+      setStartWithBrowserMessage("Connect the helper first (Get the helper, then Bind) to change this.", "error");
+    }
+  );
+  startWithBrowser.onchange = async e => {
+    const on = e.target.checked;
+    try {
+      const reply = await askHelper({ action: "set", value: on });
+      if (!reply || !reply.ok) throw new Error((reply && reply.error) || "The helper did not save the setting.");
+      setStartWithBrowserMessage("", "");
+    } catch (err) {
+      e.target.checked = !on;
+      setStartWithBrowserMessage(String(err.message || err), "error");
     }
   };
   $("#removeOffline").onclick = async () => {

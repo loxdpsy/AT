@@ -10,6 +10,11 @@ publish = false
 # would add a large GPU stack the helper does not need. Wayland and X11 are both enabled for Linux.
 [dependencies]
 libloading = "0.8"
+
+# Downloads and GitHub requests are made by the helper itself (rustls), not by curl.
+ureq = "2"
+# Unzips the downloads itself, on every system, not with PowerShell or unzip.
+zip = { version = "2", default-features = false, features = ["deflate"] }
 eframe = { version = "0.37", default-features = false, features = ["glow", "default_fonts", "clipboard", "wayland", "x11"] }
 
 # The system language, so the window can mirror its layout for right-to-left languages (Arabic, Hebrew, Persian ...).
@@ -27,3 +32,8 @@ strip = true
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"
+
+# Writes the Windows version information (company, product, description, version) into the program. Antivirus
+# heuristics look at it: a program with no version information looks more unknown. This is not a signature.
+[target.'cfg(windows)'.build-dependencies]
+winresource = "0.1"

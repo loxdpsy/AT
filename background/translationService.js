@@ -1580,7 +1580,7 @@ const translationService = function () {
   // A Yandex captcha is shown on the page that asked for the translation, so the user can solve it there.
   function notifyCaptchaRequired(e, sender) {
     if (!(e instanceof ServiceCaptchaError) || !sender || !sender.tab) return;
-    chrome.tabs.sendMessage(sender.tab.id, { action: "translationCaptcha", serviceName: e.serviceName, captchaUrl: e.captchaUrl }, () => void chrome.runtime.lastError);
+    twpSendToTab((sender.tab || {}).id, { action: "translationCaptcha", serviceName: e.serviceName, captchaUrl: e.captchaUrl }, () => void chrome.runtime.lastError);
   }
 
   chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {

@@ -12,27 +12,47 @@
 </head>
 
 <body>
-  <main class="onboarding">
-    <h1 data-i18n="onboardingTitle">Welcome to Atlas Translation</h1>
-    <p class="card-desc" data-i18n="onboardingIntro">Choose how pages and selected text are translated. You can change this later in Options.</p>
+  <main class="setup">
+    <header class="setup-head">
+      <img class="setup-logo" src="/icons/icon-128.png" alt="" width="48" height="48" />
+      <div>
+        <h1 data-i18n="onboardingTitle">Welcome to Atlas Translation</h1>
+        <p class="setup-intro" data-i18n="onboardingIntro">Choose how pages and selected text are translated. You can change this later in Options.</p>
+      </div>
+    </header>
 
     <section class="card">
-      <h2 class="card-title" data-i18n="onboardingProviderTitle">Translation provider</h2>
-      <div id="providers"></div>
-      <div id="offlineStatus" class="card-desc" hidden>
-        <p id="offlineStatusText"></p>
-        <button id="btnCheckHelper" class="btn btn-ghost" data-i18n="onboardingCheckAgain">Check the helper again</button>
-      </div>
+      <h2 class="card-title"><span class="step">1</span> <span data-i18n="onboardingProviderTitle">Translation provider</span></h2>
+      <p class="card-desc">Pick one. The recommended choice runs on your computer and sends no text to a web service.</p>
+      <div id="providers" class="providers"></div>
       <p class="card-desc" data-i18n="onboardingKeyNote">Groq and OpenRouter need your own key. Add it in Options, Services, after you save.</p>
     </section>
 
-    <section class="card">
-      <h2 class="card-title" data-i18n="onboardingHelperTitle">Desktop helper (optional)</h2>
-      <p class="card-desc" data-i18n="onboardingHelperDesc">The helper is a small desktop app for Windows, macOS and Linux. It runs the offline engine and keeps the language packs on your computer. Download it from the Atlas releases page, then open it once. Its Offline tab installs language packs.</p>
-      <a id="helperLink" class="btn btn-primary" href="https://github.com/loxdpsy/AT/releases" target="_blank" rel="noopener noreferrer" data-i18n="onboardingHelperButton">Download the helper</a>
+    <section class="card" id="helperCard">
+      <h2 class="card-title"><span class="step">2</span> <span>Connect the Atlas Helper (for Offline)</span></h2>
+      <p class="card-desc">The helper is a small app for this computer. It runs the offline translation, keeps the language packs, and stays in the tray. The browser cannot install it for you, so you download and open it once.</p>
+
+      <div id="offlineStatus" class="helper-status">
+        <span id="helperDot" class="dot"></span>
+        <span id="offlineStatusText">Checking the helper...</span>
+      </div>
+
+      <div class="btn-row">
+        <a id="helperLink" class="btn btn-ghost" href="https://github.com/loxdpsy/AT/releases" target="_blank" rel="noopener noreferrer">Download the helper</a>
+        <button id="btnCheckHelper" class="btn btn-ghost" data-i18n="onboardingCheckAgain">Check the helper again</button>
+        <button id="btnBind" class="btn btn-primary" hidden>Connect this browser</button>
+        <button id="btnUnbind" class="btn btn-danger" hidden>Disconnect</button>
+      </div>
+      <p id="bindMessage" class="card-desc" hidden></p>
+
+      <ol class="helper-steps">
+        <li>On the releases page, download <strong>atlas-updater-windows-setup.exe</strong> and run it. Choose the folder, or keep the default. It adds a Start menu entry and needs no administrator password.</li>
+        <li>Press <strong>Connect this browser</strong> here. The helper window asks you; choose <strong>Allow</strong>.</li>
+        <li>In the helper's Offline tab, install the language pairs you need. Each pair is about 37 MB.</li>
+      </ol>
     </section>
 
-    <div class="btn-row">
+    <div class="btn-row setup-actions">
       <button id="btnSave" class="btn btn-primary" data-i18n="onboardingSave">Save and finish</button>
       <button id="btnSkip" class="btn btn-ghost" data-i18n="onboardingSkip">Skip for now</button>
     </div>

@@ -2,7 +2,35 @@
 
 ## Unreleased
 
-Not released yet. Changes after 0.0.2.1 will be listed here.
+Not released yet. Changes after 0.0.2.5 are listed here.
+
+## 0.0.2.6
+
+Next release (not published yet).
+
+- Atlas Helper on Windows: the offline engine is inside the setup file, next to the helper. The helper no longer downloads an engine program and runs it on Windows. The installer also removes copies that older helpers downloaded.
+- Atlas Helper: the README has a "Windows: every detail" section. It lists the files, the folders, the registry keys, the network addresses, the startup shortcut, uninstalling, and the steps for Defender and the SHA-256 check.
+- Atlas Helper on Windows: starting at sign-in is a shortcut in the Startup folder, made by the installer, like other programs. The helper no longer writes a Run entry in the registry, and the installer removes the old one. Windows Settings, under Apps, then Startup, turns it on or off. The Settings card shows the state and opens that page.
+- Atlas Helper: the helper no longer runs PowerShell, curl, unzip or reg.exe. Downloads, unzipping and the Windows startup entry are done by the helper itself, so no console window appears.
+- Atlas Helper: a Windows installer (`atlas-updater-windows-setup.exe`) installs for the current user, with a Start menu entry, an optional desktop shortcut and an optional start at sign-in. It needs no administrator password, and it uninstalls cleanly.
+- Atlas Helper: the welcome page is smaller. Each browser is one row, and its steps are folded away under "Steps". It says that Chromium browsers need Load unpacked.
+- Atlas Helper: Internet Explorer is no longer listed as a browser to set up (Windows lists it as IEXPLORE.EXE).
+- Atlas Helper on Windows: the program carries version information (company, product, description and version), which antivirus heuristics look at. It is not signed yet.
+- Atlas Helper: a translation from language packs already on disk is tested with no network. CI runs that test on Linux with the network removed.
+- Atlas Helper: a Settings card for the look: theme (follow the system, light or dark) and text size (normal or large).
+- Atlas Helper: a Settings switch decides whether closing the window keeps the helper in the tray (on by default) or quits it.
+- Offline translation: a page in a right-to-left language is no longer flipped as a whole. Only the translated text blocks take their direction from their own text, so English punctuation (such as a question mark at the end of a headline) stays where it belongs.
+- Extension: the errors "No tab with id", "Cannot read properties of undefined (reading 'toLowerCase')" and "Extension context invalidated" no longer appear. Messages to a closed tab are skipped, the PDF check in the popup handles a missing tab or address, and the browser's harmless errors after a reload are not shown as uncaught.
+- Atlas Helper: the published 0.0.2.5 Windows helper ran PowerShell to unzip and curl to download, and those opened a command window. The helper now downloads and unzips by itself. This fix is on the branch and needs a new release.
+- Atlas Helper: the Offline translation list has a search box (by language name or code, for example "German" or "de") and an "Installed only" filter. Installed packs are listed first. The list reads the installed packs once, not on every frame.
+- Atlas Helper: the README says what to do when Windows Defender warns about the helper: check the SHA-256 against the release, allow the file on the device, and report it to Microsoft.
+- Options, Services, Offline: "Start the helper when the browser starts" (off by default). The setting is kept by the helper, so the helper window and the Options switch show the same value. When it is on, the browser starts the Atlas Helper in the tray each time it starts, so Offline is ready. It uses a native messaging host (com.atlas.helper), which the helper registers for the current user when you allow this browser in the helper window. No administrator rights and no window. The extension asks for the "nativeMessaging" permission, so Chrome and Edge may ask you to approve it after an update.
+- Setup page: redesigned in three numbered steps (provider, the Atlas Helper, save). The helper step shows whether the helper runs, and has a Connect this browser button that sends the bind request to the helper, and a Disconnect button. Before this, the setup page had no bind button.
+- Options: the Text direction and Text size rows use the same layout as the other rows, and "Get the helper" is shown as a button.
+- Atlas Helper: downloads are faster. A file is split into parts that download over several connections at once, and the helper puts them back together before checking the SHA-256. A server that does not allow parts still gets one download. Settings > Downloads sets the number of connections (1 to 8, 4 by default).
+- Atlas Helper: a progress popup for installs and downloads. It shows the current step (checking the version, downloading, checking, unpacking, copying), the megabytes so far, and a Cancel button. Cancelling stops the download and installs nothing.
+- Atlas Helper: "Start the helper when I sign in" moved to Settings. The helper starts minimised to the tray.
+- Extension: Options has a Text size setting (normal, large, extra large) and a Text direction setting (automatic, left to right, right to left). They also apply to the popup. Helper text is not translated yet.
 
 ## 0.0.2.5
 

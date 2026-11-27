@@ -57,16 +57,16 @@ pub fn library_file_name() -> Option<&'static str> {
     }
 }
 
-/// The library the helper installed, or one next to the helper program.
+/// The library next to the helper program (the installer puts it there), or the copy the helper downloaded before.
 fn library_path() -> Option<PathBuf> {
     let file = library_file_name()?;
-    let installed = store::data_dir().join("engine").join(file);
-    if installed.is_file() {
-        return Some(installed);
-    }
     let beside = std::env::current_exe().ok()?.parent()?.join(file);
     if beside.is_file() {
         return Some(beside);
+    }
+    let installed = store::data_dir().join("engine").join(file);
+    if installed.is_file() {
+        return Some(installed);
     }
     None
 }

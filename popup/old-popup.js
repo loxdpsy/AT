@@ -80,7 +80,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     active: true,
     currentWindow: true
   }, tabs => {
-    chrome.tabs.sendMessage(tabs[0].id, {
+    twpSendToTab((tabs[0] || {}).id, {
       action: "getOriginalTabLanguage"
     }, {
       frameId: 0
@@ -90,7 +90,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
         originalTabLanguage = tabLanguage;
       }
     });
-    chrome.tabs.sendMessage(tabs[0].id, {
+    twpSendToTab((tabs[0] || {}).id, {
       action: "getCurrentPageLanguage"
     }, {
       frameId: 0
@@ -101,7 +101,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
         updateInterface();
       }
     });
-    chrome.tabs.sendMessage(tabs[0].id, {
+    twpSendToTab((tabs[0] || {}).id, {
       action: "getCurrentPageLanguageState"
     }, {
       frameId: 0
@@ -112,7 +112,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
         updateInterface();
       }
     });
-    chrome.tabs.sendMessage(tabs[0].id, {
+    twpSendToTab((tabs[0] || {}).id, {
       action: "getCurrentPageTranslatorService"
     }, {
       frameId: 0
@@ -251,7 +251,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
       const langs = twpLang.getLanguageList();
       lblTranslate.textContent = twpI18n.getMessage("lblTranslatePageInto", langs[twpConfig.get("targetLanguage")] || twpConfig.get("targetLanguage"));
       lblTranslated.textContent = twpI18n.getMessage("lblPageTranslateInto", langs[twpConfig.get("targetLanguage")] || twpConfig.get("targetLanguage"));
-      chrome.tabs.sendMessage(tabs[0].id, {
+      twpSendToTab((tabs[0] || {}).id, {
         action: "translatePage",
         targetLanguage: selectTargetLanguage.value
       }, checkedLastError);
@@ -265,7 +265,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
       active: true,
       currentWindow: true
     }, tabs => {
-      chrome.tabs.sendMessage(tabs[0].id, {
+      twpSendToTab((tabs[0] || {}).id, {
         action: "restorePage"
       }, checkedLastError);
     });
@@ -281,7 +281,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
       active: true,
       currentWindow: true
     }, tabs => {
-      chrome.tabs.sendMessage(tabs[0].id, {
+      twpSendToTab((tabs[0] || {}).id, {
         action: "swapTranslationService",
         newServiceName: currentPageTranslatorService
       }, checkedLastError);

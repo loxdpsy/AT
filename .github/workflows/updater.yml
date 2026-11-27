@@ -72,9 +72,38 @@ jobs:
         id: tests
         run: cargo test --release 2>&1 | tee "$RUNNER_TEMP/updater-test.log"
 
+      - name: Offline translation with no network (Linux)
+        if: runner.os == 'Linux'
+        working-directory: tools/atlas-updater
+        run: |
+          # The test runs in a network namespace that has no interface, so a translation from saved packs must not
+          # need the internet. The build is already done above, so the run uses --offline.
+          set -o pipefail
+          status=0
+          sudo -E env PATH="$PATH" CARGO_HOME="${CARGO_HOME:-$HOME/.cargo}" RUSTUP_HOME="${RUSTUP_HOME:-$HOME/.rustup}" \
+            unshare -n "$(command -v cargo)" test --release --offline without_a_network 2>&1 | tee "$RUNNER_TEMP/offline-test.log" || status=$?
+          # The run as root must not leave files that the next steps (as the runner user) cannot write.
+          sudo chown -R "$(id -u):$(id -g)" target "${CARGO_HOME:-$HOME/.cargo}" || true
+          # cargo exits 0 when a filter matches nothing, so the step also needs the test to have run.
+          if [ "$status" -eq 0 ] && ! grep -q "1 passed" "$RUNNER_TEMP/offline-test.log"; then
+            echo "The no-network test did not run."
+            status=1
+          fi
+          exit $status
+
       - name: Build
         id: build
         run: cargo build --release
+
+      - name: The Windows program carries its version information
+        if: runner.os == 'Windows'
+        shell: pwsh
+        working-directory: tools/atlas-updater
+        run: |
+          $info = (Get-Item "target/release/atlas-updater.exe").VersionInfo
+          if ($info.CompanyName -ne "Atlas Translation" -or $info.ProductName -ne "Atlas Translation Helper" -or $info.FileVersion -notmatch '^\d+\.\d+\.\d+\.\d+$') {
+            throw "the version information is missing from atlas-updater.exe"
+          }
 
       - name: Refuses a folder that is not Atlas Translation (no network needed)
         id: refuse
@@ -132,6 +161,57 @@ jobs:
           name: install-output-${{ matrix.artifact }}
           path: ${{ runner.temp }}/install-output.txt
           if-no-files-found: warn
+
+      - name: Windows installer (Inno Setup, for the current user only)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        working-directory: tools/atlas-updater
+        run: |
+          choco install innosetup --no-progress -y | Out-Null
+          $iscc = Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { throw "Inno Setup was not installed" }
+          # The version in Cargo.toml is 0.0.2+5; the installer shows 0.0.2.5.
+          $line = Select-String -Path Cargo.toml -Pattern '^version = "([0-9.]+)\+([0-9]+)"' | Select-Object -First 1
+          $version = "$($line.Matches[0].Groups[1].Value).$($line.Matches[0].Groups[2].Value)"
+          # Packaging test only: placeholder engine files, so the installer's engine lines are built and installed.
+          # release.yml passes the real engine (built by engine.yml). These placeholders are never published.
+          $engineDir = Join-Path $env:RUNNER_TEMP "engine-placeholder"
+          New-Item -ItemType Directory -Force -Path $engineDir | Out-Null
+          Set-Content -Path (Join-Path $engineDir "atlas-engine-windows.exe") -Value "placeholder"
+          Set-Content -Path (Join-Path $engineDir "atlas-engine-lib-windows.dll") -Value "placeholder"
+          & $iscc "/DMyAppVersion=$version" "/DEngineExe=$engineDir\atlas-engine-windows.exe" "/DEngineLib=$engineDir\atlas-engine-lib-windows.dll" installer\atlas-helper.iss
+          if ($LASTEXITCODE -ne 0) { throw "the installer did not build" }
+          if (-not (Test-Path "dist\atlas-updater-windows-setup.exe")) { throw "the installer file is missing" }
+
+      - name: The installer installs, then uninstalls, silently
+        if: runner.os == 'Windows'
+        shell: pwsh
+        working-directory: tools/atlas-updater
+        run: |
+          $target = Join-Path $env:RUNNER_TEMP "atlas-helper-install-test"
+          Remove-Item -Recurse -Force $target -ErrorAction SilentlyContinue
+          $setup = (Resolve-Path "dist\atlas-updater-windows-setup.exe").Path
+          $install = Start-Process -FilePath $setup -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART", "/DIR=`"$target`"" -Wait -PassThru
+          if ($install.ExitCode -ne 0) { throw "the installer exited with $($install.ExitCode)" }
+          $exe = Join-Path $target "atlas-updater.exe"
+          if (-not (Test-Path $exe)) { throw "the installer did not put atlas-updater.exe in $target" }
+          if (-not (Test-Path (Join-Path $target "atlas-engine.exe"))) { throw "the installer did not put the offline engine in $target" }
+          if (-not (Test-Path (Join-Path $target "atlas_engine.dll"))) { throw "the installer did not put the engine library in $target" }
+          $uninstaller = Get-ChildItem $target -Filter "unins*.exe" | Select-Object -First 1
+          if (-not $uninstaller) { throw "no uninstaller was written" }
+          $un = Start-Process -FilePath $uninstaller.FullName -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait -PassThru
+          if ($un.ExitCode -ne 0) { throw "the uninstaller exited with $($un.ExitCode)" }
+          if (Test-Path $exe) { throw "the uninstaller left atlas-updater.exe behind" }
+          if (Test-Path (Join-Path $target "atlas-engine.exe")) { throw "the uninstaller left the offline engine behind" }
+          Write-Output "The installer installed and removed the helper in a silent run."
+
+      - name: Upload the installer
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-updater-windows-setup
+          path: tools/atlas-updater/dist/atlas-updater-windows-setup.exe
+          if-no-files-found: error
 
       - name: Upload the build
         uses: actions/upload-artifact@v4

@@ -183,6 +183,22 @@ await check("#922: text below the first screen is translated after scrolling", a
   if (shown !== "T[Text far below the first screen is translated when it is reached.]") throw new Error("shown text is " + JSON.stringify(shown));
 });
 
+await check("RTL target: the page keeps its direction, and English text is not forced right to left", async page => {
+  await page.evaluate(() => {
+    for (const listener of window.__listeners) listener({ action: "translatePage", targetLanguage: "ar" }, {}, () => {});
+  });
+  await page.waitForFunction(() => document.getElementById("plain-sentence").textContent.includes("T["), { timeout: 15000 });
+  await new Promise(resolve => setTimeout(resolve, 300));
+  const info = await page.evaluate(() => {
+    const el = document.getElementById("plain-sentence");
+    const style = getComputedStyle(el);
+    return { root: document.documentElement.getAttribute("dir"), direction: style.direction, bidi: style.unicodeBidi };
+  });
+  if (info.root !== null) throw new Error("the page was flipped: dir is " + JSON.stringify(info.root));
+  if (info.direction !== "ltr") throw new Error("English text was forced to " + info.direction);
+  if (info.bidi !== "plaintext") throw new Error("the block does not take its direction from its text: " + info.bidi);
+});
+
 await browser.close();
 server.close();
 const failed = results.filter(r => !r.ok).length;

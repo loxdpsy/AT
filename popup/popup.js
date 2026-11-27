@@ -28,7 +28,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
       active: true,
       currentWindow: true
     }, tabs => {
-      chrome.tabs.sendMessage(tabs[0].id, {
+      twpSendToTab((tabs[0] || {}).id, {
         action: "swapTranslationService",
         newServiceName: currentPageTranslatorService
       }, checkedLastError);
@@ -65,7 +65,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
         active: true,
         currentWindow: true
       }, tabs => {
-        chrome.tabs.sendMessage(tabs[0].id, {
+        twpSendToTab((tabs[0] || {}).id, {
           action: "translatePage",
           targetLanguage: chosen.value || "original"
         }, checkedLastError);
@@ -130,7 +130,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     const url = (tabs[0] && tabs[0].url) || "";
     menuPage = { url, host: hostnameOf(url) };
     renderMenu();
-    chrome.tabs.sendMessage(tabs[0].id, {
+    twpSendToTab((tabs[0] || {}).id, {
       action: "getOriginalTabLanguage"
     }, {
       frameId: 0
@@ -143,7 +143,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
         updateInterface();
       }
     });
-    chrome.tabs.sendMessage(tabs[0].id, {
+    twpSendToTab((tabs[0] || {}).id, {
       action: "getCurrentPageLanguage"
     }, {
       frameId: 0
@@ -154,7 +154,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
         updateInterface();
       }
     });
-    chrome.tabs.sendMessage(tabs[0].id, {
+    twpSendToTab((tabs[0] || {}).id, {
       action: "getCurrentPageLanguageState"
     }, {
       frameId: 0
@@ -165,7 +165,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
         updateInterface();
       }
     });
-    chrome.tabs.sendMessage(tabs[0].id, {
+    twpSendToTab((tabs[0] || {}).id, {
       action: "getCurrentPageTranslatorService"
     }, {
       frameId: 0

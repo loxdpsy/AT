@@ -1,7 +1,164 @@
-.onboarding { max-width: 760px; margin: 40px auto; padding: 0 16px; }
-.onboarding h1 { margin-bottom: 8px; }
-.provider { display: flex; gap: 12px; align-items: flex-start; padding: 12px; margin: 8px 0; border: 1px solid #dadce0; border-radius: 8px; cursor: pointer; }
-.provider input { margin-top: 4px; }
-.provider .provider-title { display: block; font-weight: 600; }
-.provider .provider-badge { font-size: 12px; margin-left: 6px; color: #1f63d6; }
-.provider .provider-desc { display: block; margin-top: 4px; color: #5f6368; }
+/* The setup page. It uses the settings page styles (options/options.css) for cards, rows and buttons. */
+
+.setup {
+  max-width: 760px;
+  margin: 40px auto 56px;
+  padding: 0 20px;
+}
+
+.setup-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.setup-logo {
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+}
+
+.setup h1 {
+  margin: 0;
+  font-size: 24px;
+  line-height: 32px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.setup-intro {
+  margin: 4px 0 0;
+  color: var(--sub);
+}
+
+.step {
+  display: inline-block;
+  min-width: 22px;
+  height: 22px;
+  line-height: 22px;
+  margin-right: 6px;
+  border-radius: 11px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 12px;
+  text-align: center;
+}
+
+.providers {
+  padding: 0 12px 4px;
+}
+
+.provider {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px;
+  margin: 8px 0;
+  border: 1px solid var(--field-border);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.provider:hover {
+  background: var(--hover);
+}
+
+.provider input {
+  margin-top: 4px;
+  accent-color: var(--accent);
+}
+
+.provider-body {
+  display: block;
+  min-width: 0;
+}
+
+.provider-title {
+  display: block;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.provider-badge {
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.provider-desc {
+  display: block;
+  margin-top: 4px;
+  color: var(--sub);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.helper-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 16px 12px;
+  color: var(--text);
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--field-border);
+  flex-shrink: 0;
+}
+
+.dot.ok {
+  background: var(--ok);
+}
+
+.dot.off {
+  background: var(--danger);
+}
+
+.btn-row {
+  align-items: center;
+}
+
+.bind-message {
+  margin: 0 16px 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: var(--hover);
+  color: var(--text);
+}
+
+.bind-message.ok {
+  background: var(--ok-soft);
+  color: var(--ok);
+}
+
+.bind-message.error {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.helper-steps {
+  margin: 4px 16px 16px;
+  padding-left: 20px;
+  color: var(--sub);
+}
+
+.helper-steps li {
+  margin: 6px 0;
+}
+
+.setup-actions {
+  padding: 8px 0 0;
+}
+
+.setup #result {
+  margin-top: 12px;
+  padding: 0;
+}

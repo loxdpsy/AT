@@ -7,6 +7,7 @@ build/
 .DS_Store
 Thumbs.db
 tools/atlas-updater/target/
+tools/atlas-updater/dist/
 
 # The offline engine's Bergamot source: a git checkout of mozilla/translations (see tools/atlas-engine/CMakeLists.txt).
 tools/atlas-engine/translations-source/

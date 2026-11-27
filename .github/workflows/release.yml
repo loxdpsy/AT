@@ -241,8 +241,8 @@ jobs:
   # so the helper is always the version that matches the release. A build failure stops the publish job.
   helper:
     name: Helper (${{ matrix.os }})
-    needs: prepare
-    if: ${{ needs.prepare.result == 'success' }}
+    needs: [prepare, engine]
+    if: ${{ needs.prepare.result == 'success' && needs.engine.result == 'success' }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -279,6 +279,41 @@ jobs:
         with:
           name: ${{ matrix.asset }}
           path: ${{ runner.temp }}/helper/${{ matrix.asset }}
+          if-no-files-found: error
+
+      # The Windows installer includes the offline engine, so the helper never downloads a program to run on Windows.
+      - name: Download the Windows engine files (Windows only)
+        if: runner.os == 'Windows'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: atlas-engine-*windows*
+          merge-multiple: true
+          path: ${{ runner.temp }}/engine
+
+      # The Windows installer (Inno Setup, for the current user only). Same script and checks as updater.yml.
+      - name: Windows installer (Inno Setup, for the current user only)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        working-directory: tools/atlas-updater
+        run: |
+          choco install innosetup --no-progress -y | Out-Null
+          $iscc = Join-Path ${env:ProgramFiles(x86)} "Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { throw "Inno Setup was not installed" }
+          $line = Select-String -Path Cargo.toml -Pattern '^version = "([0-9.]+)\+([0-9]+)"' | Select-Object -First 1
+          $version = "$($line.Matches[0].Groups[1].Value).$($line.Matches[0].Groups[2].Value)"
+          $engineExe = Join-Path $env:RUNNER_TEMP "engine\atlas-engine-windows.exe"
+          $engineLib = Join-Path $env:RUNNER_TEMP "engine\atlas-engine-lib-windows.dll"
+          if (-not (Test-Path $engineExe) -or -not (Test-Path $engineLib)) { throw "the offline engine files are missing from the build" }
+          & $iscc "/DMyAppVersion=$version" "/DEngineExe=$engineExe" "/DEngineLib=$engineLib" installer\atlas-helper.iss
+          if ($LASTEXITCODE -ne 0) { throw "the installer did not build" }
+          Copy-Item "dist\atlas-updater-windows-setup.exe" "$env:RUNNER_TEMP\helper\atlas-updater-windows-setup.exe"
+
+      - name: Keep the installer for the publish job
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: atlas-updater-windows-setup
+          path: ${{ runner.temp }}/helper/atlas-updater-windows-setup.exe
           if-no-files-found: error
 
   publish:
@@ -369,8 +404,8 @@ jobs:
             echo "- **Chrome Web Store:** \`atlas-translation-$VERSION-chromium.zip\`"
             echo "- **Microsoft Edge Add-ons:** \`atlas-translation-$VERSION-edge.zip\` (same package as Chromium). It is submitted to Edge automatically when the Edge secrets are set."
             echo "- **Chromium, self-hosting:** \`atlas-translation-$VERSION-chromium.crx\` (Chromium 109 or newer)"
-            echo "- **Helper (atlas-updater):** \`atlas-updater-windows.exe\`, \`atlas-updater-macos\`, \`atlas-updater-linux\`. It installs the newest release into your unpacked copy. See tools/atlas-updater/README.md."
-            echo "- **Offline engine:** \`atlas-engine-windows.exe\`, \`atlas-engine-macos\`, \`atlas-engine-linux\`. The helper runs it for offline translation and installs it from here. The library \`atlas-engine-lib-*\` is the same engine as a shared library, which the helper loads."
+            echo "- **Helper (atlas-updater):** \`atlas-updater-windows-setup.exe\` (Windows installer, for the current user, with a Start menu entry, a choice of folder, an optional start at sign-in, and the offline engine inside it), \`atlas-updater-windows.exe\`, \`atlas-updater-macos\`, \`atlas-updater-linux\`. It installs the newest release into your unpacked copy. See tools/atlas-updater/README.md."
+            echo "- **Offline engine:** \`atlas-engine-windows.exe\`, \`atlas-engine-macos\`, \`atlas-engine-linux\`. The helper runs it for offline translation. On Windows the engine is already inside the setup file, and the helper does not download it; on macOS and Linux the helper installs it from here. The library \`atlas-engine-lib-*\` is the same engine as a shared library, which the helper loads."
             if [ -f "dist/atlas-translation-$VERSION-firefox-signed.xpi" ]; then
               echo "- **Firefox, self-hosted:** \`atlas-translation-$VERSION-firefox-signed.xpi\` is signed. Open it in Firefox to install. Firefox then updates it from \`updates.json\` in this release. Firefox for Android installs from addons.mozilla.org only."
             else

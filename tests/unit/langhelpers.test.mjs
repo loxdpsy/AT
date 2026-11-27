@@ -28,7 +28,7 @@ function makeContext(config, { htmlDir = null, computedDir = "ltr" } = {}) {
     console,
   };
   vm.createContext(ctx);
-  vm.runInContext(block + "\n;globalThis.__api={isRightToLeftLanguage,languageNeedsAutoTranslate,applyPageDirection,restorePageDirection};", ctx);
+  vm.runInContext(block + "\n;globalThis.__api={isRightToLeftLanguage,languageNeedsAutoTranslate};", ctx);
   return ctx;
 }
 
@@ -52,26 +52,13 @@ c = makeContext(cfg({ translateAllLanguages: "yes", neverTranslateLangs: ["de"] 
 assert.strictEqual(c.__api.languageNeedsAutoTranslate("de"), false, "never list wins over all on");
 assert.strictEqual(c.__api.languageNeedsAutoTranslate("ja"), true, "other languages still translated");
 
-// Direction flip and restore
-c = makeContext(cfg({ target: "ar" }), { computedDir: "ltr" });
-c.__api.applyPageDirection("ar");
-assert.strictEqual(c.attrs.dir ?? null, "rtl", "LTR page flips to rtl for Arabic");
-c.__api.restorePageDirection();
-assert.strictEqual(c.attrs.dir ?? null, null, "absent dir attribute is removed again");
-
-c = makeContext(cfg({ target: "en" }), { htmlDir: "rtl", computedDir: "rtl" });
-c.__api.applyPageDirection("en");
-assert.strictEqual(c.attrs.dir ?? null, "ltr", "RTL page flips to ltr for English");
-c.__api.restorePageDirection();
-assert.strictEqual(c.attrs.dir ?? null, "rtl", "original rtl attribute is put back");
-
-c = makeContext(cfg({ target: "fr" }), { htmlDir: "ltr", computedDir: "ltr" });
-c.__api.applyPageDirection("fr");
-assert.strictEqual(c.attrs.dir ?? null, "ltr", "no change when direction already matches");
-c.__api.restorePageDirection();
-assert.strictEqual(c.attrs.dir ?? null, "ltr", "no restore side effect when nothing changed");
-
-c = makeContext(cfg({ target: "ar" }), { computedDir: "rtl" });
-c.__api.applyPageDirection("ar");
-assert.strictEqual(c.attrs.dir ?? null, null, "already rtl: nothing changed");
+// The page keeps its own direction when translated into a right-to-left language. Flipping the whole page moved
+// English punctuation (the "?" of a headline) to the wrong side. Each translated block takes its direction from its text.
+c = makeContext(cfg({ target: "ar" }), { htmlDir: null, computedDir: "ltr" });
+assert.strictEqual(c.__api.applyPageDirection, undefined, "no whole-page flip function");
+assert.strictEqual(c.attrs.dir ?? null, null, "Arabic target: the page dir attribute is not set");
+const ruleMatch = src.match(/\.twp-rtl-text \{[^}]*\}/);
+assert.ok(ruleMatch, "RTL block rule found");
+assert.ok(/unicode-bidi: plaintext/.test(ruleMatch[0]), "block direction comes from its text");
+assert.ok(!/direction: rtl/.test(ruleMatch[0]), "block is not forced to rtl");
 console.log("all helper checks passed");

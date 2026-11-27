@@ -25,15 +25,18 @@ mod engine;
 mod enginelib;
 mod gui;
 mod json;
+mod native_host;
 mod packs;
 mod settings;
 mod sha256;
 mod store;
 mod tray;
+mod transfer;
 
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::Command;
+
+use crate::transfer::Transfer;
 
 // The release the helper installs from. While Atlas Translation publishes prereleases, that is the newest one in the list
 // that is not a draft (GitHub lists releases newest first). /releases/latest skips prereleases, so it is used only when
@@ -71,6 +74,10 @@ fn usage() -> String {
 
 fn run() -> Result<(), String> {
     let args: Vec<String> = std::env::args().skip(1).collect();
+    // A browser started this program to connect its extension: start the helper in the tray and answer. No window.
+    if native_host::is_launch(&args) {
+        return native_host::run();
+    }
     if args.is_empty() {
         // Started by a double click: the helper window and its tray icon open.
         return gui::run(true);
@@ -99,7 +106,7 @@ fn run() -> Result<(), String> {
         return Ok(());
     }
 
-    install(&folder, &release)?;
+    install(&folder, &release, &Transfer::quiet())?;
     println!("Installed {} in {}.", release.version, folder.display());
     println!("Next: open Atlas Translation's Settings in your browser, and click \"Reload extension\" in the Updates section.");
     Ok(())
@@ -228,29 +235,32 @@ fn version_parts(v: &str) -> Vec<u64> {
         .collect()
 }
 
-fn install(folder: &Path, release: &Release) -> Result<(), String> {
+fn install(folder: &Path, release: &Release, transfer: &Transfer) -> Result<(), String> {
     let work = std::env::temp_dir().join(format!("atlas-updater-{}", std::process::id()));
     let _ = fs::remove_dir_all(&work);
     fs::create_dir_all(&work).map_err(|e| format!("cannot create {}: {}", work.display(), e))?;
-    let result = install_from(folder, release, &work);
+    let result = install_from(folder, release, &work, transfer);
     // Remove the download and the unpacked files whether or not the install worked.
     let _ = fs::remove_dir_all(&work);
     result
 }
 
-fn install_from(folder: &Path, release: &Release, work: &Path) -> Result<(), String> {
+fn install_from(folder: &Path, release: &Release, work: &Path, transfer: &Transfer) -> Result<(), String> {
     let zip_path = work.join(&release.zip_name);
     let unpacked = work.join("unpacked");
 
     println!("Downloading {} ...", release.zip_name);
-    download(&release.zip_url, &zip_path)?;
+    transfer.progress.set_stage("Downloading the extension...");
+    transfer.download(&release.zip_url, &zip_path, None)?;
 
+    transfer.progress.set_stage("Checking the download...");
     let bytes = fs::read(&zip_path).map_err(|e| format!("cannot read the download: {}", e))?;
     if sha256::hex(&bytes) != release.sha256_hex {
         return Err("the download does not match GitHub's SHA-256. Nothing was changed. Try again later.".to_string());
     }
     println!("Checksum OK.");
 
+    transfer.progress.set_stage("Unpacking...");
     extract(&zip_path, &unpacked)?;
     let unpacked_version = read_installed_version(&unpacked)?;
     if unpacked_version != release.version {
@@ -260,29 +270,8 @@ fn install_from(folder: &Path, release: &Release, work: &Path) -> Result<(), Str
         ));
     }
 
+    transfer.progress.set_stage("Copying the files into the folder...");
     copy_tree(&unpacked, folder)
-}
-
-/// Downloads with curl, which ships with Windows 10 and later, macOS and most Linux systems.
-/// curl's own --retry does not retry a connection that closes early (EOF), so the helper tries again itself.
-fn download(url: &str, dest: &Path) -> Result<(), String> {
-    const ATTEMPTS: u32 = 3;
-    for attempt in 1..=ATTEMPTS {
-        let status = Command::new("curl")
-            .args(["-fsSL", "--retry", "2", "--retry-delay", "5", "--max-time", "300", "-o"])
-            .arg(dest)
-            .arg(url)
-            .status()
-            .map_err(|e| format!("cannot run curl ({}). Install curl, then try again.", e))?;
-        if status.success() {
-            return Ok(());
-        }
-        if attempt < ATTEMPTS {
-            println!("The download did not finish. Trying again ({} of {}) ...", attempt + 1, ATTEMPTS);
-            std::thread::sleep(std::time::Duration::from_secs(5));
-        }
-    }
-    Err(format!("the download failed ({}). Check your internet connection.", url))
 }
 
 /// GitHub allows 60 requests an hour per IP address without a token, and runners on shared networks can use that up.
@@ -291,47 +280,26 @@ fn github_token() -> Option<String> {
     std::env::var("GITHUB_TOKEN").ok().map(|t| t.trim().to_string()).filter(|t| !t.is_empty())
 }
 
-fn curl_text(url: &str) -> Result<String, String> {
-    let mut args: Vec<String> = [
-        "-fsSL",
-        "--retry",
-        "3",
-        "--retry-delay",
-        "5",
-        "--max-time",
-        "60",
-        "-H",
-        "Accept: application/vnd.github+json",
-        "-H",
-        "User-Agent: atlas-updater",
-    ]
-    .iter()
-    .map(|s| s.to_string())
-    .collect();
+fn http_text(url: &str) -> Result<String, String> {
+    let mut request = ureq::get(url)
+        .set("Accept", "application/vnd.github+json")
+        .set("User-Agent", "atlas-updater")
+        .timeout(std::time::Duration::from_secs(60));
     if url.starts_with("https://api.github.com/") {
         if let Some(token) = github_token() {
-            args.push("-H".to_string());
-            args.push(format!("Authorization: Bearer {}", token));
+            request = request.set("Authorization", &format!("Bearer {}", token));
         }
     }
-    args.push(url.to_string());
-    let output = Command::new("curl")
-        .args(&args)
-        .output()
-        .map_err(|e| format!("cannot run curl ({}). Install curl, then try again.", e))?;
-    if !output.status.success() {
-        let detail = String::from_utf8_lossy(&output.stderr).trim().to_string();
-        return Err(format!("could not reach GitHub. {}", detail));
-    }
-    String::from_utf8(output.stdout).map_err(|_| "GitHub sent text that is not UTF-8".to_string())
+    let response = request.call().map_err(|e| format!("could not reach GitHub. {}", e))?;
+    response.into_string().map_err(|e| format!("could not read GitHub's answer: {}", e))
 }
 
-/// curl_text, tried again when GitHub does not answer (curl's own --retry does not retry a 403 rate limit).
+/// http_text, tried again when GitHub does not answer (a 403 rate limit is not retried by the first attempt).
 fn github_text(url: &str) -> Result<String, String> {
     const ATTEMPTS: u32 = 3;
     let mut last = String::new();
     for attempt in 1..=ATTEMPTS {
-        match curl_text(url) {
+        match http_text(url) {
             Ok(body) => return Ok(body),
             Err(e) => last = e,
         }
@@ -343,29 +311,29 @@ fn github_text(url: &str) -> Result<String, String> {
     Err(last)
 }
 
-/// Unzips with PowerShell on Windows and with unzip on macOS and Linux.
-fn extract(zip: &Path, dest: &Path) -> Result<(), String> {
+/// Unzips with the zip crate on every system. An entry that would land outside the folder is refused.
+fn extract(zip_path: &Path, dest: &Path) -> Result<(), String> {
     fs::create_dir_all(dest).map_err(|e| format!("cannot create {}: {}", dest.display(), e))?;
-    let status = if cfg!(windows) {
-        let script = format!(
-            "Expand-Archive -LiteralPath '{}' -DestinationPath '{}' -Force",
-            zip.display().to_string().replace('\'', "''"),
-            dest.display().to_string().replace('\'', "''")
-        );
-        Command::new("powershell")
-            .args(["-NoProfile", "-NonInteractive", "-Command", script.as_str()])
-            .status()
-    } else {
-        Command::new("unzip").arg("-q").arg("-o").arg(zip).arg("-d").arg(dest).status()
-    };
-    match status {
-        Ok(s) if s.success() => Ok(()),
-        Ok(_) => Err("could not unzip the download".to_string()),
-        Err(e) => Err(format!(
-            "cannot unzip the download ({}). On Linux, install the unzip package, then try again.",
-            e
-        )),
+    let file = fs::File::open(zip_path).map_err(|e| format!("cannot open the download: {}", e))?;
+    let mut archive = zip::ZipArchive::new(file).map_err(|e| format!("cannot read the download: {}", e))?;
+    for index in 0..archive.len() {
+        let mut entry = archive.by_index(index).map_err(|e| format!("cannot read the download: {}", e))?;
+        let relative = entry
+            .enclosed_name()
+            .map(|p| p.to_path_buf())
+            .ok_or_else(|| "the download holds a file outside its folder. Nothing was changed.".to_string())?;
+        let out = dest.join(&relative);
+        if entry.is_dir() {
+            fs::create_dir_all(&out).map_err(|e| format!("cannot create {}: {}", out.display(), e))?;
+            continue;
+        }
+        if let Some(parent) = out.parent() {
+            fs::create_dir_all(parent).map_err(|e| format!("cannot create {}: {}", parent.display(), e))?;
+        }
+        let mut writer = fs::File::create(&out).map_err(|e| format!("cannot write {}: {}", out.display(), e))?;
+        std::io::copy(&mut entry, &mut writer).map_err(|e| format!("cannot unzip {}: {}", out.display(), e))?;
     }
+    Ok(())
 }
 
 /// Copies every file from one folder tree into another, replacing files with the same name. Nothing is deleted.

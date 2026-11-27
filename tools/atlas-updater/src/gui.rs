@@ -5,9 +5,11 @@
 // while (checking releases, downloading, installing) runs on a background thread and reports back through a channel,
 // so the window never freezes. Closing the window hides it; the tray icon brings it back, and Quit stops the helper.
 
+use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::mpsc::{self, Receiver, Sender};
+use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
@@ -24,6 +26,7 @@ use crate::engine::{self, Engine};
 use crate::packs::{self, Catalogue, Pack};
 use crate::settings::{self, Settings};
 use crate::store;
+use crate::transfer::{self, Transfer};
 use crate::tray::{self, Tray, TrayAction};
 
 /// The Atlas logo, the same one the extension uses (icons/icon-128.png). The window shows it at the top, and the
@@ -36,6 +39,10 @@ const GREY: Color32 = Color32::from_rgb(0x5f, 0x63, 0x68);
 const PAPER: Color32 = Color32::from_rgb(0xf3, 0xf5, 0xf9);
 const SIDEBAR: Color32 = Color32::from_rgb(0xe6, 0xeb, 0xf3);
 const BORDER: Color32 = Color32::from_rgb(0xd3, 0xd9, 0xe3);
+const DARK_PAPER: Color32 = Color32::from_rgb(0x17, 0x1a, 0x21);
+const DARK_CARD: Color32 = Color32::from_rgb(0x20, 0x24, 0x2d);
+const DARK_MUTED: Color32 = Color32::from_rgb(0xa8, 0xb0, 0xbd);
+const DARK_BORDER: Color32 = Color32::from_rgb(0x3a, 0x40, 0x4c);
 
 #[derive(Clone, Copy, PartialEq)]
 enum Tab {
@@ -68,6 +75,8 @@ enum Action {
     UseDefaultFolder,
     OpenLink(String),
     Autostart(bool),
+    SetConnections(usize),
+    SetStartWithBrowser(bool),
     InstallEngine,
     InstallPack(usize),
     RemovePack(usize),
@@ -76,6 +85,9 @@ enum Action {
     SetupAll,
     FinishWelcome,
     SetExperimental(bool),
+    SetTheme(&'static str),
+    SetTextSize(&'static str),
+    SetKeepInTray(bool),
     ShowSetupAgain,
     OpenDataFolder,
     OpenPacksFolder,
@@ -88,7 +100,13 @@ pub struct Helper {
     status: Option<Status>,
     catalogue: Option<Result<Catalogue, String>>,
     catalogue_asked: bool,
+    // The packs installed on disk, read once and cleared after each install or removal.
+    installed_pairs: Option<HashSet<String>>,
+    pack_search: String,
+    installed_only: bool,
     busy: Option<String>,
+    // The progress popup's counters, set while a download or install runs.
+    progress: Option<Arc<transfer::Progress>>,
     message: Option<(bool, String)>,
     autostart: bool,
     tray: Option<Tray>,
@@ -108,8 +126,14 @@ pub struct Helper {
     /// True while the first-run question about setting up the browsers is open.
     setup_open: bool,
     settings: Settings,
+    applied_dark: Option<bool>,
     /// Kept so the offline service's engine stays alive for the whole run (it is shared with the API thread).
     _engine: Arc<Engine>,
+}
+
+/// Formats a byte count as megabytes for the progress popup.
+fn megabytes(bytes: u64) -> String {
+    format!("{:.1}", bytes as f64 / 1_048_576.0)
 }
 
 /// Starts the helper's window, its tray icon, and the offline translation service. When `show_window` is false the
@@ -143,7 +167,7 @@ pub fn run(show_window: bool) -> Result<(), String> {
         "Atlas Helper",
         options,
         Box::new(move |cc| {
-            cc.egui_ctx.set_visuals(visuals());
+            cc.egui_ctx.set_visuals(visuals(false));
             let texture = cc.egui_ctx.load_texture(
                 "atlas-logo",
                 egui::ColorImage::from_rgba_unmultiplied([logo.width as usize, logo.height as usize], &logo.rgba),
@@ -168,7 +192,11 @@ pub fn run(show_window: bool) -> Result<(), String> {
                 status: None,
                 catalogue: None,
                 catalogue_asked: false,
+                installed_pairs: None,
+                pack_search: String::new(),
+                installed_only: false,
                 busy: None,
+                progress: None,
                 message: None,
                 autostart: autostart::is_enabled(),
                 tray,
@@ -185,6 +213,7 @@ pub fn run(show_window: bool) -> Result<(), String> {
                 detected,
                 setup_open,
                 settings: saved_settings,
+                applied_dark: None,
                 _engine: engine,
             };
             helper.refresh();
@@ -196,6 +225,21 @@ pub fn run(show_window: bool) -> Result<(), String> {
 
 impl eframe::App for Helper {
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // The look follows the settings: the theme (system, light or dark) and the text size.
+        let dark = match self.settings.theme.as_str() {
+            "dark" => true,
+            "light" => false,
+            _ => ctx.system_theme() == Some(egui::Theme::Dark),
+        };
+        let zoom = if self.settings.text_size == "large" { 1.25 } else { 1.0 };
+        if self.applied_dark != Some(dark) {
+            ctx.set_visuals(visuals(dark));
+            self.applied_dark = Some(dark);
+        }
+        if (ctx.zoom_factor() - zoom).abs() > f32::EPSILON {
+            ctx.set_zoom_factor(zoom);
+        }
+
         // Tray clicks and menu choices.
         let mut tray_actions = Vec::new();
         if let Some(tray) = &self.tray {
@@ -209,7 +253,7 @@ impl eframe::App for Helper {
         }
 
         // A close button press hides the window while the tray is there. Without a tray, closing quits.
-        if ctx.input(|i| i.viewport().close_requested()) && !self.quitting && self.tray.is_some() {
+        if ctx.input(|i| i.viewport().close_requested()) && !self.quitting && self.tray.is_some() && self.settings.keep_in_tray {
             ctx.send_viewport_cmd(ViewportCommand::CancelClose);
             ctx.send_viewport_cmd(ViewportCommand::Visible(false));
         }
@@ -229,9 +273,14 @@ impl eframe::App for Helper {
         while let Ok(event) = self.events.try_recv() {
             match event {
                 Event::Status(status) => self.status = Some(status),
-                Event::Catalogue(result) => self.catalogue = Some(result),
+                Event::Catalogue(result) => {
+                    self.catalogue = Some(result);
+                    self.installed_pairs = None;
+                }
                 Event::Done { ok, text, reload } => {
                     self.busy = None;
+                    self.progress = None;
+                    self.installed_pairs = None;
                     self.message = Some((ok, text));
                     if reload {
                         self.refresh();
@@ -255,7 +304,7 @@ impl eframe::App for Helper {
                     ui.add_space(12.0);
                     ui.vertical(|ui| {
                         ui.label(RichText::new("Atlas Helper").size(20.0).strong());
-                        ui.label(RichText::new(format!("Version {}", crate::app_version())).color(GREY));
+                        ui.label(RichText::new(format!("Version {}", crate::app_version())).color(muted(ui)));
                     });
                 });
             });
@@ -288,7 +337,7 @@ impl eframe::App for Helper {
                         let color = if *ok { GREEN } else { RED };
                         ui.label(RichText::new(text.as_str()).color(color));
                     } else {
-                        ui.label(RichText::new("Ready.").color(GREY));
+                        ui.label(RichText::new("Ready.").color(muted(ui)));
                     }
                 });
             });
@@ -315,6 +364,7 @@ impl eframe::App for Helper {
 
         self.bind_dialog(ui.ctx());
         self.setup_dialog(ui.ctx(), &mut actions);
+        self.progress_dialog(ui.ctx());
 
         for action in actions {
             self.perform(action, ui.ctx());
@@ -325,7 +375,7 @@ impl eframe::App for Helper {
 impl Helper {
     fn extension_tab(&mut self, ui: &mut egui::Ui, idle: bool, actions: &mut Vec<Action>) {
         ui.heading("Atlas Translation extension");
-        ui.label(RichText::new("Install or update the extension here. Firefox users get updates from the Add-ons store, so they only need the link below.").color(GREY));
+        ui.label(RichText::new("Install or update the extension here. Firefox users get updates from the Add-ons store, so they only need the link below.").color(muted(ui)));
         ui.add_space(12.0);
 
         card(ui, |ui| {
@@ -340,7 +390,7 @@ impl Helper {
 
             match &self.status {
                 None => {
-                    ui.label(RichText::new("Checking the latest release...").color(GREY));
+                    ui.label(RichText::new("Checking the latest release...").color(muted(ui)));
                 }
                 Some(status) => {
                     match &status.latest {
@@ -384,19 +434,11 @@ impl Helper {
             });
         });
 
-        ui.add_space(12.0);
-        card(ui, |ui| {
-            let mut on = self.autostart;
-            if ui.checkbox(&mut on, "Start the helper when I sign in").changed() {
-                actions.push(Action::Autostart(on));
-            }
-        });
-
         ui.add_space(16.0);
         ui.heading("Browsers");
         ui.add_space(4.0);
         if self.detected.is_empty() {
-            ui.label(RichText::new("No browser was found on this computer. Install one, then open the helper again.").color(GREY));
+            ui.label(RichText::new("No browser was found on this computer. Install one, then open the helper again.").color(muted(ui)));
         }
         for browser in self.detected.clone() {
             let guide = browsers::guide(&browser, &self.folder);
@@ -406,7 +448,7 @@ impl Helper {
                     ui.label(format!("{}. {}", i + 1, step));
                 }
                 if guide.needs_folder {
-                    ui.label(RichText::new("Choose the folder above first.").color(GREY));
+                    ui.label(RichText::new("Choose the folder above first.").color(muted(ui)));
                 }
                 if let Some(link) = &guide.link {
                     if ui.button(format!("Open the page for {}", guide.name)).clicked() {
@@ -424,7 +466,7 @@ impl Helper {
 
     fn offline_tab(&mut self, ui: &mut egui::Ui, idle: bool, actions: &mut Vec<Action>) {
         ui.heading("Offline translation");
-        ui.label(RichText::new("Translation that runs on this computer. Each language pair is a pack that you install here.").color(GREY));
+        ui.label(RichText::new("Translation that runs on this computer. Each language pair is a pack that you install here.").color(muted(ui)));
         ui.add_space(12.0);
 
         card(ui, |ui| {
@@ -444,7 +486,7 @@ impl Helper {
                 actions.push(Action::InstallEngine);
             }
             ui.add_space(6.0);
-            ui.label(RichText::new(format!("Data folder: {}", store::data_dir().display())).color(GREY));
+            ui.label(RichText::new(format!("Data folder: {}", store::data_dir().display())).color(muted(ui)));
         });
 
         ui.add_space(14.0);
@@ -453,10 +495,16 @@ impl Helper {
             self.catalogue_asked = true;
             self.load_catalogue();
         }
+        let root = store::packs_dir();
+        if self.installed_pairs.is_none() {
+            if let Some(Ok(catalogue)) = &self.catalogue {
+                self.installed_pairs = Some(installed_pairs(&root, catalogue));
+            }
+        }
         let mut retry = false;
         match &self.catalogue {
             None => {
-                ui.label(RichText::new("Loading the list of packs...").color(GREY));
+                ui.label(RichText::new("Loading the list of packs...").color(muted(ui)));
             }
             Some(Err(e)) => {
                 ui.label(RichText::new(format!("The packs could not be listed: {}", e)).color(RED));
@@ -465,31 +513,68 @@ impl Helper {
                 }
             }
             Some(Ok(catalogue)) => {
-                ui.label(RichText::new(format!("Each pack is about 37 MB. {} packs are available.", catalogue.packs.len())).color(GREY));
-                ui.add_space(6.0);
-                let root = store::packs_dir();
-                let installed_packs: Vec<&Pack> = catalogue.packs.iter().filter(|p| packs::is_installed_in(&root, p)).collect();
+                let installed = self.installed_pairs.clone().unwrap_or_default();
+                let installed_packs: Vec<&Pack> = catalogue.packs.iter().filter(|p| installed.contains(&p.pair)).collect();
                 let installed_mb = installed_packs.iter().map(|p| p.bytes as f64).sum::<f64>() / 1_000_000.0;
                 card(ui, |ui| {
                     ui.label(RichText::new(format!("Installed now: {} pack(s), about {:.0} MB", installed_packs.len(), installed_mb)).strong());
-                    ui.label(RichText::new(format!("Folder: {}", root.display())).color(GREY));
+                    ui.label(RichText::new(format!("Each pack is about 37 MB. {} packs are available.", catalogue.packs.len())).color(muted(ui)));
+                    ui.label(RichText::new(format!("Folder: {}", root.display())).color(muted(ui)));
                     if ui.button("Open the packs folder").clicked() {
                         actions.push(Action::OpenPacksFolder);
                     }
                 });
-                ui.add_space(8.0);
+                ui.add_space(10.0);
+
+                ui.horizontal(|ui| {
+                    ui.add(
+                        egui::TextEdit::singleline(&mut self.pack_search)
+                            .hint_text("Search a language, for example German or de")
+                            .desired_width(340.0),
+                    );
+                    ui.checkbox(&mut self.installed_only, "Installed only");
+                });
+
+                // The list: installed packs first, then by language name. The search and the filter narrow it.
+                let search = self.pack_search.clone();
+                let installed_only = self.installed_only;
+                let mut shown: Vec<usize> = (0..catalogue.packs.len())
+                    .filter(|&i| {
+                        let pack = &catalogue.packs[i];
+                        packs::matches(pack, &search) && (!installed_only || installed.contains(&pack.pair))
+                    })
+                    .collect();
+                shown.sort_by(|&a, &b| {
+                    let (pa, pb) = (&catalogue.packs[a], &catalogue.packs[b]);
+                    installed
+                        .contains(&pb.pair)
+                        .cmp(&installed.contains(&pa.pair))
+                        .then_with(|| packs::language_name(&pa.from).cmp(packs::language_name(&pb.from)))
+                        .then_with(|| packs::language_name(&pa.to).cmp(packs::language_name(&pb.to)))
+                });
+                ui.add_space(4.0);
+                ui.label(RichText::new(format!("Showing {} of {} packs.", shown.len(), catalogue.packs.len())).color(muted(ui)));
+                if shown.is_empty() {
+                    ui.label(RichText::new(format!("No language matches \"{}\".", self.pack_search.trim())).color(muted(ui)));
+                }
+                ui.add_space(4.0);
                 card(ui, |ui| {
                     egui::Grid::new("language_packs")
                         .num_columns(3)
                         .striped(true)
                         .spacing([18.0, 8.0])
+                        .min_col_width(170.0)
                         .show(ui, |ui| {
-                            for (index, pack) in catalogue.packs.iter().enumerate() {
-                                let installed = packs::is_installed_in(&root, pack);
-                                ui.label(RichText::new(format!("{} to {}", pack.from, pack.to)).strong());
-                                ui.label(RichText::new(size_text(pack)).color(GREY));
+                            for &index in &shown {
+                                let pack = &catalogue.packs[index];
+                                let is_installed = installed.contains(&pack.pair);
+                                ui.vertical(|ui| {
+                                    ui.label(RichText::new(format!("{} to {}", packs::language_name(&pack.from), packs::language_name(&pack.to))).strong());
+                                    ui.label(RichText::new(format!("{} to {}", pack.from, pack.to)).color(muted(ui)).small());
+                                });
+                                ui.label(RichText::new(size_text(pack)).color(muted(ui)));
                                 ui.horizontal(|ui| {
-                                    if installed {
+                                    if is_installed {
                                         ui.label(RichText::new("installed").color(GREEN));
                                         if ui.add_enabled(idle, egui::Button::new("Remove")).clicked() {
                                             actions.push(Action::RemovePack(index));
@@ -512,7 +597,7 @@ impl Helper {
 
     fn connections_tab(&mut self, ui: &mut egui::Ui, actions: &mut Vec<Action>) {
         ui.heading("Connections");
-        ui.label(RichText::new("Browsers that the helper allowed to use the offline service. Remove one to stop it.").color(GREY));
+        ui.label(RichText::new("Browsers that the helper allowed to use the offline service. Remove one to stop it.").color(muted(ui)));
         ui.add_space(12.0);
         let items = match self.bindings.lock() {
             Ok(b) => b.items.clone(),
@@ -520,7 +605,7 @@ impl Helper {
         };
         card(ui, |ui| {
             if items.is_empty() {
-                ui.label(RichText::new("No browser is connected yet. Open the Atlas Translation settings in the browser and choose Bind.").color(GREY));
+                ui.label(RichText::new("No browser is connected yet. Open the Atlas Translation settings in the browser and choose Bind.").color(muted(ui)));
             }
             for (index, binding) in items.iter().enumerate() {
                 row(ui, self.rtl, |ui| {
@@ -531,6 +616,43 @@ impl Helper {
                 });
             }
         });
+    }
+
+    /// The popup for a download or an install: the current step, the size so far, and a Cancel button.
+    fn progress_dialog(&mut self, ctx: &egui::Context) {
+        let progress = match &self.progress {
+            Some(p) => Arc::clone(p),
+            None => return,
+        };
+        let done = progress.done.load(Ordering::Relaxed);
+        let total = progress.total.load(Ordering::Relaxed);
+        let stage = progress.stage();
+        let mut cancel = false;
+        egui::Window::new("Atlas Helper is working")
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
+            .show(ctx, |ui| {
+                ui.set_min_width(360.0);
+                ui.label(RichText::new(stage.as_str()).size(16.0).strong());
+                ui.add_space(8.0);
+                if total > 0 {
+                    let fraction = (done as f32 / total as f32).clamp(0.0, 1.0);
+                    let text = format!("{} of {} MB", megabytes(done), megabytes(total));
+                    ui.add(egui::ProgressBar::new(fraction).text(text).desired_width(360.0));
+                } else {
+                    ui.add(egui::ProgressBar::new(0.0).animate(true).desired_width(360.0));
+                }
+                ui.add_space(8.0);
+                ui.label(RichText::new("This window closes when the step finishes. Nothing is installed until the file checks out.").color(muted(ui)).small());
+                ui.add_space(6.0);
+                if ui.button("Cancel").clicked() {
+                    cancel = true;
+                }
+            });
+        if cancel {
+            progress.cancel.store(true, Ordering::Relaxed);
+        }
     }
 
     /// The question shown when an extension asks to bind. Allow gives it a token; Deny (or closing) refuses it.
@@ -548,7 +670,7 @@ impl Helper {
                 ui.label(RichText::new(format!("\"{}\" wants to use the offline translation.", name)).size(16.0).strong());
                 ui.label("Allow it only if you use Atlas Translation in that browser. You can remove it later under Connections.");
                 ui.add_space(6.0);
-                ui.label(RichText::new(format!("Requested from: {}", origin)).color(GREY).small());
+                ui.label(RichText::new(format!("Requested from: {}", origin)).color(muted(ui)).small());
                 ui.add_space(10.0);
                 row(ui, self.rtl, |ui| {
                     if ui.button("Allow").clicked() {
@@ -561,6 +683,10 @@ impl Helper {
             });
         if let Some(allow) = answer {
             if let Some(request) = self.pending_bind.take() {
+                if allow {
+                    // Lets the browser start the helper with itself (native messaging). Failing here does not stop the binding.
+                    let _ = crate::native_host::register_origin(&request.origin);
+                }
                 let token = if allow {
                     match self.bindings.lock() {
                         Ok(mut b) => b.add(&request.name).ok(),
@@ -599,38 +725,53 @@ impl Helper {
         egui::Window::new("Welcome to Atlas Helper")
             .collapsible(false)
             .resizable(false)
+            .default_width(440.0)
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
                 ui.label(RichText::new("Welcome to Atlas Helper").size(16.0).strong());
-                ui.label(RichText::new(format!("Helper version {}.", crate::app_version())).color(GREY));
+                ui.label(RichText::new(format!("Helper version {}.", crate::app_version())).color(muted(ui)));
                 if let Some((newer, text)) = &update {
                     ui.label(RichText::new(text.as_str()).color(if *newer { RED } else { BLUE }));
                 }
-                ui.add_space(8.0);
-                ui.label("The helper runs offline translation on this computer and sets Atlas Translation up in your browsers. Text is not sent to a web service.");
-                ui.add_space(8.0);
+                ui.add_space(6.0);
+                ui.label("The helper runs offline translation on this computer. Text is not sent to a web service.");
+                ui.add_space(6.0);
                 if pending.is_empty() {
                     ui.label("No browser was found that Atlas Translation is not set up in yet.");
                 } else {
-                    ui.label(RichText::new("Do you want to install Atlas Translation in these browsers?").strong());
-                    for browser in &pending {
-                        row(ui, rtl, |ui| {
-                            ui.label(RichText::new(browser.name.as_str()).strong());
-                            if ui.button("Install here").clicked() {
-                                actions.push(Action::SetupBrowser(browser.id.clone()));
-                            }
-                        });
-                        let guide = browsers::guide(browser, &folder);
-                        for (i, step) in guide.steps.iter().enumerate() {
-                            ui.label(RichText::new(format!("{}. {}", i + 1, step)).color(GREY));
+                    ui.label(RichText::new("Install Atlas Translation in these browsers?").strong());
+                    ui.label(
+                        RichText::new(
+                            "Chrome, Edge and other Chromium browsers do not let an app install an extension by itself. \
+                             The helper copies the extension to a folder and opens the browser's extensions page. \
+                             There you choose Load unpacked.",
+                        )
+                        .color(muted(ui))
+                        .small(),
+                    );
+                    ui.add_space(4.0);
+                    egui::ScrollArea::vertical().max_height(260.0).auto_shrink([false, true]).show(ui, |ui| {
+                        for browser in &pending {
+                            row(ui, rtl, |ui| {
+                                ui.label(RichText::new(browser.name.as_str()).strong());
+                                if ui.button("Install here").clicked() {
+                                    actions.push(Action::SetupBrowser(browser.id.clone()));
+                                }
+                            });
+                            let guide = browsers::guide(browser, &folder);
+                            egui::CollapsingHeader::new("Steps").id_salt(browser.id.as_str()).show(ui, |ui| {
+                                for (i, step) in guide.steps.iter().enumerate() {
+                                    ui.label(RichText::new(format!("{}. {}", i + 1, step)).color(muted(ui)).small());
+                                }
+                            });
+                            ui.add_space(4.0);
                         }
-                        ui.add_space(4.0);
-                    }
+                    });
                     if pending.len() > 1 && ui.button("Install in all of them").clicked() {
                         actions.push(Action::SetupAll);
                     }
                 }
-                ui.add_space(12.0);
+                ui.add_space(8.0);
                 if ui.button("Done").clicked() {
                     actions.push(Action::FinishWelcome);
                 }
@@ -694,7 +835,7 @@ impl Helper {
                 let folder = self.folder.trim().to_string();
                 let needs_copy = matches!(self.status.as_ref().map(|s| &s.installed), Some(Ok(None)) | None);
                 if copy && needs_copy && !folder.is_empty() {
-                    self.start("Installing the extension into the folder...", move || match install_into_folder(&folder) {
+                    self.start_download("Installing the extension into the folder...", move |transfer| match install_into_folder(&folder, &transfer) {
                         Ok(text) => Event::Done { ok: true, text, reload: true },
                         Err(text) => Event::Done { ok: false, text, reload: false },
                     });
@@ -725,7 +866,79 @@ impl Helper {
 
     fn settings_tab(&mut self, ui: &mut egui::Ui, actions: &mut Vec<Action>) {
         ui.heading("Settings");
-        ui.label(RichText::new("How the helper behaves. Experimental options may change or break.").color(GREY));
+        ui.label(RichText::new("How the helper behaves. Experimental options may change or break.").color(muted(ui)));
+        ui.add_space(12.0);
+
+        card(ui, |ui| {
+            ui.label(RichText::new("Look").strong());
+            ui.label("Theme");
+            row(ui, self.rtl, |ui| {
+                let current = self.settings.theme.clone();
+                for (value, label) in [("system", "Follow the system"), ("light", "Light"), ("dark", "Dark")] {
+                    if ui.selectable_label(current == value, label).clicked() && current != value {
+                        actions.push(Action::SetTheme(value));
+                    }
+                }
+            });
+            ui.add_space(6.0);
+            ui.label("Text size");
+            row(ui, self.rtl, |ui| {
+                let current = self.settings.text_size.clone();
+                for (value, label) in [("normal", "Normal"), ("large", "Large")] {
+                    if ui.selectable_label(current == value, label).clicked() && current != value {
+                        actions.push(Action::SetTextSize(value));
+                    }
+                }
+            });
+        });
+        ui.add_space(12.0);
+
+        card(ui, |ui| {
+            ui.label(RichText::new("Window and tray").strong());
+            let mut keep = self.settings.keep_in_tray;
+            if ui.checkbox(&mut keep, "Closing the window keeps the helper in the tray").changed() {
+                actions.push(Action::SetKeepInTray(keep));
+            }
+            ui.label(RichText::new("Off means closing the window quits the helper.").color(muted(ui)));
+            ui.add_space(6.0);
+            if cfg!(windows) {
+                // Windows keeps this list: the installer makes the Startup shortcut, and Windows Settings changes it.
+                let state = if self.autostart { "On: the helper starts when you sign in." } else { "Off: the helper does not start when you sign in." };
+                ui.label(state);
+                ui.label(RichText::new("To change it, open Windows Settings, under Apps, then Startup.").color(muted(ui)));
+                if ui.button("Open Windows startup settings").clicked() {
+                    actions.push(Action::OpenLink("ms-settings:startupapps".to_string()));
+                }
+            } else {
+                let mut on = self.autostart;
+                if ui.checkbox(&mut on, "Start the helper when I sign in").changed() {
+                    actions.push(Action::Autostart(on));
+                }
+            }
+            ui.label(RichText::new("It starts minimised to the tray, so it never opens a window by itself.").color(muted(ui)));
+            ui.add_space(6.0);
+            let mut with_browser = self.settings.start_with_browser;
+            if ui.checkbox(&mut with_browser, "Start the helper when the browser starts").changed() {
+                actions.push(Action::SetStartWithBrowser(with_browser));
+            }
+            ui.label(
+                RichText::new("The browser starts the helper in the tray. It works only once this browser is connected to the helper (Options, Services, Offline).")
+                    .color(muted(ui)),
+            );
+        });
+        ui.add_space(12.0);
+
+        card(ui, |ui| {
+            ui.label(RichText::new("Downloads").strong());
+            let mut connections = self.settings.download_connections;
+            if ui.add(egui::Slider::new(&mut connections, transfer::MIN_CONNECTIONS..=transfer::MAX_CONNECTIONS).text("Connections at once")).changed() {
+                actions.push(Action::SetConnections(connections));
+            }
+            ui.label(
+                RichText::new("Each file is split into parts that download together, which is faster on most connections. Use 1 on a slow or metered connection.")
+                    .color(muted(ui)),
+            );
+        });
         ui.add_space(12.0);
 
         let mut experimental = self.settings.experimental;
@@ -734,7 +947,7 @@ impl Helper {
             if ui.checkbox(&mut experimental, "Show experimental options and developer tools").changed() {
                 actions.push(Action::SetExperimental(experimental));
             }
-            ui.label(RichText::new("Off by default. Nothing here is needed to translate.").color(GREY));
+            ui.label(RichText::new("Off by default. Nothing here is needed to translate.").color(muted(ui)));
         });
 
         if self.settings.experimental {
@@ -779,7 +992,7 @@ impl Helper {
             }
             Action::Install => {
                 let folder = self.folder.trim().to_string();
-                self.start("Installing the extension...", move || match install_into_folder(&folder) {
+                self.start_download("Installing the extension...", move |transfer| match install_into_folder(&folder, &transfer) {
                     Ok(text) => Event::Done { ok: true, text, reload: true },
                     Err(text) => Event::Done { ok: false, text, reload: false },
                 });
@@ -797,7 +1010,7 @@ impl Helper {
                 let _ = self.events_tx.send(event);
             }
             Action::InstallEngine => {
-                self.start("Installing the offline engine...", move || match engine::install_from_latest_release() {
+                self.start_download("Installing the offline engine...", move |transfer| match engine::install_from_latest_release(&transfer) {
                     Ok(v) => Event::Done { ok: true, text: format!("Installed the offline engine {}.", v), reload: false },
                     Err(e) => Event::Done { ok: false, text: e, reload: false },
                 });
@@ -809,7 +1022,7 @@ impl Helper {
                 };
                 if let Some((pack, commit)) = picked {
                     let label = format!("Installing the {} to {} pack...", pack.from, pack.to);
-                    self.start(&label, move || pack_result(packs::install_into(&store::packs_dir(), &pack, &commit), &pack, "installed"));
+                    self.start_download(&label, move |transfer| pack_result(packs::install_into(&store::packs_dir(), &pack, &commit, &transfer), &pack, "installed"));
                 }
             }
             Action::RemovePack(index) => {
@@ -852,6 +1065,26 @@ impl Helper {
                 self.settings.experimental = on;
                 self.save_settings();
             }
+            Action::SetTheme(value) => {
+                self.settings.theme = value.to_string();
+                self.save_settings();
+            }
+            Action::SetTextSize(value) => {
+                self.settings.text_size = value.to_string();
+                self.save_settings();
+            }
+            Action::SetKeepInTray(on) => {
+                self.settings.keep_in_tray = on;
+                self.save_settings();
+            }
+            Action::SetStartWithBrowser(on) => {
+                self.settings.start_with_browser = on;
+                self.save_settings();
+            }
+            Action::SetConnections(n) => {
+                self.settings.download_connections = n.clamp(transfer::MIN_CONNECTIONS, transfer::MAX_CONNECTIONS);
+                self.save_settings();
+            }
             Action::ShowSetupAgain => {
                 self.settings.answered.clear();
                 self.settings.welcomed = false;
@@ -885,6 +1118,24 @@ impl Helper {
         let tx = self.events_tx.clone();
         thread::spawn(move || {
             let _ = tx.send(job());
+        });
+    }
+
+    /// Starts a download or install. The job gets a Transfer that counts its bytes for the progress popup and uses the
+    /// number of connections from the settings.
+    fn start_download<F>(&mut self, label: &str, job: F)
+    where
+        F: FnOnce(Transfer) -> Event + Send + 'static,
+    {
+        let progress = Arc::new(transfer::Progress::default());
+        progress.set_stage(label);
+        let download = Transfer::new(self.settings.download_connections, Arc::clone(&progress));
+        self.busy = Some(label.to_string());
+        self.progress = Some(progress);
+        self.message = None;
+        let tx = self.events_tx.clone();
+        thread::spawn(move || {
+            let _ = tx.send(job(download));
         });
     }
 
@@ -947,13 +1198,14 @@ fn load_status(folder: &str) -> Status {
 }
 
 /// Installs or updates the extension in `folder`. Refuses a folder that is not an Atlas Translation copy.
-fn install_into_folder(folder: &str) -> Result<String, String> {
+fn install_into_folder(folder: &str, transfer: &Transfer) -> Result<String, String> {
     if folder.is_empty() {
         return Err("Choose a folder first.".into());
     }
     let path = PathBuf::from(folder);
     let fresh = is_fresh_folder(&path);
     let installed = if fresh { None } else { Some(crate::read_installed_version(&path)?) };
+    transfer.progress.set_stage("Checking the latest version...");
     let release = crate::fetch_latest_release()?;
     if let Some(v) = &installed {
         if !crate::is_newer(&release.version, v) {
@@ -963,7 +1215,7 @@ fn install_into_folder(folder: &str) -> Result<String, String> {
     if fresh {
         std::fs::create_dir_all(&path).map_err(|e| format!("cannot create the folder: {}", e))?;
     }
-    crate::install(&path, &release)?;
+    crate::install(&path, &release, transfer)?;
     Ok(format!("Installed version {} in {}. Reload Atlas Translation in your browser.", release.version, folder))
 }
 
@@ -972,6 +1224,11 @@ fn pack_result(result: Result<(), String>, pack: &Pack, verb: &str) -> Event {
         Ok(()) => Event::Done { ok: true, text: format!("The {} to {} pack was {}.", pack.from, pack.to, verb), reload: false },
         Err(e) => Event::Done { ok: false, text: e, reload: false },
     }
+}
+
+/// The packs whose three files are all on disk with the catalogue's sizes.
+fn installed_pairs(root: &Path, catalogue: &Catalogue) -> HashSet<String> {
+    catalogue.packs.iter().filter(|p| packs::is_installed_in(root, p)).map(|p| p.pair.clone()).collect()
 }
 
 fn size_text(pack: &Pack) -> String {
@@ -1010,25 +1267,31 @@ fn open_target(target: &str) -> bool {
 }
 
 /// The Atlas colours on top of the light theme: a soft background, white cards, rounded corners.
-fn visuals() -> egui::Visuals {
-    let mut visuals = egui::Visuals::light();
+fn visuals(dark: bool) -> egui::Visuals {
+    let mut visuals = if dark { egui::Visuals::dark() } else { egui::Visuals::light() };
     visuals.hyperlink_color = BLUE;
     visuals.selection.bg_fill = BLUE;
     // The text of a selected tab sits on the blue fill, so it is white.
     visuals.selection.stroke = egui::Stroke::new(1.0, Color32::WHITE);
-    visuals.panel_fill = PAPER;
-    visuals.window_fill = Color32::WHITE;
+    visuals.panel_fill = if dark { DARK_PAPER } else { PAPER };
+    visuals.window_fill = if dark { DARK_CARD } else { Color32::WHITE };
     for widget in [&mut visuals.widgets.inactive, &mut visuals.widgets.hovered, &mut visuals.widgets.active] {
         widget.corner_radius = egui::CornerRadius::same(8);
     }
     visuals
 }
 
+/// The secondary text colour for the current theme.
+fn muted(ui: &egui::Ui) -> Color32 {
+    if ui.visuals().dark_mode { DARK_MUTED } else { GREY }
+}
+
 /// A white card with a thin border, around a group of related controls.
 fn card<R>(ui: &mut egui::Ui, add: impl FnOnce(&mut egui::Ui) -> R) -> R {
+    let dark = ui.visuals().dark_mode;
     egui::Frame::new()
-        .fill(Color32::WHITE)
-        .stroke(egui::Stroke::new(1.0, BORDER))
+        .fill(if dark { DARK_CARD } else { Color32::WHITE })
+        .stroke(egui::Stroke::new(1.0, if dark { DARK_BORDER } else { BORDER }))
         .corner_radius(egui::CornerRadius::same(10))
         .inner_margin(egui::Margin::same(14))
         .show(ui, add)
