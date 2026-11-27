@@ -92,6 +92,9 @@ optional. It does three things for the extension:
   pages and selected text can be translated without sending them to a web service.
 - **A window of its own.** A tray icon opens the helper's settings: the folder, the language packs, and the update
   check. It runs in the background from the tray, not in a terminal.
+- **Helper updates.** The helper checks GitHub for a newer helper, not only a newer extension. When one is out, the window says
+  "A new version is available, please update" with what is new, and a button opens the release page. The helper does not
+  replace itself; download the new one from the release.
 
 The helper has the same version as the extension (for example 0.0.2.1). Download it from the release next to the
 extension zip. See [tools/atlas-updater/README.md](tools/atlas-updater/README.md) for the details.

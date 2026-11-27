@@ -20,6 +20,10 @@ Translation services are external. Their APIs and terms belong to their owners (
 Yandex, DeepL, LibreTranslate). Use your own DeepL or LibreTranslate key when you need one.
 
 ## Third-party code
+- Read-aloud voices (planned, not yet in the helper). The helper's voice catalogue is `tools/atlas-updater/src/voices.json`.
+  Supertonic 3 (Supertone Inc.): model under the BigScience Open RAIL-M licence with use restrictions. Sample code MIT.
+  Kokoro v1.1-zh (hexgrad): Apache-2.0. Both are in the sherpa-onnx voice release (k2-fsa, Apache-2.0).
+  Open question before shipping: the sherpa-onnx build may use espeak-ng (GPL-3.0) for phonemes.
 
 - pdf.js 4.10.38 (Apache License 2.0, Mozilla). In `lib/pdfjs/`: the minified library, its worker and the CJK
   character maps, unchanged. It reads the text of PDF files for the Translator page. The licence text is in

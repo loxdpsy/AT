@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- Helper: checks for a newer helper, not only a newer extension. It shows "A new version is available, please update" with what is new, and a button to the release page.
+- Voice catalogue for read-aloud (Supertonic 3 and Kokoro v1.1), with licences and GitHub SHA-256 digests. Piper is not used.
 
 Not released yet. Changes after 0.0.2.5 are listed here.
 

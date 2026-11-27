@@ -1,0 +1,71 @@
+{
+  "source": "https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models",
+  "note": "Voice models for the helper's read-aloud. Each archive is the sherpa-onnx build published by k2-fsa. The sha256 values are the digests GitHub publishes for those release assets (api.github.com). Check the archive against them before use. The helper asks before each download and shows the licence.",
+  "voices": [
+    {
+      "id": "supertonic-3",
+      "name": "Supertonic 3 (31 languages)",
+      "languages": [
+        "en",
+        "ko",
+        "ja",
+        "ar",
+        "bg",
+        "cs",
+        "da",
+        "de",
+        "el",
+        "es",
+        "et",
+        "fi",
+        "fr",
+        "hi",
+        "hr",
+        "hu",
+        "id",
+        "it",
+        "lt",
+        "lv",
+        "nl",
+        "pl",
+        "pt",
+        "ro",
+        "ru",
+        "sk",
+        "sl",
+        "sv",
+        "tr",
+        "uk",
+        "vi"
+      ],
+      "file": "sherpa-onnx-supertonic-3-tts-int8-2026-05-11.tar.bz2",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/sherpa-onnx-supertonic-3-tts-int8-2026-05-11.tar.bz2",
+      "bytes": 128774318,
+      "sha256": "82fa96f91c4ef8abaae3a14a3f4153facf88bed821d1f7331cec2700f432c427",
+      "licence": "BigScience Open RAIL-M (model); MIT (sample code)",
+      "licenceUrl": "https://huggingface.co/Supertone/supertonic-3/blob/main/LICENSE",
+      "usageRestrictions": "The model card's licence includes use restrictions (Attachment A). Read them before you accept.",
+      "acceptLicence": true,
+      "default": true,
+      "modelCard": "https://huggingface.co/Supertone/supertonic-3"
+    },
+    {
+      "id": "kokoro-v1.1-zh-int8",
+      "name": "Kokoro v1.1 (English and Chinese)",
+      "languages": [
+        "en",
+        "zh"
+      ],
+      "file": "kokoro-int8-multi-lang-v1_1.tar.bz2",
+      "url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/kokoro-int8-multi-lang-v1_1.tar.bz2",
+      "bytes": 147052523,
+      "sha256": "259c9c8bc906d6078e4e0570421885dabb68b539c2f970fcbb890a58eeaf3e9c",
+      "licence": "Apache-2.0",
+      "licenceUrl": "https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh",
+      "acceptLicence": false,
+      "default": false,
+      "modelCard": "https://huggingface.co/hexgrad/Kokoro-82M-v1.1-zh",
+      "openIssue": "The model's own usage notes install espeak-ng (GPL-3.0) for some text. Confirm before shipping."
+    }
+  ]
+}

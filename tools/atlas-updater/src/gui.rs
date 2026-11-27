@@ -307,6 +307,14 @@ impl eframe::App for Helper {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let mut actions: Vec<Action> = Vec::new();
         let dark = ui.visuals().dark_mode;
+        // The helper's own update: the newest release is newer than this helper. Set only when there is one.
+        let newer_helper: Option<String> = self
+            .status
+            .as_ref()
+            .and_then(|s| s.latest.as_ref().ok())
+            .filter(|latest| crate::helper_update_text(latest).is_some())
+            .cloned();
+        let helper_notes: Vec<String> = self.status.as_ref().map(|s| s.notes.clone()).unwrap_or_default();
 
         egui::Panel::top("header")
             .frame(egui::Frame::new().fill(if dark { DARK_CARD } else { Color32::WHITE }).inner_margin(egui::Margin::same(12)))
@@ -317,6 +325,18 @@ impl eframe::App for Helper {
                     ui.vertical(|ui| {
                         ui.label(RichText::new("Atlas Helper").size(20.0).strong());
                         ui.label(RichText::new(format!("Version {}", crate::app_version())).color(muted(ui)));
+                        if let Some(latest) = &newer_helper {
+                            if let Some(text) = crate::helper_update_text(latest) {
+                                ui.label(RichText::new(text).color(RED));
+                            }
+                            // What is new in that release: the bullets of its CHANGELOG section.
+                            for note in helper_notes.iter().take(5) {
+                                ui.label(RichText::new(format!("- {}", note)).color(muted(ui)));
+                            }
+                            if ui.button("Get the new helper").clicked() {
+                                open_target(&format!("{}/tag/v{}", crate::RELEASES_PAGE, latest));
+                            }
+                        }
                     });
                 });
             });
