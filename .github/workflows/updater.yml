@@ -173,7 +173,13 @@ jobs:
           # The version in Cargo.toml is 0.0.2+5; the installer shows 0.0.2.5.
           $line = Select-String -Path Cargo.toml -Pattern '^version = "([0-9.]+)\+([0-9]+)"' | Select-Object -First 1
           $version = "$($line.Matches[0].Groups[1].Value).$($line.Matches[0].Groups[2].Value)"
-          & $iscc "/DMyAppVersion=$version" installer\atlas-helper.iss
+          # Packaging test only: placeholder engine files, so the installer's engine lines are built and installed.
+          # release.yml passes the real engine (built by engine.yml). These placeholders are never published.
+          $engineDir = Join-Path $env:RUNNER_TEMP "engine-placeholder"
+          New-Item -ItemType Directory -Force -Path $engineDir | Out-Null
+          Set-Content -Path (Join-Path $engineDir "atlas-engine-windows.exe") -Value "placeholder"
+          Set-Content -Path (Join-Path $engineDir "atlas-engine-lib-windows.dll") -Value "placeholder"
+          & $iscc "/DMyAppVersion=$version" "/DEngineExe=$engineDir\atlas-engine-windows.exe" "/DEngineLib=$engineDir\atlas-engine-lib-windows.dll" installer\atlas-helper.iss
           if ($LASTEXITCODE -ne 0) { throw "the installer did not build" }
           if (-not (Test-Path "dist\atlas-updater-windows-setup.exe")) { throw "the installer file is missing" }
 
@@ -189,11 +195,14 @@ jobs:
           if ($install.ExitCode -ne 0) { throw "the installer exited with $($install.ExitCode)" }
           $exe = Join-Path $target "atlas-updater.exe"
           if (-not (Test-Path $exe)) { throw "the installer did not put atlas-updater.exe in $target" }
+          if (-not (Test-Path (Join-Path $target "atlas-engine.exe"))) { throw "the installer did not put the offline engine in $target" }
+          if (-not (Test-Path (Join-Path $target "atlas_engine.dll"))) { throw "the installer did not put the engine library in $target" }
           $uninstaller = Get-ChildItem $target -Filter "unins*.exe" | Select-Object -First 1
           if (-not $uninstaller) { throw "no uninstaller was written" }
           $un = Start-Process -FilePath $uninstaller.FullName -ArgumentList "/VERYSILENT", "/SUPPRESSMSGBOXES", "/NORESTART" -Wait -PassThru
           if ($un.ExitCode -ne 0) { throw "the uninstaller exited with $($un.ExitCode)" }
           if (Test-Path $exe) { throw "the uninstaller left atlas-updater.exe behind" }
+          if (Test-Path (Join-Path $target "atlas-engine.exe")) { throw "the uninstaller left the offline engine behind" }
           Write-Output "The installer installed and removed the helper in a silent run."
 
       - name: Upload the installer

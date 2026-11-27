@@ -99,6 +99,14 @@ pub fn library_asset_name() -> Option<&'static str> {
 /// the file, and installs it in the helper's data folder. The engine library (see enginelib.rs) is fetched the same way
 /// when the release has one. Returns the release version.
 pub fn install_from_latest_release(transfer: &Transfer) -> Result<String, String> {
+    // On Windows the engine is part of the setup file and sits next to the helper. The helper never downloads a program
+    // and runs it on Windows, so this only checks that the installed engine is there.
+    if cfg!(windows) {
+        return match find_binary() {
+            Some(_) => Ok(env!("CARGO_PKG_VERSION").replace('+', ".")),
+            None => Err("The offline engine is not in this copy of Atlas Helper. Install it with atlas-updater-windows-setup.exe, which includes the engine.".to_string()),
+        };
+    }
     let asset = engine_asset_name().ok_or("there is no offline engine for this computer")?;
     let release = super::newest_release_json()?;
     let tag = release.get("tag_name").and_then(|v| v.as_str()).ok_or("the latest release has no tag_name")?;
@@ -166,15 +174,16 @@ fn make_executable(_path: &Path) -> Result<(), String> {
     Ok(())
 }
 
-/// The engine program: the copy the helper installed, or one next to the helper program.
+/// The engine program: the one next to the helper program (the installer puts it there), or the copy the helper
+/// downloaded before (on macOS and Linux, and on Windows before the installer included the engine).
 pub fn find_binary() -> Option<PathBuf> {
-    let installed = store::installed_engine();
-    if installed.is_file() {
-        return Some(installed);
-    }
     let beside = std::env::current_exe().ok()?.parent()?.join(store::engine_file_name());
     if beside.is_file() {
         return Some(beside);
+    }
+    let installed = store::installed_engine();
+    if installed.is_file() {
+        return Some(installed);
     }
     None
 }
