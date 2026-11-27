@@ -115,7 +115,8 @@ extension zip. See [tools/atlas-updater/README.md](tools/atlas-updater/README.md
   are in [NOTICE.md](NOTICE.md).
 - **Text recognition (OCR).** The helper reads text in page pictures, such as scanned PDF pages, with PP-OCRv4 (Apache-2.0,
   Chinese and English, about 16 MB). The models are downloaded once and checked with SHA-256. The engine runs on this
-  computer; the picture is sent only to the helper on 127.0.0.1. Other engines and languages are not added yet.
+  computer; the picture is sent only to the helper on 127.0.0.1. Install it in the Offline tab. The ocrs and Tesseract
+  engines and more languages are not added yet.
 - **Not built yet:** reading the text aloud. The voices can be installed and listed, but the helper does not speak yet.
   Piper's phonemizer is espeak-ng (GPL-3.0). A licence review is needed before any release that ships the voices.
 

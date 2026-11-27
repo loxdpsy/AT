@@ -3,7 +3,8 @@
 ## Unreleased
 - Offline text recognition (OCR) engine in the helper: PP-OCRv4 (Apache-2.0), read in pure Rust, with a local
   `/api/offline/ocr` route for the extension. The models are about 16 MB, downloaded once and checked with SHA-256.
-  Still to do: the install button in the helper window, and the extension's OCR button for scanned PDFs.
+  The Offline tab has an OCR card: choose an engine, then install PP-OCRv4. ocrs and Tesseract are listed, not added yet.
+  Still to do: the extension's OCR button for scanned PDFs.
 - Helper: checks for a newer helper, not only a newer extension. It shows "A new version is available, please update" with what is new, and a button to the release page.
 - Atlas Helper starts silently: after install and at sign-in it runs in the tray only, with no window and no console. Its window opens from the tray icon.
 - Read-aloud voices: seven voices for English, Arabic, Chinese and 31 languages in all (Kitten nano 0.2 added for English), with licences and SHA-256 checksums. In the Offline tab, choose a language, tick the voices you want (or select all), and install them: the size and licence are shown first, and each download is checked. Reading aloud is not built yet.
