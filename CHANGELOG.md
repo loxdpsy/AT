@@ -4,6 +4,12 @@
 
 Not released yet. Changes after 0.0.2.5 are listed here.
 
+- Translator page (toolbar popup menu, "Translator"): translate text as you type, with a language swap, Copy and Save.
+  History keeps the newest 100 translations. Saved items stay until you remove them. "Clear history" removes only unsaved items.
+- Translator PDF tab: choose a PDF file or paste its address. The text is read and translated on this computer with the
+  Offline helper (one side must be English, and the language pack must be installed). Scanned PDFs are not supported.
+- Setup page: Save closes the page. When the helper still needs connecting, the note stays for a few seconds first.
+
 ## 0.0.2.7
 
 Prepared, not published yet.

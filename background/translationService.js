@@ -1534,6 +1534,12 @@ const translationService = function () {
       async service => (await service.translate(sourceLanguage, targetLanguage, sourceArray.map(text => [text]), dontSaveInPersistentCache)).map(result => result[0]),
       null);
   };
+  // Translates with this one service only. When it fails, no other service is tried: the PDF translator uses this so
+  // that its text stays on this computer (the offline helper).
+  translationService.translateTextOnly = async (serviceName, sourceLanguage, targetLanguage, sourceArray, dontSaveInPersistentCache = false) => {
+    const service = getSafeServiceByName(serviceName);
+    return (await service.translate(sourceLanguage, targetLanguage, sourceArray.map(text => [text]), dontSaveInPersistentCache)).map(result => result[0]);
+  };
   translationService.translateSingleText = async (serviceName, sourceLanguage, targetLanguage, originalText, dontSaveInPersistentCache = false) => {
     return await translateWithFallback(serviceName, targetLanguage, false,
       async service => (await service.translate(sourceLanguage, targetLanguage, [[originalText]], dontSaveInPersistentCache))[0][0],
@@ -1600,6 +1606,12 @@ const translationService = function () {
     } else if (request.action === "translateText") {
       translationService.translateText(request.translationService, request.sourceLanguage, request.targetLanguage, request.sourceArray, dontSaveInPersistentCache).then(results => sendResponse(results)).catch(e => {
         sendResponse();
+        console.error(e);
+      });
+      return true;
+    } else if (request.action === "translateTextOnly") {
+      translationService.translateTextOnly(request.translationService, request.sourceLanguage, request.targetLanguage, request.sourceArray, dontSaveInPersistentCache).then(results => sendResponse({ results })).catch(e => {
+        sendResponse({ error: String(e && e.message ? e.message : e) });
         console.error(e);
       });
       return true;

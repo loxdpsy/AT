@@ -18,3 +18,9 @@
 
 Translation services are external. Their APIs and terms belong to their owners (Google, Microsoft,
 Yandex, DeepL, LibreTranslate). Use your own DeepL or LibreTranslate key when you need one.
+
+## Third-party code
+
+- pdf.js 4.10.38 (Apache License 2.0, Mozilla). In `lib/pdfjs/`: the minified library, its worker and the CJK
+  character maps, unchanged. It reads the text of PDF files for the Translator page. The licence text is in
+  `lib/pdfjs/LICENSE`.

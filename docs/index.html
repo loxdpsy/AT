@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atlas Translation</title>
+  <meta name="description" content="Atlas Translation translates web pages, text and PDF files in your browser.">
+  <style>
+    :root { color-scheme: light dark; --ink: #202124; --muted: #5f6368; --blue: #1f63d6; --card: #ffffff; --line: #d3d9e3; --bg: #f3f5f9; }
+    @media (prefers-color-scheme: dark) { :root { --ink: #f1f3f6; --muted: #a8b0bd; --blue: #8ab4f8; --card: #20242d; --line: #3a404c; --bg: #171a21; } }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif; background: var(--bg); color: var(--ink); line-height: 1.55; }
+    main { max-width: 760px; margin: 0 auto; padding: 48px 24px 64px; }
+    header { display: flex; align-items: center; gap: 16px; }
+    header img { width: 64px; height: 64px; }
+    h1 { font-size: 32px; margin: 0; }
+    .lead { font-size: 18px; color: var(--muted); margin: 8px 0 28px; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 36px; }
+    .button { display: inline-block; padding: 11px 18px; border-radius: 8px; text-decoration: none; font-weight: 600; border: 1px solid var(--blue); color: var(--blue); }
+    .button.primary { background: var(--blue); color: #fff; }
+    section { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 20px 24px; margin-bottom: 16px; }
+    h2 { font-size: 18px; margin: 0 0 8px; }
+    ul { margin: 0; padding-left: 20px; }
+    li { margin: 4px 0; }
+    footer { margin-top: 32px; font-size: 14px; color: var(--muted); }
+    a { color: var(--blue); }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <img src="icon-128.png" alt="">
+      <h1>Atlas Translation</h1>
+    </header>
+    <p class="lead">Translate web pages, selected text and PDF files in your browser.</p>
+
+    <div class="actions">
+      <a class="button primary" href="https://github.com/loxdpsy/AT/releases">Download a release</a>
+      <a class="button" href="https://github.com/loxdpsy/AT">Source code on GitHub</a>
+      <a class="button" href="privacy-policy.html">Privacy policy</a>
+    </div>
+
+    <section>
+      <h2>What it does</h2>
+      <ul>
+        <li>Translates whole web pages, with Google, Bing, Yandex, DeepL or LibreTranslate.</li>
+        <li>Translator page: type or paste text and see the translation at once, like Google Translate. Save items and keep a history.</li>
+        <li>PDF translation: choose a PDF and translate it on your computer with the Offline helper, when a language pack is installed.</li>
+        <li>Offline translation with the Atlas Helper, which runs on your computer.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Install</h2>
+      <p>The packages and the install steps for each browser are on the <a href="https://github.com/loxdpsy/AT/releases">releases page</a>.</p>
+    </section>
+
+    <footer>
+      Atlas Translation is a modified fork of TWP - Translate Web Pages by FilipePS. Translation services belong to their owners.
+    </footer>
+  </main>
+</body>
+</html>
