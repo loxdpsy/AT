@@ -32,6 +32,7 @@ mod sha256;
 mod store;
 mod tray;
 mod transfer;
+mod voices;
 
 use std::fs;
 use std::path::{Path, PathBuf};
