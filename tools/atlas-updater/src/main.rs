@@ -281,6 +281,14 @@ fn download(url: &str, dest: &Path) -> Result<(), String> {
 }
 
 fn download_once(url: &str, dest: &Path) -> Result<(), String> {
+    // The tests install packs from files on disk. The program downloads over https only (packs::parse_catalogue checks it).
+    #[cfg(test)]
+    {
+        if let Some(path) = url.strip_prefix("file://") {
+            fs::copy(path, dest).map_err(|e| format!("cannot copy {}: {}", path, e))?;
+            return Ok(());
+        }
+    }
     let response = ureq::get(url)
         .timeout(std::time::Duration::from_secs(300))
         .call()
