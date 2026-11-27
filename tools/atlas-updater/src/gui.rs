@@ -23,6 +23,7 @@ use crate::autostart;
 use crate::bind::{self, BindRequest, Shared};
 use crate::browsers::{self, Browser};
 use crate::engine::{self, Engine};
+use crate::ocr;
 use crate::packs::{self, Catalogue, Pack};
 use crate::settings::{self, Settings};
 use crate::store;
@@ -85,6 +86,8 @@ enum Action {
     InstallPacks(Vec<usize>),
     /// Installs every read-aloud voice for a language that is not installed yet.
     InstallVoices(String),
+    /// Installs the text recognition models (PP-OCRv4).
+    InstallOcr,
     /// Opens the Offline tab with a language's voices ready to confirm (from the welcome page).
     OfferVoices(String),
     RemoveBinding(usize),
@@ -519,6 +522,40 @@ impl Helper {
     }
 
     /// Read-aloud voices: choose a language, see the voices that speak it, and install them all at once.
+    /// Text recognition (OCR). The user chooses an engine and installs it. PP-OCRv4 can be installed now; the other
+    /// two engines are listed so the choice is clear, and are not available yet.
+    fn ocr_card(&mut self, ui: &mut egui::Ui, idle: bool, actions: &mut Vec<Action>) {
+        let ready = ocr::installed(&store::data_dir());
+        card(ui, |ui| {
+            ui.label(RichText::new("Text recognition (OCR)").strong());
+            ui.label(
+                RichText::new("Reads the text in scanned pages and pictures on this computer. Choose an engine, then install it. Each download is checked with SHA-256.")
+                    .color(muted(ui))
+                    .small(),
+            );
+            ui.add_space(6.0);
+            ui.horizontal_wrapped(|ui| {
+                ui.label(RichText::new("PP-OCRv4").strong());
+                ui.label(RichText::new("Chinese and English. Apache-2.0. About 16 MB.").color(muted(ui)));
+                if ready {
+                    ui.label(RichText::new("Installed").color(GREEN));
+                } else if ui.add_enabled(idle, egui::Button::new("Install")).clicked() {
+                    actions.push(Action::InstallOcr);
+                }
+            });
+            for (name, note) in [
+                ("ocrs", "English and Latin letters. Model licence CC BY-SA 4.0. Not added yet."),
+                ("Tesseract", "Many languages. Apache-2.0, needs a native library. Not added yet."),
+            ] {
+                ui.horizontal_wrapped(|ui| {
+                    ui.label(RichText::new(name).strong());
+                    ui.label(RichText::new(note).color(muted(ui)));
+                    ui.add_enabled(false, egui::Button::new("Coming soon"));
+                });
+            }
+        });
+    }
+
     fn voices_card(&mut self, ui: &mut egui::Ui, idle: bool) {
         if self.voices.is_none() {
             self.voices = Some(voices::catalogue());
@@ -713,6 +750,8 @@ impl Helper {
         });
 
         self.voices_card(ui, idle);
+        ui.add_space(14.0);
+        self.ocr_card(ui, idle, actions);
         ui.add_space(14.0);
         ui.heading("Language packs");
         if !self.catalogue_asked {
@@ -1406,6 +1445,13 @@ impl Helper {
                         self.start_download(&label, move |transfer| install_voices(&root, &chosen, &transfer));
                     }
                 }
+            }
+            Action::InstallOcr => {
+                let root = store::data_dir();
+                self.start_download("Installing the text recognition models...", move |transfer| match ocr::install(&root, &transfer) {
+                    Ok(()) => Event::Done { ok: true, text: "Installed the text recognition models (PP-OCRv4).".to_string(), reload: false },
+                    Err(e) => Event::Done { ok: false, text: e, reload: false },
+                });
             }
             Action::OfferVoices(language) => {
                 self.tab = Tab::Offline;
