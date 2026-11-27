@@ -13,6 +13,7 @@ Not released yet. Changes after 0.0.2.1 will be listed here.
 - Atlas Helper: a Settings card for the look: theme (follow the system, light or dark) and text size (normal or large).
 - Atlas Helper: a Settings switch decides whether closing the window keeps the helper in the tray (on by default) or quits it.
 - Offline translation: a page in a right-to-left language is no longer flipped as a whole. Only the translated text blocks take their direction from their own text, so English punctuation (such as a question mark at the end of a headline) stays where it belongs.
+- Extension: the errors "No tab with id", "Cannot read properties of undefined (reading 'toLowerCase')" and "Extension context invalidated" no longer appear. Messages to a closed tab are skipped, the PDF check in the popup handles a missing tab or address, and the browser's harmless errors after a reload are not shown as uncaught.
 - Atlas Helper: the published 0.0.2.5 Windows helper ran PowerShell to unzip and curl to download, and those opened a command window. The helper now downloads and unzips by itself. This fix is on the branch and needs a new release.
 - Atlas Helper: the Offline translation list has a search box (by language name or code, for example "German" or "de") and an "Installed only" filter. Installed packs are listed first. The list reads the installed packs once, not on every frame.
 - Atlas Helper: the README says what to do when Windows Defender warns about the helper: check the SHA-256 against the release, allow the file on the device, and report it to Microsoft.

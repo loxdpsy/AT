@@ -12,7 +12,7 @@ $("#btnApply").addEventListener("click", () => {
     active: true,
     currentWindow: true
   }, tabs => {
-    chrome.tabs.sendMessage(tabs[0].id, {
+    twpSendToTab((tabs[0] || {}).id, {
       action: "improveTranslation",
       sourceLanguage: $("#selectOriginalLanguage").value,
       pageTranslatorService: $("#pageTranslatorService").value,
@@ -32,13 +32,13 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     active: true,
     currentWindow: true
   }, tabs => {
-    chrome.tabs.sendMessage(tabs[0].id, {
+    twpSendToTab((tabs[0] || {}).id, {
       action: "getCurrentSourceLanguage"
     }, sourceLanguage => {
       checkedLastError();
       $("#selectOriginalLanguage").value = sourceLanguage ? sourceLanguage : "auto";
     });
-    chrome.tabs.sendMessage(tabs[0].id, {
+    twpSendToTab((tabs[0] || {}).id, {
       action: "getCurrentPageTranslatorService"
     }, pageService => {
       checkedLastError();
@@ -46,7 +46,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
         $("#pageTranslatorService").value = pageService;
       }
     });
-    chrome.tabs.sendMessage(tabs[0].id, {
+    twpSendToTab((tabs[0] || {}).id, {
       action: "getDontSortResults"
     }, dontSortResults => {
       checkedLastError();

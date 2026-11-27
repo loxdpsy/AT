@@ -51,7 +51,7 @@ twpConfig.onReady().then(() => twpI18n.updateUiMessages()).then(() => {
     active: true,
     currentWindow: true
   }, tabs => {
-    chrome.tabs.detectLanguage(tabs[0].id, lang => lang ? originalTabLanguage = lang : void 0);
+    if (tabs[0]) chrome.tabs.detectLanguage(tabs[0].id, lang => lang ? originalTabLanguage = lang : void 0);
   });
   let isPlayingAudio = false;
   function playAudio(text, targetLanguage, cbOnEnded = () => {}) {
