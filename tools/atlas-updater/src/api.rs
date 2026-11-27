@@ -4,6 +4,7 @@
 //   GET  /api/offline/ping                  what is installed (no secret)
 //   POST /api/offline/unbind                 Authorization: Bearer <token> (removes this binding)
 //   POST /api/offline/translate              Authorization: Bearer <token>, {"pair": "enfr", "texts": ["..."]}
+//   POST /api/offline/speak                  Authorization: Bearer <token>, {"voice": "supertonic-3", "text": "...", "reading": "normal"}
 //
 // Only extension pages may call it: the Origin must be chrome-extension:// or moz-extension://, and the Host must be
 // this computer. Translation needs a token from a binding the user allowed in the helper window (see bind.rs). A web page cannot read the
@@ -21,7 +22,9 @@ use crate::bind::{self, BindRequest, Bindings, Shared};
 use crate::engine::{self, Engine};
 use crate::json;
 use crate::packs;
+use crate::speak;
 use crate::store;
+use crate::voices;
 
 pub const PORT: u16 = 47632;
 
@@ -191,6 +194,14 @@ fn handle(stream: &mut TcpStream, engine: &Engine, bindings: &Shared, requests: 
                 send(stream, 403, allow, &error_body("this browser is not bound"))
             }
         }
+        ("POST", "/api/offline/speak") => {
+            let token = request.header("authorization").and_then(|h| h.strip_prefix("Bearer "));
+            let (status, body) = {
+                let guard = bindings.lock().unwrap_or_else(|p| p.into_inner());
+                speak_request(&request.body, token, &guard)
+            };
+            send(stream, status, allow, &body)
+        }
         ("POST", "/api/offline/translate") => {
             let token = request.header("authorization").and_then(|h| h.strip_prefix("Bearer "));
             let (status, body) = {
@@ -250,6 +261,47 @@ fn bind_request(body: &str, origin: Option<&str>, requests: &Sender<BindRequest>
 }
 
 /// Returns the HTTP status and the JSON body for a translate request.
+fn speak_request(body: &str, token: Option<&str>, bindings: &Bindings) -> (u16, String) {
+    speak_from(body, token, bindings, &store::data_dir())
+}
+
+/// The speak request, with the data folder given. The voice and the runtime are read from disk. The sound plays on
+/// this computer on its own thread, so the answer does not wait for the end of the sentence.
+fn speak_from(body: &str, token: Option<&str>, bindings: &Bindings, data: &Path) -> (u16, String) {
+    let value = match json::parse(body) {
+        Ok(v) => v,
+        Err(_) => return (400, error_body("the request is not valid JSON")),
+    };
+    if !token.map_or(false, |t| bindings.verify(t)) {
+        return (403, error_body("this browser is not bound to the helper. Bind it again from the extension."));
+    }
+    let voice_id = value.get("voice").and_then(|v| v.as_str()).unwrap_or("").to_string();
+    let text = value.get("text").and_then(|v| v.as_str()).unwrap_or("").to_string();
+    let reading = value.get("reading").and_then(|v| v.as_str()).unwrap_or("normal").to_string();
+    let list = match voices::catalogue() {
+        Ok(l) => l,
+        Err(e) => return (500, error_body(&e)),
+    };
+    let voice = match list.iter().find(|v| v.id == voice_id) {
+        Some(v) => v,
+        None => return (400, error_body("this voice is not in the helper's list")),
+    };
+    if !voices::is_installed_in(&data.join("voices"), voice) {
+        return (409, error_body(&format!("{} is not installed. Install it in the helper's Offline tab.", voice.name)));
+    }
+    if !speak::runtime_installed(data) {
+        return (409, error_body("the read-aloud runtime is not installed. Install it in the helper's Offline tab."));
+    }
+    let file = match speak::synthesize(data, voice, &text, speak::speed_for(&reading)) {
+        Ok(f) => f,
+        Err(e) => return (500, error_body(&e)),
+    };
+    thread::spawn(move || {
+        let _ = speak::play(&file);
+    });
+    (200, "{\"ok\":true}".to_string())
+}
+
 fn translate_request(body: &str, engine: &Engine, token: Option<&str>, bindings: &Bindings) -> (u16, String) {
     translate_from(body, engine, token, bindings, &store::packs_dir(), engine::find_binary())
 }
@@ -316,6 +368,23 @@ mod tests {
         let mut bindings = Bindings::in_memory();
         let token = bindings.add("Test browser").unwrap();
         (bindings, token)
+    }
+
+    #[test]
+    fn speaking_needs_a_bound_browser_and_a_known_voice() {
+        let (bindings, token) = bound();
+        let dir = std::env::temp_dir().join(format!("atlas-api-speak-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        let body = "{\"voice\":\"supertonic-3\",\"text\":\"hi\"}";
+        assert_eq!(speak_from(body, None, &bindings, &dir).0, 403, "no token");
+        assert_eq!(speak_from(body, Some("wrong"), &bindings, &dir).0, 403, "unbound token");
+        assert_eq!(speak_from("not json", Some(&token), &bindings, &dir).0, 400);
+        assert_eq!(speak_from("{\"voice\":\"nope\",\"text\":\"hi\"}", Some(&token), &bindings, &dir).0, 400);
+        // A known voice that is not installed, and no runtime, are both reported as 409 with a clear message.
+        let (status, text) = speak_from(body, Some(&token), &bindings, &dir);
+        assert_eq!(status, 409);
+        assert!(text.contains("not installed"), "{}", text);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
