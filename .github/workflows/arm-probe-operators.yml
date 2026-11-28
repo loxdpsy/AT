@@ -11,7 +11,7 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 40
+    timeout-minutes: 60
     env:
       CMAKE_POLICY_VERSION_MINIMUM: "3.5"
     defaults:
@@ -70,20 +70,12 @@ jobs:
             compilers=(-DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18)
           fi
           cmake -S tools/atlas-engine -B build/engine -DCMAKE_BUILD_TYPE=Release "${compilers[@]}"
-      - name: Show the compile command and compile node.cpp
+      - name: Full engine build, keep going, list the failing objects
         run: |
           set +e
-          cd build/engine
-          O=bergamot/marian-fork/src/CMakeFiles/marian.dir/graph/node.cpp.o
-          make -f bergamot/marian-fork/src/CMakeFiles/marian.dir/build.make -n $O > /tmp/dry.txt 2>&1
-          echo "dry exit $?"
-          cmd=$(grep "node.cpp" /tmp/dry.txt | head -1)
-          echo "::notice title=cmd-head::$(echo "$cmd" | cut -c1-900)"
-          echo "::notice title=cmd-tail::$(echo "$cmd" | cut -c901-1900)"
-          echo "::notice title=cmd-tail2::$(echo "$cmd" | cut -c1901-2900)"
-          head -3 /tmp/dry.txt | while IFS= read -r l; do echo "::notice title=dry::${l//%/%25}"; done
-          make -k -f bergamot/marian-fork/src/CMakeFiles/marian.dir/build.make $O > /tmp/node.log 2>&1
+          cmake --build build/engine --config Release --parallel 4 -- -k > /tmp/full.log 2>&1
           echo "build exit $?"
-          grep -E "error|fatal" /tmp/node.log | head -8 | while IFS= read -r l; do echo "::error title=node-error::${l//%/%25}"; done
-          tail -3 /tmp/node.log | while IFS= read -r l; do echo "::notice title=node-tail::${l//%/%25}"; done
+          echo "::notice title=generator::$(grep -m1 -o 'CMAKE_GENERATOR:INTERNAL=.*' build/engine/CMakeCache.txt)"
+          grep -E "FAILED|\*\*\*" /tmp/full.log | head -30 | while IFS= read -r l; do echo "::notice title=failing::${l//%/%25}"; done
+          grep -E "error:" /tmp/full.log | sort | uniq -c | sort -rn | head -12 | while IFS= read -r l; do echo "::error title=error-line::${l//%/%25}"; done
           exit 0
