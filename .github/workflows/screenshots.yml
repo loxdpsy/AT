@@ -110,6 +110,18 @@ jobs:
           shoot 04-connections
           stop_helper
 
+          # The dark theme: the same two tabs with the theme set to dark. The first-run question is marked as answered,
+          # so the window shows the tab itself.
+          export XDG_DATA_HOME="$RUNNER_TEMP/xdg-dark"
+          mkdir -p "$XDG_DATA_HOME/AtlasTranslation"
+          printf 'theme=dark\nwelcomed=true\n' > "$XDG_DATA_HOME/AtlasTranslation/settings.txt"
+          start_helper extension
+          shoot 05-extension-dark
+          stop_helper
+          start_helper offline
+          shoot 06-offline-dark
+          stop_helper
+
           kill "$XVFB" 2>/dev/null || true
           ls -l "$SHOTS"
 
