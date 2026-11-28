@@ -11,28 +11,74 @@ permissions:
 jobs:
   probe:
     runs-on: ubuntu-24.04-arm
-    timeout-minutes: 20
+    timeout-minutes: 40
+    env:
+      CMAKE_POLICY_VERSION_MINIMUM: "3.5"
+    defaults:
+      run:
+        shell: bash
     steps:
-      - name: Fetch marian inference and simd_utils
+      - uses: actions/checkout@v4
+      - name: Fetch Bergamot
+        env:
+          RUNNER_ARCH: ${{ runner.arch }}
         run: |
           set -euo pipefail
-          mkdir -p /tmp/p
-          curl -fsSL https://codeload.github.com/mozilla/translations/tar.gz/eea6e5a80aa4ddd86d9cc35ce9a65b79aa3ab96d | tar xz -C /tmp/p
-          mv /tmp/p/translations-*/inference /tmp/p/inference
-          mkdir -p /tmp/p/inference/marian-fork/src/3rd_party/simd_utils
-          curl -fsSL https://codeload.github.com/browsermt/simd_utils/tar.gz/d0793d86aea9036a5bc77b9ca7791dff024168ca | tar xz --strip-components=1 -C /tmp/p/inference/marian-fork/src/3rd_party/simd_utils
-          sed -i '/#include <stdio.h>/a #include <fenv.h>' /tmp/p/inference/marian-fork/src/3rd_party/simd_utils/simd_utils.h
-          clang++-18 --version | head -1
-          echo "arch: $(uname -m)"
-      - name: Compile operators.h as the engine does
+          src=tools/atlas-engine/translations-source
+          tmp=$(mktemp -d)
+          mkdir -p "$src"
+          curl -fsSL https://codeload.github.com/mozilla/translations/tar.gz/eea6e5a80aa4ddd86d9cc35ce9a65b79aa3ab96d \
+            | tar xz -C "$tmp"
+          mv "$tmp"/translations-*/inference "$src/inference"
+          rm -rf "$tmp"
+          git init -q "$src"
+          git -C "$src" -c user.name=ci -c user.email=ci@localhost commit -q --allow-empty \
+            -m "mozilla/translations eea6e5a80aa4ddd86d9cc35ce9a65b79aa3ab96d (inference/ from the source tarball)"
+          fetch() { # <owner/repo> <commit> <destination> [extra tar options]
+            mkdir -p "$3"
+            curl -fsSL "https://codeload.github.com/$1/tar.gz/$2" | tar xz --strip-components=1 -C "$3" "${@:4}"
+          }
+          # Commits are the gitlinks of eea6e5a8 (inference/3rd_party/ssplit-cpp, marian-fork/src/3rd_party/...).
+          fetch browsermt/ssplit-cpp a311f9865ade34db1e8e080e6cc146f55dafb067 "$src/inference/3rd_party/ssplit-cpp"
+          # One file is left out of sentencepiece: a symlink to a Python test fixture. Windows cannot always create symlinks.
+          fetch browsermt/sentencepiece ae41b7740d7006596bb9257e83340b2620db9d00 "$src/inference/marian-fork/src/3rd_party/sentencepiece" \
+            --exclude='*/python/test/botchan.txt'
+          fetch kpu/intgemm f7401513da71758dacce52fed1c7855549abee59 "$src/inference/marian-fork/src/3rd_party/intgemm"
+          # onnxjs supplies the float GEMM of the WASM-compatible sources (USE_WASM_COMPATIBLE_SOURCE, see the engine CMakeLists).
+          fetch browsermt/onnxjs 924924b08e9596b41aeebada4a172f026be95f5a "$src/inference/marian-fork/src/3rd_party/onnxjs"
+          fetch abhi-agg/eigen-git-mirror fff37f4ca0397af9ed7e04f3bd6b893a1ea2b08e "$src/inference/marian-fork/src/3rd_party/onnxjs/deps/eigen"
+          # ARM64 only (marian's ARM branch). Ruy does the float32 products, with its own cpuinfo; simd_utils is the
+          # NEON math that marian's functional/operators.h includes. These are the commits marian's ARM build pins.
+          if [ "$RUNNER_ARCH" = "ARM64" ]; then
+            fetch google/ruy 2d950b3bfa7ebfbe7a97ecb44b1cc4da5ac1d6f0 "$src/inference/marian-fork/src/3rd_party/ruy"
+            fetch pytorch/cpuinfo 5916273f79a21551890fd3d56fc5375a78d1598d "$src/inference/marian-fork/src/3rd_party/ruy/third_party/cpuinfo"
+            fetch browsermt/simd_utils d0793d86aea9036a5bc77b9ca7791dff024168ca "$src/inference/marian-fork/src/3rd_party/simd_utils"
+            # simd_utils.h calls fesetround (FE_TONEAREST) without including <fenv.h>; GCC does not get it from elsewhere.
+            sed -i '/#include <stdio.h>/a #include <fenv.h>' "$src/inference/marian-fork/src/3rd_party/simd_utils/simd_utils.h"
+            # Marian's ARM build defines the macro SSE, and Eigen names an enum value SSE (Core/util/Constants.h).
+            # The macro turns that declaration into a syntax error, so the value is renamed here. Its meaning is unchanged.
+            sed -i 's/\bSSE\b/EIGEN_SSE_FLAG/g' "$src/inference/marian-fork/src/3rd_party/onnxjs/deps/eigen/Eigen/src/Core/util/Constants.h"
+            grep -n "EIGEN_SSE_FLAG" "$src/inference/marian-fork/src/3rd_party/onnxjs/deps/eigen/Eigen/src/Core/util/Constants.h"
+          fi
+      - name: Configure
+        env:
+          RUNNER_ARCH: ${{ runner.arch }}
+          RUNNER_OS: ${{ runner.os }}
         run: |
-          cd /tmp/p/inference/marian-fork/src
-          printf '#include "functional/defs.h"\n#include "functional/operators.h"\nint main(){return 0;}\n' > probe.cpp
-          flags="-std=gnu++11 -fPIC -include cstdint -flax-vector-conversions -Wall -Werror -Wextra -Wno-unused-result -Wno-deprecated -Wno-pragmas -Wno-unused-parameter -Wno-unused-function -Wno-unused-value -Wno-unknown-pragmas -Wno-sign-compare -Wno-missing-field-initializers -Wno-unused-private-field -Wno-comment -fno-strict-aliasing -DARM -DFMA -DSSE -DUSE_SSE2 -DWASM_COMPATIBLE_SOURCE -DCOMPILE_CPU=1 -DUSE_ONNX_SGEMM=1 -O3 -I. -I3rd_party -I3rd_party/simd_utils -I3rd_party/onnxjs/deps/eigen -I3rd_party/spdlog/include"
-          clang++-18 $flags -H -fsyntax-only probe.cpp > trace.txt 2>&1 || true
-          echo "::notice title=probe::neon_mathfun includes: $(grep -c 'neon_mathfun' trace.txt); sse_mathfun includes: $(grep -c 'sse_mathfun' trace.txt)"
-          clang++-18 $flags -E probe.cpp -o pp.ii 2>/dev/null || true
-          grep -n "sin_ps(v4sf\|struct Ops<float32x4>" pp.ii | head -5 | while IFS= read -r l; do echo "::notice title=probe-pp::${l//%/%25}"; done
-          clang++-18 $flags -fsyntax-only probe.cpp > errs.txt 2>&1 || true
-          grep -E "error:" errs.txt | head -8 | while IFS= read -r l; do echo "::error title=probe-error::${l//%/%25}"; done
-          echo "done"
+          compilers=()
+          if [ "$RUNNER_ARCH" = "ARM64" ] && [ "$RUNNER_OS" = "Linux" ]; then
+            compilers=(-DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18)
+          fi
+          cmake -S tools/atlas-engine -B build/engine -DCMAKE_BUILD_TYPE=Release "${compilers[@]}"
+      - name: Show the compile command and compile node.cpp
+        run: |
+          cd build/engine
+          d=bergamot/marian-fork/src
+          make -n -C $d -f CMakeFiles/marian.dir/build.make CMakeFiles/marian.dir/graph/node.cpp.o 2>&1 | grep -o ' -c .*' | head -1 > /tmp/cmd.txt || true
+          cmd=$(make -n -C $d -f CMakeFiles/marian.dir/build.make CMakeFiles/marian.dir/graph/node.cpp.o 2>&1 | grep "node.cpp" | head -1)
+          echo "::notice title=cmd-head::$(echo "$cmd" | cut -c1-900)"
+          echo "::notice title=cmd-tail::$(echo "$cmd" | cut -c901-1900)"
+          echo "::notice title=cmd-tail2::$(echo "$cmd" | cut -c1901-2900)"
+          make -k -C $d -f CMakeFiles/marian.dir/build.make CMakeFiles/marian.dir/graph/node.cpp.o > /tmp/node.log 2>&1 || true
+          grep -E "error|fatal" /tmp/node.log | head -8 | while IFS= read -r l; do echo "::error title=node-error::${l//%/%25}"; done
+          echo "::notice title=node-result::$(tail -2 /tmp/node.log | tr '\n' ' ' | cut -c1-300)"
