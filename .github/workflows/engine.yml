@@ -109,18 +109,14 @@ jobs:
           # onnxjs supplies the float GEMM of the WASM-compatible sources (USE_WASM_COMPATIBLE_SOURCE, see the engine CMakeLists).
           fetch browsermt/onnxjs 924924b08e9596b41aeebada4a172f026be95f5a "$src/inference/marian-fork/src/3rd_party/onnxjs"
           fetch abhi-agg/eigen-git-mirror fff37f4ca0397af9ed7e04f3bd6b893a1ea2b08e "$src/inference/marian-fork/src/3rd_party/onnxjs/deps/eigen"
-          # ARM64 only (marian's ARM branch). Ruy does the float32 products, with its own cpuinfo; simd_utils is the
-          # NEON math that marian's functional/operators.h includes. These are the commits marian's ARM build pins.
+          # ARM64 only. Marian's ARM branch uses Ruy for the float32 products (with its own cpuinfo) and simd_utils for the
+          # NEON math in functional/operators.h. These are the commits that build pins. simd_utils.h calls fesetround
+          # without including <fenv.h>, which GCC does not get from elsewhere (the engine builds with clang anyway).
           if [ "$RUNNER_ARCH" = "ARM64" ]; then
             fetch google/ruy 2d950b3bfa7ebfbe7a97ecb44b1cc4da5ac1d6f0 "$src/inference/marian-fork/src/3rd_party/ruy"
             fetch pytorch/cpuinfo 5916273f79a21551890fd3d56fc5375a78d1598d "$src/inference/marian-fork/src/3rd_party/ruy/third_party/cpuinfo"
             fetch browsermt/simd_utils d0793d86aea9036a5bc77b9ca7791dff024168ca "$src/inference/marian-fork/src/3rd_party/simd_utils"
-            # simd_utils.h calls fesetround (FE_TONEAREST) without including <fenv.h>; GCC does not get it from elsewhere.
             sed -i '/#include <stdio.h>/a #include <fenv.h>' "$src/inference/marian-fork/src/3rd_party/simd_utils/simd_utils.h"
-            # Marian's ARM build defines the macro SSE, and Eigen names an enum value SSE (Core/util/Constants.h).
-            # The macro turns that declaration into a syntax error, so the value is renamed here. Its meaning is unchanged.
-            sed -i 's/\bSSE\b/EIGEN_SSE_FLAG/g' "$src/inference/marian-fork/src/3rd_party/onnxjs/deps/eigen/Eigen/src/Core/util/Constants.h"
-            grep -n "EIGEN_SSE_FLAG" "$src/inference/marian-fork/src/3rd_party/onnxjs/deps/eigen/Eigen/src/Core/util/Constants.h"
           fi
 
       - name: Set up Node
@@ -137,8 +133,8 @@ jobs:
           "$root/vcpkg.exe" install pcre2:x64-windows-static
           echo "CMAKE_PREFIX_PATH=$(cygpath -m "$root/installed/x64-windows-static")" >> "$GITHUB_ENV"
 
-      # ARM64 Linux uses clang 18 (preinstalled on the runner image). GCC 13 fails in marian's NEON code
-      # (functional/operators.h cannot see sin_ps, log_ps and cos_ps from simd_utils); clang compiles it.
+      # ARM64 Linux builds with clang 18 (preinstalled on the runner image). Marian's NEON code is checked with clang here;
+      # GCC was not retried after the ARM definitions were fixed (see tools/atlas-engine/CMakeLists.txt).
       - name: Configure
         id: configure
         run: |

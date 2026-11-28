@@ -42,6 +42,9 @@ set(USE_MKL OFF CACHE BOOL "" FORCE)
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$")
   set(USE_INTGEMM OFF CACHE BOOL "" FORCE)
   set(USE_RUY ON CACHE BOOL "" FORCE)
+  # The WASM-compatible sources (set below) pick ONNX for float32 products, but marian's float32 Prod only exists for
+  # BLAS or Ruy. Ruy is the float32 path marian uses on ARM, so ONNX is turned off here.
+  set(USE_ONNX_SGEMM OFF CACHE BOOL "" FORCE)
 else()
   set(USE_INTGEMM ON CACHE BOOL "" FORCE)
   set(USE_RUY OFF CACHE BOOL "" FORCE)
