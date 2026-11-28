@@ -36,14 +36,13 @@ jobs:
           - os: macos-15-intel
             binary: atlas-updater
             artifact: atlas-updater-macos-intel
-          # The arm64 runners are free in public repositories. These builds check that the helper compiles and passes its
-          # tests on arm64. The release does not ship them yet: the offline engine has no arm64 build (see the README).
+          # The arm64 runners are free in public repositories. This build checks that the helper compiles and passes its
+          # tests on Linux arm64. The release does not ship it yet: the offline engine has no arm64 build (see the README).
+          # Windows arm64 is not here: tract-linalg (the OCR runtime) does not link its arm64 kernels with the MSVC
+          # toolchain on the windows-11-arm runner. Add it back once that build works.
           - os: ubuntu-24.04-arm
             binary: atlas-updater
             artifact: atlas-updater-linux-arm64
-          - os: windows-11-arm
-            binary: atlas-updater.exe
-            artifact: atlas-updater-windows-arm64
     defaults:
       run:
         shell: bash
@@ -53,16 +52,6 @@ jobs:
 
       - name: Set up Rust (the helper window needs Rust 1.92 or later)
         uses: dtolnay/rust-toolchain@stable
-
-      # ring (a TLS library the helper uses for downloads) compiles its C code with clang-cl on Windows ARM64.
-      - name: LLVM for ring (Windows arm64 only)
-        if: runner.os == 'Windows' && runner.arch == 'ARM64'
-        shell: pwsh
-        run: |
-          choco install llvm --no-progress -y | Out-Null
-          $bin = "C:\Program Files\LLVM\bin"
-          if (-not (Test-Path "$bin\clang.exe")) { throw "clang was not installed" }
-          Add-Content -Path $env:GITHUB_PATH -Value $bin
 
       - name: Compile errors as annotations (so a failed build shows what broke)
         shell: bash
