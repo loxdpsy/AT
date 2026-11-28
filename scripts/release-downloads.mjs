@@ -9,33 +9,46 @@ import { pathToFileURL } from "url";
 
 // Platforms the release does not build yet. They are named in the table, so nobody looks for them in vain.
 export const NOT_BUILT_YET = {
-  Windows: "Windows ARM64 is not built yet.",
-  Linux: "Linux ARM64 and the .deb and .rpm packages are not built yet.",
+  Windows: "Windows ARM64 (Snapdragon and other ARM PCs) is not built yet. The offline engine has no ARM64 version yet.",
+  Linux: "Linux ARM64 (Raspberry Pi 5 and ARM servers) is not built yet, and so are the .deb and .rpm packages.",
 };
 
 const GROUP_ORDER = ["Windows", "macOS", "Linux", "Browser extension", "Other files"];
 
-// The first rule that matches a file name gives its group and its description.
+// The first rule that matches a file name gives its group, its short label (the table link) and a description
+// (shown under the file in the list).
 const RULES = [
-  [/^atlas-updater-windows-setup\.exe$/, "Windows", "Setup (installer), x64"],
-  [/^atlas-updater-windows\.exe$/, "Windows", "Portable, x64 (no offline engine: use the Setup)"],
-  [/^atlas-updater-macos\.dmg$/, "macOS", "DMG, Apple Silicon"],
-  [/^atlas-updater-macos-intel\.dmg$/, "macOS", "DMG, Intel"],
-  [/^atlas-updater-linux\.AppImage$/, "Linux", "AppImage, x64"],
-  [/-chromium\.crx$/, "Browser extension", "Chromium: self-hosted package (.crx, Chromium 109 or newer)"],
-  [/-chromium\.zip$/, "Browser extension", "Chrome Web Store package (.zip)"],
-  [/-edge\.zip$/, "Browser extension", "Microsoft Edge Add-ons package (.zip)"],
-  [/-firefox-signed\.xpi$/, "Browser extension", "Firefox: signed add-on (.xpi), self-hosted"],
-  [/-firefox\.xpi$/, "Browser extension", "Firefox: unsigned add-on (.xpi), Firefox will not install it"],
-  [/-firefox\.zip$/, "Browser extension", "Firefox: add-on files (.zip)"],
-  [/^updates\.json$/, "Browser extension", "Firefox update manifest (updates.json)"],
+  [/^atlas-updater-windows-setup\.exe$/, "Windows", "Setup (installer), x64",
+    "For 64-bit Intel and AMD Windows PCs. It installs for your user account and includes the offline engine."],
+  [/^atlas-updater-windows\.exe$/, "Windows", "Portable, x64",
+    "A single program with no installer and no offline engine. Use the setup file unless you need a portable copy."],
+  [/^atlas-updater-macos\.dmg$/, "macOS", "DMG, Apple Silicon",
+    "For Macs with an M-series chip (M1 and later). The offline engine runs through Rosetta 2, which macOS offers to install the first time."],
+  [/^atlas-updater-macos-intel\.dmg$/, "macOS", "DMG, Intel",
+    "For Intel-based Macs (macOS 11 or later). The offline engine runs natively."],
+  [/^atlas-updater-linux\.AppImage$/, "Linux", "AppImage, x64",
+    "For 64-bit Intel and AMD Linux. One file with the helper and the offline engine. Run chmod +x on it first."],
+  [/-chromium\.crx$/, "Browser extension", "Chromium: self-hosted package (.crx, Chromium 109 or newer)",
+    "For installing the extension yourself in Chromium 109 or newer, outside the Chrome Web Store."],
+  [/-chromium\.zip$/, "Browser extension", "Chrome Web Store package (.zip)",
+    "The package for the Chrome Web Store upload."],
+  [/-edge\.zip$/, "Browser extension", "Microsoft Edge Add-ons package (.zip)",
+    "The same package as Chromium, for the Microsoft Edge Add-ons store."],
+  [/-firefox-signed\.xpi$/, "Browser extension", "Firefox: signed add-on (.xpi), self-hosted",
+    "Signed by Mozilla. Firefox installs it from this link and updates it from updates.json."],
+  [/-firefox\.xpi$/, "Browser extension", "Firefox: unsigned add-on (.xpi)",
+    "Not signed. Firefox will not install it."],
+  [/-firefox\.zip$/, "Browser extension", "Firefox: add-on files (.zip)",
+    "The unpacked add-on files, for developers."],
+  [/^updates\.json$/, "Browser extension", "Firefox update manifest (updates.json)",
+    "Tells self-hosted Firefox installs where the latest signed add-on is."],
 ];
 
 export function describe(name) {
-  for (const [pattern, group, label] of RULES) {
-    if (pattern.test(name)) return { group, label };
+  for (const [pattern, group, label, description] of RULES) {
+    if (pattern.test(name)) return { group, label, description };
   }
-  return { group: "Other files", label: "File" };
+  return { group: "Other files", label: "File", description: "Not recognised by the release script. Check it before you rely on it." };
 }
 
 export function sha256(bytes) {
@@ -86,6 +99,7 @@ export function downloadsMarkdown(files, { version, repo, storeSubmitted }) {
     lines.push(`**${group}**`, "");
     for (const f of items) {
       lines.push(`- [**${f.name}**](${base}/${encodeURIComponent(f.name)}): ${f.label}, ${sizeText(f.bytes)}  `);
+      if (f.description) lines.push(`  ${f.description}  `);
       lines.push(`  \`sha256:${f.sha256}\``);
     }
     lines.push("");
@@ -106,7 +120,7 @@ export function downloadsMarkdown(files, { version, repo, storeSubmitted }) {
   lines.push("");
 
   lines.push("## Helper (atlas-updater)", "");
-  lines.push("The helper installs the extension, the offline engine and the language packs. The Windows setup file, the Linux AppImage and the macOS DMG include the offline engine. The portable Windows program does not, so use the setup file. See tools/atlas-updater/README.md.", "");
+  lines.push("The helper installs the extension, the offline engine and the language packs. The Windows setup file, the Linux AppImage and both macOS disk images include the offline engine. The portable Windows program does not, so use the setup file. Android is not supported: the helper is a desktop program. See tools/atlas-updater/README.md.", "");
   return lines.join("\n");
 }
 

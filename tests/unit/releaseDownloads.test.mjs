@@ -36,11 +36,11 @@ try {
 
   // The table has the OS rows, the platforms not built yet, and the Android line.
   assert.match(markdown, /\| Windows \| \[Setup \(installer\), x64\]\(https:\/\/github\.com\/owner\/repo\/releases\/download\/v9\.9\.9\/atlas-updater-windows-setup\.exe\)/);
-  assert.match(markdown, /Windows ARM64 is not built yet\./);
+  assert.match(markdown, /Windows ARM64 \(Snapdragon and other ARM PCs\) is not built yet\./);
   assert.doesNotMatch(markdown, /Intel Macs are not built yet/);
   assert.match(markdown, /\[DMG, Intel\]\(https:\/\/github\.com\/owner\/repo\/releases\/download\/v9\.9\.9\/atlas-updater-macos-intel\.dmg\)/);
   assert.match(markdown, /\| macOS \|/);
-  assert.match(markdown, /Linux ARM64 and the \.deb and \.rpm packages are not built yet\./);
+  assert.match(markdown, /Linux ARM64 \(Raspberry Pi 5 and ARM servers\) is not built yet, and so are the \.deb and \.rpm packages\./);
   assert.match(markdown, /\| Android \| Not in this release/);
   assert.match(markdown, /\*\*Other files\*\*/, "an unknown file is listed, not dropped");
   assert.match(markdown, /something-new\.bin/);
@@ -56,6 +56,8 @@ try {
   assert.equal(describe("atlas-updater-macos.dmg").group, "macOS");
   assert.equal(describe("atlas-updater-macos-intel.dmg").group, "macOS");
   assert.equal(describe("atlas-updater-macos-intel.dmg").label, "DMG, Intel");
+  assert.match(describe("atlas-updater-macos.dmg").description, /Rosetta 2/, "the Apple Silicon file says how its engine runs");
+  assert.match(markdown, /For Intel-based Macs/, "each file has its description in the list");
   assert.equal(describe("x.txt").group, "Other files");
 } finally {
   rmSync(dir, { recursive: true, force: true });
