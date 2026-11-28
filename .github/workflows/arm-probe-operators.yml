@@ -28,11 +28,11 @@ jobs:
         run: |
           cd /tmp/p/inference/marian-fork/src
           printf '#include "functional/defs.h"\n#include "functional/operators.h"\nint main(){return 0;}\n' > probe.cpp
-          flags="-std=gnu++11 -DARM -DFMA -DSSE -DUSE_SSE2 -DWASM_COMPATIBLE_SOURCE -DCOMPILE_CPU=1 -include cstdint -flax-vector-conversions -Wall -Werror -Wextra -Wno-unused-result -Wno-deprecated -I. -I3rd_party -I3rd_party/simd_utils -I3rd_party/onnxjs/deps/eigen -I3rd_party/spdlog/include"
-          echo "::notice title=probe::neon defined: $(clang++-18 -dM -E -x c++ /dev/null | grep -c __ARM_NEON)"
+          flags="-std=gnu++11 -fPIC -include cstdint -flax-vector-conversions -Wall -Werror -Wextra -Wno-unused-result -Wno-deprecated -Wno-pragmas -Wno-unused-parameter -Wno-unused-function -Wno-unused-value -Wno-unknown-pragmas -Wno-sign-compare -Wno-missing-field-initializers -Wno-use-after-free -Wno-restrict -Wno-unused-private-field -Wno-comment -fno-strict-aliasing -DARM -DFMA -DSSE -DUSE_SSE2 -DWASM_COMPATIBLE_SOURCE -DCOMPILE_CPU=1 -DUSE_ONNX_SGEMM=1 -O3 -I. -I3rd_party -I3rd_party/simd_utils -I3rd_party/onnxjs/deps/eigen -I3rd_party/spdlog/include"
           clang++-18 $flags -H -fsyntax-only probe.cpp > trace.txt 2>&1 || true
-          grep -n "mathfun\|simd_utils.h" trace.txt | head -20 | while IFS= read -r l; do echo "::notice title=probe-include::${l//%/%25}"; done
-          clang++-18 $flags -E probe.cpp -o pp.ii 2>&1 | head -5
+          echo "::notice title=probe::neon_mathfun includes: $(grep -c 'neon_mathfun' trace.txt); sse_mathfun includes: $(grep -c 'sse_mathfun' trace.txt)"
+          clang++-18 $flags -E probe.cpp -o pp.ii 2>/dev/null || true
           grep -n "sin_ps(v4sf\|struct Ops<float32x4>" pp.ii | head -5 | while IFS= read -r l; do echo "::notice title=probe-pp::${l//%/%25}"; done
-          clang++-18 $flags -fsyntax-only probe.cpp 2>&1 | grep -E "error" | head -5 | while IFS= read -r l; do echo "::error title=probe-error::${l//%/%25}"; done
+          clang++-18 $flags -fsyntax-only probe.cpp > errs.txt 2>&1 || true
+          grep -E "error:" errs.txt | head -8 | while IFS= read -r l; do echo "::error title=probe-error::${l//%/%25}"; done
           echo "done"
