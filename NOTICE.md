@@ -27,7 +27,8 @@ Yandex, DeepL, LibreTranslate). Use your own DeepL or LibreTranslate key when yo
 - Read-aloud voices (the helper's list is `tools/atlas-updater/src/voices.json`; the helper downloads them from the
   k2-fsa sherpa-onnx release, `tts-models`, and checks each SHA-256):
   - Supertonic 3, Supertone Inc.: model under the BigScience Open RAIL-M licence, with use restrictions the user accepts
-    before the download. Sample code MIT.
+    before the download. Sample code MIT. The archive itself carries an MIT LICENSE file; the model's licence on Hugging
+    Face is Open RAIL-M, so the helper applies those restrictions.
   - Kokoro v1.1 (English and Chinese), hexgrad: Apache-2.0.
   - Piper voices, from the rhasspy/piper-voices model cards: John (US, public domain, LibriVox recordings), Joe (US,
     CC0), Sam (US, Apache-2.0), Cori (UK, CC BY 4.0, from the Hi-Fi Multi-Speaker English TTS dataset, NVIDIA, and the
@@ -37,7 +38,10 @@ Yandex, DeepL, LibreTranslate). Use your own DeepL or LibreTranslate key when yo
   - Phoneme data (`espeak-ng-data/`): the sherpa-onnx Piper and Kokoro archives contain it. It comes from espeak-ng,
     licensed GPL-3.0 (full text in [LICENSES/GPL-3.0.txt](LICENSES/GPL-3.0.txt)). The helper downloads the archives
     unchanged from k2-fsa and does not modify the data. The source of espeak-ng is at
-    <https://github.com/espeak-ng/espeak-ng>. Kitten nano's archive has not been checked for this data yet.
+    <https://github.com/espeak-ng/espeak-ng>. The Kitten nano archive contains the same data. The Voice archives
+    workflow checked every archive in CI: each has its size and SHA-256 matched, and the four Piper, Kokoro and Kitten
+    archives contain 392 espeak-ng-data files. The Kokoro and Kitten archives carry an Apache-2.0 LICENSE file; the
+    Piper archives carry none, so the GPL text is supplied from LICENSES/ instead.
   - The Piper voices come from the same sherpa-onnx release as the other voices, so the runtime and the checksums come
     from one place. The espeak-ng data is the same whichever source is used.
   - All licence texts used by these parts are in [LICENSES/](LICENSES/README.md).
