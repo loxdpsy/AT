@@ -11,6 +11,7 @@ const files = {
   "atlas-updater-windows-setup.exe": "setup",
   "atlas-updater-windows.exe": "portable",
   "atlas-updater-macos.dmg": "dmg",
+  "atlas-updater-macos-intel.dmg": "intel",
   "atlas-updater-linux.AppImage": "appimage",
   "atlas-translation-9.9.9-chromium.zip": "chromium",
   "atlas-translation-9.9.9-edge.zip": "edge",
@@ -36,7 +37,9 @@ try {
   // The table has the OS rows, the platforms not built yet, and the Android line.
   assert.match(markdown, /\| Windows \| \[Setup \(installer\), x64\]\(https:\/\/github\.com\/owner\/repo\/releases\/download\/v9\.9\.9\/atlas-updater-windows-setup\.exe\)/);
   assert.match(markdown, /Windows ARM64 is not built yet\./);
-  assert.match(markdown, /Intel Macs are not built yet\./);
+  assert.doesNotMatch(markdown, /Intel Macs are not built yet/);
+  assert.match(markdown, /\[DMG, Intel\]\(https:\/\/github\.com\/owner\/repo\/releases\/download\/v9\.9\.9\/atlas-updater-macos-intel\.dmg\)/);
+  assert.match(markdown, /\| macOS \|/);
   assert.match(markdown, /Linux ARM64 and the \.deb and \.rpm packages are not built yet\./);
   assert.match(markdown, /\| Android \| Not in this release/);
   assert.match(markdown, /\*\*Other files\*\*/, "an unknown file is listed, not dropped");
@@ -51,6 +54,8 @@ try {
   assert.match(plain, /submitted to addons\.mozilla\.org for review/);
 
   assert.equal(describe("atlas-updater-macos.dmg").group, "macOS");
+  assert.equal(describe("atlas-updater-macos-intel.dmg").group, "macOS");
+  assert.equal(describe("atlas-updater-macos-intel.dmg").label, "DMG, Intel");
   assert.equal(describe("x.txt").group, "Other files");
 } finally {
   rmSync(dir, { recursive: true, force: true });

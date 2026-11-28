@@ -115,7 +115,7 @@
       response = await timedFetch(HELPER + "/api/offline/ocr", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: "Bearer " + token() },
-        body: JSON.stringify({ image: imageDataUrl, engine: "ppocr" })
+        body: JSON.stringify({ image: imageDataUrl, engine: "ocrs" })
       }, OCR_MS);
     } catch (e) {
       throw new Error("The Atlas Helper did not answer. Start it and try again.");

@@ -98,9 +98,9 @@ optional. It does three things for the extension:
   licence are shown first; a voice with terms (Supertone Supertonic 3) needs you to accept them. Each download is checked
   with SHA-256. The same tab installs the read-aloud runtime once for the computer (sherpa-onnx, Apache-2.0). Reading
   aloud from the extension is not built yet.
-- **Text recognition (OCR, Offline tab).** Install one of two engines to read text in page pictures. PP-OCRv4 (Chinese and English,
-  Apache-2.0, about 16 MB) is the default. ocrs (English and Latin letters, engine MIT or Apache-2.0, models CC BY-SA 4.0, about
-  12 MB) is the second. The helper reads pictures sent to it on 127.0.0.1, with the engine asked for when it is installed, or the
+- **Text recognition (OCR, Offline tab).** Install one of two engines to read text in page pictures. ocrs (English and Latin
+  letters, engine MIT or Apache-2.0, models CC BY-SA 4.0, about 12 MB) is the default. PP-OCRv4 (Chinese and English,
+  Apache-2.0, about 16 MB) is the second. The helper reads pictures sent to it on 127.0.0.1, with the engine asked for when it is installed, or the
   other installed one. Tesseract is not added yet. The Translator's PDF tab has the OCR button for scanned pages.
 - **Helper updates.** The helper checks GitHub for a newer helper, not only a newer extension. When one is out, the window says
   "A new version is available, please update" with what is new, and a button opens the release page. The helper does not
@@ -120,8 +120,8 @@ extension zip. See [tools/atlas-updater/README.md](tools/atlas-updater/README.md
   Supertone Supertonic 3 (31 languages, OpenRAIL-M: you accept its use restrictions before the download), Kokoro v1.1
   (English and Chinese, Apache-2.0), Kitten nano 0.2 (English, Apache-2.0), and four Piper English voices (public domain, CC0, Apache-2.0, CC BY 4.0). Credits
   are in [NOTICE.md](NOTICE.md), and the licence texts are in [LICENSES/](LICENSES/README.md).
-- **Text recognition (OCR).** The helper reads text in page pictures, such as scanned PDF pages, with PP-OCRv4 (Apache-2.0,
-  Chinese and English, about 16 MB) or ocrs (English and Latin letters, about 12 MB). The models are downloaded once and checked
+- **Text recognition (OCR).** The helper reads text in page pictures, such as scanned PDF pages, with ocrs (English and Latin
+  letters, about 12 MB) or PP-OCRv4 (Apache-2.0, Chinese and English, about 16 MB). The models are downloaded once and checked
   with SHA-256. The engine runs on this computer; the picture is sent only to the helper on 127.0.0.1. Install either in the
   Offline tab. The Tesseract engine and more languages are not added yet.
 - **Listen in the Translator** uses an installed helper voice when the runtime and a voice for the language are installed (the Offline tab). Otherwise the computer's voices are used. Other parts of the extension do not use the helper's voices yet.

@@ -10,7 +10,6 @@ import { pathToFileURL } from "url";
 // Platforms the release does not build yet. They are named in the table, so nobody looks for them in vain.
 export const NOT_BUILT_YET = {
   Windows: "Windows ARM64 is not built yet.",
-  macOS: "Intel Macs are not built yet.",
   Linux: "Linux ARM64 and the .deb and .rpm packages are not built yet.",
 };
 
@@ -21,6 +20,7 @@ const RULES = [
   [/^atlas-updater-windows-setup\.exe$/, "Windows", "Setup (installer), x64"],
   [/^atlas-updater-windows\.exe$/, "Windows", "Portable, x64 (no offline engine: use the Setup)"],
   [/^atlas-updater-macos\.dmg$/, "macOS", "DMG, Apple Silicon"],
+  [/^atlas-updater-macos-intel\.dmg$/, "macOS", "DMG, Intel"],
   [/^atlas-updater-linux\.AppImage$/, "Linux", "AppImage, x64"],
   [/-chromium\.crx$/, "Browser extension", "Chromium: self-hosted package (.crx, Chromium 109 or newer)"],
   [/-chromium\.zip$/, "Browser extension", "Chrome Web Store package (.zip)"],
@@ -71,7 +71,7 @@ export function downloadsMarkdown(files, { version, repo, storeSubmitted }) {
   lines.push("| OS | Download |", "| --- | --- |");
   for (const group of ["Windows", "macOS", "Linux"]) {
     const items = files.filter(f => f.group === group).map(link);
-    const cell = [...items, NOT_BUILT_YET[group]].join(" · ");
+    const cell = [...items, NOT_BUILT_YET[group]].filter(Boolean).join(" · ");
     lines.push(`| ${group} | ${cell} |`);
   }
   lines.push("| Android | Not in this release. The helper is a desktop program, and Chrome for Android does not run extensions. Firefox for Android installs Atlas Translation from addons.mozilla.org. |");

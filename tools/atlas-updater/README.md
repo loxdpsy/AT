@@ -19,7 +19,8 @@ administrator password: it installs for your user account, in `%LOCALAPPDATA%\Pr
 menu entry, and it can add a desktop shortcut and a start-at-sign-in shortcut (both are checkboxes). The shortcut lives in your Startup folder, and Windows Settings, under Apps, then Startup, can turn it off. The helper does not write to the Windows startup registry. Uninstall it from
 Windows Settings, under Apps.
 
-**macOS: the disk image.** `atlas-updater-macos.dmg` opens a window with Atlas Helper and the Applications folder. Drag
+**macOS: the disk image.** `atlas-updater-macos.dmg` is for Apple Silicon Macs, and `atlas-updater-macos-intel.dmg` is for Intel
+Macs (Apple menu, About This Mac, shows Chip or Processor). It opens a window with Atlas Helper and the Applications folder. Drag
 Atlas Helper into Applications, then open it. The offline engine is inside the app, so there is nothing else to install. The
 app is not signed by Apple yet: the first time, right-click Atlas Helper, choose **Open**, and confirm. If macOS still says
 the app is damaged, run `xattr -dr com.apple.quarantine "/Applications/Atlas Helper.app"` once in Terminal.

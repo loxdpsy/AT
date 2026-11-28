@@ -3,12 +3,13 @@
 ## Unreleased
 - Release notes: a download table by operating system, with every file's SHA-256 and size, and a `SHA256SUMS.txt`
   file for checking downloads. Android has no package (the helper is a desktop program; Firefox for Android installs the
-  store version). Windows ARM64, Intel Macs, and Linux ARM64 and the .deb and .rpm packages are not built yet.
+  store version). Intel Macs have their own disk image. Windows ARM64, Linux ARM64 and the .deb and .rpm packages are
+  not built yet.
 - The extension's Settings note about the offline service ("Needs the Atlas Helper and a language pack") is translated
   into 39 languages. Santali shows English until it has a translation.
 - Offline text recognition (OCR) engines in the helper, in pure Rust, with a local `/api/offline/ocr` route for the
-  extension. PP-OCRv4 (Apache-2.0, about 16 MB) is the default. ocrs (MIT or Apache-2.0 engine; models CC BY-SA 4.0,
-  about 12 MB, checked with SHA-256) is the second. The request names the engine it wants; when that one is not
+  extension. ocrs (MIT or Apache-2.0 engine; models CC BY-SA 4.0, about 12 MB, checked with SHA-256) is the default.
+  PP-OCRv4 (Apache-2.0, about 16 MB) is the second. The request names the engine it wants; when that one is not
   installed, the other installed engine reads the picture. The helper's ping lists the installed engines in
   `ocr_engines`. Tesseract is listed, not added yet.
   The Translator's PDF tab has an OCR button for scanned pages (no text): the page is read by the helper and then translated.

@@ -71,7 +71,8 @@ pub fn installed(root: &Path) -> bool {
     d.join(MARKER).is_file() && d.join(DET_FILE).is_file() && d.join(REC_FILE).is_file()
 }
 
-/// The engine names used by the extension and the helper. PP-OCRv4 is the default.
+/// The engine names used by the extension and the helper. ocrs is the default (confirmed by the maintainer);
+/// PP-OCRv4 can still be installed and is used when it is the only engine installed.
 pub const ENGINE_PPOCR: &str = "ppocr";
 pub const ENGINE_OCRS: &str = "ocrs";
 
@@ -111,7 +112,7 @@ pub fn installed_engines(root: &Path) -> Vec<&'static str> {
 /// None when no engine is installed.
 pub fn engine_for(root: &Path, requested: &str) -> Option<&'static str> {
     let installed = installed_engines(root);
-    let wanted = if requested == ENGINE_OCRS { ENGINE_OCRS } else { ENGINE_PPOCR };
+    let wanted = if requested == ENGINE_PPOCR { ENGINE_PPOCR } else { ENGINE_OCRS };
     if installed.contains(&wanted) {
         return Some(wanted);
     }

@@ -248,8 +248,13 @@ jobs:
           - os: ubuntu-latest
             asset: atlas-updater-linux.AppImage
             engine: linux
+          # Apple Silicon (the macos-latest runner is arm64). Its engine is the x86_64 one from engine.yml, which runs
+          # here under Rosetta 2, as before. The Intel build below runs it natively.
           - os: macos-latest
             asset: atlas-updater-macos.dmg
+            engine: macos
+          - os: macos-15-intel
+            asset: atlas-updater-macos-intel.dmg
             engine: macos
           - os: windows-latest
             asset: atlas-updater-windows.exe
@@ -372,8 +377,8 @@ jobs:
           # Ad-hoc signature (no Apple certificate). Gatekeeper still asks the user to confirm the first time.
           codesign --force --deep --sign - "$APP"
           ln -s /Applications "$STAGE/Applications"
-          hdiutil create -volname "Atlas Helper" -srcfolder "$STAGE" -ov -format UDZO "$RUNNER_TEMP/helper/atlas-updater-macos.dmg"
-          ls -l "$RUNNER_TEMP/helper/atlas-updater-macos.dmg"
+          hdiutil create -volname "Atlas Helper" -srcfolder "$STAGE" -ov -format UDZO "$RUNNER_TEMP/helper/${{ matrix.asset }}"
+          ls -l "$RUNNER_TEMP/helper/${{ matrix.asset }}"
 
       - name: Keep the program for the publish job
         uses: actions/upload-artifact@v4

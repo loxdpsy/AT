@@ -321,7 +321,7 @@ fn ocr_request(body: &str, allowed: bool, data: &Path) -> (u16, String) {
     if !allowed {
         return (403, error_body("this browser is not bound to the helper. Bind it again from the extension."));
     }
-    let requested = value.get("engine").and_then(|v| v.as_str()).unwrap_or(ocr::ENGINE_PPOCR);
+    let requested = value.get("engine").and_then(|v| v.as_str()).unwrap_or(ocr::ENGINE_OCRS);
     if requested != ocr::ENGINE_PPOCR && requested != ocr::ENGINE_OCRS {
         return (400, error_body("this text recognition engine is not available"));
     }
