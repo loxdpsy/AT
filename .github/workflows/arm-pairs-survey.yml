@@ -19,9 +19,9 @@ jobs:
           python3 - <<'PY'
           import json, urllib.request, urllib.parse
           B = "https://storage.googleapis.com/storage/v1/b/moz-fx-translations-data--303e-prod-translations-data/o"
+          LINES = []
           def note(msg):
-              msg = msg.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
-              print("::notice title=pair::" + msg)
+              LINES.append(msg)
           def listing(prefix, fields):
               items, token = [], None
               while True:
@@ -58,5 +58,7 @@ jobs:
                       p["pair"], pick["name"].split("/")[-1], pick["size"], p["bytes"], fp32_total, fp32_total / 1e6, run))
               except Exception as e:
                   note("%s: error %s" % (p.get("pair"), e))
-          print("survey done", len(cat))
+          LINES.append("survey done: %d pairs" % len(cat))
+          out = "\n".join(LINES).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+          print("::notice title=survey::" + out)
           PY
