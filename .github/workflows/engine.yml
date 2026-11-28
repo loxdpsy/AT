@@ -115,6 +115,8 @@ jobs:
             fetch google/ruy 2d950b3bfa7ebfbe7a97ecb44b1cc4da5ac1d6f0 "$src/inference/marian-fork/src/3rd_party/ruy"
             fetch pytorch/cpuinfo 5916273f79a21551890fd3d56fc5375a78d1598d "$src/inference/marian-fork/src/3rd_party/ruy/third_party/cpuinfo"
             fetch browsermt/simd_utils d0793d86aea9036a5bc77b9ca7791dff024168ca "$src/inference/marian-fork/src/3rd_party/simd_utils"
+            # simd_utils.h calls fesetround (FE_TONEAREST) without including <fenv.h>; GCC does not get it from elsewhere.
+            sed -i '/#include <stdio.h>/a #include <fenv.h>' "$src/inference/marian-fork/src/3rd_party/simd_utils/simd_utils.h"
             # Marian's ARM build defines the macro SSE, and Eigen names an enum value SSE (Core/util/Constants.h).
             # The macro turns that declaration into a syntax error, so the value is renamed here. Its meaning is unchanged.
             sed -i 's/\bSSE\b/EIGEN_SSE_FLAG/g' "$src/inference/marian-fork/src/3rd_party/onnxjs/deps/eigen/Eigen/src/Core/util/Constants.h"
