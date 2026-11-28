@@ -55,7 +55,13 @@ enum Tab {
     Offline,
     Connections,
     Settings,
+    About,
 }
+
+/// The helper's web page (GitHub Pages, from the `docs` folder of the repository). The About tab links to it.
+pub const WEB_PAGE: &str = "https://loxdpsy.github.io/AT/";
+/// The repository, its releases and the third-party notices.
+pub const REPOSITORY: &str = "https://github.com/loxdpsy/AT";
 
 /// What the extension folder and the release server say. `installed` is Ok(None) for an empty or new folder.
 struct Status {
@@ -215,6 +221,7 @@ pub fn run(show_window: bool) -> Result<(), String> {
                 "offline" => Tab::Offline,
                 "connections" => Tab::Connections,
                 "settings" => Tab::Settings,
+                "about" => Tab::About,
                 _ => Tab::Extension,
             };
             let mut helper = Helper {
@@ -376,10 +383,11 @@ impl eframe::App for Helper {
             .frame(egui::Frame::new().fill(if dark { DARK_SIDEBAR } else { SIDEBAR }).inner_margin(egui::Margin::same(10)))
             .show_inside(ui, |ui| {
                 ui.add_space(4.0);
-                tab_button(ui, &mut self.tab, Tab::Extension, "Extension");
-                tab_button(ui, &mut self.tab, Tab::Offline, "Offline translation");
-                tab_button(ui, &mut self.tab, Tab::Connections, "Connections");
-                tab_button(ui, &mut self.tab, Tab::Settings, "Settings");
+                tab_button(ui, &mut self.tab, Tab::Extension, &tr("Extension"));
+                tab_button(ui, &mut self.tab, Tab::Offline, &tr("Offline translation"));
+                tab_button(ui, &mut self.tab, Tab::Connections, &tr("Connections"));
+                tab_button(ui, &mut self.tab, Tab::Settings, &tr("Settings"));
+                tab_button(ui, &mut self.tab, Tab::About, &tr("About"));
                 ui.add_space(24.0);
                 if ui.add_sized([ui.available_width(), 30.0], egui::Button::new(tr("Quit helper"))).clicked() {
                     actions.push(Action::Quit);
@@ -417,6 +425,7 @@ impl eframe::App for Helper {
                             Tab::Offline => self.offline_tab(ui, idle, &mut actions),
                             Tab::Connections => self.connections_tab(ui, &mut actions),
                             Tab::Settings => self.settings_tab(ui, &mut actions),
+                            Tab::About => self.about_tab(ui, &mut actions),
                         }
                     });
                 });
@@ -588,6 +597,37 @@ impl Helper {
                     ui.add_enabled(false, egui::Button::new(tr("Coming soon")));
                 });
             }
+        });
+    }
+
+    /// About: the version, the web page, the repository and the licence notices.
+    fn about_tab(&mut self, ui: &mut egui::Ui, actions: &mut Vec<Action>) {
+        ui.heading(tr("About Atlas Helper"));
+        ui.label(RichText::new(format!("{} {}", tr("Version"), env!("CARGO_PKG_VERSION").replace('+', "."))).color(muted(ui)));
+        ui.add_space(12.0);
+        card(ui, |ui| {
+            ui.label(RichText::new(tr("The helper runs offline translation, read-aloud voices and text recognition on this computer, for the Atlas Translation extension.")).color(muted(ui)));
+            ui.add_space(8.0);
+            ui.horizontal_wrapped(|ui| {
+                ui.label(RichText::new(tr("Web page")).strong());
+                ui.label(WEB_PAGE);
+                if ui.button(tr("Open the web page")).clicked() {
+                    actions.push(Action::OpenLink(WEB_PAGE.to_string()));
+                }
+            });
+            ui.horizontal_wrapped(|ui| {
+                if ui.button(tr("Source code on GitHub")).clicked() {
+                    actions.push(Action::OpenLink(REPOSITORY.to_string()));
+                }
+                if ui.button(tr("Releases")).clicked() {
+                    actions.push(Action::OpenLink(format!("{}/releases", REPOSITORY)));
+                }
+                if ui.button(tr("Third-party notices")).clicked() {
+                    actions.push(Action::OpenLink(format!("{}/blob/main/NOTICE.md", REPOSITORY)));
+                }
+            });
+            ui.add_space(6.0);
+            ui.label(RichText::new(tr("Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.")).color(muted(ui)).small());
         });
     }
 

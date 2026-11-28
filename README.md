@@ -59,6 +59,8 @@ Other extensions with a similar name are not Atlas Translation. Store links will
 - **Themes**: System, Light, or Dark (*Style → Theme*). The settings page and the popup look the same in Chromium browsers and Firefox. The layout follows Chrome's settings page.
 - **Light on memory**: translations are cached with a bounded in-memory cache, and finished requests are released.
 
+The web page: https://loxdpsy.github.io/AT/ (the same page is in `docs/`, published with GitHub Pages).
+
 ## Install
 
 ### Chromium (Chrome 109+, Edge, Brave, Opera, Vivaldi)
