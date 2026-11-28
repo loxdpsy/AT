@@ -56,6 +56,15 @@ jobs:
             library: atlas_engine.dll
             library_asset: atlas-engine-lib-windows.dll
             checker: atlas-engine-check.exe
+          # ARM64 (free on public repositories). No intgemm here, so the test reads a float32 model: the .npz of Mozilla's
+          # training run for English to French (the same run as the int8 pack's model).
+          - os: ubuntu-24.04-arm
+            binary: atlas-engine
+            asset: atlas-engine-linux-arm64
+            library: libatlas_engine.so
+            library_asset: atlas-engine-lib-linux-arm64.so
+            checker: atlas-engine-check
+            fp32_url: "https://storage.googleapis.com/moz-fx-translations-data--303e-prod-translations-data/models/en-fr/retrain_hr_NLIxDbE1TBGyOTI-zwZagw/student/final.model.npz.best-chrf.npz"
     # The PCRE2 copy that SentencePiece downloads is configured during the Build step, not the Configure step, so the
     # variable must be set for the whole job. CMake 4 refuses the old CMake minimum that PCRE2 and SentencePiece declare.
     env:
@@ -158,6 +167,8 @@ jobs:
       - name: Translate English to French with the real language pack
         id: smoke
         # The output is kept for the job summary. The step still fails when the test fails (bash runs with pipefail).
+        env:
+          ATLAS_FP32_MODEL_URL: ${{ matrix.fp32_url || '' }}
         run: node scripts/engine-smoke.mjs "${{ steps.find.outputs.path }}" "${{ steps.find.outputs.checker }}" 2>&1 | tee "$RUNNER_TEMP/engine-smoke.log"
 
       # When the test fails, the last lines of its log are also written as error annotations. Annotations can be read
