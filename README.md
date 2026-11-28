@@ -112,12 +112,12 @@ extension zip. See [tools/atlas-updater/README.md](tools/atlas-updater/README.md
 - **Translation packs.** Each language pair is a pack of about 37 MB, downloaded once and checked with SHA-256. The
   helper's Offline tab installs one pack, every pack into one language ("Translate to"), or all packs. A pair needs
   English on one side. Text is translated on this computer.
-- **Read-aloud voices.** The Offline tab lists the voices for each language. "Install the selected voices" asks
+- **Read-aloud voices.** The Offline tab lists the voices for each language. "Install all voices for <language> (recommended)" installs every voice for it after a confirmation. You can instead tick single voices and choose "Install selected". The Offline tab also has "Install all packs (recommended)". "Install the selected voices" asks
   first, showing the size and each licence. The welcome page offers the English voices after the helper is installed,
   so the installer itself stays small. Voices come from the k2-fsa sherpa-onnx release and are checked with SHA-256:
   Supertone Supertonic 3 (31 languages, OpenRAIL-M: you accept its use restrictions before the download), Kokoro v1.1
   (English and Chinese, Apache-2.0), Kitten nano 0.2 (English, Apache-2.0), and four Piper English voices (public domain, CC0, Apache-2.0, CC BY 4.0). Credits
-  are in [NOTICE.md](NOTICE.md).
+  are in [NOTICE.md](NOTICE.md), and the licence texts are in [LICENSES/](LICENSES/README.md).
 - **Text recognition (OCR).** The helper reads text in page pictures, such as scanned PDF pages, with PP-OCRv4 (Apache-2.0,
   Chinese and English, about 16 MB). The models are downloaded once and checked with SHA-256. The engine runs on this
   computer; the picture is sent only to the helper on 127.0.0.1. Install it in the Offline tab. The ocrs and Tesseract

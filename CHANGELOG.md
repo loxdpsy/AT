@@ -26,6 +26,8 @@ Not released yet. Changes after 0.0.2.5 are listed here.
 - Translator: Listen to the source or the translation, at Normal, Slow or Slowest speed. The helper's installed read-aloud voice
   for the language is used when there is one (up to 2000 characters); otherwise the computer's voices are used.
 - Atlas Helper status: the local API reports the installed read-aloud voices and whether text recognition is installed.
+- Offline tab: "Install all voices for <language> (recommended)" and "Install all packs (recommended)". Single voices and packs can still be chosen.
+- Licences: the full texts of the licences the helper's parts use are in LICENSES/ (GPL-3.0 for the espeak-ng phoneme data in the voice archives, Apache-2.0, MIT, MPL-2.0, and links for CC BY 4.0, CC0 and OpenRAIL-M). NOTICE.md lists each part.
 - Opening a PDF shows a prompt to translate it (From and To). It opens the Translator's PDF tab, which translates on this computer with the Offline helper.
 - PDF translation: the document's language is guessed from its text, and From is set to it. A "Show original text" box shows each paragraph's source.
 - Keyboard command "Open the Translator" (Firefox: Shift+Alt+Y; Chromium: set it at chrome://extensions/shortcuts).
