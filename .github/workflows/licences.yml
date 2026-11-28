@@ -39,6 +39,8 @@ jobs:
 
       # The output is kept in an artifact too, because the run log is not always downloadable.
       - name: Every crate's licence is on the allowlist
+        env:
+          NO_COLOR: "1"
         run: cargo deny check licenses 2>&1 | tee "$RUNNER_TEMP/deny-check.log"
 
       # The run log and the artifacts are not always downloadable, so the errors also appear as annotations on the run.
@@ -47,7 +49,9 @@ jobs:
         run: |
           python3 - "$RUNNER_TEMP/deny-check.log" <<'PY'
           import sys
-          lines = [l.rstrip() for l in open(sys.argv[1], encoding="utf-8", errors="replace")]
+          import re
+          ansi = re.compile(r"\x1b\[[0-9;]*[A-Za-z]")
+          lines = [ansi.sub("", l).rstrip() for l in open(sys.argv[1], encoding="utf-8", errors="replace")]
           hits = [i for i, l in enumerate(lines) if l.lstrip().startswith("error")]
           for i in hits[:15]:
               text = " | ".join(x.strip() for x in lines[i:i + 6] if x.strip())
