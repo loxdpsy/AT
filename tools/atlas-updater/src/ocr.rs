@@ -788,4 +788,22 @@ mod tests {
         assert!(all.contains("offline"), "read: {}", all);
         let _ = fs::remove_dir_all(&root);
     }
+
+    /// The same sample read by the ocrs engine. Like the test above, it runs only when ATLAS_OCR_TEST is set.
+    #[test]
+    fn ocrs_reads_the_sample_page_when_enabled() {
+        if std::env::var("ATLAS_OCR_TEST").is_err() {
+            eprintln!("skipped: set ATLAS_OCR_TEST=1 to download the ocrs models and read the sample");
+            return;
+        }
+        let root = std::env::temp_dir().join(format!("atlas-ocrs-test-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        install_ocrs(&root, &Transfer::quiet()).expect("install ocrs");
+        let picture = include_bytes!("testdata/ocr-sample.png");
+        let lines = recognise(&root, ENGINE_OCRS, picture).expect("recognise with ocrs");
+        let all: String = lines.iter().map(|l| l.text.to_lowercase()).collect::<Vec<_>>().join(" | ");
+        assert!(all.contains("world"), "read: {}", all);
+        assert!(all.contains("offline"), "read: {}", all);
+        let _ = fs::remove_dir_all(&root);
+    }
 }
