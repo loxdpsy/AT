@@ -1703,6 +1703,7 @@ const LANGUAGES: &[(&str, &str)] = &[
     ("nl", "Nederlands"), ("no", "Norsk"), ("pl", "Polski"), ("pt_BR", "Português (Brasil)"), ("pt_PT", "Português (Portugal)"),
     ("ro", "Română"), ("ru", "Русский"), ("sl", "Slovenščina"), ("sr", "Српски"), ("sv", "Svenska"), ("th", "ไทย"),
     ("tr", "Türkçe"), ("ug", "ئۇيغۇرچە"), ("uk", "Українська"), ("vi", "Tiếng Việt"), ("zh_CN", "简体中文"), ("zh_TW", "繁體中文"),
+    ("kaa", "Qaraqalpaqsha"), ("sat", "ᱥᱟᱱᱛᱟᱲᱤ"),
 ];
 
 /// The colour of the window's accent for a choice from ACCENTS.

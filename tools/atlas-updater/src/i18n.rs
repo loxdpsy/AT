@@ -29,12 +29,14 @@ const FILES: &[(&str, &str)] = &[
     ("is", include_str!("../i18n/is.json")),
     ("it", include_str!("../i18n/it.json")),
     ("ja", include_str!("../i18n/ja.json")),
+    ("kaa", include_str!("../i18n/kaa.json")),
     ("ko", include_str!("../i18n/ko.json")),
     ("lv", include_str!("../i18n/lv.json")),
     ("nl", include_str!("../i18n/nl.json")),
     ("no", include_str!("../i18n/no.json")),
     ("pl", include_str!("../i18n/pl.json")),
     ("pt_BR", include_str!("../i18n/pt_BR.json")),
+    ("pt_PT", include_str!("../i18n/pt_PT.json")),
     ("ro", include_str!("../i18n/ro.json")),
     ("ru", include_str!("../i18n/ru.json")),
     ("sl", include_str!("../i18n/sl.json")),
@@ -42,9 +44,11 @@ const FILES: &[(&str, &str)] = &[
     ("sv", include_str!("../i18n/sv.json")),
     ("th", include_str!("../i18n/th.json")),
     ("tr", include_str!("../i18n/tr.json")),
+    ("ug", include_str!("../i18n/ug.json")),
     ("uk", include_str!("../i18n/uk.json")),
     ("vi", include_str!("../i18n/vi.json")),
     ("zh_CN", include_str!("../i18n/zh_CN.json")),
+    ("zh_TW", include_str!("../i18n/zh_TW.json")),
 ];
 
 /// The translation table of the chosen language. None means English.
