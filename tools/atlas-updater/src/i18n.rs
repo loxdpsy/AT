@@ -12,12 +12,17 @@ use crate::json::{self, Value};
 const FILES: &[(&str, &str)] = &[
     ("ar", include_str!("../i18n/ar.json")),
     ("bn", include_str!("../i18n/bn.json")),
+    ("de", include_str!("../i18n/de.json")),
     ("es", include_str!("../i18n/es.json")),
     ("fr", include_str!("../i18n/fr.json")),
     ("hi", include_str!("../i18n/hi.json")),
+    ("it", include_str!("../i18n/it.json")),
     ("ja", include_str!("../i18n/ja.json")),
+    ("ko", include_str!("../i18n/ko.json")),
+    ("pl", include_str!("../i18n/pl.json")),
     ("pt_BR", include_str!("../i18n/pt_BR.json")),
     ("ru", include_str!("../i18n/ru.json")),
+    ("tr", include_str!("../i18n/tr.json")),
     ("vi", include_str!("../i18n/vi.json")),
     ("zh_CN", include_str!("../i18n/zh_CN.json")),
 ];
