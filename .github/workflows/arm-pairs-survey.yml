@@ -59,6 +59,13 @@ jobs:
               except Exception as e:
                   note("%s: error %s" % (p.get("pair"), e))
           LINES.append("survey done: %d pairs" % len(cat))
-          out = "\n".join(LINES).replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
-          print("::notice title=survey::" + out)
+          chunks, cur = [], ""
+          for line in LINES:
+              if len(cur) + len(line) + 1 > 3000:
+                  chunks.append(cur); cur = ""
+              cur += line + "\n"
+          chunks.append(cur)
+          for i, c in enumerate(chunks):
+              out = c.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+              print("::notice title=survey %d::" % (i + 1) + out)
           PY
