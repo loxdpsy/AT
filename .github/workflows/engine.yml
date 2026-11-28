@@ -82,7 +82,7 @@ jobs:
       # tools/atlas-engine/CMakeLists.txt). It comes from the commit's source tarball. Marian reads a .git next to the
       # folder for its version header, so the folder gets a git repository with one empty commit. That repository has no
       # submodule entries, so CMake's own submodule updates do nothing. The five submodules that the build needs
-      # are fetched as tarballs at their pinned commits. The other submodules are for CUDA, FBGEMM, or the ARM build.
+      # are fetched as tarballs at their pinned commits. The ARM64 build fetches three more (see below). The rest are for CUDA or FBGEMM.
       - name: Fetch Bergamot (inference/ of mozilla/translations at eea6e5a8)
         run: |
           set -euo pipefail
@@ -109,9 +109,14 @@ jobs:
           # onnxjs supplies the float GEMM of the WASM-compatible sources (USE_WASM_COMPATIBLE_SOURCE, see the engine CMakeLists).
           fetch browsermt/onnxjs 924924b08e9596b41aeebada4a172f026be95f5a "$src/inference/marian-fork/src/3rd_party/onnxjs"
           fetch abhi-agg/eigen-git-mirror fff37f4ca0397af9ed7e04f3bd6b893a1ea2b08e "$src/inference/marian-fork/src/3rd_party/onnxjs/deps/eigen"
-          # ARM64 only. Marian's ARM build defines the macro SSE, and Eigen names an enum value SSE (Core/util/Constants.h).
-          # The macro turns that declaration into a syntax error, so the value is renamed here. Its meaning is unchanged.
+          # ARM64 only (marian's ARM branch). Ruy does the float32 products, with its own cpuinfo; simd_utils is the
+          # NEON math that marian's functional/operators.h includes. These are the commits marian's ARM build pins.
           if [ "$RUNNER_ARCH" = "ARM64" ]; then
+            fetch google/ruy 2d950b3bfa7ebfbe7a97ecb44b1cc4da5ac1d6f0 "$src/inference/marian-fork/src/3rd_party/ruy"
+            fetch pytorch/cpuinfo 5916273f79a21551890fd3d56fc5375a78d1598d "$src/inference/marian-fork/src/3rd_party/ruy/third_party/cpuinfo"
+            fetch browsermt/simd_utils d0793d86aea9036a5bc77b9ca7791dff024168ca "$src/inference/marian-fork/src/3rd_party/simd_utils"
+            # Marian's ARM build defines the macro SSE, and Eigen names an enum value SSE (Core/util/Constants.h).
+            # The macro turns that declaration into a syntax error, so the value is renamed here. Its meaning is unchanged.
             sed -i 's/\bSSE\b/EIGEN_SSE_FLAG/g' "$src/inference/marian-fork/src/3rd_party/onnxjs/deps/eigen/Eigen/src/Core/util/Constants.h"
             grep -n "EIGEN_SSE_FLAG" "$src/inference/marian-fork/src/3rd_party/onnxjs/deps/eigen/Eigen/src/Core/util/Constants.h"
           fi
