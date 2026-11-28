@@ -73,15 +73,16 @@ jobs:
       - name: Show the compile command and compile node.cpp
         run: |
           set +e
-          cd build/engine/bergamot/marian-fork/src
-          make -f CMakeFiles/marian.dir/build.make -n CMakeFiles/marian.dir/graph/node.cpp.o > /tmp/dry.txt 2>&1
+          cd build/engine
+          O=bergamot/marian-fork/src/CMakeFiles/marian.dir/graph/node.cpp.o
+          make -f bergamot/marian-fork/src/CMakeFiles/marian.dir/build.make -n $O > /tmp/dry.txt 2>&1
           echo "dry exit $?"
           cmd=$(grep "node.cpp" /tmp/dry.txt | head -1)
           echo "::notice title=cmd-head::$(echo "$cmd" | cut -c1-900)"
           echo "::notice title=cmd-tail::$(echo "$cmd" | cut -c901-1900)"
           echo "::notice title=cmd-tail2::$(echo "$cmd" | cut -c1901-2900)"
           head -3 /tmp/dry.txt | while IFS= read -r l; do echo "::notice title=dry::${l//%/%25}"; done
-          make -k -f CMakeFiles/marian.dir/build.make CMakeFiles/marian.dir/graph/node.cpp.o > /tmp/node.log 2>&1
+          make -k -f bergamot/marian-fork/src/CMakeFiles/marian.dir/build.make $O > /tmp/node.log 2>&1
           echo "build exit $?"
           grep -E "error|fatal" /tmp/node.log | head -8 | while IFS= read -r l; do echo "::error title=node-error::${l//%/%25}"; done
           tail -3 /tmp/node.log | while IFS= read -r l; do echo "::notice title=node-tail::${l//%/%25}"; done
