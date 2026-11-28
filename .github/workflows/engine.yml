@@ -137,9 +137,16 @@ jobs:
           "$root/vcpkg.exe" install pcre2:x64-windows-static
           echo "CMAKE_PREFIX_PATH=$(cygpath -m "$root/installed/x64-windows-static")" >> "$GITHUB_ENV"
 
+      # ARM64 Linux uses clang 18 (preinstalled on the runner image). GCC 13 fails in marian's NEON code
+      # (functional/operators.h cannot see sin_ps, log_ps and cos_ps from simd_utils); clang compiles it.
       - name: Configure
         id: configure
-        run: cmake -S tools/atlas-engine -B build/engine -DCMAKE_BUILD_TYPE=Release
+        run: |
+          compilers=()
+          if [ "$RUNNER_ARCH" = "ARM64" ] && [ "$RUNNER_OS" = "Linux" ]; then
+            compilers=(-DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18)
+          fi
+          cmake -S tools/atlas-engine -B build/engine -DCMAKE_BUILD_TYPE=Release "${compilers[@]}"
 
       # The log is kept for the job summary. On Linux and macOS, -k keeps going after an error, so one run lists every
       # failing file instead of only the first one. Windows (MSBuild) stops at the failed project.
