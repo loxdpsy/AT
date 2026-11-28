@@ -161,7 +161,8 @@ target_link_libraries(atlas-engine-check PRIVATE atlas-engine-lib)
 # for its own directory, so these targets would be compiled without them and the NEON helpers (sin_ps, _mm_mul_ps, ...)
 # would be missing. x86 does not use these helpers, so it is unchanged.
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$")
-  foreach(target IN ITEMS bergamot-translator-source atlas-engine atlas-engine-lib)
+  # translator-cli is Bergamot's command-line app; the default build compiles it too.
+  foreach(target IN ITEMS bergamot-translator-source translator-cli atlas-engine atlas-engine-lib)
     target_compile_definitions(${target} PRIVATE ARM FMA SSE)
   endforeach()
 endif()
