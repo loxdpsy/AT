@@ -119,6 +119,13 @@ endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 add_subdirectory("${ATLAS_BERGAMOT_SOURCE}" bergamot)
 
+# ARM64: marian's SIMD helpers (functional/operators.h, through simd_utils) need ARM, FMA and SSE. Marian sets them only
+# for its own directory, so the translator would be compiled without them and its NEON helpers (sin_ps, _mm_mul_ps, ...)
+# would be missing. x86 does not use these helpers, so it is unchanged.
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(aarch64|arm64|ARM64)$")
+  target_compile_definitions(bergamot-translator-source PRIVATE ARM FMA SSE)
+endif()
+
 # marian gives each of its own targets -Wall and -Wextra, and those come after the directory options added above.
 # So a -Wno- option set at directory level does not reach them: -Wall turns the warning back on. Apple clang reports
 # two warnings in marian's code, and -Werror makes them errors (factored_vocab.cpp and shortlist.cpp have
