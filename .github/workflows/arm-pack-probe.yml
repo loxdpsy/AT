@@ -3,6 +3,9 @@
 name: ARM pack probe
 
 on:
+  push:
+    paths:
+      - ".github/workflows/arm-pack-probe.yml"
   workflow_dispatch:
     inputs:
       pair:
@@ -20,7 +23,7 @@ jobs:
     steps:
       - name: Read the bucket
         env:
-          PAIR: ${{ inputs.pair }}
+          PAIR: ${{ inputs.pair || 'en-fr' }}
         run: |
           set -u
           B=https://storage.googleapis.com/moz-fx-translations-data--303e-prod-translations-data
@@ -49,7 +52,7 @@ jobs:
           fi
       - name: Files of one training run folder (the first one that has a quantized model)
         env:
-          PAIR: ${{ inputs.pair }}
+          PAIR: ${{ inputs.pair || 'en-fr' }}
         run: |
           set -u
           python3 - <<'PY'
