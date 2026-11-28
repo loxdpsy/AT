@@ -26,6 +26,7 @@ use crate::engine::{self, Engine};
 use crate::ocr;
 use crate::packs::{self, Catalogue, Pack};
 use crate::settings::{self, Settings};
+use crate::speak;
 use crate::store;
 use crate::transfer::{self, Transfer};
 use crate::tray::{self, Tray, TrayAction};
@@ -88,6 +89,8 @@ enum Action {
     InstallVoices(String),
     /// Installs the text recognition models (PP-OCRv4).
     InstallOcr,
+    /// Installs the read-aloud runtime (sherpa-onnx) for this computer.
+    InstallSpeakRuntime,
     /// Opens the Offline tab with a language's voices ready to confirm (from the welcome page).
     OfferVoices(String),
     RemoveBinding(usize),
@@ -522,6 +525,36 @@ impl Helper {
     }
 
     /// Read-aloud voices: choose a language, see the voices that speak it, and install them all at once.
+    /// The read-aloud runtime: the program that speaks the voices. It is one download for the computer, separate from
+    /// the voices, and it is checked with SHA-256 like them.
+    fn speak_card(&mut self, ui: &mut egui::Ui, idle: bool, actions: &mut Vec<Action>) {
+        let root = store::data_dir();
+        let ready = speak::runtime_installed(&root);
+        card(ui, |ui| {
+            ui.label(RichText::new("Read-aloud runtime").strong());
+            ui.label(
+                RichText::new("The program that speaks the voices above (sherpa-onnx, Apache-2.0). It is installed once for this computer.")
+                    .color(muted(ui))
+                    .small(),
+            );
+            ui.add_space(6.0);
+            ui.horizontal_wrapped(|ui| match speak::RUNTIME {
+                None => {
+                    ui.label(RichText::new("Not available for this computer.").color(muted(ui)));
+                }
+                Some(_) if ready => {
+                    ui.label(RichText::new("Installed").color(GREEN));
+                }
+                Some(runtime) => {
+                    let label = format!("Install (about {:.0} MB)", runtime.bytes as f64 / 1_000_000.0);
+                    if ui.add_enabled(idle, egui::Button::new(label)).clicked() {
+                        actions.push(Action::InstallSpeakRuntime);
+                    }
+                }
+            });
+        });
+    }
+
     /// Text recognition (OCR). The user chooses an engine and installs it. PP-OCRv4 can be installed now; the other
     /// two engines are listed so the choice is clear, and are not available yet.
     fn ocr_card(&mut self, ui: &mut egui::Ui, idle: bool, actions: &mut Vec<Action>) {
@@ -752,6 +785,8 @@ impl Helper {
         self.voices_card(ui, idle);
         ui.add_space(14.0);
         self.ocr_card(ui, idle, actions);
+        ui.add_space(14.0);
+        self.speak_card(ui, idle, actions);
         ui.add_space(14.0);
         ui.heading("Language packs");
         if !self.catalogue_asked {
@@ -1445,6 +1480,13 @@ impl Helper {
                         self.start_download(&label, move |transfer| install_voices(&root, &chosen, &transfer));
                     }
                 }
+            }
+            Action::InstallSpeakRuntime => {
+                let root = store::data_dir();
+                self.start_download("Installing the read-aloud runtime...", move |transfer| match speak::install_runtime(&root, &transfer) {
+                    Ok(()) => Event::Done { ok: true, text: "Installed the read-aloud runtime.".to_string(), reload: false },
+                    Err(e) => Event::Done { ok: false, text: e, reload: false },
+                });
             }
             Action::InstallOcr => {
                 let root = store::data_dir();

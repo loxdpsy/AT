@@ -94,7 +94,11 @@ optional. It does three things for the extension:
   check. It runs in the background from the tray, not in a terminal.
 - **Read-aloud voices (Offline tab).** Choose a language, tick the voices you want (or select all), and install them. The size and each
   licence are shown first; a voice with terms (Supertone Supertonic 3) needs you to accept them. Each download is checked
-  with SHA-256. Reading aloud is not built yet.
+  with SHA-256. The same tab installs the read-aloud runtime once for the computer (sherpa-onnx, Apache-2.0). Reading
+  aloud from the extension is not built yet.
+- **Text recognition (OCR, Offline tab).** Install PP-OCRv4 to read text in page pictures (Chinese and English, Apache-2.0,
+  about 16 MB). The helper reads pictures sent to it on 127.0.0.1. ocrs and Tesseract are not added yet, and the
+  extension's button for scanned PDFs is not built yet.
 - **Helper updates.** The helper checks GitHub for a newer helper, not only a newer extension. When one is out, the window says
   "A new version is available, please update" with what is new, and a button opens the release page. The helper does not
   replace itself; download the new one from the release.
@@ -117,7 +121,8 @@ extension zip. See [tools/atlas-updater/README.md](tools/atlas-updater/README.md
   Chinese and English, about 16 MB). The models are downloaded once and checked with SHA-256. The engine runs on this
   computer; the picture is sent only to the helper on 127.0.0.1. Install it in the Offline tab. The ocrs and Tesseract
   engines and more languages are not added yet.
-- **Not built yet:** reading the text aloud. The voices can be installed and listed, but the helper does not speak yet.
+- **Not built yet:** the extension's Listen button. The helper can speak through its local API once the runtime and a
+  voice are installed (the window's runtime button is in the Offline tab).
   Piper's phonemizer is espeak-ng (GPL-3.0). A licence review is needed before any release that ships the voices.
 
 ## Build from source

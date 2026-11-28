@@ -221,8 +221,12 @@ fn handle(stream: &mut TcpStream, engine: &Engine, bindings: &Shared, requests: 
         ("POST", "/api/offline/translate") => {
             let token = request.header("authorization").and_then(|h| h.strip_prefix("Bearer "));
             let (status, body) = {
-                let guard = bindings.lock().unwrap_or_else(|p| p.into_inner());
-                translate_request(&request.body, engine, token, &guard)
+                // The token is checked under the lock, which is released before the (slow) translation.
+                let allowed = {
+                    let guard = bindings.lock().unwrap_or_else(|p| p.into_inner());
+                    token_allowed(&guard, token)
+                };
+                translate_allowed(&request.body, engine, allowed)
             };
             send(stream, status, allow, &body)
         }
@@ -370,17 +374,21 @@ fn speak_from(body: &str, allowed: bool, data: &Path) -> (u16, String) {
 }
 
 fn translate_request(body: &str, engine: &Engine, token: Option<&str>, bindings: &Bindings) -> (u16, String) {
-    translate_from(body, engine, token, bindings, &store::packs_dir(), engine::find_binary())
+    translate_allowed(body, engine, token_allowed(bindings, token))
+}
+
+fn translate_allowed(body: &str, engine: &Engine, allowed: bool) -> (u16, String) {
+    translate_from(body, engine, allowed, &store::packs_dir(), engine::find_binary())
 }
 
 /// The translate request, with the packs folder and the engine program given. It needs no network: the language list is
 /// built into the helper, and the packs and the engine are read from disk.
-fn translate_from(body: &str, engine: &Engine, token: Option<&str>, bindings: &Bindings, packs_root: &Path, binary: Option<PathBuf>) -> (u16, String) {
+fn translate_from(body: &str, engine: &Engine, allowed: bool, packs_root: &Path, binary: Option<PathBuf>) -> (u16, String) {
     let value = match json::parse(body) {
         Ok(v) => v,
         Err(_) => return (400, error_body("the request is not valid JSON")),
     };
-    if !token.map_or(false, |t| bindings.verify(t)) {
+    if !allowed {
         return (403, error_body("this browser is not bound to the helper. Bind it again from the extension."));
     }
     let pair = value.get("pair").and_then(|v| v.as_str()).unwrap_or("").to_string();
@@ -535,14 +543,14 @@ mod tests {
         let engine = Engine::new();
         let (bindings, token) = bound();
         let body = r#"{"pair":"enfr","texts":["Hello","Good morning"]}"#;
-        let (status, reply) = translate_from(body, &engine, Some(token.as_str()), &bindings, &root, Some(script.clone()));
+        let (status, reply) = translate_from(body, &engine, token_allowed(&bindings, Some(token.as_str())), &root, Some(script.clone()));
         assert_eq!(status, 200, "{}", reply);
         assert!(reply.contains("\"Hello\"") && reply.contains("\"Good morning\""), "{}", reply);
         engine.stop_all();
 
         // Without the marker the pack is not installed: the helper says so and does not download it.
         std::fs::remove_file(pack_dir.join(packs::MARKER)).unwrap();
-        let (status, reply) = translate_from(body, &engine, Some(token.as_str()), &bindings, &root, Some(script));
+        let (status, reply) = translate_from(body, &engine, token_allowed(&bindings, Some(token.as_str())), &root, Some(script));
         assert_eq!(status, 409, "{}", reply);
         assert!(reply.contains("not installed"), "{}", reply);
         let _ = std::fs::remove_dir_all(&root);
