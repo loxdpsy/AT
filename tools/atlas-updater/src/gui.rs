@@ -1172,8 +1172,6 @@ impl Helper {
             None => {}
         }
         let line = parts.join("  \u{b7}  ");
-        let accent = ctx.style().visuals.selection.bg_fill;
-
         let mut cancel = false;
         egui::Window::new(tr("Atlas Helper is working"))
             .collapsible(false)
@@ -1181,6 +1179,7 @@ impl Helper {
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
                 ui.set_min_width(400.0);
+                let accent = ui.visuals().selection.bg_fill;
                 ui.label(RichText::new(stage.as_str()).size(17.0).strong());
                 ui.add_space(10.0);
                 ui.horizontal(|ui| {
