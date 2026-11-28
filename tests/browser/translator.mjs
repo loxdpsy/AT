@@ -270,6 +270,54 @@ await check("reading speed: the menu opens and the choice is kept", async page =
   }
 }
 
+// A scanned PDF (no text layer): the OCR button is offered, and its pages are read through the helper's text recognition
+// (the helper is stood in here: readOcr returns two lines) and then translated. Nothing is sent to an online service.
+{
+  const name = "a scanned PDF offers OCR, and the OCR text is translated";
+  const { page, errors } = await openPage();
+  try {
+    await page.click("#tabPdf");
+    await (await page.$("#pdfFile")).uploadFile(path.join(root, "tests/fixtures/scanned-sample.pdf"));
+    await page.select("#pdfSource", "en");
+    await page.select("#pdfTarget", "fr");
+    // Stand in for the helper: connected, with text recognition installed, and two lines on the page.
+    await page.evaluate(() => {
+      window.__ocrImages = [];
+      TwpHelper.ocrAvailable = async () => true;
+      TwpHelper.readOcr = async image => {
+        window.__ocrImages.push(image.slice(0, 22));
+        return [
+          { text: "Scanned first line", box: [40, 100, 300, 120] },
+          { text: "and the second line.", box: [40, 124, 300, 144] }
+        ];
+      };
+    });
+    await page.click("#btnPdfTranslate");
+    await page.waitForFunction(() => !document.getElementById("pdfOcr").hidden, { timeout: 30000 });
+    const offer = await page.$eval("#pdfOcrText", el => el.textContent);
+    assert.ok(offer.includes("1 page has no text"), "the offer counts the scanned page: " + offer);
+    assert.strictEqual(await page.$$eval("#pdfResult p", els => els.length), 0, "nothing is shown before OCR");
+    await page.click("#btnPdfOcr");
+    await page.waitForFunction(() => document.querySelectorAll("#pdfResult p").length > 0, { timeout: 30000 });
+    const paragraphs = await page.$$eval("#pdfResult p", els => els.map(el => el.textContent));
+    assert.deepStrictEqual(paragraphs, ["T[Scanned first line and the second line.]"], "the OCR paragraph is translated");
+    const images = await page.evaluate(() => window.__ocrImages);
+    assert.deepStrictEqual(images, ["data:image/png;base64,"], "one page picture is sent to the helper");
+    const sent = await page.evaluate(() => window.__messages.filter(m => m.action === "translateTextOnly").length);
+    assert.ok(sent >= 1, "the translation uses the offline-only message");
+    const notOffer = await page.$eval("#pdfOcr", el => el.hidden);
+    assert.ok(notOffer, "the offer is hidden once every page has text");
+    if (errors.length) throw new Error("page errors: " + errors.join("; "));
+    results.push({ name, ok: true });
+    console.log(`  ok    ${name}`);
+  } catch (e) {
+    results.push({ name, ok: false });
+    console.log(`  FAIL  ${name}\n        ${e.message}`);
+  } finally {
+    await page.close();
+  }
+}
+
 await browser.close();
 server.close();
 const failed = results.filter(r => !r.ok).length;

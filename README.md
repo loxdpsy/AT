@@ -43,10 +43,10 @@ Other extensions with a similar name are not Atlas Translation. Store links will
 - **Translator page** (toolbar popup menu, *Translator*), like Google Translate:
   - translate as you type, with a language chooser: chips for the current and recent languages, a full list with search, and a swap button;
   - Copy, Save, and a History of the newest 100 translations. Saved items stay until you remove them;
-  - **Listen** to the source or the translation, at *Normal*, *Slow* or *Slowest* speed. Reading uses the voices of this computer for now.
+  - **Listen** to the source or the translation, at *Normal*, *Slow* or *Slowest* speed. When the Atlas Helper has an installed read-aloud voice for the language (up to 2000 characters), that voice reads; otherwise this computer's voices do.
 - **PDF translation.** When the tab is a PDF, the toolbar popup offers to translate it (From and To languages). It opens the
   Translator's PDF tab and translates the text on this computer with the Atlas Helper and an installed language pack (one side must be
-  English). Scanned PDFs without text are not supported. Limits: 50 MB and 300 pages. The result is text with Copy and
+  English). Scanned pages (no text) are read with OCR when you press *Read scanned pages with OCR*, using the helper's text recognition (see below). Limits: 50 MB and 300 pages. The result is text with Copy and
   Download .txt; the PDF layout is not rebuilt. The document's language is guessed from its text (a best guess, shown in the status).
   *Show original text* puts each paragraph's source under its translation.
 - **Open the Translator with a keyboard shortcut.** Firefox: `Shift+Alt+Y`. Chromium browsers allow only four built-in shortcut
@@ -99,8 +99,7 @@ optional. It does three things for the extension:
   with SHA-256. The same tab installs the read-aloud runtime once for the computer (sherpa-onnx, Apache-2.0). Reading
   aloud from the extension is not built yet.
 - **Text recognition (OCR, Offline tab).** Install PP-OCRv4 to read text in page pictures (Chinese and English, Apache-2.0,
-  about 16 MB). The helper reads pictures sent to it on 127.0.0.1. ocrs and Tesseract are not added yet, and the
-  extension's button for scanned PDFs is not built yet.
+  about 16 MB). The helper reads pictures sent to it on 127.0.0.1. ocrs and Tesseract are not added yet. The Translator's PDF tab has the OCR button for scanned pages.
 - **Helper updates.** The helper checks GitHub for a newer helper, not only a newer extension. When one is out, the window says
   "A new version is available, please update" with what is new, and a button opens the release page. The helper does not
   replace itself; download the new one from the release.
@@ -123,8 +122,7 @@ extension zip. See [tools/atlas-updater/README.md](tools/atlas-updater/README.md
   Chinese and English, about 16 MB). The models are downloaded once and checked with SHA-256. The engine runs on this
   computer; the picture is sent only to the helper on 127.0.0.1. Install it in the Offline tab. The ocrs and Tesseract
   engines and more languages are not added yet.
-- **Not built yet:** the extension's Listen button. The helper can speak through its local API once the runtime and a
-  voice are installed (the window's runtime button is in the Offline tab).
+- **Listen in the Translator** uses an installed helper voice when the runtime and a voice for the language are installed (the Offline tab). Otherwise the computer's voices are used. Other parts of the extension do not use the helper's voices yet.
   Piper's phonemizer is espeak-ng (GPL-3.0). A licence review is needed before any release that ships the voices.
 
 ## Build from source

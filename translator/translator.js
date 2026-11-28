@@ -75,7 +75,8 @@
     save.textContent = entry && entry.saved ? t("btnSaved", "Saved") : t("btnSave", "Save");
   }
 
-  // ---- Reading aloud. Uses the voices of this computer (speechSynthesis). The speed is one of SPEEDS.
+  // ---- Reading aloud. The Atlas Helper's installed voice is used when it speaks the language (helper.js). Otherwise the
+  // voices of this computer are used (speechSynthesis). The speed is one of SPEEDS.
   function voicesReady() {
     return new Promise(resolve => {
       const voices = speechSynthesis.getVoices();
@@ -90,6 +91,7 @@
 
   async function speak(text, code, rate) {
     if (!text || !text.trim()) return;
+    if (await TwpHelper.speakWithHelper(text, code, rate)) return;
     if (!("speechSynthesis" in window)) {
       status(t("msgNoSpeech", "Reading aloud is not available in this browser."), true);
       return;

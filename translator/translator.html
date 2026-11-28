@@ -96,13 +96,17 @@
                 </div>
             </div>
             <p id="pdfStatus" class="status" role="status"></p>
+            <div id="pdfOcr" class="pdfOcr" hidden>
+                <p id="pdfOcrText" class="muted small"></p>
+                <button type="button" id="btnPdfOcr" class="linkButton">Read scanned pages with OCR</button>
+            </div>
             <div id="pdfActions" class="pdfActions" hidden>
                 <button type="button" id="pdfCopy" class="linkButton">Copy</button>
                 <button type="button" id="pdfDownload" class="linkButton">Download .txt</button>
                 <label class="checkLabel"><input type="checkbox" id="pdfShowOriginal"> Show original text</label>
             </div>
             <div id="pdfResult" class="pdfResult" aria-live="polite"></div>
-            <p class="muted small">Needs the Atlas Helper with the language pack for the two languages (one side must be English). Scanned PDFs without a text layer are not supported. Up to 50 MB and 300 pages.</p>
+            <p class="muted small">Needs the Atlas Helper with the language pack for the two languages (one side must be English). Scanned pages (no text layer) can be read with OCR, which runs in the Atlas Helper and needs its text recognition models. Up to 50 MB and 300 pages.</p>
         </section>
 
         <section id="panelHistory" role="tabpanel" aria-labelledby="tabHistory" hidden>
@@ -133,6 +137,7 @@
     <script src="/lib/languages.js"></script>
     <script src="/lib/config.js"></script>
     <script src="/lib/i18n.js"></script>
+    <script src="helper.js"></script>
     <script src="history.js"></script>
     <script src="language-picker.js"></script>
     <script src="translator.js"></script>

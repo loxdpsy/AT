@@ -37,7 +37,7 @@ pub const PORT: u16 = 47632;
 pub const PROTOCOL: u32 = 2;
 
 /// What this helper can do. An extension uses the features it knows, and ignores the rest.
-const FEATURES: &[&str] = &["offline", "packs", "bind", "translate"];
+const FEATURES: &[&str] = &["offline", "packs", "bind", "translate", "speak", "ocr"];
 /// The most a request body may be. A page is translated in batches, so this is generous.
 const MAX_BODY: usize = 16 * 1024 * 1024;
 /// The most texts in one request.
@@ -247,13 +247,31 @@ fn ping_body() -> String {
     // The protocol number and the features let an extension of another version use what this helper supports, and skip
     // the rest. An unknown field or feature is ignored by the extension, so a newer helper is never a failure for it.
     let features: Vec<String> = FEATURES.iter().map(|f| json::quote(f)).collect();
+    // The read-aloud voices that are installed, with the languages each one speaks, so the extension can pick one for
+    // a language. The runtime must be installed too; the extension speaks in the browser otherwise.
+    let data = store::data_dir();
+    let voices_root = data.join("voices");
+    let speech_voices: Vec<String> = match voices::catalogue() {
+        Ok(list) => list
+            .iter()
+            .filter(|v| voices::is_installed_in(&voices_root, v))
+            .map(|v| {
+                let languages: Vec<String> = v.languages.iter().map(|l| json::quote(l)).collect();
+                format!("{{\"id\":{},\"languages\":[{}]}}", json::quote(&v.id), languages.join(","))
+            })
+            .collect(),
+        Err(_) => Vec::new(),
+    };
     format!(
-        "{{\"ok\":true,\"name\":\"Atlas Helper\",\"version\":{},\"protocol\":{},\"features\":[{}],\"engine\":{},\"packs\":[{}]}}",
+        "{{\"ok\":true,\"name\":\"Atlas Helper\",\"version\":{},\"protocol\":{},\"features\":[{}],\"engine\":{},\"packs\":[{}],\"speech\":{{\"runtime\":{},\"voices\":[{}]}},\"ocr\":{}}}",
         json::quote(&crate::app_version()),
         PROTOCOL,
         features.join(","),
         engine::find_binary().is_some(),
-        installed.join(",")
+        installed.join(","),
+        speak::runtime_installed(&data),
+        speech_voices.join(","),
+        ocr::installed(&data)
     )
 }
 
@@ -443,6 +461,17 @@ mod tests {
         let mut bindings = Bindings::in_memory();
         let token = bindings.add("Test browser").unwrap();
         (bindings, token)
+    }
+
+    #[test]
+    fn ping_reports_the_speech_and_ocr_state() {
+        // The extension picks a read-aloud voice and checks for text recognition from these fields.
+        let body = json::parse(&ping_body()).expect("the ping answer is valid JSON");
+        let speech = body.get("speech").expect("the ping answer has a speech object");
+        assert!(speech.get("runtime").is_some());
+        assert!(speech.get("voices").and_then(|v| v.as_array()).is_some());
+        assert!(body.get("ocr").is_some());
+        assert!(body.get("features").and_then(|v| v.as_array()).unwrap().iter().any(|f| f.as_str() == Some("ocr")));
     }
 
     #[test]

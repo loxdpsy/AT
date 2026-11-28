@@ -4,7 +4,7 @@
 - Offline text recognition (OCR) engine in the helper: PP-OCRv4 (Apache-2.0), read in pure Rust, with a local
   `/api/offline/ocr` route for the extension. The models are about 16 MB, downloaded once and checked with SHA-256.
   The Offline tab has an OCR card: choose an engine, then install PP-OCRv4. ocrs and Tesseract are listed, not added yet.
-  Still to do: the extension's OCR button for scanned PDFs.
+  The Translator's PDF tab has an OCR button for scanned pages (no text): the page is read by the helper and then translated.
 - Helper window and tray text: translated into Chinese (Simplified), Hindi, Spanish, Arabic, French, Bengali, Portuguese (Brazil), Russian, Japanese, Vietnamese, German, Korean, Turkish, Italian, Polish, Dutch, Ukrainian, Czech, Thai, Greek, Hebrew, Persian, Catalan, Danish, Finnish, Croatian, Hungarian, Romanian, Swedish, Norwegian, Serbian, Slovenian, Latvian, Icelandic, Afrikaans, Portuguese (Portugal), Traditional Chinese, Uyghur and Karakalpak (batches 1 to 8 of 8; 39 languages). Karakalpak and Santali are now in the language list; Santali shows English until translated.
 - Helper About tab: the version, a link to the web page, the repository, releases and third-party notices.
   The language is the one chosen in Settings, or the computer's language with "system". Strings with no translation show
@@ -13,16 +13,19 @@
   for speaking, OCR and translation now checks the token under the lock and releases it before the slow work.
 - Helper: checks for a newer helper, not only a newer extension. It shows "A new version is available, please update" with what is new, and a button to the release page.
 - Atlas Helper starts silently: after install and at sign-in it runs in the tray only, with no window and no console. Its window opens from the tray icon.
-- Read-aloud voices: seven voices for English, Arabic, Chinese and 31 languages in all (Kitten nano 0.2 added for English), with licences and SHA-256 checksums. In the Offline tab, choose a language, tick the voices you want (or select all), and install them: the size and licence are shown first, and each download is checked. Reading aloud is not built yet.
+- Read-aloud voices: seven voices for English, Arabic, Chinese and 31 languages in all (Kitten nano 0.2 added for English), with licences and SHA-256 checksums. In the Offline tab, choose a language, tick the voices you want (or select all), and install them: the size and licence are shown first, and each download is checked. The Translator's Listen button uses them.
 
 Not released yet. Changes after 0.0.2.5 are listed here.
 
 - Translator page (toolbar popup menu, "Translator"): translate text as you type, with a language swap, Copy and Save.
   History keeps the newest 100 translations. Saved items stay until you remove them. "Clear history" removes only unsaved items.
 - Translator PDF tab: choose a PDF file or paste its address. The text is read and translated on this computer with the
-  Offline helper (one side must be English, and the language pack must be installed). Scanned PDFs are not supported.
+  Offline helper (one side must be English, and the language pack must be installed). Scanned pages (no text) are read
+  with the helper's text recognition when you press "Read scanned pages with OCR".
 - Translator text tab: a Google-style language chooser (chips for the current and recent languages, a full list with search, swap).
-- Translator: Listen to the source or the translation, at Normal, Slow or Slowest speed (system voices for now).
+- Translator: Listen to the source or the translation, at Normal, Slow or Slowest speed. The helper's installed read-aloud voice
+  for the language is used when there is one (up to 2000 characters); otherwise the computer's voices are used.
+- Atlas Helper status: the local API reports the installed read-aloud voices and whether text recognition is installed.
 - Opening a PDF shows a prompt to translate it (From and To). It opens the Translator's PDF tab, which translates on this computer with the Offline helper.
 - PDF translation: the document's language is guessed from its text, and From is set to it. A "Show original text" box shows each paragraph's source.
 - Keyboard command "Open the Translator" (Firefox: Shift+Alt+Y; Chromium: set it at chrome://extensions/shortcuts).

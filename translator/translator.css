@@ -150,6 +150,7 @@ button.primary {
 .pdfForm .langRow { flex-wrap: wrap; align-items: flex-end; }
 .pdfForm .langRow .pdfField { flex-direction: row; align-items: center; gap: 8px; }
 .pdfActions { display: flex; gap: 8px; margin: 12px 0 4px; }
+.pdfOcr { margin: 12px 0 4px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 .pdfResult { margin-top: 12px; }
 .pdfPage { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px 18px; margin-bottom: 12px; }
 .pdfPage h3 { font-size: 14px; color: var(--muted); margin: 4px 0 8px; font-weight: 600; }
