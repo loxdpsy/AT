@@ -5,6 +5,7 @@
   file for checking downloads. Android has no package (the helper is a desktop program; Firefox for Android installs the
   store version). Intel Macs have their own disk image. Windows ARM64, Linux ARM64 and the .deb and .rpm packages are
   not built yet.
+  Each file has a short description of who it is for.
 - The extension's Settings note about the offline service ("Needs the Atlas Helper and a language pack") is translated
   into 39 languages. Santali shows English until it has a translation.
 - Offline text recognition (OCR) engines in the helper, in pure Rust, with a local `/api/offline/ocr` route for the
