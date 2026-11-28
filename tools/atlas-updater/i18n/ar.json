@@ -98,5 +98,16 @@
  "Open Atlas Helper": "فتح Atlas Helper",
  "Quit": "إنهاء",
  "Installed the read-aloud runtime.": "تم تثبيت بيئة القراءة الصوتية.",
- "Installed the text recognition models (PP-OCRv4).": "تم تثبيت نماذج التعرف على النص (PP-OCRv4)."
+ "Installed the text recognition models (PP-OCRv4).": "تم تثبيت نماذج التعرف على النص (PP-OCRv4).",
+ "About": "حول",
+ "About Atlas Helper": "حول Atlas Helper",
+ "Version": "الإصدار",
+ "The helper runs offline translation, read-aloud voices and text recognition on this computer, for the Atlas Translation extension.": "يشغّل المساعد على هذا الكمبيوتر الترجمة دون اتصال وأصوات القراءة الصوتية والتعرف على النص، لإضافة Atlas Translation.",
+ "Web page": "صفحة الويب",
+ "Open the web page": "فتح صفحة الويب",
+ "Source code on GitHub": "الشيفرة المصدرية على GitHub",
+ "Releases": "الإصدارات",
+ "Third-party notices": "إشعارات الأطراف الثالثة",
+ "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "Licencia: MPL-2.0 para el asistente. Los modelos y voces sin conexión conservan sus propias licencias, indicadas en los avisos.",
+ "Extension": "الإضافة"
 }

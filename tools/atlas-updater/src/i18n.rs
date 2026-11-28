@@ -11,9 +11,14 @@ use crate::json::{self, Value};
 /// The languages that have a translation file, by code (as in `_locales`, with `_` between the parts).
 const FILES: &[(&str, &str)] = &[
     ("ar", include_str!("../i18n/ar.json")),
+    ("bn", include_str!("../i18n/bn.json")),
     ("es", include_str!("../i18n/es.json")),
     ("fr", include_str!("../i18n/fr.json")),
     ("hi", include_str!("../i18n/hi.json")),
+    ("ja", include_str!("../i18n/ja.json")),
+    ("pt_BR", include_str!("../i18n/pt_BR.json")),
+    ("ru", include_str!("../i18n/ru.json")),
+    ("vi", include_str!("../i18n/vi.json")),
     ("zh_CN", include_str!("../i18n/zh_CN.json")),
 ];
 

@@ -98,5 +98,16 @@
  "Open Atlas Helper": "Ouvrir Atlas Helper",
  "Quit": "Quitter",
  "Installed the read-aloud runtime.": "Moteur de lecture à voix haute installé.",
- "Installed the text recognition models (PP-OCRv4).": "Modèles de reconnaissance de texte installés (PP-OCRv4)."
+ "Installed the text recognition models (PP-OCRv4).": "Modèles de reconnaissance de texte installés (PP-OCRv4).",
+ "About": "À propos",
+ "About Atlas Helper": "À propos d'Atlas Helper",
+ "Version": "Version",
+ "The helper runs offline translation, read-aloud voices and text recognition on this computer, for the Atlas Translation extension.": "L'assistant exécute sur cet ordinateur la traduction hors ligne, les voix de lecture à voix haute et la reconnaissance de texte, pour l'extension Atlas Translation.",
+ "Web page": "Page web",
+ "Open the web page": "Ouvrir la page web",
+ "Source code on GitHub": "Code source sur GitHub",
+ "Releases": "Versions",
+ "Third-party notices": "Mentions des tiers",
+ "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "Licence : MPL-2.0 pour l'assistant. Les modèles et voix hors ligne conservent leurs propres licences, listées dans les mentions.",
+ "Extension": "Extension"
 }

@@ -98,5 +98,16 @@
  "Open Atlas Helper": "Atlas Helper खोलें",
  "Quit": "बंद करें",
  "Installed the read-aloud runtime.": "पढ़कर सुनाने का रनटाइम इंस्टॉल हो गया।",
- "Installed the text recognition models (PP-OCRv4).": "टेक्स्ट पहचान मॉडल इंस्टॉल हो गए (PP-OCRv4)।"
+ "Installed the text recognition models (PP-OCRv4).": "टेक्स्ट पहचान मॉडल इंस्टॉल हो गए (PP-OCRv4)।",
+ "About": "के बारे में",
+ "About Atlas Helper": "Atlas Helper के बारे में",
+ "Version": "संस्करण",
+ "The helper runs offline translation, read-aloud voices and text recognition on this computer, for the Atlas Translation extension.": "सहायक Atlas Translation एक्सटेंशन के लिए इस कंप्यूटर पर ऑफ़लाइन अनुवाद, पढ़कर सुनाने की आवाज़ें और टेक्स्ट पहचान चलाता है।",
+ "Web page": "वेब पेज",
+ "Open the web page": "वेब पेज खोलें",
+ "Source code on GitHub": "GitHub पर सोर्स कोड",
+ "Releases": "रिलीज़",
+ "Third-party notices": "तृतीय-पक्ष सूचनाएँ",
+ "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "الترخيص: MPL-2.0 للمساعد. تحتفظ النماذج والأصوات دون اتصال بتراخيصها الخاصة المدرجة في الإشعارات.",
+ "Extension": "एक्सटेंशन"
 }

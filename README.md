@@ -253,7 +253,7 @@ too few requests remain. Add `--upstream` to also check FilipePS's project. Set 
 ### Helper window and tray
 
 The helper's window and tray text are translated in `tools/atlas-updater/i18n/`, one JSON file per language, keyed by the
-English text. Batch 1 covers Chinese (Simplified), Hindi, Spanish, Arabic and French. A string with no translation shows in
+English text. Batches 1 and 2 cover Chinese (Simplified), Hindi, Spanish, Arabic, French, Bengali, Portuguese (Brazil), Russian, Japanese and Vietnamese. A string with no translation shows in
 English. Check that a translation keeps its placeholders (`{}`); `tests/unit/helperI18n.test.mjs` runs that check.
 
 ### Extension
