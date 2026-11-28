@@ -28,7 +28,7 @@ jobs:
         run: |
           cd /tmp/p/inference/marian-fork/src
           printf '#include "functional/defs.h"\n#include "functional/operators.h"\nint main(){return 0;}\n' > probe.cpp
-          flags="-std=gnu++11 -fPIC -include cstdint -flax-vector-conversions -Wall -Werror -Wextra -Wno-unused-result -Wno-deprecated -Wno-pragmas -Wno-unused-parameter -Wno-unused-function -Wno-unused-value -Wno-unknown-pragmas -Wno-sign-compare -Wno-missing-field-initializers -Wno-use-after-free -Wno-restrict -Wno-unused-private-field -Wno-comment -fno-strict-aliasing -DARM -DFMA -DSSE -DUSE_SSE2 -DWASM_COMPATIBLE_SOURCE -DCOMPILE_CPU=1 -DUSE_ONNX_SGEMM=1 -O3 -I. -I3rd_party -I3rd_party/simd_utils -I3rd_party/onnxjs/deps/eigen -I3rd_party/spdlog/include"
+          flags="-std=gnu++11 -fPIC -include cstdint -flax-vector-conversions -Wall -Werror -Wextra -Wno-unused-result -Wno-deprecated -Wno-pragmas -Wno-unused-parameter -Wno-unused-function -Wno-unused-value -Wno-unknown-pragmas -Wno-sign-compare -Wno-missing-field-initializers -Wno-unused-private-field -Wno-comment -fno-strict-aliasing -DARM -DFMA -DSSE -DUSE_SSE2 -DWASM_COMPATIBLE_SOURCE -DCOMPILE_CPU=1 -DUSE_ONNX_SGEMM=1 -O3 -I. -I3rd_party -I3rd_party/simd_utils -I3rd_party/onnxjs/deps/eigen -I3rd_party/spdlog/include"
           clang++-18 $flags -H -fsyntax-only probe.cpp > trace.txt 2>&1 || true
           echo "::notice title=probe::neon_mathfun includes: $(grep -c 'neon_mathfun' trace.txt); sse_mathfun includes: $(grep -c 'sse_mathfun' trace.txt)"
           clang++-18 $flags -E probe.cpp -o pp.ii 2>/dev/null || true
