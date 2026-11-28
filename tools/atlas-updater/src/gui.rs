@@ -464,7 +464,7 @@ impl eframe::App for Helper {
 
         let idle = self.busy.is_none();
         egui::CentralPanel::default()
-            .frame(egui::Frame::new().fill(PAPER).inner_margin(egui::Margin::same(18)))
+            .frame(egui::Frame::new().fill(if dark { DARK_PAPER } else { PAPER }).inner_margin(egui::Margin::same(18)))
             .show_inside(ui, |ui| {
                 let align = if self.rtl { egui::Align::Max } else { egui::Align::Min };
                 egui::ScrollArea::vertical().show(ui, |ui| {
