@@ -37,18 +37,23 @@ jobs:
         with:
           tool: cargo-deny
 
+      # The output is kept in an artifact too, because the run log is not always downloadable.
       - name: Every crate's licence is on the allowlist
-        run: cargo deny check licenses
+        run: cargo deny check licenses 2>&1 | tee "$RUNNER_TEMP/deny-check.log"
 
       - name: List every crate and its licence
-        run: cargo deny list --format json > "$RUNNER_TEMP/crate-licences.json"
+        if: always()
+        run: cargo deny list --format json > "$RUNNER_TEMP/crate-licences.json" 2> "$RUNNER_TEMP/deny-list.log" || true
 
-      - name: Keep the list
+      - name: Keep the list and the check output
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: crate-licences
-          path: ${{ runner.temp }}/crate-licences.json
+          path: |
+            ${{ runner.temp }}/crate-licences.json
+            ${{ runner.temp }}/deny-check.log
+            ${{ runner.temp }}/deny-list.log
           if-no-files-found: warn
 
       - name: Job summary
