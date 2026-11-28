@@ -53,7 +53,9 @@ jobs:
               text = " | ".join(x.strip() for x in lines[i:i + 6] if x.strip())
               print("::error::" + text.replace("%", "%25"))
           if not hits:
-              print("::error::cargo-deny failed without an error line; see the log in the crate-licences artifact")
+              print("::error::cargo-deny failed without an error line. The last lines of its output follow.")
+              for l in [x for x in lines if x.strip()][-12:]:
+                  print("::error::" + l.strip().replace("%", "%25"))
           PY
 
       - name: List every crate and its licence
