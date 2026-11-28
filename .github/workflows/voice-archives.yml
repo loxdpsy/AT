@@ -51,6 +51,8 @@ jobs:
               espeak = [n for n in listing if "espeak-ng-data/" in n]
               licences = [n for n in listing if os.path.basename(n.rstrip("/")).upper().startswith(("COPYING", "LICENSE", "NOTICE"))]
               rows.append((name, size, "ok" if size_ok else "differs", "ok" if sum_ok else "differs", len(espeak), licences))
+              # Also as an annotation, so the result shows on the run page even when the summary is not reachable.
+              print(f"::notice title=Voice {name}::{size} bytes, size {'ok' if size_ok else 'differs'}, SHA-256 {'ok' if sum_ok else 'differs'}, espeak-ng-data files: {len(espeak)}, licence files: {', '.join(licences) or 'none'}")
 
           with open(summary, "a", encoding="utf-8") as out:
               out.write("## Voice archives\n\n")
