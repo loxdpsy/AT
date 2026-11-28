@@ -67,7 +67,7 @@ pub fn set_language(setting: &str) {
 
 /// The translation file for a language tag, if there is one. An exact match wins (zh-CN, pt_BR). A region without
 /// its own file uses the file of its language (fr-FR, fr-CA), unless that language has regional files of its own:
-/// then zh-TW does not get zh_CN, and pt-PT does not get pt_BR. Such a region is shown in English.
+/// then zh-TW does not get zh_CN, and pt-PT does not get pt_BR. Such a region with no file of its own is shown in English.
 fn find(tag: &str) -> Option<&'static str> {
     let tag = tag.replace('-', "_");
     if let Some((_, text)) = FILES.iter().find(|(code, _)| code.eq_ignore_ascii_case(&tag)) {
@@ -116,10 +116,12 @@ mod tests {
         assert!(find("fr").is_some());
         assert!(find("fr-CA").is_some(), "a region with no file of its own uses its language");
         assert!(find("fr_FR").is_some());
-        assert!(find("pt-PT").is_none(), "Portugal does not get the Brazilian file");
+        assert!(find("pt-PT").is_some(), "Portugal has its own file");
+        assert_ne!(find("pt-PT"), find("pt-BR"), "Portugal does not get the Brazilian file");
         assert!(find("zh-CN").is_some());
         assert!(find("zh_CN").is_some());
-        assert!(find("zh-TW").is_none(), "Traditional Chinese does not get the Simplified file");
+        assert!(find("zh-TW").is_some(), "Traditional Chinese has its own file");
+        assert_ne!(find("zh-TW"), find("zh-CN"), "Traditional Chinese does not get the Simplified file");
         assert!(find("en").is_none());
         assert!(find("xx").is_none());
     }
