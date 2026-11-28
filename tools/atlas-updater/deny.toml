@@ -22,4 +22,6 @@ allow = [
     "Unlicense",
     "OFL-1.1",
     "Ubuntu-font-1.0",
+    # webpki-roots: the Mozilla root certificates used for HTTPS (a permissive data licence).
+    "CDLA-Permissive-2.0",
 ]

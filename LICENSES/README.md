@@ -18,7 +18,8 @@ part are in [NOTICE.md](../NOTICE.md). The project itself is licensed under MPL-
 | Piper voice John | Public domain (LibriVox recordings) | none needed; credit in NOTICE.md |
 | Supertonic 3 voice (Supertone Inc.) | BigScience Open RAIL-M (use restrictions) | [OpenRAIL-M.txt](OpenRAIL-M.txt) |
 | Supertonic 3 sample code | MIT | [MIT.txt](MIT.txt) |
-| Rust crates of the Atlas Helper | MIT or Apache-2.0 (per crate) | the crates' own licence files; a full list is still to be generated |
+| Mozilla root certificates (`webpki-roots` crate, used by the helper for HTTPS) | CDLA-Permissive-2.0 | [CDLA-Permissive-2.0.txt](CDLA-Permissive-2.0.txt) |
+| Rust crates of the Atlas Helper | MIT, Apache-2.0 and the other licences on the allowlist in `tools/atlas-updater/deny.toml` | checked in CI by the Licences workflow; the crates' own licence files |
 
 ## Notes on the GPL-3.0 phoneme data
 
