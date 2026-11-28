@@ -53,11 +53,22 @@ jobs:
       - name: Set up Rust (the helper window needs Rust 1.92 or later)
         uses: dtolnay/rust-toolchain@stable
 
+      # The first build on a fresh runner takes about 12 minutes on macOS Intel (eframe, tract and ocrs). The cache keeps
+      # the compiled crates, so the next run starts from them.
+      - name: Cache the compiled crates
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: tools/atlas-updater
+
       - name: Compile errors as annotations (so a failed build shows what broke)
         shell: bash
         working-directory: tools/atlas-updater
+        env:
+          # Cargo writes its "Compiling ..." lines to the log as it goes, so a long build is visibly working.
+          CARGO_TERM_PROGRESS_WHEN: always
+          CARGO_TERM_PROGRESS_WIDTH: "100"
         run: |
-          cargo test --release --no-run --message-format=json > "$RUNNER_TEMP/cargo-messages.json" 2>/dev/null || true
+          cargo test --release --no-run --message-format=json > "$RUNNER_TEMP/cargo-messages.json" || true
           python3 - "$RUNNER_TEMP/cargo-messages.json" <<'PY'
           import json, sys
           for line in open(sys.argv[1], encoding="utf-8", errors="replace"):

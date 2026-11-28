@@ -12,7 +12,7 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::thread;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use eframe::egui::{self, Color32, RichText, ViewportCommand};
 use eframe::egui::IconData;
@@ -36,18 +36,19 @@ use crate::voices;
 /// The Atlas logo, the same one the extension uses (icons/icon-128.png). The window shows it at the top, and the
 /// window and tray icons are made from it.
 const LOGO: &[u8] = include_bytes!("../../../icons/icon-128.png");
-const BLUE: Color32 = Color32::from_rgb(0x1f, 0x63, 0xd6);
-const RED: Color32 = Color32::from_rgb(0xb4, 0x23, 0x18);
-const GREEN: Color32 = Color32::from_rgb(0x1b, 0x7f, 0x3b);
-const GREY: Color32 = Color32::from_rgb(0x5f, 0x63, 0x68);
+const BLUE: Color32 = Color32::from_rgb(0x3b, 0x6c, 0xf6);
+const RED: Color32 = Color32::from_rgb(0xdc, 0x3e, 0x46);
+const GREEN: Color32 = Color32::from_rgb(0x1f, 0x9d, 0x63);
+const GREY: Color32 = Color32::from_rgb(0x6b, 0x72, 0x80);
 const PAPER: Color32 = Color32::from_rgb(0xf3, 0xf5, 0xf9);
-const SIDEBAR: Color32 = Color32::from_rgb(0xe6, 0xeb, 0xf3);
-const BORDER: Color32 = Color32::from_rgb(0xd3, 0xd9, 0xe3);
-const DARK_PAPER: Color32 = Color32::from_rgb(0x17, 0x1a, 0x21);
-const DARK_CARD: Color32 = Color32::from_rgb(0x20, 0x24, 0x2d);
-const DARK_MUTED: Color32 = Color32::from_rgb(0xa8, 0xb0, 0xbd);
-const DARK_BORDER: Color32 = Color32::from_rgb(0x3a, 0x40, 0x4c);
-const DARK_SIDEBAR: Color32 = Color32::from_rgb(0x12, 0x15, 0x1c);
+const SIDEBAR: Color32 = Color32::from_rgb(0xff, 0xff, 0xff);
+const BORDER: Color32 = Color32::from_rgb(0xe4, 0xe8, 0xf0);
+const DARK_PAPER: Color32 = Color32::from_rgb(0x0a, 0x0c, 0x11);
+const DARK_CARD: Color32 = Color32::from_rgb(0x13, 0x16, 0x1e);
+const DARK_MUTED: Color32 = Color32::from_rgb(0x8d, 0x96, 0xa8);
+const DARK_BORDER: Color32 = Color32::from_rgb(0x23, 0x29, 0x35);
+const DARK_SIDEBAR: Color32 = Color32::from_rgb(0x0e, 0x11, 0x17);
+const DARK_INSET: Color32 = Color32::from_rgb(0x19, 0x1d, 0x26);
 
 #[derive(Clone, Copy, PartialEq)]
 enum Tab {
@@ -69,6 +70,15 @@ struct Status {
     installed: Result<Option<String>, String>,
     /// What is new in the latest release (bullets of its CHANGELOG section).
     notes: Vec<String>,
+}
+
+/// Follows the speed of the running transfer, so the progress window can show the time left.
+struct Meter {
+    progress: Arc<transfer::Progress>,
+    at: Instant,
+    done: u64,
+    /// Bytes a second, smoothed over the last few samples.
+    rate: f64,
 }
 
 /// Results from background threads.
@@ -144,6 +154,8 @@ pub struct Helper {
     busy: Option<String>,
     // The progress popup's counters, set while a download or install runs.
     progress: Option<Arc<transfer::Progress>>,
+    /// The speed of the running transfer (see Meter).
+    meter: Option<Meter>,
     message: Option<(bool, String)>,
     autostart: bool,
     tray: Option<Tray>,
@@ -166,6 +178,15 @@ pub struct Helper {
     applied_look: Option<(bool, String)>,
     /// Kept so the offline service's engine stays alive for the whole run (it is shared with the API thread).
     _engine: Arc<Engine>,
+}
+
+/// The seconds left for a transfer going at `rate` bytes a second. None when the size is not known, the transfer is
+/// done, or the speed is not measured yet.
+fn time_left(done: u64, total: u64, rate: f64) -> Option<u64> {
+    if total == 0 || done >= total || rate < 1.0 {
+        return None;
+    }
+    Some(((total - done) as f64 / rate).ceil() as u64)
 }
 
 /// Formats a byte count as megabytes for the progress popup.
@@ -206,6 +227,12 @@ pub fn run(show_window: bool) -> Result<(), String> {
         options,
         Box::new(move |cc| {
             cc.egui_ctx.set_visuals(visuals(false, "blue"));
+            cc.egui_ctx.all_styles_mut(|style| {
+                style.spacing.item_spacing = egui::vec2(10.0, 9.0);
+                style.spacing.button_padding = egui::vec2(14.0, 7.0);
+                style.spacing.interact_size.y = 32.0;
+                style.text_styles.insert(egui::TextStyle::Heading, egui::FontId::proportional(22.0));
+            });
             let texture = cc.egui_ctx.load_texture(
                 "atlas-logo",
                 egui::ColorImage::from_rgba_unmultiplied([logo.width as usize, logo.height as usize], &logo.rgba),
@@ -243,6 +270,7 @@ pub fn run(show_window: bool) -> Result<(), String> {
                 voice_picked: HashSet::new(),
                 busy: None,
                 progress: None,
+                meter: None,
                 message: None,
                 autostart: autostart::is_enabled(),
                 tray,
@@ -352,51 +380,71 @@ impl eframe::App for Helper {
             .cloned();
         let helper_notes: Vec<String> = self.status.as_ref().map(|s| s.notes.clone()).unwrap_or_default();
 
+        let border = if dark { DARK_BORDER } else { BORDER };
+        let accent = ui.visuals().selection.bg_fill;
         egui::Panel::top("header")
-            .frame(egui::Frame::new().fill(if dark { DARK_CARD } else { Color32::WHITE }).inner_margin(egui::Margin::same(12)))
+            .frame(
+                egui::Frame::new()
+                    .fill(if dark { DARK_CARD } else { Color32::WHITE })
+                    .stroke(egui::Stroke::new(1.0, border))
+                    .inner_margin(egui::Margin::symmetric(18, 12)),
+            )
             .show_inside(ui, |ui| {
                 row(ui, self.rtl, |ui| {
-                    ui.add(egui::Image::new(&self.logo).fit_to_exact_size(egui::vec2(52.0, 52.0)));
-                    ui.add_space(12.0);
-                    ui.vertical(|ui| {
-                        ui.label(RichText::new("Atlas Helper").size(20.0).strong());
-                        ui.label(RichText::new(trf!("Version {}", crate::app_version())).color(muted(ui)));
-                        if let Some(latest) = &newer_helper {
-                            if let Some(text) = crate::helper_update_text(latest) {
-                                ui.label(RichText::new(text).color(RED));
-                            }
-                            // What is new in that release: the bullets of its CHANGELOG section.
-                            for note in helper_notes.iter().take(5) {
-                                ui.label(RichText::new(format!("- {}", note)).color(muted(ui)));
-                            }
-                            if ui.button(tr("Get the new helper")).clicked() {
-                                open_target(&format!("{}/tag/v{}", crate::RELEASES_PAGE, latest));
-                            }
+                    ui.add(egui::Image::new(&self.logo).fit_to_exact_size(egui::vec2(30.0, 30.0)));
+                    ui.add_space(8.0);
+                    ui.label(RichText::new("Atlas Helper").size(17.0).strong());
+                    ui.add_space(6.0);
+                    pill(ui, &trf!("Version {}", crate::app_version()), accent);
+                });
+                if let Some(latest) = &newer_helper {
+                    ui.add_space(6.0);
+                    row(ui, self.rtl, |ui| {
+                        if let Some(text) = crate::helper_update_text(latest) {
+                            ui.label(RichText::new(text).color(RED));
+                        }
+                        if ui.button(tr("Get the new helper")).clicked() {
+                            open_target(&format!("{}/tag/v{}", crate::RELEASES_PAGE, latest));
                         }
                     });
-                });
+                    // What is new in that release: the bullets of its CHANGELOG section.
+                    for note in helper_notes.iter().take(5) {
+                        ui.label(RichText::new(format!("- {}", note)).color(muted(ui)).small());
+                    }
+                }
             });
 
         let tabs_side = if self.rtl { egui::Panel::right("tabs") } else { egui::Panel::left("tabs") };
         tabs_side
             .resizable(false)
-            .default_size(190.0)
-            .frame(egui::Frame::new().fill(if dark { DARK_SIDEBAR } else { SIDEBAR }).inner_margin(egui::Margin::same(10)))
+            .default_size(208.0)
+            .frame(
+                egui::Frame::new()
+                    .fill(if dark { DARK_SIDEBAR } else { SIDEBAR })
+                    .stroke(egui::Stroke::new(1.0, border))
+                    .inner_margin(egui::Margin::symmetric(12, 16)),
+            )
             .show_inside(ui, |ui| {
-                ui.add_space(4.0);
-                tab_button(ui, &mut self.tab, Tab::Extension, &tr("Extension"));
-                tab_button(ui, &mut self.tab, Tab::Offline, &tr("Offline translation"));
-                tab_button(ui, &mut self.tab, Tab::Connections, &tr("Connections"));
-                tab_button(ui, &mut self.tab, Tab::Settings, &tr("Settings"));
-                tab_button(ui, &mut self.tab, Tab::About, &tr("About"));
-                ui.add_space(24.0);
-                if ui.add_sized([ui.available_width(), 30.0], egui::Button::new(tr("Quit helper"))).clicked() {
+                let rtl = self.rtl;
+                tab_button(ui, &mut self.tab, Tab::Extension, &tr("Extension"), rtl);
+                tab_button(ui, &mut self.tab, Tab::Offline, &tr("Offline translation"), rtl);
+                tab_button(ui, &mut self.tab, Tab::Connections, &tr("Connections"), rtl);
+                tab_button(ui, &mut self.tab, Tab::Settings, &tr("Settings"), rtl);
+                tab_button(ui, &mut self.tab, Tab::About, &tr("About"), rtl);
+                let spare = (ui.available_height() - 40.0).max(12.0);
+                ui.add_space(spare);
+                if ui.add_sized([ui.available_width(), 32.0], egui::Button::new(tr("Quit helper"))).clicked() {
                     actions.push(Action::Quit);
                 }
             });
 
         egui::Panel::bottom("footer")
-            .frame(egui::Frame::new().fill(if dark { DARK_CARD } else { Color32::WHITE }).inner_margin(egui::Margin::same(8)))
+            .frame(
+                egui::Frame::new()
+                    .fill(if dark { DARK_CARD } else { Color32::WHITE })
+                    .stroke(egui::Stroke::new(1.0, border))
+                    .inner_margin(egui::Margin::symmetric(16, 8)),
+            )
             .show_inside(ui, |ui| {
                 row(ui, self.rtl, |ui| {
                     if let Some(label) = &self.busy {
@@ -404,9 +452,12 @@ impl eframe::App for Helper {
                         ui.label(label.as_str());
                     } else if let Some((ok, text)) = &self.message {
                         let color = if *ok { GREEN } else { RED };
+                        status_dot(ui, color);
                         ui.label(RichText::new(text.as_str()).color(color));
                     } else {
-                        ui.label(RichText::new(tr("Ready.")).color(muted(ui)));
+                        let color = muted(ui);
+                        status_dot(ui, color);
+                        ui.label(RichText::new(tr("Ready.")).color(color));
                     }
                 });
             });
@@ -419,7 +470,7 @@ impl eframe::App for Helper {
                 egui::ScrollArea::vertical().show(ui, |ui| {
                     ui.with_layout(egui::Layout::top_down(align), |ui| {
                         // One readable column: the text wraps inside it and never runs under the scroll bar.
-                        let width = ui.available_width().min(640.0);
+                        let width = ui.available_width().min(720.0);
                         ui.set_max_width(width);
                         match self.tab {
                             Tab::Extension => self.extension_tab(ui, idle, &mut actions),
@@ -446,59 +497,78 @@ impl eframe::App for Helper {
 
 impl Helper {
     fn extension_tab(&mut self, ui: &mut egui::Ui, idle: bool, actions: &mut Vec<Action>) {
-        ui.heading(tr("Atlas Translation extension"));
-        ui.label(RichText::new(tr("Install or update the extension here. Firefox users get updates from the Add-ons store, so they only need the link below.")).color(muted(ui)));
-        ui.add_space(12.0);
+        ui.label(RichText::new(tr("Atlas Translation extension")).size(22.0).strong());
+        ui.label(
+            RichText::new(tr("Install or update the extension here. Firefox users get updates from the Add-ons store, so they only need the link below."))
+                .color(muted(ui)),
+        );
+        ui.add_space(14.0);
 
         card(ui, |ui| {
             ui.label(RichText::new(tr("Folder with the unpacked copy of the extension (Chromium browsers)")).strong());
+            ui.add_space(4.0);
             row(ui, self.rtl, |ui| {
-                ui.add(egui::TextEdit::singleline(&mut self.folder).desired_width(360.0));
+                let width = (ui.available_width() - 110.0).max(160.0);
+                ui.add(egui::TextEdit::singleline(&mut self.folder).desired_width(width));
                 if ui.button(tr("Default")).clicked() {
                     actions.push(Action::UseDefaultFolder);
                 }
             });
-            ui.add_space(10.0);
+            ui.add_space(12.0);
 
             match &self.status {
                 None => {
                     ui.label(RichText::new(tr("Checking the latest release...")).color(muted(ui)));
                 }
                 Some(status) => {
-                    match &status.latest {
-                        Ok(v) => ui.label(trf!("Latest release: {}", v)),
-                        Err(e) => ui.label(RichText::new(trf!("Latest release: unknown ({})", e)).color(RED)),
-                    };
-                    match &status.installed {
-                        Ok(None) => ui.label(tr("Installed in this folder: nothing yet")),
-                        Ok(Some(v)) => ui.label(trf!("Installed in this folder: {}", v)),
-                        Err(e) => ui.label(RichText::new(trf!("This folder: {}", e)).color(RED)),
-                    };
-                    if let (Ok(latest), Ok(installed)) = (&status.latest, &status.installed) {
-                        let newer = matches!(installed, Some(v) if crate::is_newer(latest, v));
-                        let text = match installed {
-                            None => "Ready to install.".to_string(),
-                            Some(_) if newer => trf!("Please update: version {} is available.", latest),
-                            Some(_) => "You have the latest version.".to_string(),
-                        };
-                        ui.label(RichText::new(text).color(if newer { RED } else { ui.visuals().hyperlink_color }));
-                        if newer && !status.notes.is_empty() {
-                            ui.label(RichText::new(trf!("What is new in {}:", latest)).strong());
-                            for note in &status.notes {
-                                ui.label(format!("•  {}", note));
+                    let dark = ui.visuals().dark_mode;
+                    let accent = ui.visuals().selection.bg_fill;
+                    egui::Frame::new()
+                        .fill(if dark { DARK_INSET } else { PAPER })
+                        .corner_radius(egui::CornerRadius::same(12))
+                        .inner_margin(egui::Margin::same(14))
+                        .show(ui, |ui| {
+                            let width = ui.available_width();
+                            ui.set_width(width);
+                            match &status.latest {
+                                Ok(v) => ui.label(trf!("Latest release: {}", v)),
+                                Err(e) => ui.label(RichText::new(trf!("Latest release: unknown ({})", e)).color(RED)),
+                            };
+                            match &status.installed {
+                                Ok(None) => ui.label(tr("Installed in this folder: nothing yet")),
+                                Ok(Some(v)) => ui.label(trf!("Installed in this folder: {}", v)),
+                                Err(e) => ui.label(RichText::new(trf!("This folder: {}", e)).color(RED)),
+                            };
+                            if let (Ok(latest), Ok(installed)) = (&status.latest, &status.installed) {
+                                let newer = matches!(installed, Some(v) if crate::is_newer(latest, v));
+                                let (text, color) = match installed {
+                                    None => (tr("Ready to install."), accent),
+                                    Some(_) if newer => (trf!("Please update: version {} is available.", latest), RED),
+                                    Some(_) => (tr("You have the latest version."), GREEN),
+                                };
+                                ui.add_space(8.0);
+                                pill(ui, &text, color);
+                                if newer && !status.notes.is_empty() {
+                                    ui.add_space(6.0);
+                                    ui.label(RichText::new(trf!("What is new in {}:", latest)).strong());
+                                    for note in &status.notes {
+                                        ui.label(format!("•  {}", note));
+                                    }
+                                }
                             }
-                        }
-                    }
+                        });
                 }
             }
-            ui.add_space(10.0);
 
+            ui.add_space(14.0);
+            let accent = ui.visuals().selection.bg_fill;
             row(ui, self.rtl, |ui| {
+                let install = egui::Button::new(RichText::new(tr("Install or update")).strong().color(Color32::WHITE)).fill(accent);
+                if ui.add_enabled(idle && !self.folder.trim().is_empty(), install).clicked() {
+                    actions.push(Action::Install);
+                }
                 if ui.add_enabled(idle, egui::Button::new(tr("Check again"))).clicked() {
                     actions.push(Action::Refresh);
-                }
-                if ui.add_enabled(idle && !self.folder.trim().is_empty(), egui::Button::new(tr("Install or update"))).clicked() {
-                    actions.push(Action::Install);
                 }
                 if ui.button(tr("Open folder")).clicked() {
                     actions.push(Action::OpenFolder);
@@ -506,28 +576,34 @@ impl Helper {
             });
         });
 
-        ui.add_space(16.0);
-        ui.heading(tr("Browsers"));
-        ui.add_space(4.0);
+        ui.add_space(20.0);
+        ui.label(RichText::new(tr("Browsers")).size(17.0).strong());
+        ui.add_space(6.0);
         if self.detected.is_empty() {
             ui.label(RichText::new(tr("No browser was found on this computer. Install one, then open the helper again.")).color(muted(ui)));
         }
         for browser in self.detected.clone() {
             let guide = browsers::guide(&browser, &self.folder);
-            let title = format!("{}  (found on this computer)", browser.name);
-            ui.collapsing(title, |ui| {
-                for (i, step) in guide.steps.iter().enumerate() {
-                    ui.label(format!("{}. {}", i + 1, step));
-                }
-                if guide.needs_folder {
-                    ui.label(RichText::new(tr("Choose the folder above first.")).color(muted(ui)));
-                }
-                if let Some(link) = &guide.link {
-                    if ui.button(trf!("Open the page for {}", guide.name)).clicked() {
-                        actions.push(Action::OpenLink(link.clone()));
+            card(ui, |ui| {
+                row(ui, self.rtl, |ui| {
+                    ui.label(RichText::new(browser.name.as_str()).strong());
+                    pill(ui, &tr("Found on this computer"), GREEN);
+                });
+                egui::CollapsingHeader::new(tr("Steps")).id_salt(browser.id.as_str()).show(ui, |ui| {
+                    for (i, step) in guide.steps.iter().enumerate() {
+                        ui.label(format!("{}. {}", i + 1, step));
                     }
-                }
+                    if guide.needs_folder {
+                        ui.label(RichText::new(tr("Choose the folder above first.")).color(muted(ui)));
+                    }
+                    if let Some(link) = &guide.link {
+                        if ui.button(trf!("Open the page for {}", guide.name)).clicked() {
+                            actions.push(Action::OpenLink(link.clone()));
+                        }
+                    }
+                });
             });
+            ui.add_space(8.0);
         }
 
         if let Some(error) = &self.tray_error {
@@ -1066,25 +1142,76 @@ impl Helper {
         let done = progress.done.load(Ordering::Relaxed);
         let total = progress.total.load(Ordering::Relaxed);
         let stage = progress.stage();
+
+        // The speed is measured over half-second samples and smoothed, so the time left does not jump about.
+        let now = Instant::now();
+        if self.meter.as_ref().map_or(true, |m| !Arc::ptr_eq(&m.progress, &progress)) {
+            self.meter = Some(Meter { progress: Arc::clone(&progress), at: now, done, rate: 0.0 });
+        }
+        let Some(meter) = self.meter.as_mut() else {
+            return;
+        };
+        let elapsed = now.duration_since(meter.at).as_secs_f64();
+        if elapsed >= 0.5 {
+            let sample = done.saturating_sub(meter.done) as f64 / elapsed;
+            meter.rate = if meter.rate <= 0.0 { sample } else { meter.rate * 0.6 + sample * 0.4 };
+            meter.at = now;
+            meter.done = done;
+        }
+        let rate = meter.rate;
+
+        let fraction = if total > 0 { (done as f32 / total as f32).clamp(0.0, 1.0) } else { 0.0 };
+        let mut parts: Vec<String> = Vec::new();
+        if rate >= 1.0 {
+            parts.push(format!("{:.1} MB/s", rate / 1_048_576.0));
+        }
+        match time_left(done, total, rate) {
+            Some(secs) if secs < 60 => parts.push(trf!("About {} seconds left", secs)),
+            Some(secs) => parts.push(trf!("About {} minutes left", secs.div_ceil(60))),
+            None if rate < 1.0 => parts.push(tr("Starting...")),
+            None => {}
+        }
+        let line = parts.join("  \u{b7}  ");
+        let accent = ctx.style().visuals.selection.bg_fill;
+
         let mut cancel = false;
         egui::Window::new(tr("Atlas Helper is working"))
             .collapsible(false)
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
-                ui.set_min_width(360.0);
-                ui.label(RichText::new(stage.as_str()).size(16.0).strong());
-                ui.add_space(8.0);
-                if total > 0 {
-                    let fraction = (done as f32 / total as f32).clamp(0.0, 1.0);
-                    let text = format!("{} of {} MB", megabytes(done), megabytes(total));
-                    ui.add(egui::ProgressBar::new(fraction).text(text).desired_width(360.0));
+                ui.set_min_width(400.0);
+                ui.label(RichText::new(stage.as_str()).size(17.0).strong());
+                ui.add_space(10.0);
+                ui.horizontal(|ui| {
+                    if total > 0 {
+                        ui.label(RichText::new(format!("{:.0}%", fraction * 100.0)).size(32.0).strong().color(accent));
+                    } else {
+                        ui.spinner();
+                    }
+                    ui.vertical(|ui| {
+                        if total > 0 {
+                            ui.label(RichText::new(trf!("{} of {} MB", megabytes(done), megabytes(total))).strong());
+                        }
+                        if !line.is_empty() {
+                            ui.label(RichText::new(line.as_str()).color(muted(ui)).small());
+                        }
+                    });
+                });
+                ui.add_space(12.0);
+                let bar = if total > 0 {
+                    egui::ProgressBar::new(fraction)
                 } else {
-                    ui.add(egui::ProgressBar::new(0.0).animate(true).desired_width(360.0));
-                }
+                    egui::ProgressBar::new(0.0).animate(true)
+                };
+                ui.add(bar.fill(accent).corner_radius(egui::CornerRadius::same(8)).desired_width(400.0));
+                ui.add_space(10.0);
+                ui.label(
+                    RichText::new(tr("This window closes when the step finishes. Nothing is installed until the file checks out."))
+                        .color(muted(ui))
+                        .small(),
+                );
                 ui.add_space(8.0);
-                ui.label(RichText::new(tr("This window closes when the step finishes. Nothing is installed until the file checks out.")).color(muted(ui)).small());
-                ui.add_space(6.0);
                 if ui.button(tr("Cancel")).clicked() {
                     cancel = true;
                 }
@@ -1190,20 +1317,24 @@ impl Helper {
                     );
                     ui.add_space(4.0);
                     egui::ScrollArea::vertical().max_height(260.0).auto_shrink([false, true]).show(ui, |ui| {
+                        let accent = ui.visuals().selection.bg_fill;
                         for browser in &pending {
-                            row(ui, rtl, |ui| {
-                                ui.label(RichText::new(browser.name.as_str()).strong());
-                                if ui.button(tr("Install here")).clicked() {
-                                    actions.push(Action::SetupBrowser(browser.id.clone()));
-                                }
+                            card(ui, |ui| {
+                                row(ui, rtl, |ui| {
+                                    ui.label(RichText::new(browser.name.as_str()).strong());
+                                    let install = egui::Button::new(RichText::new(tr("Install here")).color(Color32::WHITE)).fill(accent);
+                                    if ui.add(install).clicked() {
+                                        actions.push(Action::SetupBrowser(browser.id.clone()));
+                                    }
+                                });
+                                let guide = browsers::guide(browser, &folder);
+                                egui::CollapsingHeader::new(tr("Steps")).id_salt(browser.id.as_str()).show(ui, |ui| {
+                                    for (i, step) in guide.steps.iter().enumerate() {
+                                        ui.label(RichText::new(format!("{}. {}", i + 1, step)).color(muted(ui)).small());
+                                    }
+                                });
                             });
-                            let guide = browsers::guide(browser, &folder);
-                            egui::CollapsingHeader::new(tr("Steps")).id_salt(browser.id.as_str()).show(ui, |ui| {
-                                for (i, step) in guide.steps.iter().enumerate() {
-                                    ui.label(RichText::new(format!("{}. {}", i + 1, step)).color(muted(ui)).small());
-                                }
-                            });
-                            ui.add_space(4.0);
+                            ui.add_space(6.0);
                         }
                     });
                     if pending.len() > 1 && ui.button(tr("Install in all of them")).clicked() {
@@ -1910,18 +2041,42 @@ fn open_target(target: &str) -> bool {
     autostart::quiet(command).spawn().is_ok()
 }
 
-/// The Atlas colours on top of the light theme: a soft background, white cards, rounded corners.
+/// The Atlas look on top of the theme: a calm background, cards with thin borders and soft corners, a soft shadow on
+/// the windows, and one accent colour for the open tab, the main button and the progress bars.
 fn visuals(dark: bool, accent: &str) -> egui::Visuals {
     let mut visuals = if dark { egui::Visuals::dark() } else { egui::Visuals::light() };
     let accent = accent_color(accent);
+    let border = if dark { DARK_BORDER } else { BORDER };
     visuals.hyperlink_color = accent;
     visuals.selection.bg_fill = accent;
-    // The text of a selected tab sits on the blue fill, so it is white.
+    // The text of a selected item sits on the accent fill, so it is white.
     visuals.selection.stroke = egui::Stroke::new(1.0, Color32::WHITE);
     visuals.panel_fill = if dark { DARK_PAPER } else { PAPER };
     visuals.window_fill = if dark { DARK_CARD } else { Color32::WHITE };
-    for widget in [&mut visuals.widgets.inactive, &mut visuals.widgets.hovered, &mut visuals.widgets.active] {
-        widget.corner_radius = egui::CornerRadius::same(8);
+    visuals.window_stroke = egui::Stroke::new(1.0, border);
+    visuals.window_corner_radius = egui::CornerRadius::same(16);
+    visuals.window_shadow = egui::Shadow {
+        offset: [0, 10],
+        blur: 30,
+        spread: 0,
+        color: Color32::from_black_alpha(if dark { 150 } else { 36 }),
+    };
+    visuals.faint_bg_color = if dark { DARK_INSET } else { Color32::from_rgb(0xf8, 0xf9, 0xfc) };
+    visuals.extreme_bg_color = if dark { Color32::from_rgb(0x0c, 0x0e, 0x13) } else { Color32::WHITE };
+    let (rest, hover, press) = if dark {
+        (Color32::from_rgb(0x1c, 0x21, 0x2b), Color32::from_rgb(0x25, 0x2b, 0x37), Color32::from_rgb(0x2d, 0x34, 0x42))
+    } else {
+        (Color32::from_rgb(0xf0, 0xf2, 0xf7), Color32::from_rgb(0xe5, 0xe9, 0xf1), Color32::from_rgb(0xd9, 0xdf, 0xea))
+    };
+    let widgets = &mut visuals.widgets;
+    for (widget, fill) in [(&mut widgets.inactive, rest), (&mut widgets.hovered, hover), (&mut widgets.active, press)] {
+        widget.weak_bg_fill = fill;
+        widget.bg_fill = fill;
+        widget.bg_stroke = egui::Stroke::new(1.0, border);
+    }
+    widgets.hovered.bg_stroke = egui::Stroke::new(1.0, accent.gamma_multiply(0.7));
+    for widget in [&mut widgets.noninteractive, &mut widgets.inactive, &mut widgets.hovered, &mut widgets.active] {
+        widget.corner_radius = egui::CornerRadius::same(10);
     }
     visuals
 }
@@ -1931,22 +2086,69 @@ fn muted(ui: &egui::Ui) -> Color32 {
     if ui.visuals().dark_mode { DARK_MUTED } else { GREY }
 }
 
-/// A white card with a thin border, around a group of related controls.
+/// A card: a white (or dark) panel with a thin border, soft corners and a faint shadow, around related controls.
 fn card<R>(ui: &mut egui::Ui, add: impl FnOnce(&mut egui::Ui) -> R) -> R {
     let dark = ui.visuals().dark_mode;
     egui::Frame::new()
         .fill(if dark { DARK_CARD } else { Color32::WHITE })
         .stroke(egui::Stroke::new(1.0, if dark { DARK_BORDER } else { BORDER }))
-        .corner_radius(egui::CornerRadius::same(10))
-        .inner_margin(egui::Margin::same(14))
+        .corner_radius(egui::CornerRadius::same(14))
+        .inner_margin(egui::Margin::same(18))
+        .shadow(egui::Shadow {
+            offset: [0, 2],
+            blur: 10,
+            spread: 0,
+            color: Color32::from_black_alpha(if dark { 0 } else { 14 }),
+        })
         .show(ui, add)
         .inner
 }
 
-/// A tab in the sidebar: a full-width button that shows whether it is the open tab.
-fn tab_button(ui: &mut egui::Ui, current: &mut Tab, tab: Tab, label: &str) {
+/// A small rounded label in one colour: the state of a version, or that a browser was found.
+fn pill(ui: &mut egui::Ui, text: &str, color: Color32) {
+    egui::Frame::new()
+        .fill(color.gamma_multiply(0.16))
+        .corner_radius(egui::CornerRadius::same(255))
+        .inner_margin(egui::Margin::symmetric(10, 3))
+        .show(ui, |ui| {
+            ui.label(RichText::new(text).color(color).small().strong());
+        });
+}
+
+/// A round dot that shows the state in the footer.
+fn status_dot(ui: &mut egui::Ui, color: Color32) {
+    let (rect, _) = ui.allocate_exact_size(egui::vec2(8.0, 8.0), egui::Sense::hover());
+    ui.painter().circle_filled(rect.center(), 4.0, color);
+}
+
+/// A tab in the sidebar: a full-width row with the label, a soft fill and an accent bar when it is the open tab.
+fn tab_button(ui: &mut egui::Ui, current: &mut Tab, tab: Tab, label: &str, rtl: bool) {
     let selected = *current == tab;
-    if ui.add_sized([ui.available_width(), 34.0], egui::Button::selectable(selected, label)).clicked() {
+    let accent = ui.visuals().selection.bg_fill;
+    let text_color = if selected { accent } else { ui.visuals().text_color() };
+    let hover_fill = ui.visuals().widgets.hovered.weak_bg_fill;
+    let (rect, response) = ui.allocate_exact_size(egui::vec2(ui.available_width(), 40.0), egui::Sense::click());
+    let fill = if selected {
+        accent.gamma_multiply(0.16)
+    } else if response.hovered() {
+        hover_fill
+    } else {
+        Color32::TRANSPARENT
+    };
+    let painter = ui.painter();
+    painter.rect_filled(rect, egui::CornerRadius::same(10), fill);
+    let (anchor, x) = if rtl {
+        (egui::Align2::RIGHT_CENTER, rect.right() - 16.0)
+    } else {
+        (egui::Align2::LEFT_CENTER, rect.left() + 16.0)
+    };
+    painter.text(egui::pos2(x, rect.center().y), anchor, label, egui::FontId::proportional(14.5), text_color);
+    if selected {
+        let bar_x = if rtl { rect.right() - 4.0 } else { rect.left() + 2.0 };
+        let bar = egui::Rect::from_min_size(egui::pos2(bar_x, rect.center().y - 10.0), egui::vec2(3.0, 20.0));
+        painter.rect_filled(bar, egui::CornerRadius::same(2), accent);
+    }
+    if response.clicked() {
         *current = tab;
     }
 }
@@ -1976,6 +2178,15 @@ fn square(icon: &IconData, size: u32) -> IconData {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn time_left_needs_a_size_and_a_speed() {
+        assert_eq!(time_left(0, 100, 10.0), Some(10));
+        assert_eq!(time_left(50, 100, 10.0), Some(5));
+        assert_eq!(time_left(100, 100, 10.0), None);
+        assert_eq!(time_left(0, 0, 10.0), None);
+        assert_eq!(time_left(0, 100, 0.0), None);
+    }
 
     #[test]
     fn right_to_left_languages_mirror_the_window() {

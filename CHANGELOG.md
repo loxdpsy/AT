@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- The Atlas Helper window has a new look: a dark theme that reads well, cards with soft corners, a sidebar with an accent
+  bar, and an install window that shows the speed and the time left while a download runs.
 - Release notes: a download table by operating system, with every file's SHA-256 and size, and a `SHA256SUMS.txt`
   file for checking downloads. Android has no package (the helper is a desktop program; Firefox for Android installs the
   store version). Intel Macs have their own disk image. Windows ARM64, Linux ARM64 and the .deb and .rpm packages are
