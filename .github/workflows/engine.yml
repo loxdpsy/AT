@@ -152,7 +152,7 @@ jobs:
       - name: Annotate the build failure
         if: failure() && steps.build.outcome == 'failure'
         run: |
-          grep -E ': error|error [A-Z]+[0-9]+|LNK[0-9]+|CMake Error|\*\*\* |failed' "$RUNNER_TEMP/engine-build.log" | head -n 60 | while IFS= read -r line; do
+          grep -iE 'error|fatal|undefined reference|LNK[0-9]+|CMake Error|\*\*\* ' "$RUNNER_TEMP/engine-build.log" | cut -c1-400 | head -n 60 | while IFS= read -r line; do
             echo "::error title=engine build::${line//%/%25}"
           done || true
 
