@@ -72,13 +72,19 @@ jobs:
           cmake -S tools/atlas-engine -B build/engine -DCMAKE_BUILD_TYPE=Release "${compilers[@]}"
       - name: Show the compile command and compile node.cpp
         run: |
+          set +e
           cd build/engine
           d=bergamot/marian-fork/src
-          make -n -C $d -f CMakeFiles/marian.dir/build.make CMakeFiles/marian.dir/graph/node.cpp.o 2>&1 | grep -o ' -c .*' | head -1 > /tmp/cmd.txt || true
-          cmd=$(make -n -C $d -f CMakeFiles/marian.dir/build.make CMakeFiles/marian.dir/graph/node.cpp.o 2>&1 | grep "node.cpp" | head -1)
+          ls $d | head -3
+          make -C $d -f CMakeFiles/marian.dir/build.make -n CMakeFiles/marian.dir/graph/node.cpp.o > /tmp/dry.txt 2>&1
+          echo "dry exit $?"
+          cmd=$(grep "node.cpp" /tmp/dry.txt | head -1)
           echo "::notice title=cmd-head::$(echo "$cmd" | cut -c1-900)"
           echo "::notice title=cmd-tail::$(echo "$cmd" | cut -c901-1900)"
           echo "::notice title=cmd-tail2::$(echo "$cmd" | cut -c1901-2900)"
-          make -k -C $d -f CMakeFiles/marian.dir/build.make CMakeFiles/marian.dir/graph/node.cpp.o > /tmp/node.log 2>&1 || true
+          head -3 /tmp/dry.txt | while IFS= read -r l; do echo "::notice title=dry::${l//%/%25}"; done
+          make -k -C $d -f CMakeFiles/marian.dir/build.make CMakeFiles/marian.dir/graph/node.cpp.o > /tmp/node.log 2>&1
+          echo "build exit $?"
           grep -E "error|fatal" /tmp/node.log | head -8 | while IFS= read -r l; do echo "::error title=node-error::${l//%/%25}"; done
-          echo "::notice title=node-result::$(tail -2 /tmp/node.log | tr '\n' ' ' | cut -c1-300)"
+          tail -3 /tmp/node.log | while IFS= read -r l; do echo "::notice title=node-tail::${l//%/%25}"; done
+          exit 0
