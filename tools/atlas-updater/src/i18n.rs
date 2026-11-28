@@ -99,6 +99,33 @@ pub fn tr(source: &str) -> String {
     source.to_string()
 }
 
+/// The text for an English source with `{}` placeholders: the translation (or the English) with each `{}` filled in
+/// order. Arguments are given already formatted, so a translation can keep them in its own order.
+pub fn fill(template: &str, args: &[&dyn std::fmt::Display]) -> String {
+    let mut out = String::new();
+    let mut rest = template;
+    let mut index = 0;
+    while let Some(at) = rest.find("{}") {
+        out.push_str(&rest[..at]);
+        match args.get(index) {
+            Some(arg) => out.push_str(&arg.to_string()),
+            None => out.push_str("{}"),
+        }
+        index += 1;
+        rest = &rest[at + 2..];
+    }
+    out.push_str(rest);
+    out
+}
+
+/// `tr` for a text with placeholders: `trf!("Installed {} of {}", a, b)` looks up the English text and fills it in.
+macro_rules! trf {
+    ($source:expr $(, $arg:expr)* $(,)?) => {
+        $crate::i18n::fill(&$crate::i18n::tr($source), &[$(&$arg as &dyn ::std::fmt::Display),*])
+    };
+}
+pub(crate) use trf;
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -109,6 +136,14 @@ mod tests {
             let value = json::parse(text).unwrap_or_else(|e| panic!("{} is not valid JSON: {}", code, e));
             assert!(value.get("Cancel").is_some() || value.get("Quit").is_some(), "{} has no translations", code);
         }
+    }
+
+    #[test]
+    fn placeholders_are_filled_in_order() {
+        assert_eq!(fill("Installed {} of {}", &[&2, &3]), "Installed 2 of 3");
+        assert_eq!(fill("{} to {}", &[&"fr", &"en"]), "fr to en");
+        assert_eq!(fill("no placeholders", &[&1]), "no placeholders");
+        assert_eq!(fill("{} and {}", &[&"one"]), "one and {}", "a missing argument keeps its placeholder");
     }
 
     #[test]

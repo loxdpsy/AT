@@ -18,7 +18,10 @@ function codeStrings() {
   const found = new Set();
   for (const file of ["gui.rs", "tray.rs"]) {
     const text = readFileSync(join(src, file), "utf8");
-    for (const m of text.matchAll(/\btr\("((?:[^"\\]|\\.)*)"\)/g)) found.add(unescapeRust(m[1]));
+    // tr("...") and trf!("...", args) with placeholders filled in at run time.
+    for (const m of text.matchAll(/\btr\(\s*"((?:[^"\\]|\\.)*)"\s*\)|\btrf!\(\s*"((?:[^"\\]|\\.)*)"/g)) {
+      found.add(unescapeRust(m[1] ?? m[2]));
+    }
   }
   return found;
 }

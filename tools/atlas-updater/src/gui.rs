@@ -23,7 +23,7 @@ use crate::autostart;
 use crate::bind::{self, BindRequest, Shared};
 use crate::browsers::{self, Browser};
 use crate::engine::{self, Engine};
-use crate::i18n::tr;
+use crate::i18n::{tr, trf};
 use crate::ocr;
 use crate::packs::{self, Catalogue, Pack};
 use crate::settings::{self, Settings};
@@ -359,7 +359,7 @@ impl eframe::App for Helper {
                     ui.add_space(12.0);
                     ui.vertical(|ui| {
                         ui.label(RichText::new("Atlas Helper").size(20.0).strong());
-                        ui.label(RichText::new(format!("Version {}", crate::app_version())).color(muted(ui)));
+                        ui.label(RichText::new(trf!("Version {}", crate::app_version())).color(muted(ui)));
                         if let Some(latest) = &newer_helper {
                             if let Some(text) = crate::helper_update_text(latest) {
                                 ui.label(RichText::new(text).color(RED));
@@ -465,24 +465,24 @@ impl Helper {
                 }
                 Some(status) => {
                     match &status.latest {
-                        Ok(v) => ui.label(format!("Latest release: {}", v)),
-                        Err(e) => ui.label(RichText::new(format!("Latest release: unknown ({})", e)).color(RED)),
+                        Ok(v) => ui.label(trf!("Latest release: {}", v)),
+                        Err(e) => ui.label(RichText::new(trf!("Latest release: unknown ({})", e)).color(RED)),
                     };
                     match &status.installed {
                         Ok(None) => ui.label(tr("Installed in this folder: nothing yet")),
-                        Ok(Some(v)) => ui.label(format!("Installed in this folder: {}", v)),
-                        Err(e) => ui.label(RichText::new(format!("This folder: {}", e)).color(RED)),
+                        Ok(Some(v)) => ui.label(trf!("Installed in this folder: {}", v)),
+                        Err(e) => ui.label(RichText::new(trf!("This folder: {}", e)).color(RED)),
                     };
                     if let (Ok(latest), Ok(installed)) = (&status.latest, &status.installed) {
                         let newer = matches!(installed, Some(v) if crate::is_newer(latest, v));
                         let text = match installed {
                             None => "Ready to install.".to_string(),
-                            Some(_) if newer => format!("Please update: version {} is available.", latest),
+                            Some(_) if newer => trf!("Please update: version {} is available.", latest),
                             Some(_) => "You have the latest version.".to_string(),
                         };
                         ui.label(RichText::new(text).color(if newer { RED } else { ui.visuals().hyperlink_color }));
                         if newer && !status.notes.is_empty() {
-                            ui.label(RichText::new(format!("What is new in {}:", latest)).strong());
+                            ui.label(RichText::new(trf!("What is new in {}:", latest)).strong());
                             for note in &status.notes {
                                 ui.label(format!("•  {}", note));
                             }
@@ -522,7 +522,7 @@ impl Helper {
                     ui.label(RichText::new(tr("Choose the folder above first.")).color(muted(ui)));
                 }
                 if let Some(link) = &guide.link {
-                    if ui.button(format!("Open the page for {}", guide.name)).clicked() {
+                    if ui.button(trf!("Open the page for {}", guide.name)).clicked() {
                         actions.push(Action::OpenLink(link.clone()));
                     }
                 }
@@ -531,7 +531,7 @@ impl Helper {
 
         if let Some(error) = &self.tray_error {
             ui.add_space(16.0);
-            ui.label(RichText::new(format!("No tray icon: {}. Keep this window open, or start the helper again.", error)).color(RED));
+            ui.label(RichText::new(trf!("No tray icon: {}. Keep this window open, or start the helper again.", error)).color(RED));
         }
     }
 
@@ -638,7 +638,7 @@ impl Helper {
         let list = match &self.voices {
             Some(Ok(list)) => list.clone(),
             Some(Err(e)) => {
-                let text = format!("The read-aloud voices could not be listed: {}", e);
+                let text = trf!("The read-aloud voices could not be listed: {}", e);
                 card(ui, |ui| {
                     ui.label(RichText::new(text).color(RED));
                 });
@@ -697,7 +697,7 @@ impl Helper {
                 if ui
                     .add_enabled(
                         idle && picked_now > 0,
-                        egui::Button::new(format!("Install {} selected voice(s) for {}", picked_now, name)),
+                        egui::Button::new(trf!("Install {} selected voice(s) for {}", picked_now, name)),
                     )
                     .clicked()
                 {
@@ -722,8 +722,8 @@ impl Helper {
                             }
                         }
                     }
-                    ui.label(RichText::new(format!("about {:.0} MB", voice.bytes as f64 / 1_000_000.0)).color(muted(ui)));
-                    ui.label(RichText::new(format!("Licence: {}", voice.licence)).color(muted(ui)));
+                    ui.label(RichText::new(trf!("about {} MB", format!("{:.0}", voice.bytes as f64 / 1_000_000.0))).color(muted(ui)));
+                    ui.label(RichText::new(trf!("Licence: {}", voice.licence)).color(muted(ui)));
                 });
             }
         });
@@ -766,11 +766,11 @@ impl Helper {
                     megabytes
                 ));
                 for voice in &missing {
-                    ui.label(format!("- {} ({}, about {:.0} MB)", voice.name, voice.licence, voice.bytes as f64 / 1_000_000.0));
+                    ui.label(trf!("- {} ({}, about {} MB)", voice.name, voice.licence, format!("{:.0}", voice.bytes as f64 / 1_000_000.0)));
                 }
                 ui.add_space(8.0);
                 for voice in &needs_licence {
-                    ui.label(RichText::new(format!("{} needs you to accept its licence: {}.", voice.name, voice.licence)).color(RED));
+                    ui.label(RichText::new(trf!("{} needs you to accept its licence: {}.", voice.name, voice.licence)).color(RED));
                     if ui.button(tr("Read the licence")).clicked() {
                         actions.push(Action::OpenLink(voice.licence_url.clone()));
                     }
@@ -816,7 +816,7 @@ impl Helper {
 
         card(ui, |ui| {
             if let Some(error) = &self.api_error {
-                ui.label(RichText::new(format!("The offline service is not running: {}", error)).color(RED));
+                ui.label(RichText::new(trf!("The offline service is not running: {}", error)).color(RED));
             } else {
                 ui.label(RichText::new(tr("The offline service runs on this computer (127.0.0.1:47632).")).color(GREEN));
             }
@@ -824,14 +824,14 @@ impl Helper {
 
             let engine_path = engine::find_binary();
             match &engine_path {
-                Some(path) => ui.label(format!("Engine: installed ({})", path.display())),
+                Some(path) => ui.label(trf!("Engine: installed ({})", path.display())),
                 None => ui.label(RichText::new(tr("Engine: not installed")).color(RED)),
             };
             if engine_path.is_none() && ui.add_enabled(idle, egui::Button::new(tr("Install the engine"))).clicked() {
                 actions.push(Action::InstallEngine);
             }
             ui.add_space(6.0);
-            ui.label(RichText::new(format!("Data folder: {}", store::data_dir().display())).color(muted(ui)));
+            ui.label(RichText::new(trf!("Data folder: {}", store::data_dir().display())).color(muted(ui)));
         });
 
         self.voices_card(ui, idle);
@@ -857,7 +857,7 @@ impl Helper {
                 ui.label(RichText::new(tr("Loading the list of packs...")).color(muted(ui)));
             }
             Some(Err(e)) => {
-                ui.label(RichText::new(format!("The packs could not be listed: {}", e)).color(RED));
+                ui.label(RichText::new(trf!("The packs could not be listed: {}", e)).color(RED));
                 if ui.add_enabled(idle, egui::Button::new(tr("Try again"))).clicked() {
                     retry = true;
                 }
@@ -867,9 +867,9 @@ impl Helper {
                 let installed_packs: Vec<&Pack> = catalogue.packs.iter().filter(|p| installed.contains(&p.pair)).collect();
                 let installed_mb = installed_packs.iter().map(|p| p.bytes as f64).sum::<f64>() / 1_000_000.0;
                 card(ui, |ui| {
-                    ui.label(RichText::new(format!("Installed now: {} pack(s), about {:.0} MB", installed_packs.len(), installed_mb)).strong());
-                    ui.label(RichText::new(format!("Each pack is about 37 MB. {} packs are available.", catalogue.packs.len())).color(muted(ui)));
-                    ui.label(RichText::new(format!("Folder: {}", root.display())).color(muted(ui)));
+                    ui.label(RichText::new(trf!("Installed now: {} pack(s), about {} MB", installed_packs.len(), format!("{:.0}", installed_mb))).strong());
+                    ui.label(RichText::new(trf!("Each pack is about 37 MB. {} packs are available.", catalogue.packs.len())).color(muted(ui)));
+                    ui.label(RichText::new(trf!("Folder: {}", root.display())).color(muted(ui)));
                     if ui.button(tr("Open the packs folder")).clicked() {
                         actions.push(Action::OpenPacksFolder);
                     }
@@ -912,7 +912,7 @@ impl Helper {
                                 }
                             }
                         });
-                        if ui.add_enabled(idle && !for_target.is_empty(), egui::Button::new(format!("Install all to {}", target_name))).clicked() {
+                        if ui.add_enabled(idle && !for_target.is_empty(), egui::Button::new(trf!("Install all to {}", target_name))).clicked() {
                             self.confirm_install = Some(for_target.clone());
                         }
                         let packs_label = tr("Install all packs (recommended)");
@@ -941,9 +941,9 @@ impl Helper {
                         .then_with(|| packs::language_name(&pa.to).cmp(packs::language_name(&pb.to)))
                 });
                 ui.add_space(4.0);
-                ui.label(RichText::new(format!("Showing {} of {} packs.", shown.len(), catalogue.packs.len())).color(muted(ui)));
+                ui.label(RichText::new(trf!("Showing {} of {} packs.", shown.len(), catalogue.packs.len())).color(muted(ui)));
                 if shown.is_empty() {
-                    ui.label(RichText::new(format!("No language matches \"{}\".", self.pack_search.trim())).color(muted(ui)));
+                    ui.label(RichText::new(trf!("No language matches \"{}\".", self.pack_search.trim())).color(muted(ui)));
                 }
                 ui.add_space(4.0);
                 card(ui, |ui| {
@@ -1004,7 +1004,7 @@ impl Helper {
             .open(&mut open)
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
-                ui.label(format!("{} pack(s), about {:.0} MB in total. The downloads can take a long time.", count, megabytes));
+                ui.label(trf!("{} pack(s), about {} MB in total. The downloads can take a long time.", count, format!("{:.0}", megabytes)));
                 ui.label(RichText::new(tr("Each pack is checked with SHA-256 before it is saved. You can remove any pack later.")).color(muted(ui)).small());
                 ui.add_space(8.0);
                 ui.horizontal(|ui| {
@@ -1099,10 +1099,10 @@ impl Helper {
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
-                ui.label(RichText::new(format!("\"{}\" wants to use the offline translation.", name)).size(16.0).strong());
+                ui.label(RichText::new(trf!("\"{}\" wants to use the offline translation.", name)).size(16.0).strong());
                 ui.label(tr("Allow it only if you use Atlas Translation in that browser. You can remove it later under Connections."));
                 ui.add_space(6.0);
-                ui.label(RichText::new(format!("Requested from: {}", origin)).color(muted(ui)).small());
+                ui.label(RichText::new(trf!("Requested from: {}", origin)).color(muted(ui)).small());
                 ui.add_space(10.0);
                 row(ui, self.rtl, |ui| {
                     if ui.button(tr("Allow")).clicked() {
@@ -1130,9 +1130,9 @@ impl Helper {
                 let granted = token.is_some();
                 let _ = request.reply.send(token);
                 self.message = Some(if granted {
-                    (true, format!("{} is now bound to the offline service.", request.name))
+                    (true, trf!("{} is now bound to the offline service.", request.name))
                 } else {
-                    (false, format!("{} was not bound.", request.name))
+                    (false, trf!("{} was not bound.", request.name))
                 });
             }
         }
@@ -1161,7 +1161,7 @@ impl Helper {
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
                 ui.label(RichText::new(tr("Welcome to Atlas Helper")).size(16.0).strong());
-                ui.label(RichText::new(format!("Helper version {}.", crate::app_version())).color(muted(ui)));
+                ui.label(RichText::new(trf!("Helper version {}.", crate::app_version())).color(muted(ui)));
                 if let Some((newer, text)) = &update {
                     ui.label(RichText::new(text.as_str()).color(if *newer { RED } else { ui.visuals().hyperlink_color }));
                 }
@@ -1225,12 +1225,12 @@ impl Helper {
         let status = self.status.as_ref()?;
         let latest = status.latest.as_ref().ok()?;
         match &status.installed {
-            Ok(None) => Some((false, format!("Atlas Translation {} is available. It is not in this folder yet.", latest))),
+            Ok(None) => Some((false, trf!("Atlas Translation {} is available. It is not in this folder yet.", latest))),
             Ok(Some(installed)) if crate::is_newer(latest, installed) => Some((
                 true,
-                format!("Please update: Atlas Translation {} is available. Use Install or update in the Extension tab.", latest),
+                trf!("Please update: Atlas Translation {} is available. Use Install or update in the Extension tab.", latest),
             )),
-            Ok(Some(_)) => Some((false, "You have the latest Atlas Translation.".to_string())),
+            Ok(Some(_)) => Some((false, tr("You have the latest Atlas Translation."))),
             Err(_) => None,
         }
     }
@@ -1267,9 +1267,9 @@ impl Helper {
         match browser.kind {
             browsers::Kind::Firefox => {
                 let text = if open_target(browsers::FIREFOX_STORE_URL) {
-                    (true, "Firefox opened the Atlas Translation add-on page. Click Add to Firefox there.".to_string())
+                    (true, tr("Firefox opened the Atlas Translation add-on page. Click Add to Firefox there."))
                 } else {
-                    (false, "The Firefox add-on page could not be opened.".to_string())
+                    (false, tr("The Firefox add-on page could not be opened."))
                 };
                 self.message = Some(text);
             }
@@ -1283,9 +1283,9 @@ impl Helper {
                     });
                 }
                 let text = if browsers::open_in_browser(&browser.program, browser.extensions_url()) {
-                    (true, format!("Opened {}. Turn on Developer mode, choose Load unpacked, and pick {}.", browser.name, self.folder.trim()))
+                    (true, trf!("Opened {}. Turn on Developer mode, choose Load unpacked, and pick {}.", browser.name, self.folder.trim()))
                 } else {
-                    (false, format!("{} could not be opened. Open its extensions page by hand.", browser.name))
+                    (false, trf!("{} could not be opened. Open its extensions page by hand.", browser.name))
                 };
                 self.message = Some(text);
             }
@@ -1429,10 +1429,10 @@ impl Helper {
             ui.add_space(12.0);
             card(ui, |ui| {
                 ui.label(RichText::new(tr("Developer")).strong());
-                ui.label(format!("Data folder: {}", store::data_dir().display()));
-                ui.label(format!("Packs folder: {}", store::packs_dir().display()));
-                ui.label(format!("Offline service address: 127.0.0.1:{}", api::PORT));
-                ui.label(format!("Helper version: {}", crate::app_version()));
+                ui.label(trf!("Data folder: {}", store::data_dir().display()));
+                ui.label(trf!("Packs folder: {}", store::packs_dir().display()));
+                ui.label(trf!("Offline service address: 127.0.0.1:{}", api::PORT));
+                ui.label(trf!("Helper version: {}", crate::app_version()));
                 row(ui, self.rtl, |ui| {
                     if ui.button(tr("Open the data folder")).clicked() {
                         actions.push(Action::OpenDataFolder);
@@ -1477,7 +1477,7 @@ impl Helper {
                 let event = match autostart::set_enabled(on) {
                     Ok(()) => Event::Done {
                         ok: true,
-                        text: if on { "The helper starts when you sign in.".into() } else { "The helper no longer starts at sign-in.".into() },
+                        text: if on { tr("The helper starts when you sign in.") } else { tr("The helper no longer starts at sign-in.") },
                         reload: false,
                     },
                     Err(e) => Event::Done { ok: false, text: e, reload: false },
@@ -1486,7 +1486,7 @@ impl Helper {
             }
             Action::InstallEngine => {
                 self.start_download("Installing the offline engine...", move |transfer| match engine::install_from_latest_release(&transfer) {
-                    Ok(v) => Event::Done { ok: true, text: format!("Installed the offline engine {}.", v), reload: false },
+                    Ok(v) => Event::Done { ok: true, text: trf!("Installed the offline engine {}.", v), reload: false },
                     Err(e) => Event::Done { ok: false, text: e, reload: false },
                 });
             }
@@ -1496,8 +1496,8 @@ impl Helper {
                     _ => None,
                 };
                 if let Some((pack, commit)) = picked {
-                    let label = format!("Installing the {} to {} pack...", pack.from, pack.to);
-                    self.start_download(&label, move |transfer| pack_result(packs::install_into(&store::packs_dir(), &pack, &commit, &transfer), &pack, "installed"));
+                    let label = trf!("Installing the {} to {} pack...", pack.from, pack.to);
+                    self.start_download(&label, move |transfer| pack_result(packs::install_into(&store::packs_dir(), &pack, &commit, &transfer), &pack, true));
                 }
             }
             Action::InstallPacks(indices) => {
@@ -1507,7 +1507,7 @@ impl Helper {
                 };
                 if let Some((list, commit)) = picked {
                     if !list.is_empty() {
-                        let label = format!("Installing {} pack(s). This can take a long time.", list.len());
+                        let label = trf!("Installing {} pack(s). This can take a long time.", list.len());
                         self.start_download(&label, move |transfer| install_many(&store::packs_dir(), &list, &commit, &transfer));
                     }
                 }
@@ -1525,7 +1525,7 @@ impl Helper {
                 };
                 if let Some(chosen) = picked {
                     if !chosen.is_empty() {
-                        let label = format!(
+                        let label = trf!(
                             "Installing the read-aloud voices for {}. This can take a long time.",
                             packs::language_name(&language)
                         );
@@ -1560,10 +1560,10 @@ impl Helper {
                     _ => None,
                 };
                 if let Some((pack, catalogue)) = picked {
-                    let label = format!("Removing the {} to {} pack...", pack.from, pack.to);
+                    let label = trf!("Removing the {} to {} pack...", pack.from, pack.to);
                     self.start(&label, move || {
                         let result = packs::remove_from(&store::packs_dir(), &catalogue, &pack.pair);
-                        pack_result(result, &pack, "removed")
+                        pack_result(result, &pack, false)
                     });
                 }
             }
@@ -1792,14 +1792,14 @@ fn install_into_folder(folder: &str, transfer: &Transfer) -> Result<String, Stri
     let release = crate::fetch_latest_release()?;
     if let Some(v) = &installed {
         if !crate::is_newer(&release.version, v) {
-            return Ok(format!("You already have the latest version ({}).", v));
+            return Ok(trf!("You already have the latest version ({}).", v));
         }
     }
     if fresh {
-        std::fs::create_dir_all(&path).map_err(|e| format!("cannot create the folder: {}", e))?;
+        std::fs::create_dir_all(&path).map_err(|e| trf!("cannot create the folder: {}", e))?;
     }
     crate::install(&path, &release, transfer)?;
-    Ok(format!("Installed version {} in {}. Reload Atlas Translation in your browser.", release.version, folder))
+    Ok(trf!("Installed version {} in {}. Reload Atlas Translation in your browser.", release.version, folder))
 }
 
 /// Installs packs one after another in one background job. A pack that fails is reported, and the rest still install.
@@ -1809,11 +1809,11 @@ fn install_voices(root: &Path, chosen: &[voices::Voice], transfer: &Transfer) ->
     let total = pending.len();
     let failures = voices::install_all(root, &pending, transfer);
     if failures.is_empty() {
-        Event::Done { ok: true, text: format!("Installed {} voice(s).", total), reload: false }
+        Event::Done { ok: true, text: trf!("Installed {} voice(s).", total), reload: false }
     } else {
         Event::Done {
             ok: false,
-            text: format!("Installed {} of {} voice(s). Not installed: {}", total - failures.len(), total, failures.join("; ")),
+            text: trf!("Installed {} of {} voice(s). Not installed: {}", total - failures.len(), total, failures.join("; ")),
             reload: false,
         }
     }
@@ -1825,7 +1825,7 @@ fn install_many(root: &Path, list: &[Pack], commit: &str, transfer: &Transfer) -
     for (n, pack) in list.iter().enumerate() {
         // Each pack has its own byte counter, so the progress bar starts again for each one.
         transfer.progress.done.store(0, Ordering::Relaxed);
-        transfer.progress.set_stage(&format!(
+        transfer.progress.set_stage(&trf!(
             "Installing pack {} of {}: {} to {}",
             n + 1,
             total,
@@ -1838,19 +1838,20 @@ fn install_many(root: &Path, list: &[Pack], commit: &str, transfer: &Transfer) -
     }
     let installed = total - failed.len();
     if failed.is_empty() {
-        Event::Done { ok: true, text: format!("Installed {} pack(s).", installed), reload: false }
+        Event::Done { ok: true, text: trf!("Installed {} pack(s).", installed), reload: false }
     } else {
         Event::Done {
             ok: false,
-            text: format!("Installed {} of {} pack(s). Not installed: {}", installed, total, failed.join("; ")),
+            text: trf!("Installed {} of {} pack(s). Not installed: {}", installed, total, failed.join("; ")),
             reload: false,
         }
     }
 }
 
-fn pack_result(result: Result<(), String>, pack: &Pack, verb: &str) -> Event {
+fn pack_result(result: Result<(), String>, pack: &Pack, installed: bool) -> Event {
     match result {
-        Ok(()) => Event::Done { ok: true, text: format!("The {} to {} pack was {}.", pack.from, pack.to, verb), reload: false },
+        Ok(()) if installed => Event::Done { ok: true, text: trf!("The {} to {} pack was installed.", pack.from, pack.to), reload: false },
+        Ok(()) => Event::Done { ok: true, text: trf!("The {} to {} pack was removed.", pack.from, pack.to), reload: false },
         Err(e) => Event::Done { ok: false, text: e, reload: false },
     }
 }
