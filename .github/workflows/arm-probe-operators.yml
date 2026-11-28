@@ -1,0 +1,38 @@
+name: ARM probe (temporary)
+
+on:
+  push:
+    paths:
+      - ".github/workflows/arm-probe-operators.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 20
+    steps:
+      - name: Fetch marian inference and simd_utils
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/p
+          curl -fsSL https://codeload.github.com/mozilla/translations/tar.gz/eea6e5a80aa4ddd86d9cc35ce9a65b79aa3ab96d | tar xz -C /tmp/p
+          mv /tmp/p/translations-*/inference /tmp/p/inference
+          mkdir -p /tmp/p/inference/marian-fork/src/3rd_party/simd_utils
+          curl -fsSL https://codeload.github.com/browsermt/simd_utils/tar.gz/d0793d86aea9036a5bc77b9ca7791dff024168ca | tar xz --strip-components=1 -C /tmp/p/inference/marian-fork/src/3rd_party/simd_utils
+          sed -i '/#include <stdio.h>/a #include <fenv.h>' /tmp/p/inference/marian-fork/src/3rd_party/simd_utils/simd_utils.h
+          clang++-18 --version | head -1
+          echo "arch: $(uname -m)"
+      - name: Compile operators.h as the engine does
+        run: |
+          cd /tmp/p/inference/marian-fork/src
+          printf '#include "functional/defs.h"\n#include "functional/operators.h"\nint main(){return 0;}\n' > probe.cpp
+          flags="-std=gnu++11 -DARM -DFMA -DSSE -DUSE_SSE2 -DWASM_COMPATIBLE_SOURCE -DCOMPILE_CPU=1 -include cstdint -flax-vector-conversions -Wall -Werror -Wextra -Wno-unused-result -Wno-deprecated -I. -I3rd_party -I3rd_party/simd_utils -I3rd_party/onnxjs/deps/eigen -I3rd_party/spdlog/include"
+          echo "::notice title=probe::neon defined: $(clang++-18 -dM -E -x c++ /dev/null | grep -c __ARM_NEON)"
+          clang++-18 $flags -H -fsyntax-only probe.cpp > trace.txt 2>&1 || true
+          grep -n "mathfun\|simd_utils.h" trace.txt | head -20 | while IFS= read -r l; do echo "::notice title=probe-include::${l//%/%25}"; done
+          clang++-18 $flags -E probe.cpp -o pp.ii 2>&1 | head -5
+          grep -n "sin_ps(v4sf\|struct Ops<float32x4>" pp.ii | head -5 | while IFS= read -r l; do echo "::notice title=probe-pp::${l//%/%25}"; done
+          clang++-18 $flags -fsyntax-only probe.cpp 2>&1 | grep -E "error" | head -5 | while IFS= read -r l; do echo "::error title=probe-error::${l//%/%25}"; done
+          echo "done"
