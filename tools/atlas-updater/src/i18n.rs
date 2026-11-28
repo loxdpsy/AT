@@ -10,6 +10,7 @@ use crate::json::{self, Value};
 
 /// The languages that have a translation file, by code (as in `_locales`, with `_` between the parts).
 const FILES: &[(&str, &str)] = &[
+    ("af", include_str!("../i18n/af.json")),
     ("ar", include_str!("../i18n/ar.json")),
     ("bn", include_str!("../i18n/bn.json")),
     ("ca", include_str!("../i18n/ca.json")),
@@ -25,15 +26,19 @@ const FILES: &[(&str, &str)] = &[
     ("hi", include_str!("../i18n/hi.json")),
     ("hr", include_str!("../i18n/hr.json")),
     ("hu", include_str!("../i18n/hu.json")),
+    ("is", include_str!("../i18n/is.json")),
     ("it", include_str!("../i18n/it.json")),
     ("ja", include_str!("../i18n/ja.json")),
     ("ko", include_str!("../i18n/ko.json")),
+    ("lv", include_str!("../i18n/lv.json")),
     ("nl", include_str!("../i18n/nl.json")),
     ("no", include_str!("../i18n/no.json")),
     ("pl", include_str!("../i18n/pl.json")),
     ("pt_BR", include_str!("../i18n/pt_BR.json")),
     ("ro", include_str!("../i18n/ro.json")),
     ("ru", include_str!("../i18n/ru.json")),
+    ("sl", include_str!("../i18n/sl.json")),
+    ("sr", include_str!("../i18n/sr.json")),
     ("sv", include_str!("../i18n/sv.json")),
     ("th", include_str!("../i18n/th.json")),
     ("tr", include_str!("../i18n/tr.json")),
