@@ -36,19 +36,24 @@ pub fn set_language(setting: &str) {
     *ACTIVE.lock().unwrap_or_else(|p| p.into_inner()) = table;
 }
 
-/// The translation file for a language tag, if there is one. A region must match exactly (zh-TW does not use the
-/// zh_CN file). A bare language code uses the file of that language.
+/// The translation file for a language tag, if there is one. An exact match wins (zh-CN, pt_BR). A region without
+/// its own file uses the file of its language (fr-FR, fr-CA), unless that language has regional files of its own:
+/// then zh-TW does not get zh_CN, and pt-PT does not get pt_BR. Such a region is shown in English.
 fn find(tag: &str) -> Option<&'static str> {
     let tag = tag.replace('-', "_");
     if let Some((_, text)) = FILES.iter().find(|(code, _)| code.eq_ignore_ascii_case(&tag)) {
         return Some(text);
     }
-    if tag.contains('_') {
+    let base = tag.split('_').next().unwrap_or("");
+    let has_regional_files = FILES.iter().any(|(code, _)| {
+        code.contains('_') && code.split('_').next().unwrap_or("").eq_ignore_ascii_case(base)
+    });
+    if tag.contains('_') && has_regional_files {
         return None;
     }
     FILES
         .iter()
-        .find(|(code, _)| code.split('_').next().unwrap_or("").eq_ignore_ascii_case(&tag))
+        .find(|(code, _)| code.split('_').next().unwrap_or("").eq_ignore_ascii_case(base))
         .map(|(_, text)| *text)
 }
 
@@ -80,10 +85,12 @@ mod tests {
     #[test]
     fn languages_are_found_by_code_and_region() {
         assert!(find("fr").is_some());
-        assert!(find("fr-CA").is_none(), "a region with no file is English");
+        assert!(find("fr-CA").is_some(), "a region with no file of its own uses its language");
+        assert!(find("fr_FR").is_some());
+        assert!(find("pt-PT").is_none(), "Portugal does not get the Brazilian file");
         assert!(find("zh-CN").is_some());
         assert!(find("zh_CN").is_some());
-        assert!(find("zh-TW").is_none(), "Traditional Chinese has no file yet");
+        assert!(find("zh-TW").is_none(), "Traditional Chinese does not get the Simplified file");
         assert!(find("en").is_none());
         assert!(find("xx").is_none());
     }
