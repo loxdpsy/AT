@@ -493,24 +493,10 @@ jobs:
               echo "> **Prerelease.** Not the public launch yet. The helper (atlas-updater) installs it while it includes prereleases."
               echo ""
             fi
-            echo "## Downloads"
-            echo ""
-            echo "- **Chrome Web Store:** \`atlas-translation-$VERSION-chromium.zip\`"
-            echo "- **Microsoft Edge Add-ons:** \`atlas-translation-$VERSION-edge.zip\` (same package as Chromium). It is submitted to Edge automatically when the Edge secrets are set."
-            echo "- **Chromium, self-hosting:** \`atlas-translation-$VERSION-chromium.crx\` (Chromium 109 or newer)"
-            echo "- **Helper (atlas-updater):** \`atlas-updater-windows-setup.exe\` (Windows installer, for the current user, with a Start menu entry, a choice of folder, an optional start at sign-in; the offline engine is inside it). \`atlas-updater-linux.AppImage\` (Linux: make it executable and run it; the engine is inside). \`atlas-updater-macos.dmg\` (macOS: open it and drag Atlas Helper to Applications; the engine is inside; the app is not signed by Apple, so right-click it and choose Open the first time). \`atlas-updater-windows.exe\` (portable: no installer and no engine, so use the setup file instead). See tools/atlas-updater/README.md.\""
-            echo "- **Offline engine:** not attached. The helper packages include it: the Windows setup file, the Linux AppImage, and the macOS DMG."
-            if [ -f "dist/atlas-translation-$VERSION-firefox-signed.xpi" ]; then
-              echo "- **Firefox, self-hosted:** \`atlas-translation-$VERSION-firefox-signed.xpi\` is signed. Open it in Firefox to install. Firefox then updates it from \`updates.json\` in this release. Firefox for Android installs from addons.mozilla.org only."
-            else
-              echo "- **Firefox:** install from addons.mozilla.org. This release has no signed \`.xpi\`, so self-hosted installs and updates are not available for it."
-            fi
-            if [ "$SUBMIT" = "true" ]; then
-              echo "- **Firefox store:** submitted to addons.mozilla.org for review with this release. It appears in the store after Mozilla approves it. The store file is not attached here."
-            else
-              echo "- **Firefox store:** not submitted in this run. The store file is not attached to the release."
-            fi
           } >> notes.md
+          # The download table, the files with their SHA-256, and the Stores and Helper notes. The checksums of every
+          # file are written to dist/SHA256SUMS.txt here, so the upload below attaches that file too.
+          node scripts/release-downloads.mjs --dist dist --version "$VERSION" --repo "$GITHUB_REPOSITORY" --store-submitted "$SUBMIT" >> notes.md
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" dist/* --clobber
             gh release edit "$TAG" --title "Atlas Translation $VERSION" --notes-file notes.md --prerelease="$PRERELEASE"
