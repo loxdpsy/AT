@@ -8,6 +8,10 @@
 //! The steps follow RapidOCR: the detector finds text areas on a probability map, the areas are grouped into lines,
 //! and each area is read by the recogniser with greedy CTC decoding.
 //!
+//! The second engine is ocrs (Robert Knight, MIT or Apache-2.0), in pure Rust, with its .rten models (CC BY-SA 4.0).
+//! Its two models are downloaded from a GitHub mirror at a fixed commit and checked by size and SHA-256. The engine is
+//! chosen per request: the one asked for when it is installed, otherwise the other installed one.
+//!
 //! Limits of this first version: text is read as horizontal lines. There is no rotated-text or 180-degree correction
 //! (the wheel's direction classifier is not used), and a detected area is its axis-aligned box, not a tilted rectangle.
 
@@ -65,6 +69,80 @@ pub fn dir(root: &Path) -> PathBuf {
 pub fn installed(root: &Path) -> bool {
     let d = dir(root);
     d.join(MARKER).is_file() && d.join(DET_FILE).is_file() && d.join(REC_FILE).is_file()
+}
+
+/// The engine names used by the extension and the helper. PP-OCRv4 is the default.
+pub const ENGINE_PPOCR: &str = "ppocr";
+pub const ENGINE_OCRS: &str = "ocrs";
+
+// ocrs: two .rten models. The original host no longer answers, so they come from a GitHub mirror at a fixed commit.
+// The same SHA-256 values are published by two other mirrors. Model licence: CC BY-SA 4.0 (see NOTICE.md).
+const OCRS_BASE: &str = "https://github.com/baras-app/ocr-models/raw/2854720fdf7218273b85010d49302765476e16fc/";
+const OCRS_DIR: &str = "ocrs";
+const OCRS_FILES: [(&str, u64, &str); 2] = [
+    ("text-detection.rten", 2_510_284, "f15cfb56bd02c4bf478a20343986504a1f01e1665c2b3a0ad66340f054b1b5ca"),
+    ("text-recognition.rten", 9_716_568, "e484866d4cce403175bd8d00b128feb08ab42e208de30e42cd9889d8f1735a6e"),
+];
+
+/// The folder of the ocrs models, inside the OCR folder.
+pub fn ocrs_dir(root: &Path) -> PathBuf {
+    dir(root).join(OCRS_DIR)
+}
+
+/// True when both ocrs models and the install marker are in place.
+pub fn ocrs_installed(root: &Path) -> bool {
+    let d = ocrs_dir(root);
+    d.join(MARKER).is_file() && OCRS_FILES.iter().all(|file| d.join(file.0).is_file())
+}
+
+/// The engines whose models are installed, PP-OCRv4 first.
+pub fn installed_engines(root: &Path) -> Vec<&'static str> {
+    let mut list = Vec::new();
+    if installed(root) {
+        list.push(ENGINE_PPOCR);
+    }
+    if ocrs_installed(root) {
+        list.push(ENGINE_OCRS);
+    }
+    list
+}
+
+/// The engine that reads a picture: the one asked for when it is installed, otherwise the other installed one.
+/// None when no engine is installed.
+pub fn engine_for(root: &Path, requested: &str) -> Option<&'static str> {
+    let installed = installed_engines(root);
+    let wanted = if requested == ENGINE_OCRS { ENGINE_OCRS } else { ENGINE_PPOCR };
+    if installed.contains(&wanted) {
+        return Some(wanted);
+    }
+    installed.first().copied()
+}
+
+/// Downloads the two ocrs models, checks each size and SHA-256, and keeps them only when both pass.
+pub fn install_ocrs(root: &Path, transfer: &Transfer) -> Result<(), String> {
+    let d = ocrs_dir(root);
+    fs::create_dir_all(&d).map_err(|e| format!("cannot create {}: {}", d.display(), e))?;
+    let _ = fs::remove_file(d.join(MARKER));
+    let total: u64 = OCRS_FILES.iter().map(|file| file.1).sum();
+    transfer.progress.total.store(total, Ordering::Relaxed);
+    for (name, bytes, sha) in OCRS_FILES {
+        let part = d.join(format!("{}.part", name));
+        if let Err(e) = transfer.download(&format!("{}{}", OCRS_BASE, name), &part, Some(bytes)) {
+            let _ = fs::remove_file(&part);
+            return Err(format!("the {} model could not be downloaded: {}", name, e));
+        }
+        let data = fs::read(&part).map_err(|e| format!("cannot read {}: {}", part.display(), e))?;
+        let _ = fs::remove_file(&part);
+        if data.len() as u64 != bytes {
+            return Err(format!("{} is {} bytes, expected {}. Nothing was installed.", name, data.len(), bytes));
+        }
+        if sha256::hex(&data) != sha {
+            return Err(format!("the SHA-256 check of {} failed. Nothing was installed.", name));
+        }
+        write_file(&d.join(name), &data)?;
+    }
+    fs::write(d.join(MARKER), format!("{{\"source\":{}}}\n", json::quote(OCRS_BASE)))
+        .map_err(|e| format!("cannot finish the install: {}", e))
 }
 
 /// Downloads the wheel, checks its size and SHA-256, and keeps the two models. Nothing is kept if a check fails.
@@ -499,27 +577,114 @@ pub fn group_lines(mut areas: Vec<[f32; 4]>) -> Vec<Vec<[f32; 4]>> {
 
 static ENGINE: Mutex<Option<Engine>> = Mutex::new(None);
 
-/// Reads the text of a PNG or JPEG picture with the installed models.
-pub fn recognise(root: &Path, picture: &[u8]) -> Result<Vec<Line>, String> {
-    if !installed(root) {
-        return Err("the text recognition models are not installed".to_string());
-    }
+static OCRS_ENGINE: Mutex<Option<ocrs::OcrEngine>> = Mutex::new(None);
+
+/// Reads the text of a PNG or JPEG picture with the engine named (`ppocr` or `ocrs`), using its installed models.
+pub fn recognise(root: &Path, engine: &str, picture: &[u8]) -> Result<Vec<Line>, String> {
     let img = image::load_from_memory(picture)
         .map_err(|e| format!("the picture cannot be read: {}", e))?
         .to_rgb8();
+    if engine == ENGINE_OCRS {
+        return read_with_ocrs(root, &img);
+    }
+    read_with_ppocr(root, &img)
+}
+
+fn read_with_ppocr(root: &Path, img: &RgbImage) -> Result<Vec<Line>, String> {
+    if !installed(root) {
+        return Err("the text recognition models are not installed".to_string());
+    }
     let mut guard = ENGINE.lock().unwrap_or_else(|p| p.into_inner());
     if guard.is_none() {
         *guard = Some(Engine::load(&dir(root))?);
     }
     match guard.as_mut() {
-        Some(engine) => engine.read_page(&img),
+        Some(engine) => engine.read_page(img),
         None => Err("the text recognition engine did not start".to_string()),
+    }
+}
+
+/// Reads a picture with ocrs: detect the words, group them into lines, then recognise each line. Each line's box is
+/// the bounds of its word rectangles, in picture pixels.
+fn read_with_ocrs(root: &Path, img: &RgbImage) -> Result<Vec<Line>, String> {
+    if !ocrs_installed(root) {
+        return Err("the ocrs models are not installed".to_string());
+    }
+    let mut guard = OCRS_ENGINE.lock().unwrap_or_else(|p| p.into_inner());
+    if guard.is_none() {
+        let d = ocrs_dir(root);
+        let detection = rten::Model::load_file(d.join(OCRS_FILES[0].0))
+            .map_err(|e| format!("cannot load the detection model: {}", e))?;
+        let recognition = rten::Model::load_file(d.join(OCRS_FILES[1].0))
+            .map_err(|e| format!("cannot load the recognition model: {}", e))?;
+        let engine = ocrs::OcrEngine::new(ocrs::OcrEngineParams {
+            detection_model: Some(detection),
+            recognition_model: Some(recognition),
+            ..Default::default()
+        })
+        .map_err(|e| format!("cannot start ocrs: {}", e))?;
+        *guard = Some(engine);
+    }
+    let engine = match guard.as_ref() {
+        Some(engine) => engine,
+        None => return Err("the ocrs engine did not start".to_string()),
+    };
+    let (width, height) = img.dimensions();
+    let source = ocrs::ImageSource::from_bytes(img.as_raw(), (width, height))
+        .map_err(|e| format!("the picture cannot be read: {}", e))?;
+    let input = engine.prepare_input(source).map_err(|e| format!("the picture cannot be prepared: {}", e))?;
+    let words = engine.detect_words(&input).map_err(|e| format!("text detection failed: {}", e))?;
+    let lines = engine.find_text_lines(&input, &words);
+    let texts = engine.recognize_text(&input, &lines).map_err(|e| format!("text recognition failed: {}", e))?;
+    let mut out = Vec::new();
+    for (line, text) in lines.iter().zip(texts) {
+        let Some(text) = text else { continue };
+        let text = text.to_string();
+        if text.trim().is_empty() {
+            continue;
+        }
+        let (mut left, mut top, mut right, mut bottom) = (f32::MAX, f32::MAX, f32::MIN, f32::MIN);
+        for rect in line {
+            for corner in rect.corners() {
+                left = left.min(corner.x);
+                top = top.min(corner.y);
+                right = right.max(corner.x);
+                bottom = bottom.max(corner.y);
+            }
+        }
+        out.push(Line { text, bbox: [pixel(left), pixel(top), pixel(right), pixel(bottom)] });
+    }
+    Ok(out)
+}
+
+fn pixel(value: f32) -> u32 {
+    if value.is_finite() && value > 0.0 {
+        value.round() as u32
+    } else {
+        0
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_installed_engine_is_picked() {
+        let dir = std::env::temp_dir().join(format!("atlas-ocr-pick-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        assert_eq!(engine_for(&dir, ENGINE_OCRS), None, "nothing installed");
+        let d = ocrs_dir(&dir);
+        fs::create_dir_all(&d).unwrap();
+        fs::write(d.join(MARKER), "{}").unwrap();
+        for file in OCRS_FILES {
+            fs::write(d.join(file.0), b"x").unwrap();
+        }
+        assert_eq!(installed_engines(&dir), vec![ENGINE_OCRS]);
+        assert_eq!(engine_for(&dir, ENGINE_PPOCR), Some(ENGINE_OCRS), "falls back to the installed engine");
+        assert_eq!(engine_for(&dir, ENGINE_OCRS), Some(ENGINE_OCRS));
+        let _ = fs::remove_dir_all(&dir);
+    }
 
     #[test]
     fn metadata_text_reads_the_character_entry() {

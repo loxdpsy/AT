@@ -168,5 +168,9 @@
  "Installed {} pack(s).": "팩 {}개를 설치했습니다.",
  "Installed {} of {} pack(s). Not installed: {}": "팩 {}개 설치됨 (전체 {}개). 설치되지 않음: {}",
  "The {} to {} pack was installed.": "{} → {} 팩을 설치했습니다.",
- "The {} to {} pack was removed.": "{} → {} 팩을 제거했습니다."
+ "The {} to {} pack was removed.": "{} → {} 팩을 제거했습니다.",
+ "English and Latin letters. Models CC BY-SA 4.0. About 12 MB.": "영어와 라틴 문자. 모델 CC BY-SA 4.0. 약 12MB.",
+ "Installed the text recognition models (ocrs).": "텍스트 인식 모델(ocrs)을 설치했습니다.",
+ "Installing the text recognition models...": "텍스트 인식 모델을 설치하는 중...",
+ "Many languages. Apache-2.0, needs a native library. Not added yet.": "여러 언어 지원. Apache-2.0, 네이티브 라이브러리 필요. 아직 추가되지 않음."
 }

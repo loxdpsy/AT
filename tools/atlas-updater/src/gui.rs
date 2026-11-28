@@ -96,6 +96,7 @@ enum Action {
     InstallVoices(String),
     /// Installs the text recognition models (PP-OCRv4).
     InstallOcr,
+    InstallOcrs,
     /// Installs the read-aloud runtime (sherpa-onnx) for this computer.
     InstallSpeakRuntime,
     /// Opens the Offline tab with a language's voices ready to confirm (from the welcome page).
@@ -569,7 +570,9 @@ impl Helper {
     /// Text recognition (OCR). The user chooses an engine and installs it. PP-OCRv4 can be installed now; the other
     /// two engines are listed so the choice is clear, and are not available yet.
     fn ocr_card(&mut self, ui: &mut egui::Ui, idle: bool, actions: &mut Vec<Action>) {
-        let ready = ocr::installed(&store::data_dir());
+        let data = store::data_dir();
+        let ready = ocr::installed(&data);
+        let ready_ocrs = ocr::ocrs_installed(&data);
         card(ui, |ui| {
             ui.label(RichText::new(tr("Text recognition (OCR)")).strong());
             ui.label(
@@ -587,16 +590,20 @@ impl Helper {
                     actions.push(Action::InstallOcr);
                 }
             });
-            for (name, note) in [
-                ("ocrs", "English and Latin letters. Model licence CC BY-SA 4.0. Not added yet."),
-                ("Tesseract", "Many languages. Apache-2.0, needs a native library. Not added yet."),
-            ] {
-                ui.horizontal_wrapped(|ui| {
-                    ui.label(RichText::new(name).strong());
-                    ui.label(RichText::new(note).color(muted(ui)));
-                    ui.add_enabled(false, egui::Button::new(tr("Coming soon")));
-                });
-            }
+            ui.horizontal_wrapped(|ui| {
+                ui.label(RichText::new("ocrs").strong());
+                ui.label(RichText::new(tr("English and Latin letters. Models CC BY-SA 4.0. About 12 MB.")).color(muted(ui)));
+                if ready_ocrs {
+                    ui.label(RichText::new(tr("Installed")).color(GREEN));
+                } else if ui.add_enabled(idle, egui::Button::new(tr("Install"))).clicked() {
+                    actions.push(Action::InstallOcrs);
+                }
+            });
+            ui.horizontal_wrapped(|ui| {
+                ui.label(RichText::new("Tesseract").strong());
+                ui.label(RichText::new(tr("Many languages. Apache-2.0, needs a native library. Not added yet.")).color(muted(ui)));
+                ui.add_enabled(false, egui::Button::new(tr("Coming soon")));
+            });
         });
     }
 
@@ -1543,8 +1550,15 @@ impl Helper {
             }
             Action::InstallOcr => {
                 let root = store::data_dir();
-                self.start_download("Installing the text recognition models...", move |transfer| match ocr::install(&root, &transfer) {
+                self.start_download(&tr("Installing the text recognition models..."), move |transfer| match ocr::install(&root, &transfer) {
                     Ok(()) => Event::Done { ok: true, text: tr("Installed the text recognition models (PP-OCRv4).").to_string(), reload: false },
+                    Err(e) => Event::Done { ok: false, text: e, reload: false },
+                });
+            }
+            Action::InstallOcrs => {
+                let root = store::data_dir();
+                self.start_download(&tr("Installing the text recognition models..."), move |transfer| match ocr::install_ocrs(&root, &transfer) {
+                    Ok(()) => Event::Done { ok: true, text: tr("Installed the text recognition models (ocrs).").to_string(), reload: false },
                     Err(e) => Event::Done { ok: false, text: e, reload: false },
                 });
             }

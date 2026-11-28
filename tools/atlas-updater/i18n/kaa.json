@@ -168,5 +168,9 @@
  "Installed {} pack(s).": "{} paket ornatıldı.",
  "Installed {} of {} pack(s). Not installed: {}": "{} paket ornatıldı (jámi {} ishinen). Ornatılmaǵanlar: {}",
  "The {} to {} pack was installed.": "{} dan {} ge paket ornatıldı.",
- "The {} to {} pack was removed.": "{} dan {} ge paket óshirildi."
+ "The {} to {} pack was removed.": "{} dan {} ge paket óshirildi.",
+ "English and Latin letters. Models CC BY-SA 4.0. About 12 MB.": "Inglis hám latın áripleri. Modeller CC BY-SA 4.0. Shama menen 12 MB.",
+ "Installed the text recognition models (ocrs).": "Tekst tanıw modelleri (ocrs) ornatıldı.",
+ "Installing the text recognition models...": "Tekst tanıw modelleri ornatılıp atır...",
+ "Many languages. Apache-2.0, needs a native library. Not added yet.": "Köp tilli. Apache-2.0, native kitapxana kerek. Áli qosılmaǵan."
 }

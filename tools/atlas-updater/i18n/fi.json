@@ -168,5 +168,9 @@
  "Installed {} pack(s).": "{} pakettia asennettu.",
  "Installed {} of {} pack(s). Not installed: {}": "{} / {} pakettia asennettu. Ei asennettu: {}",
  "The {} to {} pack was installed.": "Paketti {} → {} asennettu.",
- "The {} to {} pack was removed.": "Paketti {} → {} poistettu."
+ "The {} to {} pack was removed.": "Paketti {} → {} poistettu.",
+ "English and Latin letters. Models CC BY-SA 4.0. About 12 MB.": "Englanti ja latinalaiset kirjaimet. Mallit CC BY-SA 4.0. Noin 12 Mt.",
+ "Installed the text recognition models (ocrs).": "Tekstintunnistusmallit (ocrs) asennettiin.",
+ "Installing the text recognition models...": "Asennetaan tekstintunnistusmalleja...",
+ "Many languages. Apache-2.0, needs a native library. Not added yet.": "Monia kieliä. Apache-2.0, tarvitsee natiivikirjaston. Ei vielä lisätty."
 }

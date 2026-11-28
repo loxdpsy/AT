@@ -168,5 +168,9 @@
  "Installed {} pack(s).": "{} Paket(e) installiert.",
  "Installed {} of {} pack(s). Not installed: {}": "{} von {} Paket(en) installiert. Nicht installiert: {}",
  "The {} to {} pack was installed.": "Das Paket {} → {} wurde installiert.",
- "The {} to {} pack was removed.": "Das Paket {} → {} wurde entfernt."
+ "The {} to {} pack was removed.": "Das Paket {} → {} wurde entfernt.",
+ "English and Latin letters. Models CC BY-SA 4.0. About 12 MB.": "Englische und lateinische Buchstaben. Modelle CC BY-SA 4.0. Etwa 12 MB.",
+ "Installed the text recognition models (ocrs).": "Die Modelle zur Texterkennung (ocrs) wurden installiert.",
+ "Installing the text recognition models...": "Die Modelle zur Texterkennung werden installiert...",
+ "Many languages. Apache-2.0, needs a native library. Not added yet.": "Viele Sprachen. Apache-2.0, benötigt eine native Bibliothek. Noch nicht hinzugefügt."
 }

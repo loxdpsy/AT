@@ -168,5 +168,9 @@
  "Installed {} pack(s).": "{} pakke(r) installert.",
  "Installed {} of {} pack(s). Not installed: {}": "{} av {} pakke(r) installert. Ikke installert: {}",
  "The {} to {} pack was installed.": "Pakken {} til {} ble installert.",
- "The {} to {} pack was removed.": "Pakken {} til {} ble fjernet."
+ "The {} to {} pack was removed.": "Pakken {} til {} ble fjernet.",
+ "English and Latin letters. Models CC BY-SA 4.0. About 12 MB.": "Engelske og latinske bokstaver. Modeller CC BY-SA 4.0. Omtrent 12 MB.",
+ "Installed the text recognition models (ocrs).": "Modellene for tekstgjenkjenning (ocrs) er installert.",
+ "Installing the text recognition models...": "Installerer modellene for tekstgjenkjenning...",
+ "Many languages. Apache-2.0, needs a native library. Not added yet.": "Mange språk. Apache-2.0, trenger et native bibliotek. Ikke lagt til ennå."
 }

@@ -168,5 +168,9 @@
  "Installed {} pack(s).": "Instalirano paketa: {}.",
  "Installed {} of {} pack(s). Not installed: {}": "Instalirano {} od {} paketa. Nije instalirano: {}",
  "The {} to {} pack was installed.": "Paket {} → {} je instaliran.",
- "The {} to {} pack was removed.": "Paket {} → {} je uklonjen."
+ "The {} to {} pack was removed.": "Paket {} → {} je uklonjen.",
+ "English and Latin letters. Models CC BY-SA 4.0. About 12 MB.": "Engleska i latinična slova. Modeli CC BY-SA 4.0. Oko 12 MB.",
+ "Installed the text recognition models (ocrs).": "Modeli za prepoznavanje teksta (ocrs) su instalirani.",
+ "Installing the text recognition models...": "Instaliraju se modeli za prepoznavanje teksta...",
+ "Many languages. Apache-2.0, needs a native library. Not added yet.": "Mnogo jezika. Apache-2.0, treba izvorna biblioteka. Još nije dodano."
 }

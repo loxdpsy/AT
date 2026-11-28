@@ -168,5 +168,9 @@
  "Installed {} pack(s).": "Đã cài {} gói.",
  "Installed {} of {} pack(s). Not installed: {}": "Đã cài {} / {} gói. Chưa cài: {}",
  "The {} to {} pack was installed.": "Gói {} sang {} đã được cài.",
- "The {} to {} pack was removed.": "Gói {} sang {} đã được xóa."
+ "The {} to {} pack was removed.": "Gói {} sang {} đã được xóa.",
+ "English and Latin letters. Models CC BY-SA 4.0. About 12 MB.": "Chữ cái tiếng Anh và Latinh. Mô hình CC BY-SA 4.0. Khoảng 12 MB.",
+ "Installed the text recognition models (ocrs).": "Đã cài đặt các mô hình nhận dạng văn bản (ocrs).",
+ "Installing the text recognition models...": "Đang cài đặt các mô hình nhận dạng văn bản...",
+ "Many languages. Apache-2.0, needs a native library. Not added yet.": "Nhiều ngôn ngữ. Apache-2.0, cần thư viện gốc. Chưa được thêm."
 }

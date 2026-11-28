@@ -250,6 +250,8 @@ fn ping_body() -> String {
     // The read-aloud voices that are installed, with the languages each one speaks, so the extension can pick one for
     // a language. The runtime must be installed too; the extension speaks in the browser otherwise.
     let data = store::data_dir();
+    // The text recognition engines whose models are installed. "ocr" is true when at least one is.
+    let ocr_engines: Vec<String> = ocr::installed_engines(&data).iter().map(|e| json::quote(e)).collect();
     let voices_root = data.join("voices");
     let speech_voices: Vec<String> = match voices::catalogue() {
         Ok(list) => list
@@ -263,7 +265,7 @@ fn ping_body() -> String {
         Err(_) => Vec::new(),
     };
     format!(
-        "{{\"ok\":true,\"name\":\"Atlas Helper\",\"version\":{},\"protocol\":{},\"features\":[{}],\"engine\":{},\"packs\":[{}],\"speech\":{{\"runtime\":{},\"voices\":[{}]}},\"ocr\":{}}}",
+        "{{\"ok\":true,\"name\":\"Atlas Helper\",\"version\":{},\"protocol\":{},\"features\":[{}],\"engine\":{},\"packs\":[{}],\"speech\":{{\"runtime\":{},\"voices\":[{}]}},\"ocr_engines\":[{}],\"ocr\":{}}}",
         json::quote(&crate::app_version()),
         PROTOCOL,
         features.join(","),
@@ -271,7 +273,8 @@ fn ping_body() -> String {
         installed.join(","),
         speak::runtime_installed(&data),
         speech_voices.join(","),
-        ocr::installed(&data)
+        ocr_engines.join(","),
+        !ocr::installed_engines(&data).is_empty()
     )
 }
 
@@ -318,9 +321,9 @@ fn ocr_request(body: &str, allowed: bool, data: &Path) -> (u16, String) {
     if !allowed {
         return (403, error_body("this browser is not bound to the helper. Bind it again from the extension."));
     }
-    let engine = value.get("engine").and_then(|v| v.as_str()).unwrap_or("ppocr");
-    if engine != "ppocr" {
-        return (400, error_body("this text recognition engine is not available yet"));
+    let requested = value.get("engine").and_then(|v| v.as_str()).unwrap_or(ocr::ENGINE_PPOCR);
+    if requested != ocr::ENGINE_PPOCR && requested != ocr::ENGINE_OCRS {
+        return (400, error_body("this text recognition engine is not available"));
     }
     let encoded = value.get("image").and_then(|v| v.as_str()).unwrap_or("");
     let encoded = encoded.rsplit(',').next().unwrap_or("").trim();
@@ -328,10 +331,11 @@ fn ocr_request(body: &str, allowed: bool, data: &Path) -> (u16, String) {
         Ok(bytes) if !bytes.is_empty() => bytes,
         _ => return (400, error_body("the picture is not valid base64")),
     };
-    if !ocr::installed(data) {
+    // The engine asked for when it is installed, otherwise the other installed one.
+    let Some(engine) = ocr::engine_for(data, requested) else {
         return (409, error_body("the text recognition models are not installed. Install them in the helper's Offline tab."));
-    }
-    match ocr::recognise(data, &picture) {
+    };
+    match ocr::recognise(data, engine, &picture) {
         Ok(lines) => (200, lines_body(&lines)),
         Err(message) => (500, error_body(&message)),
     }

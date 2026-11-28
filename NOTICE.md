@@ -24,6 +24,13 @@ Yandex, DeepL, LibreTranslate). Use your own DeepL or LibreTranslate key when yo
   Authors, Apache-2.0), packaged as ONNX by RapidOCR (RapidAI, Apache-2.0; `rapidocr_onnxruntime` 1.4.4 on PyPI). The
   helper downloads that wheel, checks its SHA-256 and takes the two model files out of it. The character list is read
   from the model's metadata. The RapidOCR and PaddleOCR licences apply; the wheel's direction classifier is not used.
+- Text recognition (OCR) engine ocrs, by Robert Knight (https://github.com/robertknight/ocrs), MIT or Apache-2.0 (the
+  `ocrs` and `rten` crates, used unmodified). Its two models, `text-detection.rten` and `text-recognition.rten`, are
+  licensed CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/), as published at
+  https://github.com/robertknight/ocrs-models. Attribution: Robert Knight, ocrs-models, CC BY-SA 4.0. The original download
+  host no longer answers, so the helper takes the two files from the GitHub mirror `baras-app/ocr-models` at commit
+  `2854720fdf7218273b85010d49302765476e16fc` (it carries the licence text) and checks each file's size and SHA-256.
+  The same SHA-256 values are published by a second mirror. The models are not changed.
 - Read-aloud voices (the helper's list is `tools/atlas-updater/src/voices.json`; the helper downloads them from the
   k2-fsa sherpa-onnx release, `tts-models`, and checks each SHA-256):
   - Supertonic 3, Supertone Inc.: model under the BigScience Open RAIL-M licence, with use restrictions the user accepts

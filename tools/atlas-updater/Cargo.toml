@@ -22,6 +22,10 @@ tar = "0.4"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
 # Runs the PP-OCRv4 text models (ONNX) in pure Rust. The helper needs no native inference library.
 tract-onnx = "0.21"
+# The second text recognition engine (ocrs, MIT or Apache-2.0), in pure Rust. Its models are the .rten files, so the
+# rten_format feature is on and the ONNX format is left out. rten is named directly because the engine takes its models.
+ocrs = { version = "0.14", default-features = false, features = ["rten"] }
+rten = { version = "0.28", default-features = false }
 # The page picture arrives from the extension as base64.
 base64 = "0.22"
 eframe = { version = "0.37", default-features = false, features = ["glow", "default_fonts", "clipboard", "wayland", "x11"] }

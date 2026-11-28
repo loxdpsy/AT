@@ -168,5 +168,9 @@
  "Installed {} pack(s).": "已安装 {} 个语言包。",
  "Installed {} of {} pack(s). Not installed: {}": "已安装 {} 个（共 {} 个）语言包。未安装：{}",
  "The {} to {} pack was installed.": "{} 到 {} 的语言包已安装。",
- "The {} to {} pack was removed.": "{} 到 {} 的语言包已删除。"
+ "The {} to {} pack was removed.": "{} 到 {} 的语言包已删除。",
+ "English and Latin letters. Models CC BY-SA 4.0. About 12 MB.": "英文和拉丁字母。模型为 CC BY-SA 4.0。约 12 MB。",
+ "Installed the text recognition models (ocrs).": "已安装文字识别模型（ocrs）。",
+ "Installing the text recognition models...": "正在安装文字识别模型...",
+ "Many languages. Apache-2.0, needs a native library. Not added yet.": "支持多种语言。Apache-2.0，需要本地库。尚未添加。"
 }

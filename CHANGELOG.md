@@ -1,9 +1,11 @@
 # Changelog
 
 ## Unreleased
-- Offline text recognition (OCR) engine in the helper: PP-OCRv4 (Apache-2.0), read in pure Rust, with a local
-  `/api/offline/ocr` route for the extension. The models are about 16 MB, downloaded once and checked with SHA-256.
-  The Offline tab has an OCR card: choose an engine, then install PP-OCRv4. ocrs and Tesseract are listed, not added yet.
+- Offline text recognition (OCR) engines in the helper, in pure Rust, with a local `/api/offline/ocr` route for the
+  extension. PP-OCRv4 (Apache-2.0, about 16 MB) is the default. ocrs (MIT or Apache-2.0 engine; models CC BY-SA 4.0,
+  about 12 MB, checked with SHA-256) is the second. The request names the engine it wants; when that one is not
+  installed, the other installed engine reads the picture. The helper's ping lists the installed engines in
+  `ocr_engines`. Tesseract is listed, not added yet.
   The Translator's PDF tab has an OCR button for scanned pages (no text): the page is read by the helper and then translated.
 - Helper window and tray text: translated into 39 languages (Santali shows English until a translation is added). Native-speaker review is still needed before release.
 - Helper About tab: the version, a link to the web page, the repository, releases and third-party notices.

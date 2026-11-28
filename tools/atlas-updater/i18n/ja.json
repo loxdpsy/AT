@@ -168,5 +168,9 @@
  "Installed {} pack(s).": "{} 件のパックをインストールしました。",
  "Installed {} of {} pack(s). Not installed: {}": "{} / {} 件のパックをインストールしました。未インストール：{}",
  "The {} to {} pack was installed.": "{} から {} へのパックをインストールしました。",
- "The {} to {} pack was removed.": "{} から {} へのパックを削除しました。"
+ "The {} to {} pack was removed.": "{} から {} へのパックを削除しました。",
+ "English and Latin letters. Models CC BY-SA 4.0. About 12 MB.": "英語とラテン文字。モデルは CC BY-SA 4.0。約 12 MB。",
+ "Installed the text recognition models (ocrs).": "文字認識モデル（ocrs）をインストールしました。",
+ "Installing the text recognition models...": "文字認識モデルをインストールしています...",
+ "Many languages. Apache-2.0, needs a native library. Not added yet.": "多言語対応。Apache-2.0。ネイティブライブラリが必要。未追加。"
 }
