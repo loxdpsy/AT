@@ -45,7 +45,6 @@
  "Install many packs": "Installer flere pakker",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "Vælg et sprog at oversætte til, og installer alle dets pakker på én gang. Hver pakke kontrolleres, før den gemmes.",
  "Translate to": "Oversæt til",
- "Install all packs": "Installer alle pakker",
  "installed": "installeret",
  "Remove": "Fjern",
  "Install these packs?": "Installer disse pakker?",
@@ -109,5 +108,7 @@
  "Releases": "Udgivelser",
  "Third-party notices": "Tredjepartsmeddelelser",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "Licens: MPL-2.0 for hjælperen. Modellerne og stemmerne uden for net beholder deres egne licenser, som er angivet i meddelelserne.",
- "Extension": "Udvidelse"
+ "Extension": "Udvidelse",
+ "Install all voices for {} (recommended)": "Installer alle stemmer til {} (anbefalet)",
+ "Install all packs (recommended)": "Installer alle pakker (anbefalet)"
 }

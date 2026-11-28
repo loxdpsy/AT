@@ -45,7 +45,6 @@
  "Install many packs": "Nainstalovat více balíčků",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "Vyberte jazyk, do kterého chcete překládat, a nainstalujte všechny jeho balíčky najednou. Každý balíček se před uložením kontroluje.",
  "Translate to": "Překládat do",
- "Install all packs": "Nainstalovat všechny balíčky",
  "installed": "nainstalováno",
  "Remove": "Odebrat",
  "Install these packs?": "Nainstalovat tyto balíčky?",
@@ -109,5 +108,7 @@
  "Releases": "Vydání",
  "Third-party notices": "Upozornění třetích stran",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "Licence: MPL-2.0 pro pomocníka. Offline modely a hlasy si ponechávají vlastní licence, uvedené v upozorněních.",
- "Extension": "Rozšíření"
+ "Extension": "Rozšíření",
+ "Install all voices for {} (recommended)": "Nainstalovat všechny hlasy pro: {} (doporučeno)",
+ "Install all packs (recommended)": "Nainstalovat všechny balíčky (doporučeno)"
 }

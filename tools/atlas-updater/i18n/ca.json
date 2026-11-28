@@ -45,7 +45,6 @@
  "Install many packs": "Instal·la molts paquets",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "Tria un idioma de destinació i instal·la de cop tots els seus paquets. Cada paquet es verifica abans de desar-se.",
  "Translate to": "Tradueix a",
- "Install all packs": "Instal·la tots els paquets",
  "installed": "instal·lat",
  "Remove": "Elimina",
  "Install these packs?": "Vols instal·lar aquests paquets?",
@@ -109,5 +108,7 @@
  "Releases": "Versions",
  "Third-party notices": "Avisos de tercers",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "Llicència: MPL-2.0 per a l'assistent. Els models i les veus sense connexió conserven les seves pròpies llicències, que consten als avisos.",
- "Extension": "Extensió"
+ "Extension": "Extensió",
+ "Install all voices for {} (recommended)": "Instal·la totes les veus per a {} (recomanat)",
+ "Install all packs (recommended)": "Instal·la tots els paquets (recomanat)"
 }

@@ -27,6 +27,9 @@ Not released yet. Changes after 0.0.2.5 are listed here.
   for the language is used when there is one (up to 2000 characters); otherwise the computer's voices are used.
 - Atlas Helper status: the local API reports the installed read-aloud voices and whether text recognition is installed.
 - Offline tab: "Install all voices for <language> (recommended)" and "Install all packs (recommended)". Single voices and packs can still be chosen.
+- Licences in the packages: the Windows installer, the Linux AppImage and the macOS app now include LICENSE, NOTICE.md and LICENSES/.
+- Checks: a workflow downloads each read-aloud voice archive, checks its size and SHA-256, and reports whether it contains espeak-ng-data and licence files. Another workflow checks every Rust crate's licence against an allowlist (tools/atlas-updater/deny.toml).
+- Labels for the batch installs are translated into all helper languages (first drafts, to be reviewed by native speakers).
 - Licences: the full texts of the licences the helper's parts use are in LICENSES/ (GPL-3.0 for the espeak-ng phoneme data in the voice archives, Apache-2.0, MIT, MPL-2.0, and links for CC BY 4.0, CC0 and OpenRAIL-M). NOTICE.md lists each part.
 - Opening a PDF shows a prompt to translate it (From and To). It opens the Translator's PDF tab, which translates on this computer with the Offline helper.
 - PDF translation: the document's language is guessed from its text, and From is set to it. A "Show original text" box shows each paragraph's source.

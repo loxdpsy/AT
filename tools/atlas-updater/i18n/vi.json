@@ -45,7 +45,6 @@
  "Install many packs": "Cài nhiều gói",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "Chọn ngôn ngữ muốn dịch sang, rồi cài tất cả gói của ngôn ngữ đó cùng lúc. Mỗi gói được kiểm tra trước khi lưu.",
  "Translate to": "Dịch sang",
- "Install all packs": "Cài tất cả gói",
  "installed": "đã cài đặt",
  "Remove": "Gỡ bỏ",
  "Install these packs?": "Cài các gói này?",
@@ -109,5 +108,7 @@
  "Third-party notices": "Thông báo bên thứ ba",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "Giấy phép: MPL-2.0 cho trình trợ giúp. Các mô hình và giọng ngoại tuyến giữ giấy phép riêng, liệt kê trong thông báo.",
  "About": "Giới thiệu",
- "Extension": "Tiện ích"
+ "Extension": "Tiện ích",
+ "Install all voices for {} (recommended)": "Cài tất cả giọng cho {} (khuyến nghị)",
+ "Install all packs (recommended)": "Cài tất cả gói (khuyến nghị)"
 }

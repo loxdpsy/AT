@@ -45,7 +45,6 @@
  "Install many packs": "Meerdere pakketten installeren",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "Kies een doeltaal en installeer alle pakketten ervan tegelijk. Elk pakket wordt gecontroleerd voordat het wordt opgeslagen.",
  "Translate to": "Vertalen naar",
- "Install all packs": "Alle pakketten installeren",
  "installed": "geïnstalleerd",
  "Remove": "Verwijderen",
  "Install these packs?": "Deze pakketten installeren?",
@@ -109,5 +108,7 @@
  "Releases": "Releases",
  "Third-party notices": "Kennisgevingen van derden",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "Licentie: MPL-2.0 voor de helper. De offlinemodellen en stemmen houden hun eigen licenties, vermeld in de kennisgevingen.",
- "Extension": "Extensie"
+ "Extension": "Extensie",
+ "Install all voices for {} (recommended)": "Alle stemmen voor {} installeren (aanbevolen)",
+ "Install all packs (recommended)": "Alle pakketten installeren (aanbevolen)"
 }

@@ -45,7 +45,6 @@
  "Install many packs": "批量安装语言包",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "选择要翻译到的语言，然后一次安装它的所有语言包。每个语言包在保存前都会进行校验。",
  "Translate to": "翻译为",
- "Install all packs": "安装所有语言包",
  "installed": "已安装",
  "Remove": "删除",
  "Install these packs?": "安装这些语言包吗？",
@@ -109,5 +108,7 @@
  "Releases": "الإصدارات",
  "Third-party notices": "إشعارات الجهات الخارجية",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "许可证：助手使用 MPL-2.0。离线模型和语音保留各自的许可证，列在声明中。",
- "Extension": "扩展程序"
+ "Extension": "扩展程序",
+ "Install all voices for {} (recommended)": "安装{}的全部语音（推荐）",
+ "Install all packs (recommended)": "安装全部语言包（推荐）"
 }

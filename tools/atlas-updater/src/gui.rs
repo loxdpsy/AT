@@ -686,7 +686,7 @@ impl Helper {
                 }
                 // The recommended choice: every voice for the language, then the same confirmation as a single pick.
                 // Each voice can still be unticked by choosing "Install selected" instead.
-                let all_label = format!("{} for {} ({})", tr("Install all voices"), name, tr("recommended"));
+                let all_label = tr("Install all voices for {} (recommended)").replace("{}", &name);
                 if ui.add_enabled(idle && !missing.is_empty(), egui::Button::new(all_label)).clicked() {
                     for voice in &missing {
                         self.voice_picked.insert(voice.id.clone());
@@ -915,7 +915,7 @@ impl Helper {
                         if ui.add_enabled(idle && !for_target.is_empty(), egui::Button::new(format!("Install all to {}", target_name))).clicked() {
                             self.confirm_install = Some(for_target.clone());
                         }
-                        let packs_label = format!("{} ({})", tr("Install all packs"), tr("recommended"));
+                        let packs_label = tr("Install all packs (recommended)");
                         if ui.add_enabled(idle && !not_installed.is_empty(), egui::Button::new(packs_label)).clicked() {
                             self.confirm_install = Some(not_installed.clone());
                         }

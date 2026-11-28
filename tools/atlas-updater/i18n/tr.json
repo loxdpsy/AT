@@ -45,7 +45,6 @@
  "Install many packs": "Birçok paketi kur",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "Çevrileceği dili seçin, sonra o dilin tüm paketlerini tek seferde kurun. Her paket kaydedilmeden önce denetlenir.",
  "Translate to": "Şuna çevir",
- "Install all packs": "Tüm paketleri kur",
  "installed": "kurulu",
  "Remove": "Kaldır",
  "Install these packs?": "Bu paketler kurulsun mu?",
@@ -109,5 +108,7 @@
  "Releases": "Sürümler",
  "Third-party notices": "Üçüncü taraf bildirimleri",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "Lisans: Yardımcı için MPL-2.0. Çevrimdışı modeller ve sesler, bildirimlerde listelenen kendi lisanslarını korur.",
- "Extension": "Eklenti"
+ "Extension": "Eklenti",
+ "Install all voices for {} (recommended)": "{} için tüm sesleri yükle (önerilen)",
+ "Install all packs (recommended)": "Tüm paketleri yükle (önerilen)"
 }

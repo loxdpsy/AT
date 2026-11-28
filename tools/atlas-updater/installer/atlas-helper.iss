@@ -52,6 +52,10 @@ Name: "autostart"; Description: "Start Atlas Helper in the tray when I sign in t
 
 [Files]
 Source: "{#SourceExe}"; DestDir: "{app}"; DestName: "atlas-updater.exe"; Flags: ignoreversion
+; Licence texts and notices (the repository's LICENSE, NOTICE.md and LICENSES folder), in the install folder.
+Source: "..\..\..\LICENSE"; DestDir: "{app}\licenses"; Flags: ignoreversion
+Source: "..\..\..\NOTICE.md"; DestDir: "{app}\licenses"; Flags: ignoreversion
+Source: "..\..\..\LICENSES\*"; DestDir: "{app}\licenses\LICENSES"; Flags: ignoreversion recursesubdirs
 #ifdef HasEngine
 Source: "{#EngineExe}"; DestDir: "{app}"; DestName: "atlas-engine.exe"; Flags: ignoreversion
 Source: "{#EngineLib}"; DestDir: "{app}"; DestName: "atlas_engine.dll"; Flags: ignoreversion

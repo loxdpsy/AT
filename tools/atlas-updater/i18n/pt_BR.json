@@ -45,7 +45,6 @@
  "Install many packs": "Instalar vários pacotes",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "Escolha o idioma para traduzir e depois instale todos os seus pacotes de uma vez. Cada pacote é verificado antes de ser salvo.",
  "Translate to": "Traduzir para",
- "Install all packs": "Instalar todos os pacotes",
  "installed": "instalado",
  "Remove": "Remover",
  "Install these packs?": "Instalar estes pacotes?",
@@ -109,5 +108,7 @@
  "Third-party notices": "Avisos de terceiros",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "Licença: MPL-2.0 para o assistente. Os modelos e vozes offline mantêm as próprias licenças, listadas nos avisos.",
  "About": "Sobre",
- "Extension": "Extensão"
+ "Extension": "Extensão",
+ "Install all voices for {} (recommended)": "Instalar todas as vozes para {} (recomendado)",
+ "Install all packs (recommended)": "Instalar todos os pacotes (recomendado)"
 }

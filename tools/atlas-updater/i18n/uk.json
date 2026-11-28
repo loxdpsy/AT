@@ -45,7 +45,6 @@
  "Install many packs": "Встановити кілька пакетів",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "Оберіть мову перекладу та встановіть усі її пакети разом. Кожен пакет перевіряється перед збереженням.",
  "Translate to": "Перекласти на",
- "Install all packs": "Встановити всі пакети",
  "installed": "встановлено",
  "Remove": "Видалити",
  "Install these packs?": "Встановити ці пакети?",
@@ -109,5 +108,7 @@
  "Releases": "Випуски",
  "Third-party notices": "Повідомлення третіх сторін",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "Ліцензія: MPL-2.0 для помічника. Офлайн-моделі та голоси мають власні ліцензії, наведені в повідомленнях.",
- "Extension": "Розширення"
+ "Extension": "Розширення",
+ "Install all voices for {} (recommended)": "Встановити всі голоси для: {} (рекомендовано)",
+ "Install all packs (recommended)": "Встановити всі пакети (рекомендовано)"
 }

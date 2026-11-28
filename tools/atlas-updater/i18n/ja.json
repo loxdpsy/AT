@@ -45,7 +45,6 @@
  "Install many packs": "複数のパックをインストール",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "翻訳先の言語を選び、その言語のパックをまとめてインストールします。各パックは保存前に確認されます。",
  "Translate to": "翻訳先",
- "Install all packs": "すべてのパックをインストール",
  "installed": "インストール済み",
  "Remove": "削除",
  "Install these packs?": "これらのパックをインストールしますか？",
@@ -109,5 +108,7 @@
  "Third-party notices": "サードパーティの告知",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "ライセンス: ヘルパーは MPL-2.0。オフラインのモデルと音声は独自のライセンスを保持し、告知に記載されています。",
  "About": "情報",
- "Extension": "拡張機能"
+ "Extension": "拡張機能",
+ "Install all voices for {} (recommended)": "{}の音声をすべてインストール（おすすめ）",
+ "Install all packs (recommended)": "すべてのパックをインストール（おすすめ）"
 }

@@ -1,0 +1,60 @@
+# Checks the licence of every Rust crate that the Atlas Helper uses, against the allowlist in tools/atlas-updater/deny.toml,
+# and keeps the list of crates and licences as an artifact (crate-licences.json).
+name: Licences
+
+on:
+  push:
+    paths:
+      - "tools/atlas-updater/Cargo.toml"
+      - "tools/atlas-updater/deny.toml"
+      - ".github/workflows/licences.yml"
+  pull_request:
+    paths:
+      - "tools/atlas-updater/Cargo.toml"
+      - "tools/atlas-updater/deny.toml"
+      - ".github/workflows/licences.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  crates:
+    name: Crate licences (cargo-deny)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: tools/atlas-updater
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Rust (the helper window needs Rust 1.92 or later)
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-deny
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-deny
+
+      - name: Every crate's licence is on the allowlist
+        run: cargo deny check licenses
+
+      - name: List every crate and its licence
+        run: cargo deny list --format json > "$RUNNER_TEMP/crate-licences.json"
+
+      - name: Keep the list
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: crate-licences
+          path: ${{ runner.temp }}/crate-licences.json
+          if-no-files-found: warn
+
+      - name: Job summary
+        if: always()
+        continue-on-error: true
+        run: |
+          echo "## Crate licences" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "The check uses the allowlist in tools/atlas-updater/deny.toml. The full list is in the crate-licences artifact." >> "$GITHUB_STEP_SUMMARY"

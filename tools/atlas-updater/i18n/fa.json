@@ -45,7 +45,6 @@
  "Install many packs": "نصب چند بسته",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "یک زبان مقصد انتخاب کنید و سپس همه بسته‌های آن را یک‌جا نصب کنید. هر بسته پیش از ذخیره بررسی می‌شود.",
  "Translate to": "ترجمه به",
- "Install all packs": "نصب همه بسته‌ها",
  "installed": "نصب شد",
  "Remove": "حذف",
  "Install these packs?": "این بسته‌ها نصب شوند؟",
@@ -109,5 +108,7 @@
  "Releases": "انتشارها",
  "Third-party notices": "اطلاعیه‌های اشخاص ثالث",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "مجوز: MPL-2.0 برای دستیار. مدل‌ها و صداهای آفلاین مجوزهای خودشان را دارند که در اطلاعیه‌ها فهرست شده‌اند.",
- "Extension": "افزونه"
+ "Extension": "افزونه",
+ "Install all voices for {} (recommended)": "نصب همه صداها برای {} (پیشنهادی)",
+ "Install all packs (recommended)": "نصب همه بسته‌ها (پیشنهادی)"
 }

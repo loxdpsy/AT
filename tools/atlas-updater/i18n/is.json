@@ -45,7 +45,6 @@
  "Install many packs": "Setja upp marga pakka",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "Veldu tungumálið sem á að þýða á og settu upp alla pakka þess í einu. Hver pakki er athugaður áður en hann er vistaður.",
  "Translate to": "Þýða yfir á",
- "Install all packs": "Setja upp alla pakka",
  "installed": "uppsett",
  "Remove": "Fjarlægja",
  "Install these packs?": "Setja upp þessa pakka?",
@@ -109,5 +108,7 @@
  "Releases": "Útgáfur",
  "Third-party notices": "Tilkynningar frá þriðju aðilum",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "Leyfi: MPL-2.0 fyrir hjálparforritið. Módel og raddir án nettengingar halda eigin leyfum, sem eru skráð í tilkynningunum.",
- "Extension": "Viðbót"
+ "Extension": "Viðbót",
+ "Install all voices for {} (recommended)": "Setja upp allar raddir fyrir {} (mælt með)",
+ "Install all packs (recommended)": "Setja upp alla pakka (mælt með)"
 }

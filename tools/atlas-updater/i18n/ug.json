@@ -45,7 +45,6 @@
  "Install many packs": "كۆپ بوغچا ئورنىتىش",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "نىشان تىلنى تاللاڭ، ئاندىن ئۇنىڭ بارلىق بوغچىلىرىنى بىر قېتىمدا ئورنىتىڭ. ھەر بىر بوغچا ساقلىنىشتىن ئىلگىرى تەكشۈرۈلىدۇ.",
  "Translate to": "تەرجىمە قىلىش تىلى",
- "Install all packs": "بارلىق بوغچىلارنى ئورنىتىش",
  "installed": "ئورنىتىلدى",
  "Remove": "ئۆچۈرۈش",
  "Install these packs?": "بۇ بوغچىلارنى ئورنىتامسىز؟",
@@ -109,5 +108,7 @@
  "Releases": "چىقارылىشلار",
  "Third-party notices": "ئۈچىنچى تەرەپ ئۇقتۇرۇشلىرى",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "لىتسېنزىيە: ياردەمچى ئۈچۈن MPL-2.0. ئۇلانماسىز مودېللار ۋە ئاۋازلار ئۆزىنىڭ لىتسېنزىيىسىنى ساقلايدۇ، ئۇ ئۇقتۇرۇشلاردا تىزىلغان.",
- "Extension": "كېڭەيتمە"
+ "Extension": "كېڭەيتمە",
+ "Install all voices for {} (recommended)": "{} ئۈچۈن بارلىق ئاۋازلارنى ئورنىتىش (تەۋسىيە قىلىنىدۇ)",
+ "Install all packs (recommended)": "بارلىق بوغچىلارنى ئورنىتىش (تەۋسىيە قىلىنىدۇ)"
 }

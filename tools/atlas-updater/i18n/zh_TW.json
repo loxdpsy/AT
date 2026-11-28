@@ -45,7 +45,6 @@
  "Install many packs": "安裝多個套件",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "選擇目標語言，然後一次安裝該語言的所有套件。每個套件在儲存前都會經過檢查。",
  "Translate to": "翻譯成",
- "Install all packs": "安裝所有套件",
  "installed": "已安裝",
  "Remove": "移除",
  "Install these packs?": "要安裝這些套件嗎？",
@@ -109,5 +108,7 @@
  "Releases": "發行版本",
  "Third-party notices": "第三方聲明",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "授權：助手採用 MPL-2.0。離線模型與聲音保留其各自的授權，列於聲明中。",
- "Extension": "擴充功能"
+ "Extension": "擴充功能",
+ "Install all voices for {} (recommended)": "安裝{}的所有語音（建議）",
+ "Install all packs (recommended)": "安裝所有套件（建議）"
 }

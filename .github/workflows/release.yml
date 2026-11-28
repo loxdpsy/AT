@@ -294,6 +294,10 @@ jobs:
           cp "$RUNNER_TEMP/engine/atlas-engine-lib-linux.so" "$APP/usr/bin/libatlas_engine.so"
           chmod +x "$APP/usr/bin/atlas-updater" "$APP/usr/bin/atlas-engine"
           cp icons/icon-128.png "$APP/atlas-helper.png"
+          # The licence texts and notices, as the packages must carry them.
+          mkdir -p "$APP/usr/share/doc/atlas-helper"
+          cp LICENSE NOTICE.md "$APP/usr/share/doc/atlas-helper/"
+          cp -r LICENSES "$APP/usr/share/doc/atlas-helper/"
           cat > "$APP/atlas-helper.desktop" <<'DESKTOP'
           [Desktop Entry]
           Type=Application
@@ -328,6 +332,10 @@ jobs:
           cp "$RUNNER_TEMP/engine/atlas-engine-macos" "$APP/Contents/MacOS/atlas-engine"
           cp "$RUNNER_TEMP/engine/atlas-engine-lib-macos.dylib" "$APP/Contents/MacOS/libatlas_engine.dylib"
           chmod +x "$APP/Contents/MacOS/atlas-updater" "$APP/Contents/MacOS/atlas-engine"
+          # The licence texts and notices, as the packages must carry them.
+          mkdir -p "$APP/Contents/Resources/licenses"
+          cp LICENSE NOTICE.md "$APP/Contents/Resources/licenses/"
+          cp -r LICENSES "$APP/Contents/Resources/licenses/"
           # The icon: the 128 px logo, resized to each size an app icon needs.
           ICONSET="$RUNNER_TEMP/AppIcon.iconset"
           mkdir -p "$ICONSET"

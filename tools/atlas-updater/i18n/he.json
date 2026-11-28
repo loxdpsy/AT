@@ -45,7 +45,6 @@
  "Install many packs": "התקן חבילות רבות",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "בחר שפת יעד, ואז התקן את כל החבילות שלה בבת אחת. כל חבילה נבדקת לפני ששומרים אותה.",
  "Translate to": "תרגם ל-",
- "Install all packs": "התקן את כל החבילות",
  "installed": "מותקן",
  "Remove": "הסר",
  "Install these packs?": "להתקין את החבילות האלה?",
@@ -109,5 +108,7 @@
  "Releases": "מהדורות",
  "Third-party notices": "הודעות צד שלישי",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "רישיון: MPL-2.0 לעוזר. המודלים והקולות הלא מקוונים שומרים על הרישיונות שלהם, המפורטים בהודעות.",
- "Extension": "הרחבה"
+ "Extension": "הרחבה",
+ "Install all voices for {} (recommended)": "התקנת כל הקולות עבור {} (מומלץ)",
+ "Install all packs (recommended)": "התקנת כל החבילות (מומלץ)"
 }

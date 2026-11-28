@@ -45,7 +45,6 @@
  "Install many packs": "कई पैक इंस्टॉल करें",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "वह भाषा चुनें जिसमें अनुवाद करना है, फिर उसके सारे पैक एक साथ इंस्टॉल करें। हर पैक सहेजने से पहले जाँचा जाता है।",
  "Translate to": "इसमें अनुवाद करें",
- "Install all packs": "सभी पैक इंस्टॉल करें",
  "installed": "इंस्टॉल किया गया",
  "Remove": "हटाएँ",
  "Install these packs?": "ये पैक इंस्टॉल करें?",
@@ -109,5 +108,7 @@
  "Releases": "रिलीज़",
  "Third-party notices": "तृतीय-पक्ष सूचनाएँ",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "الترخيص: MPL-2.0 للمساعد. تحتفظ النماذج والأصوات دون اتصال بتراخيصها الخاصة المدرجة في الإشعارات.",
- "Extension": "एक्सटेंशन"
+ "Extension": "एक्सटेंशन",
+ "Install all voices for {} (recommended)": "{} के लिए सभी आवाज़ें इंस्टॉल करें (अनुशंसित)",
+ "Install all packs (recommended)": "सभी पैक इंस्टॉल करें (अनुशंसित)"
 }

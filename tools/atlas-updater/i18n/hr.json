@@ -45,7 +45,6 @@
  "Install many packs": "Instaliraj više paketa",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "Odaberite jezik na koji prevodite, pa instalirajte sve njegove pakete odjednom. Svaki paket se provjerava prije spremanja.",
  "Translate to": "Prevedi na",
- "Install all packs": "Instaliraj sve pakete",
  "installed": "instalirano",
  "Remove": "Ukloni",
  "Install these packs?": "Instalirati ove pakete?",
@@ -109,5 +108,7 @@
  "Releases": "Izdanja",
  "Third-party notices": "Obavijesti trećih strana",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "Licenca: MPL-2.0 za pomoćnika. Modeli i glasovi bez interneta zadržavaju vlastite licence, navedene u obavijestima.",
- "Extension": "Proširenje"
+ "Extension": "Proširenje",
+ "Install all voices for {} (recommended)": "Instaliraj sve glasove za: {} (preporučeno)",
+ "Install all packs (recommended)": "Instaliraj sve pakete (preporučeno)"
 }

@@ -45,7 +45,6 @@
  "Install many packs": "Kóp paket ornatıw",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "Awdarıladı tilди tańlań, sonan soń onıń barlıq paketlerin birden ornatıń. Hár bir paket saqlanbas aldın tekseriledi.",
  "Translate to": "Awdarıw tili",
- "Install all packs": "Barlıq paketlerdi ornatıw",
  "installed": "ornatılǵan",
  "Remove": "Alıp taslaw",
  "Install these packs?": "Bul paketlerdi ornatasızba?",
@@ -109,5 +108,7 @@
  "Releases": "Shıǵarılımlar",
  "Third-party notices": "Úshinshi tárep bildiriwleri",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "Litsenziya: kómekshi ushın MPL-2.0. Offlayn modeller hám dawıslar óz litsenziyasın saqlaydı, bildiriwlerde kórsetilgen.",
- "Extension": "Keńeytpe"
+ "Extension": "Keńeytpe",
+ "Install all voices for {} (recommended)": "{} ushın barlıq dawıslardı ornatıw (usınıs etiledi)",
+ "Install all packs (recommended)": "Barlıq paketlerdi ornatıw (usınıs etiledi)"
 }

@@ -45,7 +45,6 @@
  "Install many packs": "Több csomag telepítése",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "Válassza ki a célnyelvet, majd telepítse az összes csomagját egyszerre. Minden csomag mentés előtt ellenőrzésen megy át.",
  "Translate to": "Fordítás erre a nyelvre:",
- "Install all packs": "Összes csomag telepítése",
  "installed": "telepítve",
  "Remove": "Eltávolítás",
  "Install these packs?": "Telepítse ezeket a csomagokat?",
@@ -109,5 +108,7 @@
  "Releases": "Kiadások",
  "Third-party notices": "Harmadik féltől származó közlemények",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "Licenc: MPL-2.0 a segédre. Az offline modellek és hangok saját licenccel rendelkeznek, amelyeket a közlemények sorolnak fel.",
- "Extension": "Bővítmény"
+ "Extension": "Bővítmény",
+ "Install all voices for {} (recommended)": "Minden hang telepítése: {} (ajánlott)",
+ "Install all packs (recommended)": "Minden csomag telepítése (ajánlott)"
 }

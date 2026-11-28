@@ -45,7 +45,6 @@
  "Install many packs": "Instalează mai multe pachete",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "Alegeți limba în care traduceți, apoi instalați toate pachetele ei deodată. Fiecare pachet este verificat înainte de salvare.",
  "Translate to": "Traduce în",
- "Install all packs": "Instalează toate pachetele",
  "installed": "instalat",
  "Remove": "Elimină",
  "Install these packs?": "Instalați aceste pachete?",
@@ -109,5 +108,7 @@
  "Releases": "Versiuni",
  "Third-party notices": "Notificări ale terților",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "Licență: MPL-2.0 pentru asistent. Modelele și vocile offline își păstrează propriile licențe, listate în notificări.",
- "Extension": "Extensie"
+ "Extension": "Extensie",
+ "Install all voices for {} (recommended)": "Instalează toate vocile pentru {} (recomandat)",
+ "Install all packs (recommended)": "Instalează toate pachetele (recomandat)"
 }

@@ -45,7 +45,6 @@
  "Install many packs": "Εγκατάσταση πολλών πακέτων",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "Επιλέξτε τη γλώσσα μετάφρασης και εγκαταστήστε όλα τα πακέτα της ταυτόχρονα. Κάθε πακέτο ελέγχεται πριν αποθηκευτεί.",
  "Translate to": "Μετάφραση σε",
- "Install all packs": "Εγκατάσταση όλων των πακέτων",
  "installed": "εγκατεστημένο",
  "Remove": "Αφαίρεση",
  "Install these packs?": "Εγκατάσταση αυτών των πακέτων;",
@@ -109,5 +108,7 @@
  "Releases": "Κυκλοφορίες",
  "Third-party notices": "Σημειώσεις τρίτων",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "Άδεια: MPL-2.0 για τον βοηθό. Τα μοντέλα και οι φωνές εκτός σύνδεσης διατηρούν τις δικές τους άδειες, που αναφέρονται στις σημειώσεις.",
- "Extension": "Επέκταση"
+ "Extension": "Επέκταση",
+ "Install all voices for {} (recommended)": "Εγκατάσταση όλων των φωνών για {} (προτείνεται)",
+ "Install all packs (recommended)": "Εγκατάσταση όλων των πακέτων (προτείνεται)"
 }

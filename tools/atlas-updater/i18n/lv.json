@@ -45,7 +45,6 @@
  "Install many packs": "Instalēt vairākas pakotnes",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "Izvēlieties valodu, uz kuru tulkot, un instalējiet visas tās pakotnes uzreiz. Katra pakotne pirms saglabāšanas tiek pārbaudīta.",
  "Translate to": "Tulkot uz",
- "Install all packs": "Instalēt visas pakotnes",
  "installed": "instalēts",
  "Remove": "Noņemt",
  "Install these packs?": "Instalēt šīs pakotnes?",
@@ -109,5 +108,7 @@
  "Releases": "Laidieni",
  "Third-party notices": "Trešo pušu paziņojumi",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "Licence: MPL-2.0 palīgam. Modeļi un balsis bez interneta saglabā savas licences, kas uzskaitītas paziņojumos.",
- "Extension": "Paplašinājums"
+ "Extension": "Paplašinājums",
+ "Install all voices for {} (recommended)": "Instalēt visas balsis valodai {} (ieteicams)",
+ "Install all packs (recommended)": "Instalēt visas pakotnes (ieteicams)"
 }

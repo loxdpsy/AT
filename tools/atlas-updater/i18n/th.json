@@ -45,7 +45,6 @@
  "Install many packs": "ติดตั้งหลายแพ็ก",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "เลือกภาษาที่จะแปลเป็น แล้วติดตั้งแพ็กทั้งหมดของภาษานั้นพร้อมกัน แต่ละแพ็กจะถูกตรวจก่อนบันทึก",
  "Translate to": "แปลเป็น",
- "Install all packs": "ติดตั้งทุกแพ็ก",
  "installed": "ติดตั้งแล้ว",
  "Remove": "ลบ",
  "Install these packs?": "ติดตั้งแพ็กเหล่านี้ไหม",
@@ -109,5 +108,7 @@
  "Releases": "รุ่นที่เผยแพร่",
  "Third-party notices": "ประกาศของบุคคลที่สาม",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "ใบอนุญาต: MPL-2.0 สำหรับตัวช่วย โมเดลและเสียงออฟไลน์คงใบอนุญาตของตนเอง ซึ่งระบุไว้ในประกาศ",
- "Extension": "ส่วนขยาย"
+ "Extension": "ส่วนขยาย",
+ "Install all voices for {} (recommended)": "ติดตั้งเสียงทั้งหมดสำหรับ {} (แนะนำ)",
+ "Install all packs (recommended)": "ติดตั้งแพ็กทั้งหมด (แนะนำ)"
 }

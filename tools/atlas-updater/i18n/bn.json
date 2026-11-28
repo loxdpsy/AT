@@ -45,7 +45,6 @@
  "Install many packs": "অনেক প্যাক ইনস্টল করুন",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "যে ভাষায় অনুবাদ করবেন সেটি বেছে নিন, তারপর তার সব প্যাক একসাথে ইনস্টল করুন। প্রতিটি প্যাক সংরক্ষণের আগে যাচাই করা হয়।",
  "Translate to": "অনুবাদ করুন",
- "Install all packs": "সব প্যাক ইনস্টল করুন",
  "installed": "ইনস্টল করা",
  "Remove": "সরান",
  "Install these packs?": "এই প্যাকগুলো ইনস্টল করবেন?",
@@ -109,5 +108,7 @@
  "Third-party notices": "তৃতীয় পক্ষের বিজ্ঞপ্তি",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "লাইসেন্স: হেল্পারের জন্য MPL-2.0। অফলাইন মডেল ও কণ্ঠস্বর নিজস্ব লাইসেন্স বজায় রাখে, যা বিজ্ঞপ্তিতে তালিকাভুক্ত।",
  "About": "সম্পর্কে",
- "Extension": "এক্সটেনশন"
+ "Extension": "এক্সটেনশন",
+ "Install all voices for {} (recommended)": "{} এর জন্য সব কণ্ঠ ইনস্টল করুন (সুপারিশকৃত)",
+ "Install all packs (recommended)": "সব প্যাক ইনস্টল করুন (সুপারিশকৃত)"
 }

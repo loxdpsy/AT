@@ -45,7 +45,6 @@
  "Install many packs": "Asenna useita paketteja",
  "Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.": "Valitse kohdekieli ja asenna kaikki sen paketit kerralla. Jokainen paketti tarkistetaan ennen tallennusta.",
  "Translate to": "Käännä kielelle",
- "Install all packs": "Asenna kaikki paketit",
  "installed": "asennettu",
  "Remove": "Poista",
  "Install these packs?": "Asennetaanko nämä paketit?",
@@ -109,5 +108,7 @@
  "Releases": "Julkaisut",
  "Third-party notices": "Kolmannen osapuolen ilmoitukset",
  "Licence: MPL-2.0 for the helper. The offline models and voices keep their own licences, listed in the notices.": "Lisenssi: MPL-2.0 apuohjelmalle. Offline-mallit ja äänet säilyttävät omat lisenssinsä, jotka on lueteltu ilmoituksissa.",
- "Extension": "Laajennus"
+ "Extension": "Laajennus",
+ "Install all voices for {} (recommended)": "Asenna kaikki äänet kielelle {} (suositus)",
+ "Install all packs (recommended)": "Asenna kaikki paketit (suositus)"
 }
