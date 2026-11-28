@@ -23,6 +23,7 @@ use crate::autostart;
 use crate::bind::{self, BindRequest, Shared};
 use crate::browsers::{self, Browser};
 use crate::engine::{self, Engine};
+use crate::i18n::tr;
 use crate::ocr;
 use crate::packs::{self, Catalogue, Pack};
 use crate::settings::{self, Settings};
@@ -179,6 +180,7 @@ pub fn run(show_window: bool) -> Result<(), String> {
 
     let detected: Vec<Browser> = browsers::detect();
     let saved_settings = settings::load();
+    crate::i18n::set_language(&saved_settings.language);
     let setup_open = !saved_settings.welcomed || detected.iter().any(|b| !saved_settings.answered.iter().any(|a| a == &b.id));
 
     let options = eframe::NativeOptions {
@@ -359,7 +361,7 @@ impl eframe::App for Helper {
                             for note in helper_notes.iter().take(5) {
                                 ui.label(RichText::new(format!("- {}", note)).color(muted(ui)));
                             }
-                            if ui.button("Get the new helper").clicked() {
+                            if ui.button(tr("Get the new helper")).clicked() {
                                 open_target(&format!("{}/tag/v{}", crate::RELEASES_PAGE, latest));
                             }
                         }
@@ -379,7 +381,7 @@ impl eframe::App for Helper {
                 tab_button(ui, &mut self.tab, Tab::Connections, "Connections");
                 tab_button(ui, &mut self.tab, Tab::Settings, "Settings");
                 ui.add_space(24.0);
-                if ui.add_sized([ui.available_width(), 30.0], egui::Button::new("Quit helper")).clicked() {
+                if ui.add_sized([ui.available_width(), 30.0], egui::Button::new(tr("Quit helper"))).clicked() {
                     actions.push(Action::Quit);
                 }
             });
@@ -395,7 +397,7 @@ impl eframe::App for Helper {
                         let color = if *ok { GREEN } else { RED };
                         ui.label(RichText::new(text.as_str()).color(color));
                     } else {
-                        ui.label(RichText::new("Ready.").color(muted(ui)));
+                        ui.label(RichText::new(tr("Ready.")).color(muted(ui)));
                     }
                 });
             });
@@ -434,15 +436,15 @@ impl eframe::App for Helper {
 
 impl Helper {
     fn extension_tab(&mut self, ui: &mut egui::Ui, idle: bool, actions: &mut Vec<Action>) {
-        ui.heading("Atlas Translation extension");
-        ui.label(RichText::new("Install or update the extension here. Firefox users get updates from the Add-ons store, so they only need the link below.").color(muted(ui)));
+        ui.heading(tr("Atlas Translation extension"));
+        ui.label(RichText::new(tr("Install or update the extension here. Firefox users get updates from the Add-ons store, so they only need the link below.")).color(muted(ui)));
         ui.add_space(12.0);
 
         card(ui, |ui| {
-            ui.label(RichText::new("Folder with the unpacked copy of the extension (Chromium browsers)").strong());
+            ui.label(RichText::new(tr("Folder with the unpacked copy of the extension (Chromium browsers)")).strong());
             row(ui, self.rtl, |ui| {
                 ui.add(egui::TextEdit::singleline(&mut self.folder).desired_width(360.0));
-                if ui.button("Default").clicked() {
+                if ui.button(tr("Default")).clicked() {
                     actions.push(Action::UseDefaultFolder);
                 }
             });
@@ -450,7 +452,7 @@ impl Helper {
 
             match &self.status {
                 None => {
-                    ui.label(RichText::new("Checking the latest release...").color(muted(ui)));
+                    ui.label(RichText::new(tr("Checking the latest release...")).color(muted(ui)));
                 }
                 Some(status) => {
                     match &status.latest {
@@ -458,7 +460,7 @@ impl Helper {
                         Err(e) => ui.label(RichText::new(format!("Latest release: unknown ({})", e)).color(RED)),
                     };
                     match &status.installed {
-                        Ok(None) => ui.label("Installed in this folder: nothing yet"),
+                        Ok(None) => ui.label(tr("Installed in this folder: nothing yet")),
                         Ok(Some(v)) => ui.label(format!("Installed in this folder: {}", v)),
                         Err(e) => ui.label(RichText::new(format!("This folder: {}", e)).color(RED)),
                     };
@@ -482,23 +484,23 @@ impl Helper {
             ui.add_space(10.0);
 
             row(ui, self.rtl, |ui| {
-                if ui.add_enabled(idle, egui::Button::new("Check again")).clicked() {
+                if ui.add_enabled(idle, egui::Button::new(tr("Check again"))).clicked() {
                     actions.push(Action::Refresh);
                 }
-                if ui.add_enabled(idle && !self.folder.trim().is_empty(), egui::Button::new("Install or update")).clicked() {
+                if ui.add_enabled(idle && !self.folder.trim().is_empty(), egui::Button::new(tr("Install or update"))).clicked() {
                     actions.push(Action::Install);
                 }
-                if ui.button("Open folder").clicked() {
+                if ui.button(tr("Open folder")).clicked() {
                     actions.push(Action::OpenFolder);
                 }
             });
         });
 
         ui.add_space(16.0);
-        ui.heading("Browsers");
+        ui.heading(tr("Browsers"));
         ui.add_space(4.0);
         if self.detected.is_empty() {
-            ui.label(RichText::new("No browser was found on this computer. Install one, then open the helper again.").color(muted(ui)));
+            ui.label(RichText::new(tr("No browser was found on this computer. Install one, then open the helper again.")).color(muted(ui)));
         }
         for browser in self.detected.clone() {
             let guide = browsers::guide(&browser, &self.folder);
@@ -508,7 +510,7 @@ impl Helper {
                     ui.label(format!("{}. {}", i + 1, step));
                 }
                 if guide.needs_folder {
-                    ui.label(RichText::new("Choose the folder above first.").color(muted(ui)));
+                    ui.label(RichText::new(tr("Choose the folder above first.")).color(muted(ui)));
                 }
                 if let Some(link) = &guide.link {
                     if ui.button(format!("Open the page for {}", guide.name)).clicked() {
@@ -531,19 +533,19 @@ impl Helper {
         let root = store::data_dir();
         let ready = speak::runtime_installed(&root);
         card(ui, |ui| {
-            ui.label(RichText::new("Read-aloud runtime").strong());
+            ui.label(RichText::new(tr("Read-aloud runtime")).strong());
             ui.label(
-                RichText::new("The program that speaks the voices above (sherpa-onnx, Apache-2.0). It is installed once for this computer.")
+                RichText::new(tr("The program that speaks the voices above (sherpa-onnx, Apache-2.0). It is installed once for this computer."))
                     .color(muted(ui))
                     .small(),
             );
             ui.add_space(6.0);
             ui.horizontal_wrapped(|ui| match speak::RUNTIME {
                 None => {
-                    ui.label(RichText::new("Not available for this computer.").color(muted(ui)));
+                    ui.label(RichText::new(tr("Not available for this computer.")).color(muted(ui)));
                 }
                 Some(_) if ready => {
-                    ui.label(RichText::new("Installed").color(GREEN));
+                    ui.label(RichText::new(tr("Installed")).color(GREEN));
                 }
                 Some(runtime) => {
                     let label = format!("Install (about {:.0} MB)", runtime.bytes as f64 / 1_000_000.0);
@@ -560,19 +562,19 @@ impl Helper {
     fn ocr_card(&mut self, ui: &mut egui::Ui, idle: bool, actions: &mut Vec<Action>) {
         let ready = ocr::installed(&store::data_dir());
         card(ui, |ui| {
-            ui.label(RichText::new("Text recognition (OCR)").strong());
+            ui.label(RichText::new(tr("Text recognition (OCR)")).strong());
             ui.label(
-                RichText::new("Reads the text in scanned pages and pictures on this computer. Choose an engine, then install it. Each download is checked with SHA-256.")
+                RichText::new(tr("Reads the text in scanned pages and pictures on this computer. Choose an engine, then install it. Each download is checked with SHA-256."))
                     .color(muted(ui))
                     .small(),
             );
             ui.add_space(6.0);
             ui.horizontal_wrapped(|ui| {
                 ui.label(RichText::new("PP-OCRv4").strong());
-                ui.label(RichText::new("Chinese and English. Apache-2.0. About 16 MB.").color(muted(ui)));
+                ui.label(RichText::new(tr("Chinese and English. Apache-2.0. About 16 MB.")).color(muted(ui)));
                 if ready {
-                    ui.label(RichText::new("Installed").color(GREEN));
-                } else if ui.add_enabled(idle, egui::Button::new("Install")).clicked() {
+                    ui.label(RichText::new(tr("Installed")).color(GREEN));
+                } else if ui.add_enabled(idle, egui::Button::new(tr("Install"))).clicked() {
                     actions.push(Action::InstallOcr);
                 }
             });
@@ -583,7 +585,7 @@ impl Helper {
                 ui.horizontal_wrapped(|ui| {
                     ui.label(RichText::new(name).strong());
                     ui.label(RichText::new(note).color(muted(ui)));
-                    ui.add_enabled(false, egui::Button::new("Coming soon"));
+                    ui.add_enabled(false, egui::Button::new(tr("Coming soon")));
                 });
             }
         });
@@ -620,15 +622,15 @@ impl Helper {
         let picked_now: usize = missing.iter().filter(|v| self.voice_picked.contains(&v.id)).count();
 
         card(ui, |ui| {
-            ui.label(RichText::new("Read-aloud voices").strong());
+            ui.label(RichText::new(tr("Read-aloud voices")).strong());
             ui.label(
-                RichText::new("Choose a language, tick the voices you want, then install them. Each download is checked with SHA-256 before it is saved.")
+                RichText::new(tr("Choose a language, tick the voices you want, then install them. Each download is checked with SHA-256 before it is saved."))
                     .color(muted(ui))
                     .small(),
             );
             ui.add_space(6.0);
             ui.horizontal_wrapped(|ui| {
-                ui.label("Voices for");
+                ui.label(tr("Voices for"));
                 egui::ComboBox::from_id_salt("voice_language").selected_text(name.clone()).show_ui(ui, |ui| {
                     for code in &languages {
                         let selected = *code == chosen;
@@ -637,7 +639,7 @@ impl Helper {
                         }
                     }
                 });
-                if ui.add_enabled(idle && !missing.is_empty(), egui::Button::new("Select all")).clicked() {
+                if ui.add_enabled(idle && !missing.is_empty(), egui::Button::new(tr("Select all"))).clicked() {
                     for voice in &missing {
                         self.voice_picked.insert(voice.id.clone());
                     }
@@ -659,7 +661,7 @@ impl Helper {
                 ui.horizontal_wrapped(|ui| {
                     if installed {
                         ui.label(RichText::new(voice.name.clone()).strong());
-                        ui.label(RichText::new("Installed").color(GREEN));
+                        ui.label(RichText::new(tr("Installed")).color(GREEN));
                     } else {
                         let mut on = self.voice_picked.contains(&voice.id);
                         if ui.add_enabled(idle, egui::Checkbox::new(&mut on, voice.name.clone())).changed() {
@@ -701,7 +703,7 @@ impl Helper {
         let name = packs::language_name(&language).to_string();
         let mut open = true;
         let mut decided: Option<bool> = None;
-        egui::Window::new("Install these voices?")
+        egui::Window::new(tr("Install these voices?"))
             .collapsible(false)
             .resizable(false)
             .open(&mut open)
@@ -719,22 +721,22 @@ impl Helper {
                 ui.add_space(8.0);
                 for voice in &needs_licence {
                     ui.label(RichText::new(format!("{} needs you to accept its licence: {}.", voice.name, voice.licence)).color(RED));
-                    if ui.button("Read the licence").clicked() {
+                    if ui.button(tr("Read the licence")).clicked() {
                         actions.push(Action::OpenLink(voice.licence_url.clone()));
                     }
                 }
                 let licence_needed = !needs_licence.is_empty();
                 if licence_needed {
-                    ui.checkbox(&mut self.voice_licence_accepted, "I accept the licence of these voices");
+                    ui.checkbox(&mut self.voice_licence_accepted, tr("I accept the licence of these voices"));
                 }
-                ui.label(RichText::new("Each download is checked with SHA-256 before it is saved. You can remove a voice later.").color(muted(ui)).small());
+                ui.label(RichText::new(tr("Each download is checked with SHA-256 before it is saved. You can remove a voice later.")).color(muted(ui)).small());
                 ui.add_space(8.0);
                 ui.horizontal(|ui| {
                     let can_install = !missing.is_empty() && (!licence_needed || self.voice_licence_accepted);
-                    if ui.add_enabled(can_install, egui::Button::new("Install")).clicked() {
+                    if ui.add_enabled(can_install, egui::Button::new(tr("Install"))).clicked() {
                         decided = Some(true);
                     }
-                    if ui.button("Cancel").clicked() {
+                    if ui.button(tr("Cancel")).clicked() {
                         decided = Some(false);
                     }
                 });
@@ -758,24 +760,24 @@ impl Helper {
     }
 
     fn offline_tab(&mut self, ui: &mut egui::Ui, idle: bool, actions: &mut Vec<Action>) {
-        ui.heading("Offline translation");
-        ui.label(RichText::new("Translation that runs on this computer. Each language pair is a pack that you install here.").color(muted(ui)));
+        ui.heading(tr("Offline translation"));
+        ui.label(RichText::new(tr("Translation that runs on this computer. Each language pair is a pack that you install here.")).color(muted(ui)));
         ui.add_space(12.0);
 
         card(ui, |ui| {
             if let Some(error) = &self.api_error {
                 ui.label(RichText::new(format!("The offline service is not running: {}", error)).color(RED));
             } else {
-                ui.label(RichText::new("The offline service runs on this computer (127.0.0.1:47632).").color(GREEN));
+                ui.label(RichText::new(tr("The offline service runs on this computer (127.0.0.1:47632).")).color(GREEN));
             }
             ui.add_space(6.0);
 
             let engine_path = engine::find_binary();
             match &engine_path {
                 Some(path) => ui.label(format!("Engine: installed ({})", path.display())),
-                None => ui.label(RichText::new("Engine: not installed").color(RED)),
+                None => ui.label(RichText::new(tr("Engine: not installed")).color(RED)),
             };
-            if engine_path.is_none() && ui.add_enabled(idle, egui::Button::new("Install the engine")).clicked() {
+            if engine_path.is_none() && ui.add_enabled(idle, egui::Button::new(tr("Install the engine"))).clicked() {
                 actions.push(Action::InstallEngine);
             }
             ui.add_space(6.0);
@@ -788,7 +790,7 @@ impl Helper {
         ui.add_space(14.0);
         self.speak_card(ui, idle, actions);
         ui.add_space(14.0);
-        ui.heading("Language packs");
+        ui.heading(tr("Language packs"));
         if !self.catalogue_asked {
             self.catalogue_asked = true;
             self.load_catalogue();
@@ -802,11 +804,11 @@ impl Helper {
         let mut retry = false;
         match &self.catalogue {
             None => {
-                ui.label(RichText::new("Loading the list of packs...").color(muted(ui)));
+                ui.label(RichText::new(tr("Loading the list of packs...")).color(muted(ui)));
             }
             Some(Err(e)) => {
                 ui.label(RichText::new(format!("The packs could not be listed: {}", e)).color(RED));
-                if ui.add_enabled(idle, egui::Button::new("Try again")).clicked() {
+                if ui.add_enabled(idle, egui::Button::new(tr("Try again"))).clicked() {
                     retry = true;
                 }
             }
@@ -818,7 +820,7 @@ impl Helper {
                     ui.label(RichText::new(format!("Installed now: {} pack(s), about {:.0} MB", installed_packs.len(), installed_mb)).strong());
                     ui.label(RichText::new(format!("Each pack is about 37 MB. {} packs are available.", catalogue.packs.len())).color(muted(ui)));
                     ui.label(RichText::new(format!("Folder: {}", root.display())).color(muted(ui)));
-                    if ui.button("Open the packs folder").clicked() {
+                    if ui.button(tr("Open the packs folder")).clicked() {
                         actions.push(Action::OpenPacksFolder);
                     }
                 });
@@ -830,7 +832,7 @@ impl Helper {
                             .hint_text("Search a language, for example German or de")
                             .desired_width(340.0),
                     );
-                    ui.checkbox(&mut self.installed_only, "Installed only");
+                    ui.checkbox(&mut self.installed_only, tr("Installed only"));
                 });
 
                 // Install many packs: every pack into one language ("Translate to French"), or every pack at once.
@@ -846,11 +848,11 @@ impl Helper {
                 let target_name = target.as_deref().map(packs::language_name).unwrap_or("a language").to_string();
                 ui.add_space(8.0);
                 card(ui, |ui| {
-                    ui.label(RichText::new("Install many packs").strong());
-                    ui.label(RichText::new("Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.").color(muted(ui)).small());
+                    ui.label(RichText::new(tr("Install many packs")).strong());
+                    ui.label(RichText::new(tr("Choose a language to translate to, then install all of its packs at once. Each pack is checked before it is saved.")).color(muted(ui)).small());
                     ui.add_space(6.0);
                     ui.horizontal_wrapped(|ui| {
-                        ui.label("Translate to");
+                        ui.label(tr("Translate to"));
                         let current_name = target.as_deref().map(packs::language_name).unwrap_or("Choose a language");
                         egui::ComboBox::from_id_salt("pack_target").selected_text(current_name).show_ui(ui, |ui| {
                             for code in &targets {
@@ -863,7 +865,7 @@ impl Helper {
                         if ui.add_enabled(idle && !for_target.is_empty(), egui::Button::new(format!("Install all to {}", target_name))).clicked() {
                             self.confirm_install = Some(for_target.clone());
                         }
-                        if ui.add_enabled(idle && !not_installed.is_empty(), egui::Button::new("Install all packs")).clicked() {
+                        if ui.add_enabled(idle && !not_installed.is_empty(), egui::Button::new(tr("Install all packs"))).clicked() {
                             self.confirm_install = Some(not_installed.clone());
                         }
                     });
@@ -910,11 +912,11 @@ impl Helper {
                                 ui.label(RichText::new(size_text(pack)).color(muted(ui)));
                                 ui.horizontal(|ui| {
                                     if is_installed {
-                                        ui.label(RichText::new("installed").color(GREEN));
-                                        if ui.add_enabled(idle, egui::Button::new("Remove")).clicked() {
+                                        ui.label(RichText::new(tr("installed")).color(GREEN));
+                                        if ui.add_enabled(idle, egui::Button::new(tr("Remove"))).clicked() {
                                             actions.push(Action::RemovePack(index));
                                         }
-                                    } else if ui.add_enabled(idle, egui::Button::new("Install")).clicked() {
+                                    } else if ui.add_enabled(idle, egui::Button::new(tr("Install"))).clicked() {
                                         actions.push(Action::InstallPack(index));
                                     }
                                 });
@@ -945,20 +947,20 @@ impl Helper {
         };
         let mut open = true;
         let mut decided: Option<bool> = None;
-        egui::Window::new("Install these packs?")
+        egui::Window::new(tr("Install these packs?"))
             .collapsible(false)
             .resizable(false)
             .open(&mut open)
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
                 ui.label(format!("{} pack(s), about {:.0} MB in total. The downloads can take a long time.", count, megabytes));
-                ui.label(RichText::new("Each pack is checked with SHA-256 before it is saved. You can remove any pack later.").color(muted(ui)).small());
+                ui.label(RichText::new(tr("Each pack is checked with SHA-256 before it is saved. You can remove any pack later.")).color(muted(ui)).small());
                 ui.add_space(8.0);
                 ui.horizontal(|ui| {
-                    if ui.button("Install").clicked() {
+                    if ui.button(tr("Install")).clicked() {
                         decided = Some(true);
                     }
-                    if ui.button("Cancel").clicked() {
+                    if ui.button(tr("Cancel")).clicked() {
                         decided = Some(false);
                     }
                 });
@@ -975,8 +977,8 @@ impl Helper {
     }
 
     fn connections_tab(&mut self, ui: &mut egui::Ui, actions: &mut Vec<Action>) {
-        ui.heading("Connections");
-        ui.label(RichText::new("Browsers that the helper allowed to use the offline service. Remove one to stop it.").color(muted(ui)));
+        ui.heading(tr("Connections"));
+        ui.label(RichText::new(tr("Browsers that the helper allowed to use the offline service. Remove one to stop it.")).color(muted(ui)));
         ui.add_space(12.0);
         let items = match self.bindings.lock() {
             Ok(b) => b.items.clone(),
@@ -984,12 +986,12 @@ impl Helper {
         };
         card(ui, |ui| {
             if items.is_empty() {
-                ui.label(RichText::new("No browser is connected yet. Open the Atlas Translation settings in the browser and choose Bind.").color(muted(ui)));
+                ui.label(RichText::new(tr("No browser is connected yet. Open the Atlas Translation settings in the browser and choose Bind.")).color(muted(ui)));
             }
             for (index, binding) in items.iter().enumerate() {
                 row(ui, self.rtl, |ui| {
                     ui.label(RichText::new(&binding.name).strong());
-                    if ui.button("Remove").clicked() {
+                    if ui.button(tr("Remove")).clicked() {
                         actions.push(Action::RemoveBinding(index));
                     }
                 });
@@ -1007,7 +1009,7 @@ impl Helper {
         let total = progress.total.load(Ordering::Relaxed);
         let stage = progress.stage();
         let mut cancel = false;
-        egui::Window::new("Atlas Helper is working")
+        egui::Window::new(tr("Atlas Helper is working"))
             .collapsible(false)
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
@@ -1023,9 +1025,9 @@ impl Helper {
                     ui.add(egui::ProgressBar::new(0.0).animate(true).desired_width(360.0));
                 }
                 ui.add_space(8.0);
-                ui.label(RichText::new("This window closes when the step finishes. Nothing is installed until the file checks out.").color(muted(ui)).small());
+                ui.label(RichText::new(tr("This window closes when the step finishes. Nothing is installed until the file checks out.")).color(muted(ui)).small());
                 ui.add_space(6.0);
-                if ui.button("Cancel").clicked() {
+                if ui.button(tr("Cancel")).clicked() {
                     cancel = true;
                 }
             });
@@ -1041,21 +1043,21 @@ impl Helper {
             None => return,
         };
         let mut answer: Option<bool> = None;
-        egui::Window::new("Bind a browser")
+        egui::Window::new(tr("Bind a browser"))
             .collapsible(false)
             .resizable(false)
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
                 ui.label(RichText::new(format!("\"{}\" wants to use the offline translation.", name)).size(16.0).strong());
-                ui.label("Allow it only if you use Atlas Translation in that browser. You can remove it later under Connections.");
+                ui.label(tr("Allow it only if you use Atlas Translation in that browser. You can remove it later under Connections."));
                 ui.add_space(6.0);
                 ui.label(RichText::new(format!("Requested from: {}", origin)).color(muted(ui)).small());
                 ui.add_space(10.0);
                 row(ui, self.rtl, |ui| {
-                    if ui.button("Allow").clicked() {
+                    if ui.button(tr("Allow")).clicked() {
                         answer = Some(true);
                     }
-                    if ui.button("Deny").clicked() {
+                    if ui.button(tr("Deny")).clicked() {
                         answer = Some(false);
                     }
                 });
@@ -1101,24 +1103,24 @@ impl Helper {
         let rtl = self.rtl;
         let folder = self.folder.trim().to_string();
         let update = self.update_line();
-        egui::Window::new("Welcome to Atlas Helper")
+        egui::Window::new(tr("Welcome to Atlas Helper"))
             .collapsible(false)
             .resizable(false)
             .default_width(440.0)
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
-                ui.label(RichText::new("Welcome to Atlas Helper").size(16.0).strong());
+                ui.label(RichText::new(tr("Welcome to Atlas Helper")).size(16.0).strong());
                 ui.label(RichText::new(format!("Helper version {}.", crate::app_version())).color(muted(ui)));
                 if let Some((newer, text)) = &update {
                     ui.label(RichText::new(text.as_str()).color(if *newer { RED } else { ui.visuals().hyperlink_color }));
                 }
                 ui.add_space(6.0);
-                ui.label("The helper runs offline translation on this computer. Text is not sent to a web service.");
+                ui.label(tr("The helper runs offline translation on this computer. Text is not sent to a web service."));
                 ui.add_space(6.0);
                 if pending.is_empty() {
-                    ui.label("No browser was found that Atlas Translation is not set up in yet.");
+                    ui.label(tr("No browser was found that Atlas Translation is not set up in yet."));
                 } else {
-                    ui.label(RichText::new("Install Atlas Translation in these browsers?").strong());
+                    ui.label(RichText::new(tr("Install Atlas Translation in these browsers?")).strong());
                     ui.label(
                         RichText::new(
                             "Chrome, Edge and other Chromium browsers do not let an app install an extension by itself. \
@@ -1133,12 +1135,12 @@ impl Helper {
                         for browser in &pending {
                             row(ui, rtl, |ui| {
                                 ui.label(RichText::new(browser.name.as_str()).strong());
-                                if ui.button("Install here").clicked() {
+                                if ui.button(tr("Install here")).clicked() {
                                     actions.push(Action::SetupBrowser(browser.id.clone()));
                                 }
                             });
                             let guide = browsers::guide(browser, &folder);
-                            egui::CollapsingHeader::new("Steps").id_salt(browser.id.as_str()).show(ui, |ui| {
+                            egui::CollapsingHeader::new(tr("Steps")).id_salt(browser.id.as_str()).show(ui, |ui| {
                                 for (i, step) in guide.steps.iter().enumerate() {
                                     ui.label(RichText::new(format!("{}. {}", i + 1, step)).color(muted(ui)).small());
                                 }
@@ -1146,22 +1148,22 @@ impl Helper {
                             ui.add_space(4.0);
                         }
                     });
-                    if pending.len() > 1 && ui.button("Install in all of them").clicked() {
+                    if pending.len() > 1 && ui.button(tr("Install in all of them")).clicked() {
                         actions.push(Action::SetupAll);
                     }
                 }
                 ui.add_space(8.0);
-                ui.label(RichText::new("Read-aloud voices (optional)").strong());
+                ui.label(RichText::new(tr("Read-aloud voices (optional)")).strong());
                 ui.label(
-                    RichText::new("The English voices are large, several hundred MB, so they are not part of this install. Install them now, or later from the Offline tab. The confirmation shows the exact size first.")
+                    RichText::new(tr("The English voices are large, several hundred MB, so they are not part of this install. Install them now, or later from the Offline tab. The confirmation shows the exact size first."))
                         .color(muted(ui))
                         .small(),
                 );
-                if ui.button("Show the English voices").clicked() {
+                if ui.button(tr("Show the English voices")).clicked() {
                     actions.push(Action::OfferVoices("en".to_string()));
                 }
                 ui.add_space(8.0);
-                if ui.button("Done").clicked() {
+                if ui.button(tr("Done")).clicked() {
                     actions.push(Action::FinishWelcome);
                 }
             });
@@ -1254,13 +1256,13 @@ impl Helper {
     }
 
     fn settings_tab(&mut self, ui: &mut egui::Ui, actions: &mut Vec<Action>) {
-        ui.heading("Settings");
-        ui.label(RichText::new("How the helper behaves. Experimental options may change or break.").color(muted(ui)));
+        ui.heading(tr("Settings"));
+        ui.label(RichText::new(tr("How the helper behaves. Experimental options may change or break.")).color(muted(ui)));
         ui.add_space(12.0);
 
         card(ui, |ui| {
-            ui.label(RichText::new("Look").strong());
-            ui.label("Theme");
+            ui.label(RichText::new(tr("Look")).strong());
+            ui.label(tr("Theme"));
             row(ui, self.rtl, |ui| {
                 let current = self.settings.theme.clone();
                 for (value, label) in [("system", "Follow the system"), ("light", "Light"), ("dark", "Dark")] {
@@ -1270,7 +1272,7 @@ impl Helper {
                 }
             });
             ui.add_space(6.0);
-            ui.label("Colour");
+            ui.label(tr("Colour"));
             let current_accent = self.settings.accent.clone();
             let mut picked_accent: Option<&str> = None;
             egui::ComboBox::from_id_salt("accent").selected_text(accent_label(&current_accent)).show_ui(ui, |ui| {
@@ -1286,7 +1288,7 @@ impl Helper {
                 }
             }
             ui.add_space(6.0);
-            ui.label("Language");
+            ui.label(tr("Language"));
             let current_language = self.settings.language.clone();
             let mut picked_language: Option<&str> = None;
             egui::ComboBox::from_id_salt("language").selected_text(language_label(&current_language)).show_ui(ui, |ui| {
@@ -1301,9 +1303,9 @@ impl Helper {
                     actions.push(Action::SetLanguage(code.to_string()));
                 }
             }
-            ui.label(RichText::new("The layout follows the language (right to left for Arabic, Hebrew, Persian and Urdu). The helper's text stays English until it is translated.").color(muted(ui)));
+            ui.label(RichText::new(tr("The layout follows the language (right to left for Arabic, Hebrew, Persian and Urdu). The helper's text stays English until it is translated.")).color(muted(ui)));
             ui.add_space(6.0);
-            ui.label("Text size");
+            ui.label(tr("Text size"));
             row(ui, self.rtl, |ui| {
                 let current = self.settings.text_size.clone();
                 for (value, label) in [("normal", "Normal"), ("large", "Large")] {
@@ -1316,48 +1318,48 @@ impl Helper {
         ui.add_space(12.0);
 
         card(ui, |ui| {
-            ui.label(RichText::new("Window and tray").strong());
+            ui.label(RichText::new(tr("Window and tray")).strong());
             let mut keep = self.settings.keep_in_tray;
-            if ui.checkbox(&mut keep, "Closing the window keeps the helper in the tray").changed() {
+            if ui.checkbox(&mut keep, tr("Closing the window keeps the helper in the tray")).changed() {
                 actions.push(Action::SetKeepInTray(keep));
             }
-            ui.label(RichText::new("Off means closing the window quits the helper.").color(muted(ui)));
+            ui.label(RichText::new(tr("Off means closing the window quits the helper.")).color(muted(ui)));
             ui.add_space(6.0);
             if cfg!(windows) {
                 // Windows keeps this list: the installer makes the Startup shortcut, and Windows Settings changes it.
                 let state = if self.autostart { "On: the helper starts when you sign in." } else { "Off: the helper does not start when you sign in." };
                 ui.label(state);
-                ui.label(RichText::new("To change it, open Windows Settings, under Apps, then Startup.").color(muted(ui)));
-                if ui.button("Open Windows startup settings").clicked() {
+                ui.label(RichText::new(tr("To change it, open Windows Settings, under Apps, then Startup.")).color(muted(ui)));
+                if ui.button(tr("Open Windows startup settings")).clicked() {
                     actions.push(Action::OpenLink("ms-settings:startupapps".to_string()));
                 }
             } else {
                 let mut on = self.autostart;
-                if ui.checkbox(&mut on, "Start the helper when I sign in").changed() {
+                if ui.checkbox(&mut on, tr("Start the helper when I sign in")).changed() {
                     actions.push(Action::Autostart(on));
                 }
             }
-            ui.label(RichText::new("It starts minimised to the tray, so it never opens a window by itself.").color(muted(ui)));
+            ui.label(RichText::new(tr("It starts minimised to the tray, so it never opens a window by itself.")).color(muted(ui)));
             ui.add_space(6.0);
             let mut with_browser = self.settings.start_with_browser;
-            if ui.checkbox(&mut with_browser, "Start the helper when the browser starts").changed() {
+            if ui.checkbox(&mut with_browser, tr("Start the helper when the browser starts")).changed() {
                 actions.push(Action::SetStartWithBrowser(with_browser));
             }
             ui.label(
-                RichText::new("The browser starts the helper in the tray. It works only once this browser is connected to the helper (Options, Services, Offline).")
+                RichText::new(tr("The browser starts the helper in the tray. It works only once this browser is connected to the helper (Options, Services, Offline)."))
                     .color(muted(ui)),
             );
         });
         ui.add_space(12.0);
 
         card(ui, |ui| {
-            ui.label(RichText::new("Downloads").strong());
+            ui.label(RichText::new(tr("Downloads")).strong());
             let mut connections = self.settings.download_connections;
             if ui.add(egui::Slider::new(&mut connections, transfer::MIN_CONNECTIONS..=transfer::MAX_CONNECTIONS).text("Connections at once")).changed() {
                 actions.push(Action::SetConnections(connections));
             }
             ui.label(
-                RichText::new("Each file is split into parts that download together, which is faster on most connections. Use 1 on a slow or metered connection.")
+                RichText::new(tr("Each file is split into parts that download together, which is faster on most connections. Use 1 on a slow or metered connection."))
                     .color(muted(ui)),
             );
         });
@@ -1365,26 +1367,26 @@ impl Helper {
 
         let mut experimental = self.settings.experimental;
         card(ui, |ui| {
-            ui.label(RichText::new("Experimental").strong());
-            if ui.checkbox(&mut experimental, "Show experimental options and developer tools").changed() {
+            ui.label(RichText::new(tr("Experimental")).strong());
+            if ui.checkbox(&mut experimental, tr("Show experimental options and developer tools")).changed() {
                 actions.push(Action::SetExperimental(experimental));
             }
-            ui.label(RichText::new("Off by default. Nothing here is needed to translate.").color(muted(ui)));
+            ui.label(RichText::new(tr("Off by default. Nothing here is needed to translate.")).color(muted(ui)));
         });
 
         if self.settings.experimental {
             ui.add_space(12.0);
             card(ui, |ui| {
-                ui.label(RichText::new("Developer").strong());
+                ui.label(RichText::new(tr("Developer")).strong());
                 ui.label(format!("Data folder: {}", store::data_dir().display()));
                 ui.label(format!("Packs folder: {}", store::packs_dir().display()));
                 ui.label(format!("Offline service address: 127.0.0.1:{}", api::PORT));
                 ui.label(format!("Helper version: {}", crate::app_version()));
                 row(ui, self.rtl, |ui| {
-                    if ui.button("Open the data folder").clicked() {
+                    if ui.button(tr("Open the data folder")).clicked() {
                         actions.push(Action::OpenDataFolder);
                     }
-                    if ui.button("Show the browser setup again").clicked() {
+                    if ui.button(tr("Show the browser setup again")).clicked() {
                         actions.push(Action::ShowSetupAgain);
                     }
                 });
@@ -1484,14 +1486,14 @@ impl Helper {
             Action::InstallSpeakRuntime => {
                 let root = store::data_dir();
                 self.start_download("Installing the read-aloud runtime...", move |transfer| match speak::install_runtime(&root, &transfer) {
-                    Ok(()) => Event::Done { ok: true, text: "Installed the read-aloud runtime.".to_string(), reload: false },
+                    Ok(()) => Event::Done { ok: true, text: tr("Installed the read-aloud runtime.").to_string(), reload: false },
                     Err(e) => Event::Done { ok: false, text: e, reload: false },
                 });
             }
             Action::InstallOcr => {
                 let root = store::data_dir();
                 self.start_download("Installing the text recognition models...", move |transfer| match ocr::install(&root, &transfer) {
-                    Ok(()) => Event::Done { ok: true, text: "Installed the text recognition models (PP-OCRv4).".to_string(), reload: false },
+                    Ok(()) => Event::Done { ok: true, text: tr("Installed the text recognition models (PP-OCRv4).").to_string(), reload: false },
                     Err(e) => Event::Done { ok: false, text: e, reload: false },
                 });
             }
@@ -1554,6 +1556,7 @@ impl Helper {
                 self.save_settings();
             }
             Action::SetLanguage(value) => {
+                crate::i18n::set_language(&value);
                 self.rtl = effective_rtl(&value);
                 self.settings.language = value;
                 self.save_settings();

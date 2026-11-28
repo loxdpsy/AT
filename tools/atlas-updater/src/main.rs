@@ -24,6 +24,7 @@ mod browsers;
 mod engine;
 mod enginelib;
 mod gui;
+mod i18n;
 mod json;
 mod native_host;
 mod ocr;

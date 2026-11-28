@@ -5,6 +5,9 @@
   `/api/offline/ocr` route for the extension. The models are about 16 MB, downloaded once and checked with SHA-256.
   The Offline tab has an OCR card: choose an engine, then install PP-OCRv4. ocrs and Tesseract are listed, not added yet.
   Still to do: the extension's OCR button for scanned PDFs.
+- Helper window and tray text: translated into Chinese (Simplified), Hindi, Spanish, Arabic and French (batch 1 of 8).
+  The language is the one chosen in Settings, or the computer's language with "system". Strings with no translation show
+  in English. Other languages follow in batches of five.
 - Read-aloud runtime: the Offline tab installs it once for the computer (sherpa-onnx, checked with SHA-256). The local API
   for speaking, OCR and translation now checks the token under the lock and releases it before the slow work.
 - Helper: checks for a newer helper, not only a newer extension. It shows "A new version is available, please update" with what is new, and a button to the release page.
