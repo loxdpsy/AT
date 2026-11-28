@@ -782,7 +782,7 @@ mod tests {
         let _ = fs::remove_dir_all(&root);
         install(&root, &Transfer::quiet()).expect("install");
         let picture = include_bytes!("testdata/ocr-sample.png");
-        let lines = recognise(&root, picture).expect("recognise");
+        let lines = recognise(&root, ENGINE_PPOCR, picture).expect("recognise");
         let all: String = lines.iter().map(|l| l.text.to_lowercase()).collect::<Vec<_>>().join(" | ");
         assert!(all.contains("world"), "read: {}", all);
         assert!(all.contains("offline"), "read: {}", all);
